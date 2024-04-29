@@ -2,6 +2,7 @@
 #import "GLTFAccessorSparse.h"
 #import "GLTFAccessorSparseIndices.h"
 #import "GLTFAccessorSparseValues.h"
+#import "GLTFMaterialOcclusionTextureInfo.h"
 #import "GLTFMaterialPBRMetallicRoughness.h"
 #import "GLTFMesh.h"
 #import "GLTFMeshPrimitive.h"
@@ -38,6 +39,10 @@ typedef NS_ENUM(NSInteger, GLTF2ErrorCode) {
 + (nullable GLTFAccessorSparseValues *)
     decodeAccessorSparseValuesFromJson:(NSDictionary *)jsonDict
                                  error:(NSError **)error;
+
++ (nullable GLTFMaterialOcclusionTextureInfo *)
+    decodeMaterialOcclusionTextureInfoFromJson:(NSDictionary *)jsonDict
+                                         error:(NSError **)error;
 
 + (nullable GLTFMaterialPBRMetallicRoughness *)
     decodeMaterialPBRMetallicRoughnessFromJson:(NSDictionary *)jsonDict

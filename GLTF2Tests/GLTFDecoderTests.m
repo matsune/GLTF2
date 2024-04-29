@@ -384,6 +384,70 @@
                  "Error code should indicate invalid data format.");
 }
 
+#pragma mark - GLTFMaterialOcclusionTextureInfo
+
+- (void)testDecodeWithValidData {
+  NSDictionary *validJson = @{
+    @"index" : @1,
+    @"texCoord" : @2,
+    @"strength" : @0.5,
+    @"extensions" : @{@"dummyExtension" : @{}},
+    @"extras" : @{@"dummyExtra" : @"data"}
+  };
+
+  NSError *error = nil;
+  GLTFMaterialOcclusionTextureInfo *textureInfo =
+      [GLTFDecoder decodeMaterialOcclusionTextureInfoFromJson:validJson
+                                                        error:&error];
+
+  XCTAssertNotNil(textureInfo, @"Texture info should not be nil.");
+  XCTAssertNil(error, @"Error should be nil.");
+  XCTAssertEqual(textureInfo.index, 1, @"Index should be 1.");
+  XCTAssertEqual(textureInfo.texCoord, 2, @"TexCoord should be 2.");
+  XCTAssertEqual(textureInfo.strength, 0.5, @"Strength should be 0.5.");
+  XCTAssertNotNil(textureInfo.extensions, @"Extensions should not be nil.");
+  XCTAssertNotNil(textureInfo.extras, @"Extras should not be nil.");
+}
+
+- (void)testDecodeWithMissingOptionalData {
+  NSDictionary *jsonWithMissingOptionals = @{
+    @"index" : @1
+    // Missing texCoord, strength, extensions, and extras
+  };
+
+  NSError *error = nil;
+  GLTFMaterialOcclusionTextureInfo *textureInfo = [GLTFDecoder
+      decodeMaterialOcclusionTextureInfoFromJson:jsonWithMissingOptionals
+                                           error:&error];
+
+  XCTAssertNotNil(textureInfo,
+                  @"Texture info should not be nil despite missing optionals.");
+  XCTAssertNil(error, @"Error should be nil when optional data is missing.");
+  XCTAssertEqual(textureInfo.index, 1, @"Index should still be 1.");
+  XCTAssertEqual(textureInfo.texCoord, 0, @"TexCoord should default to 0.");
+  XCTAssertEqual(textureInfo.strength, 1.0, @"Strength should default to 1.0.");
+  XCTAssertNil(textureInfo.extensions,
+               @"Extensions should be nil if not provided.");
+  XCTAssertNil(textureInfo.extras, @"Extras should be nil if not provided.");
+}
+
+- (void)testDecodeWithInvalidData {
+  NSDictionary *invalidJson = @{
+    @"index" : @"invalid",    // Index should be an integer
+    @"texCoord" : @"invalid", // texCoord should be an integer
+    @"strength" : @"invalid"  // strength should be a number
+  };
+
+  NSError *error = nil;
+  GLTFMaterialOcclusionTextureInfo *textureInfo =
+      [GLTFDecoder decodeMaterialOcclusionTextureInfoFromJson:invalidJson
+                                                        error:&error];
+
+  XCTAssertNil(textureInfo, @"Texture info should be nil due to invalid data.");
+  XCTAssertNotNil(error,
+                  @"An error should be reported due to invalid data types.");
+}
+
 #pragma mark - GLTFMaterialPBRMetallicRoughness
 
 - (void)testDecodeMaterialPBRMetallicRoughnessWithValidData {

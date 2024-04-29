@@ -51,6 +51,28 @@
   }
 }
 
++ (float)getFloat:(const NSDictionary *)jsonDict
+              key:(const NSString *)key
+         required:(BOOL)required
+          objName:(const NSString *)objName
+            error:(NSError **)error {
+  NSNumber *value = jsonDict[key];
+
+  if (!value) {
+    if (required) {
+      *error = [GLTFDecoder missingDataErrorWithKey:key objName:objName];
+    }
+    return 0.0f;
+  }
+
+  if ([value isKindOfClass:[NSNumber class]]) {
+    return [value floatValue];
+  } else {
+    *error = [GLTFDecoder invalidFormatErrorWithKey:key objName:objName];
+    return 0.0f;
+  }
+}
+
 + (BOOL)getBool:(const NSDictionary *)jsonDict
             key:(const NSString *)key
        required:(BOOL)required
@@ -446,6 +468,50 @@
   obj.extras = [GLTFDecoder getExtras:jsonDict];
 
   return obj;
+}
+
+#pragma mark - GLTFMaterialOcclusionTextureInfo
+
++ (nullable GLTFMaterialOcclusionTextureInfo *)
+    decodeMaterialOcclusionTextureInfoFromJson:(NSDictionary *)jsonDict
+                                         error:(NSError **)error {
+  NSString *const objName = @"OcclusionTextureInfo";
+  GLTFMaterialOcclusionTextureInfo *occlusionTextureInfo =
+      [[GLTFMaterialOcclusionTextureInfo alloc] init];
+
+  occlusionTextureInfo.index = [self getUInt:jsonDict
+                                         key:@"index"
+                                    required:YES
+                                     objName:objName
+                                       error:error];
+  if (*error) {
+    return nil;
+  }
+
+  occlusionTextureInfo.texCoord = [self getUInt:jsonDict
+                                            key:@"texCoord"
+                                       required:NO
+                                        objName:objName
+                                          error:error];
+  if (*error) {
+    return nil;
+  }
+
+  occlusionTextureInfo.strength = [self getFloat:jsonDict
+                                             key:@"strength"
+                                        required:NO
+                                         objName:objName
+                                           error:error];
+  if (*error) {
+    return nil;
+  }
+  if (!occlusionTextureInfo.strength)
+    occlusionTextureInfo.strength = 1;
+
+  occlusionTextureInfo.extensions = [self getExtensions:jsonDict];
+  occlusionTextureInfo.extras = [self getExtras:jsonDict];
+
+  return occlusionTextureInfo;
 }
 
 #pragma mark - GLTFMaterialPBRMetallicRoughness

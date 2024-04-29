@@ -470,6 +470,50 @@
   return obj;
 }
 
+#pragma mark - GLTFMaterialNormalTextureInfo
+
++ (nullable GLTFMaterialNormalTextureInfo *)
+    decodeMaterialNormalTextureInfoFromJson:(NSDictionary *)jsonDict
+                                      error:(NSError **)error {
+  NSString *const objName = @"NormalTextureInfo";
+  GLTFMaterialNormalTextureInfo *normalTextureInfo =
+      [[GLTFMaterialNormalTextureInfo alloc] init];
+
+  normalTextureInfo.index = [self getUInt:jsonDict
+                                      key:@"index"
+                                 required:YES
+                                  objName:objName
+                                    error:error];
+  if (*error) {
+    return nil;
+  }
+
+  normalTextureInfo.texCoord = [self getUInt:jsonDict
+                                         key:@"texCoord"
+                                    required:NO
+                                     objName:objName
+                                       error:error];
+  if (*error) {
+    return nil;
+  }
+
+  normalTextureInfo.scale = [self getFloat:jsonDict
+                                       key:@"scale"
+                                  required:NO
+                                   objName:objName
+                                     error:error];
+  if (*error) {
+    return nil;
+  }
+  if (!normalTextureInfo.scale)
+    normalTextureInfo.scale = 1;
+
+  normalTextureInfo.extensions = [self getExtensions:jsonDict];
+  normalTextureInfo.extras = [self getExtras:jsonDict];
+
+  return normalTextureInfo;
+}
+
 #pragma mark - GLTFMaterialOcclusionTextureInfo
 
 + (nullable GLTFMaterialOcclusionTextureInfo *)

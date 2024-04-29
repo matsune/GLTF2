@@ -384,6 +384,81 @@
                  "Error code should indicate invalid data format.");
 }
 
+#pragma mark - GLTFMaterialNormalTextureInfo
+
+- (void)testDecodeMaterialNormalTextureInfoFromJsonWithValidData {
+  NSDictionary *validJson = @{
+    @"index" : @1,
+    @"texCoord" : @2,
+    @"scale" : @0.5,
+    @"extensions" : @{@"exampleExtension" : @true},
+    @"extras" : @{@"note" : @"This is a test."}
+  };
+
+  NSError *error = nil;
+  GLTFMaterialNormalTextureInfo *normalTextureInfo =
+      [GLTFDecoder decodeMaterialNormalTextureInfoFromJson:validJson
+                                                     error:&error];
+
+  XCTAssertNotNil(normalTextureInfo, @"Decoding should succeed.");
+  XCTAssertNil(error, @"There should be no error.");
+
+  XCTAssertEqual(normalTextureInfo.index, 1, @"Index should match.");
+  XCTAssertEqual(normalTextureInfo.texCoord, 2, @"TexCoord should match.");
+  XCTAssertEqual(normalTextureInfo.scale, 0.5, @"Scale should match.");
+
+  NSDictionary *expectedExtensions = @{@"exampleExtension" : @true};
+  XCTAssertEqualObjects(normalTextureInfo.extensions, expectedExtensions,
+                        @"Extensions should match.");
+
+  NSDictionary *expectedExtras = @{@"note" : @"This is a test."};
+  XCTAssertEqualObjects(normalTextureInfo.extras, expectedExtras,
+                        @"Extras should match.");
+}
+
+- (void)testDecodeMaterialNormalTextureInfoFromJsonWithMissingData {
+  NSDictionary *missingDataJson = @{
+    // Missing index
+    @"texCoord" : @2,
+    @"scale" : @0.5,
+    @"extensions" : @{@"exampleExtension" : @true},
+    @"extras" : @{@"note" : @"This is a test."}
+  };
+
+  NSError *error = nil;
+  GLTFMaterialNormalTextureInfo *normalTextureInfo =
+      [GLTFDecoder decodeMaterialNormalTextureInfoFromJson:missingDataJson
+                                                     error:&error];
+
+  XCTAssertNil(normalTextureInfo,
+               @"NormalTextureInfo should be nil due to missing 'index'.");
+  XCTAssertNotNil(error, @"There should be an error.");
+  XCTAssertEqual(error.code, GLTF2ErrorMissingData,
+                 @"Error code should indicate missing data.");
+}
+
+- (void)testDecodeMaterialNormalTextureInfoFromJsonWithInvalidDataType {
+  NSDictionary *invalidDataTypeJson = @{
+    @"index" : @"This should be a number, not a string.",
+    @"texCoord" : @2,
+    @"scale" : @0.5,
+    @"extensions" : @{@"exampleExtension" : @true},
+    @"extras" : @{@"note" : @"This is a test."}
+  };
+
+  NSError *error = nil;
+  GLTFMaterialNormalTextureInfo *normalTextureInfo =
+      [GLTFDecoder decodeMaterialNormalTextureInfoFromJson:invalidDataTypeJson
+                                                     error:&error];
+
+  XCTAssertNil(
+      normalTextureInfo,
+      @"NormalTextureInfo should be nil due to invalid data type for index.");
+  XCTAssertNotNil(error, @"There should be an error.");
+  XCTAssertEqual(error.code, GLTF2ErrorInvalidFormat,
+                 @"Error code should indicate invalid format.");
+}
+
 #pragma mark - GLTFMaterialOcclusionTextureInfo
 
 - (void)testDecodeWithValidData {

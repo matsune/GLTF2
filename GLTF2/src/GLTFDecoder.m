@@ -448,6 +448,89 @@
   return obj;
 }
 
+#pragma mark - GLTFMeshPrimitive
+
++ (nullable GLTFMeshPrimitive *)decodeMeshPrimitiveFromJson:
+                                    (NSDictionary *)jsonDict
+                                                      error:(NSError **)error {
+  NSString *const objName = @"Mesh Primitive";
+  GLTFMeshPrimitive *primitive = [[GLTFMeshPrimitive alloc] init];
+
+  // Decode attributes
+  NSDictionary *attributesDict = jsonDict[@"attributes"];
+  if (!attributesDict) {
+    *error = [GLTFDecoder missingDataErrorWithKey:@"attributes"
+                                          objName:objName];
+    return nil;
+  }
+  if (![attributesDict isKindOfClass:[NSDictionary class]]) {
+    *error = [GLTFDecoder invalidFormatErrorWithKey:@"attributes"
+                                            objName:objName];
+    return nil;
+  }
+  NSMutableDictionary<NSString *, NSNumber *> *attributes =
+      [NSMutableDictionary dictionary];
+  for (NSString *key in attributesDict) {
+    id value = attributesDict[key];
+    if (![key isKindOfClass:[NSString class]] ||
+        ![value isKindOfClass:[NSNumber class]]) {
+      *error = [GLTFDecoder invalidFormatErrorWithKey:@"attributes"
+                                              objName:objName];
+      return nil;
+    }
+    attributes[key] = value;
+  }
+  primitive.attributes = [attributes copy];
+
+  primitive.indices = [GLTFDecoder getUInt:jsonDict
+                                       key:@"indices"
+                                  required:NO
+                                   objName:objName
+                                     error:error];
+  if (*error) {
+    return nil;
+  }
+
+  primitive.material = [GLTFDecoder getUInt:jsonDict
+                                        key:@"material"
+                                   required:NO
+                                    objName:objName
+                                      error:error];
+  if (*error) {
+    return nil;
+  }
+
+  NSString *modeString = [GLTFDecoder getString:jsonDict
+                                            key:@"mode"
+                                       required:NO
+                                        objName:objName
+                                          error:error];
+  if (*error) {
+    return nil;
+  }
+  NSUInteger modeValue = modeString ? GLTFPrimitiveModeFromString(modeString)
+                                    : GLTFPrimitiveModeTriangles;
+  if (modeValue == NSNotFound) {
+    *error = [GLTFDecoder invalidFormatErrorWithKey:@"mode" objName:objName];
+    return nil;
+  }
+  primitive.mode = modeValue;
+
+  primitive.targets = [GLTFDecoder getUIntegerArray:jsonDict
+                                                key:@"targets"
+                                           required:NO
+                                            objName:objName
+                                              error:error];
+  if (*error) {
+    return nil;
+  }
+
+  primitive.extensions = [GLTFDecoder getExtensions:jsonDict];
+  primitive.extras = [GLTFDecoder getExtras:jsonDict];
+
+  return primitive;
+}
+
 #pragma mark - GLTFNode
 
 + (nullable GLTFNode *)decodeNodeFromJson:(NSDictionary *)jsonDict

@@ -415,4 +415,33 @@
   return texture;
 }
 
+#pragma mark - GLTFTextureInfo
+
++ (nullable GLTFTextureInfo *)decodeTextureInfoFromJson:(NSDictionary *)jsonDict
+                                                  error:(NSError **)error {
+  NSString *const objName = @"GLTFTextureInfo";
+  GLTFTextureInfo *textureInfo = [[GLTFTextureInfo alloc] init];
+
+  textureInfo.index = [self getUInt:jsonDict
+                                key:@"index"
+                           required:YES
+                            objName:objName
+                              error:error];
+  if (*error)
+    return nil;
+
+  textureInfo.texCoord = [self getUInt:jsonDict
+                                   key:@"texCoord"
+                              required:NO
+                               objName:objName
+                                 error:error];
+  if (*error)
+    return nil;
+
+  textureInfo.extensions = [self getExtensions:jsonDict];
+  textureInfo.extras = [self getExtras:jsonDict];
+
+  return textureInfo;
+}
+
 @end

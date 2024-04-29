@@ -447,4 +447,66 @@
                  "Error code should indicate invalid data format.");
 }
 
+#pragma mark - GLTFTextureInfo
+
+- (void)testDecodeTextureInfoFromJsonWithValidData {
+  NSDictionary *validJson = @{
+    @"index" : @1,
+    @"texCoord" : @2,
+    @"extensions" : @{@"exampleExtension" : @true},
+    @"extras" : @{@"note" : @"This is a test."}
+  };
+
+  NSError *error = nil;
+  GLTFTextureInfo *textureInfo =
+      [GLTFDecoder decodeTextureInfoFromJson:validJson error:&error];
+
+  XCTAssertNotNil(textureInfo, "Decoding should succeed.");
+  XCTAssertNil(error, "There should be no error during decoding.");
+
+  XCTAssertEqual(textureInfo.index, 1,
+                 "The index should be decoded correctly.");
+  XCTAssertEqual(textureInfo.texCoord, 2,
+                 "The texCoord should be decoded correctly.");
+
+  NSDictionary *expectedExtensions = @{@"exampleExtension" : @true};
+  XCTAssertEqualObjects(textureInfo.extensions, expectedExtensions,
+                        "Extensions should be decoded correctly.");
+
+  NSDictionary *expectedExtras = @{@"note" : @"This is a test."};
+  XCTAssertEqualObjects(textureInfo.extras, expectedExtras,
+                        "Extras should be decoded correctly.");
+}
+
+- (void)testDecodeTextureInfoFromJsonWithEmptyData {
+  NSDictionary *emptyJson = @{@"index" : @1};
+  NSError *error = nil;
+  GLTFTextureInfo *textureInfo =
+      [GLTFDecoder decodeTextureInfoFromJson:emptyJson error:&error];
+
+  XCTAssertNotNil(textureInfo, "TextureInfo object should not be nil.");
+  XCTAssertNil(error, "There should be no error for empty JSON data.");
+
+  XCTAssertEqual(textureInfo.index, 1, "Index should default to 1.");
+  XCTAssertEqual(textureInfo.texCoord, 0, "TexCoord should default to 0.");
+  XCTAssertNil(textureInfo.extensions,
+               "Extensions should be nil for empty JSON.");
+  XCTAssertNil(textureInfo.extras, "Extras should be nil for empty JSON.");
+}
+
+- (void)testDecodeTextureInfoFromJsonWithInvalidDataType {
+  NSDictionary *invalidDataTypeJson =
+      @{@"index" : @"This is a string, not a number."};
+  NSError *error = nil;
+  GLTFTextureInfo *textureInfo =
+      [GLTFDecoder decodeTextureInfoFromJson:invalidDataTypeJson error:&error];
+
+  XCTAssertNil(textureInfo,
+               "TextureInfo should be nil due to invalid data type.");
+  XCTAssertNotNil(
+      error, "Error should not be nil because the data type is incorrect.");
+  XCTAssertEqual(error.code, GLTF2ErrorInvalidFormat,
+                 "Error code should indicate invalid data format.");
+}
+
 @end

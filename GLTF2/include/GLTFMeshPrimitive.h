@@ -20,9 +20,9 @@ NSUInteger GLTFPrimitiveModeFromString(NSString *modeString);
 @property(nonatomic, assign) NSUInteger indices;
 @property(nonatomic, assign) NSUInteger material;
 @property(nonatomic, assign) GLTFPrimitiveMode mode;
-@property(nonatomic, strong) NSArray<NSNumber *> *targets;
-@property(nonatomic, strong) NSDictionary *extensions;
-@property(nonatomic, strong) NSDictionary *extras;
+@property(nonatomic, strong, nullable) NSArray<NSNumber *> *targets;
+@property(nonatomic, strong, nullable) NSDictionary *extensions;
+@property(nonatomic, strong, nullable) NSDictionary *extras;
 
 @end
 

@@ -384,6 +384,80 @@
                  "Error code should indicate invalid data format.");
 }
 
+#pragma mark - GLTFMesh
+
+- (void)testDecodeMeshFromJsonWithValidData {
+  NSDictionary *validJson = @{
+    @"primitives" : @[ @{
+      @"attributes" : @{@"POSITION" : @0, @"NORMAL" : @1},
+      @"indices" : @2,
+      @"material" : @3,
+      @"mode" : @"TRIANGLES",
+      @"targets" : @[ @4, @5 ],
+      @"extensions" : @{@"exampleExtension" : @true},
+      @"extras" : @{@"note" : @"This is a test."}
+    } ],
+    @"weights" : @[ @0.5, @0.5 ],
+    @"name" : @"testMesh",
+    @"extensions" : @{@"exampleExtension" : @true},
+    @"extras" : @{@"note" : @"This is a note."}
+  };
+
+  NSError *error = nil;
+  GLTFMesh *mesh = [GLTFDecoder decodeMeshFromJson:validJson error:&error];
+
+  XCTAssertNotNil(mesh, @"Decoding should succeed.");
+  XCTAssertNil(error, @"There should be no error.");
+  XCTAssertEqual(mesh.primitives.count, 1, @"There should be one primitive.");
+  NSArray *weights = @[ @0.5, @0.5 ];
+  XCTAssertEqualObjects(mesh.weights, weights, @"Weights should match.");
+  XCTAssertEqualObjects(mesh.name, @"testMesh", @"Name should match.");
+  NSDictionary *expectedExtensions = @{@"exampleExtension" : @true};
+  XCTAssertEqualObjects(mesh.extensions, expectedExtensions,
+                        @"Extensions should match.");
+  NSDictionary *expectedExtras = @{@"note" : @"This is a note."};
+  XCTAssertEqualObjects(mesh.extras, expectedExtras, @"Extras should match.");
+}
+
+- (void)testDecodeMeshFromJsonWithMissingData {
+  NSDictionary *missingDataJson = @{
+    // Missing primitives
+    @"weights" : @[ @0.5, @0.5 ],
+    @"name" : @"testMesh",
+    @"extensions" : @{@"exampleExtension" : @true},
+    @"extras" : @{@"note" : @"This is a note."}
+  };
+
+  NSError *error = nil;
+  GLTFMesh *mesh = [GLTFDecoder decodeMeshFromJson:missingDataJson
+                                             error:&error];
+
+  XCTAssertNil(mesh, @"Mesh should be nil due to missing 'primitives'.");
+  XCTAssertNotNil(error, @"There should be an error.");
+  XCTAssertEqual(error.code, GLTF2ErrorMissingData,
+                 @"Error code should indicate missing data.");
+}
+
+- (void)testDecodeMeshFromJsonWithInvalidDataType {
+  NSDictionary *invalidDataTypeJson = @{
+    @"primitives" : @"This should be an array, not a string.",
+    @"weights" : @[ @0.5, @0.5 ],
+    @"name" : @"testMesh",
+    @"extensions" : @{@"exampleExtension" : @true},
+    @"extras" : @{@"note" : @"This is a note."}
+  };
+
+  NSError *error = nil;
+  GLTFMesh *mesh = [GLTFDecoder decodeMeshFromJson:invalidDataTypeJson
+                                             error:&error];
+
+  XCTAssertNil(
+      mesh, @"Mesh should be nil due to invalid data type for 'primitives'.");
+  XCTAssertNotNil(error, @"There should be an error.");
+  XCTAssertEqual(error.code, GLTF2ErrorInvalidFormat,
+                 @"Error code should indicate invalid format.");
+}
+
 #pragma mark - GLTFMeshPrimitive
 
 - (void)testDecodeMeshPrimitiveFromJsonWithValidData {

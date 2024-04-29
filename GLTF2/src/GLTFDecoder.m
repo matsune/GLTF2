@@ -448,6 +448,56 @@
   return obj;
 }
 
+#pragma mark - GLTFMesh
+
++ (nullable GLTFMesh *)decodeMeshFromJson:(NSDictionary *)jsonDict
+                                    error:(NSError **)error {
+  NSString *const objName = @"Mesh";
+  GLTFMesh *mesh = [[GLTFMesh alloc] init];
+
+  // Decode primitives (required)
+  NSArray *primitivesJson = jsonDict[@"primitives"];
+  if (!primitivesJson) {
+    *error = [self missingDataErrorWithKey:@"primitives" objName:objName];
+    return nil;
+  }
+  if (![primitivesJson isKindOfClass:[NSArray class]]) {
+    *error = [self invalidFormatErrorWithKey:@"primitives" objName:objName];
+    return nil;
+  }
+  NSMutableArray *primitives =
+      [NSMutableArray arrayWithCapacity:primitivesJson.count];
+  for (NSDictionary *primitiveJson in primitivesJson) {
+    GLTFMeshPrimitive *primitive =
+        [self decodeMeshPrimitiveFromJson:primitiveJson error:error];
+    if (!primitive)
+      return nil; // Stop decoding if any primitive fails
+    [primitives addObject:primitive];
+  }
+  mesh.primitives = [primitives copy];
+
+  mesh.weights = [self getUIntegerArray:jsonDict
+                                    key:@"weights"
+                               required:NO
+                                objName:objName
+                                  error:error];
+  if (*error)
+    return nil;
+
+  mesh.name = [GLTFDecoder getString:jsonDict
+                                 key:@"name"
+                            required:NO
+                             objName:objName
+                               error:error];
+  if (*error)
+    return nil;
+
+  mesh.extensions = [GLTFDecoder getExtensions:jsonDict];
+  mesh.extras = [GLTFDecoder getExtras:jsonDict];
+
+  return mesh;
+}
+
 #pragma mark - GLTFMeshPrimitive
 
 + (nullable GLTFMeshPrimitive *)decodeMeshPrimitiveFromJson:

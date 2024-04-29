@@ -2,6 +2,7 @@
 #import "GLTFAccessorSparse.h"
 #import "GLTFAccessorSparseIndices.h"
 #import "GLTFAccessorSparseValues.h"
+#import "GLTFMesh.h"
 #import "GLTFMeshPrimitive.h"
 #import "GLTFNode.h"
 #import "GLTFSampler.h"
@@ -36,6 +37,9 @@ typedef NS_ENUM(NSInteger, GLTF2ErrorCode) {
 + (nullable GLTFAccessorSparseValues *)
     decodeAccessorSparseValuesFromJson:(NSDictionary *)jsonDict
                                  error:(NSError **)error;
+
++ (nullable GLTFMesh *)decodeMeshFromJson:(NSDictionary *)jsonDict
+                                    error:(NSError **)error;
 
 + (nullable GLTFMeshPrimitive *)decodeMeshPrimitiveFromJson:
                                     (NSDictionary *)jsonDict

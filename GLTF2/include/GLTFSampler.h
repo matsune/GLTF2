@@ -35,8 +35,8 @@ BOOL isValidGLTFSamplerWrapMode(NSUInteger value);
 @property(nonatomic, assign) GLTFSamplerWrapMode wrapS;
 @property(nonatomic, assign) GLTFSamplerWrapMode wrapT;
 @property(nonatomic, copy, nullable) NSString *name;
-@property(nonatomic, copy, nullable) NSDictionary *extensions;
-@property(nonatomic, copy, nullable) NSDictionary *extras;
+@property(nonatomic, strong, nullable) NSDictionary *extensions;
+@property(nonatomic, strong, nullable) NSDictionary *extras;
 
 @end
 

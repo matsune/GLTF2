@@ -378,6 +378,35 @@
   return obj;
 }
 
+#pragma mark - GLTFScene
+
++ (nullable GLTFScene *)decodeSceneFromJson:(NSDictionary *)jsonDict
+                                      error:(NSError **)error {
+  NSString *const objName = @"GLTFScene";
+  GLTFScene *scene = [[GLTFScene alloc] init];
+
+  scene.nodes = [self getUIntegerArray:jsonDict
+                                   key:@"nodes"
+                              required:NO
+                               objName:objName
+                                 error:error];
+  if (*error)
+    return nil;
+
+  scene.name = [self getString:jsonDict
+                           key:@"name"
+                      required:NO
+                       objName:objName
+                         error:error];
+  if (*error)
+    return nil;
+
+  scene.extensions = [self getExtensions:jsonDict];
+  scene.extras = [self getExtras:jsonDict];
+
+  return scene;
+}
+
 #pragma mark - GLTFSkin
 
 + (nullable GLTFSkin *)decodeSkinFromJson:(NSDictionary *)jsonDict

@@ -384,6 +384,80 @@
                  "Error code should indicate invalid data format.");
 }
 
+#pragma mark - GLTFScene
+
+- (void)testDecodeSceneFromJsonWithValidData {
+  NSDictionary *validJson = @{
+    @"nodes" : @[ @1, @2, @3 ],
+    @"name" : @"testScene",
+    @"extensions" : @{@"exampleExtension" : @true},
+    @"extras" : @{@"note" : @"This is a test."}
+  };
+  NSError *error;
+
+  GLTFScene *scene = [GLTFDecoder decodeSceneFromJson:validJson error:&error];
+
+  XCTAssertNotNil(scene, "The decoded object should not be nil.");
+  XCTAssertNil(error, "There should be no error during the decoding process.");
+
+  NSArray *nodes = @[ @1, @2, @3 ];
+  XCTAssertEqualObjects(scene.nodes, nodes,
+                        "The nodes should be decoded correctly.");
+  XCTAssertEqualObjects(scene.name, @"testScene",
+                        "The name should be decoded correctly.");
+
+  NSDictionary *expectedExtensions = @{@"exampleExtension" : @true};
+  XCTAssertEqualObjects(scene.extensions, expectedExtensions,
+                        "The extensions should be decoded correctly.");
+
+  NSDictionary *expectedExtras = @{@"note" : @"This is a test."};
+  XCTAssertEqualObjects(scene.extras, expectedExtras,
+                        "The extras should be decoded correctly.");
+}
+
+- (void)testDecodeSceneFromJsonWithEmptyData {
+  NSDictionary *emptyJson = @{};
+  NSError *error = nil;
+  GLTFScene *scene = [GLTFDecoder decodeSceneFromJson:emptyJson error:&error];
+
+  XCTAssertNotNil(scene, "Scene object should not be nil.");
+  XCTAssertNil(error, "There should be no error for empty JSON data.");
+
+  XCTAssertNil(scene.nodes, "Nodes should be nil for empty JSON.");
+  XCTAssertNil(scene.name, "Name should be nil for empty JSON.");
+  XCTAssertNil(scene.extensions, "Extensions should be nil for empty JSON.");
+  XCTAssertNil(scene.extras, "Extras should be nil for empty JSON.");
+}
+
+- (void)testDecodeSceneFromJsonWithMissingData {
+  NSDictionary *missingDataJson = @{};
+  NSError *error = nil;
+  GLTFScene *scene = [GLTFDecoder decodeSceneFromJson:missingDataJson
+                                                error:&error];
+
+  XCTAssertNotNil(scene, "Scene object should not be nil for empty JSON data.");
+
+  XCTAssertNil(scene.nodes, "Nodes should be nil for empty JSON data.");
+  XCTAssertNil(scene.name, "Name should be nil for empty JSON data.");
+  XCTAssertNil(scene.extensions,
+               "Extensions should be nil for empty JSON data.");
+  XCTAssertNil(scene.extras, "Extras should be nil for empty JSON data.");
+  XCTAssertNil(error, "There should be no error for empty JSON data.");
+}
+
+- (void)testDecodeSceneFromJsonWithInvalidDataType {
+  NSDictionary *invalidDataTypeJson =
+      @{@"nodes" : @"This is a string, not an array."};
+  NSError *error = nil;
+  GLTFScene *scene = [GLTFDecoder decodeSceneFromJson:invalidDataTypeJson
+                                                error:&error];
+
+  XCTAssertNil(scene, "Scene object should be nil due to invalid data type.");
+  XCTAssertNotNil(error, "There should be an error.");
+  XCTAssertEqual(error.code, GLTF2ErrorInvalidFormat,
+                 "Error code should indicate invalid data format.");
+}
+
 #pragma mark - GLTFSkin
 
 - (void)testDecodeSkinFromJsonWithValidData {

@@ -378,6 +378,84 @@
   return obj;
 }
 
+#pragma mark - GLTFSampler
+
++ (nullable GLTFSampler *)decodeSamplerFromJson:(NSDictionary *)jsonDict
+                                          error:(NSError **)error {
+  NSString *const objName = @"GLTFSampler";
+  GLTFSampler *sampler = [[GLTFSampler alloc] init];
+
+  sampler.magFilter = [self getUInt:jsonDict
+                                key:@"magFilter"
+                           required:NO
+                            objName:objName
+                              error:error];
+  if (*error)
+    return nil;
+  if (sampler.magFilter > 0 &&
+      !isValidGLTFSamplerMagFilter(sampler.magFilter)) {
+    *error = [GLTFDecoder invalidFormatErrorWithKey:@"magFilter"
+                                            objName:objName];
+    return nil;
+  }
+
+  sampler.minFilter = [self getUInt:jsonDict
+                                key:@"minFilter"
+                           required:NO
+                            objName:objName
+                              error:error];
+  if (*error)
+    return nil;
+  if (sampler.minFilter > 0 &&
+      !isValidGLTFSamplerMinFilter(sampler.minFilter)) {
+    *error = [GLTFDecoder invalidFormatErrorWithKey:@"minFilter"
+                                            objName:objName];
+    return nil;
+  }
+
+  sampler.wrapS = [self getUInt:jsonDict
+                            key:@"wrapS"
+                       required:NO
+                        objName:objName
+                          error:error];
+  if (*error)
+    return nil;
+  if (sampler.wrapS == 0)
+    sampler.wrapS = GLTFSamplerWrapModeRepeat;
+  if (!isValidGLTFSamplerWrapMode(sampler.wrapS)) {
+    *error = [GLTFDecoder invalidFormatErrorWithKey:@"wrapS" objName:objName];
+    return nil;
+  }
+
+  sampler.wrapT = [self getUInt:jsonDict
+                            key:@"wrapT"
+                       required:NO
+                        objName:objName
+                          error:error];
+  if (*error)
+    return nil;
+  if (sampler.wrapT == 0)
+    sampler.wrapT = GLTFSamplerWrapModeRepeat;
+
+  if (!isValidGLTFSamplerWrapMode(sampler.wrapT)) {
+    *error = [GLTFDecoder invalidFormatErrorWithKey:@"wrapT" objName:objName];
+    return nil;
+  }
+
+  sampler.name = [self getString:jsonDict
+                             key:@"name"
+                        required:NO
+                         objName:objName
+                           error:error];
+  if (*error)
+    return nil;
+
+  sampler.extensions = [self getExtensions:jsonDict];
+  sampler.extras = [self getExtras:jsonDict];
+
+  return sampler;
+}
+
 #pragma mark - GLTFScene
 
 + (nullable GLTFScene *)decodeSceneFromJson:(NSDictionary *)jsonDict

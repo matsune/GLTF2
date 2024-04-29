@@ -384,6 +384,81 @@
                  "Error code should indicate invalid data format.");
 }
 
+#pragma mark - GLTFSampler
+
+- (void)testDecodeSamplerFromJsonWithValidData {
+  NSDictionary *validJson = @{
+    @"magFilter" : @9728, // NEAREST
+    @"minFilter" : @9729, // LINEAR
+    @"wrapS" : @10497,    // REPEAT
+    @"wrapT" : @10497,    // REPEAT
+    @"name" : @"testSampler",
+    @"extensions" : @{@"exampleExtension" : @true},
+    @"extras" : @{@"note" : @"This is a test."}
+  };
+
+  NSError *error = nil;
+  GLTFSampler *sampler = [GLTFDecoder decodeSamplerFromJson:validJson
+                                                      error:&error];
+
+  XCTAssertNotNil(sampler, "The decoded object should not be nil.");
+  XCTAssertNil(error, "There should be no error during the decoding process.");
+
+  XCTAssertEqual(sampler.magFilter, 9728,
+                 "The magFilter should be decoded correctly.");
+  XCTAssertEqual(sampler.minFilter, 9729,
+                 "The minFilter should be decoded correctly.");
+  XCTAssertEqual(sampler.wrapS, 10497,
+                 "The wrapS should be decoded correctly.");
+  XCTAssertEqual(sampler.wrapT, 10497,
+                 "The wrapT should be decoded correctly.");
+  XCTAssertEqualObjects(sampler.name, @"testSampler",
+                        "The name should be decoded correctly.");
+
+  NSDictionary *expectedExtensions = @{@"exampleExtension" : @true};
+  XCTAssertEqualObjects(sampler.extensions, expectedExtensions,
+                        "The extensions should be decoded correctly.");
+
+  NSDictionary *expectedExtras = @{@"note" : @"This is a test."};
+  XCTAssertEqualObjects(sampler.extras, expectedExtras,
+                        "The extras should be decoded correctly.");
+}
+
+- (void)testDecodeSamplerFromJsonWithEmptyData {
+  NSDictionary *emptyJson = @{};
+  NSError *error = nil;
+  GLTFSampler *sampler = [GLTFDecoder decodeSamplerFromJson:emptyJson
+                                                      error:&error];
+
+  XCTAssertNotNil(sampler, "Sampler object should not be nil.");
+  XCTAssertNil(error, "There should be no error for empty JSON data.");
+
+  // Check default values
+  XCTAssertEqual(sampler.magFilter, 0, "MagFilter should default to 0.");
+  XCTAssertEqual(sampler.minFilter, 0, "MinFilter should default to 0.");
+  XCTAssertEqual(sampler.wrapS, 10497, // Default value
+                 "WrapS should default to 10497.");
+  XCTAssertEqual(sampler.wrapT, 10497, // Default value
+                 "WrapT should default to 10497.");
+  XCTAssertNil(sampler.name, "Name should be nil for empty JSON.");
+  XCTAssertNil(sampler.extensions, "Extensions should be nil for empty JSON.");
+  XCTAssertNil(sampler.extras, "Extras should be nil for empty JSON.");
+}
+
+- (void)testDecodeSamplerFromJsonWithInvalidDataType {
+  NSDictionary *invalidDataTypeJson =
+      @{@"magFilter" : @"This is a string, not a number."};
+  NSError *error = nil;
+  GLTFSampler *sampler = [GLTFDecoder decodeSamplerFromJson:invalidDataTypeJson
+                                                      error:&error];
+
+  XCTAssertNil(sampler, "Sampler should be nil because of invalid data type.");
+  XCTAssertNotNil(
+      error, "Error should not be nil because the data type is incorrect.");
+  XCTAssertEqual(error.code, GLTF2ErrorInvalidFormat,
+                 "Error code should indicate invalid data format.");
+}
+
 #pragma mark - GLTFScene
 
 - (void)testDecodeSceneFromJsonWithValidData {

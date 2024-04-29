@@ -20,12 +20,7 @@ set_target_properties(${LIB_NAME} PROPERTIES
     XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH "NO"
 )
 
-if(CLANG_FORMAT)
-    add_custom_target(
-        format-${LIB_NAME} ALL
-        COMMAND ${CLANG_FORMAT}
-        -i
-        -style=file
-        ${HEADERS} ${SOURCES}
-    )
-endif()
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES
+    ${HEADERS}
+    ${SOURCES}
+)

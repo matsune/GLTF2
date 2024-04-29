@@ -67,13 +67,3 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES
     Main.storyboard
 )
 source_group(TREE ${PROJECT_SOURCE_DIR} FILES ${MODEL_FILES})
-
-if(CLANG_FORMAT)
-    add_custom_target(
-        format-example ALL
-        COMMAND ${CLANG_FORMAT}
-        -i
-        -style=file
-        ${HEADERS} ${SOURCES}
-    )
-endif()

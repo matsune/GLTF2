@@ -38,3 +38,4 @@ xcuserdata/
 # End of https://www.toptal.com/developers/gitignore/api/xcode,cmake
 
 build/
+.vscode/

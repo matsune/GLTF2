@@ -6,57 +6,6 @@
 
 @implementation GLTFDecoder
 
-+ (nullable GLTFAccessorSparseIndices *)
-    decodeAccessorSparseIndicesFromJson:(NSDictionary *)jsonDict
-                                  error:(NSError **)error {
-  NSString *const objName = @"GLTFAccessorSparseIndices";
-  GLTFAccessorSparseIndices *obj = [[GLTFAccessorSparseIndices alloc] init];
-
-  obj.bufferView = [GLTFDecoder getUInt:jsonDict
-                                    key:@"bufferView"
-                               required:YES
-                                objName:objName
-                                  error:error];
-  if (*error)
-    return nil;
-
-  obj.byteOffset = [GLTFDecoder getUInt:jsonDict
-                                    key:@"byteOffset"
-                               required:NO
-                                objName:objName
-                                  error:error];
-  if (*error)
-    return nil;
-
-  NSUInteger componentType = [GLTFDecoder getUInt:jsonDict
-                                              key:@"componentType"
-                                         required:YES
-                                          objName:objName
-                                            error:error];
-  if (*error)
-    return nil;
-  switch (componentType) {
-  case GLTFAccessorSparseIndicesComponentTypeUnsignedByte:
-    obj.componentType = GLTFAccessorSparseIndicesComponentTypeUnsignedByte;
-    break;
-  case GLTFAccessorSparseIndicesComponentTypeUnsignedShort:
-    obj.componentType = GLTFAccessorSparseIndicesComponentTypeUnsignedShort;
-    break;
-  case GLTFAccessorSparseIndicesComponentTypeUnsignedInt:
-    obj.componentType = GLTFAccessorSparseIndicesComponentTypeUnsignedInt;
-    break;
-  default:
-    *error = [GLTFDecoder invalidFormatErrorWithKey:@"componentType"
-                                            objName:objName];
-    return nil;
-  }
-
-  obj.extensions = [GLTFDecoder getExtensions:jsonDict];
-  obj.extras = [GLTFDecoder getExtras:jsonDict];
-
-  return obj;
-}
-
 + (NSError *)missingDataErrorWithKey:(const NSString *)key
                              objName:(const NSString *)objName {
   return [NSError
@@ -119,6 +68,89 @@
     return extras;
   }
   return nil;
+}
+
+#pragma mark - GLTFAccessorSparseIndices
+
++ (nullable GLTFAccessorSparseIndices *)
+    decodeAccessorSparseIndicesFromJson:(NSDictionary *)jsonDict
+                                  error:(NSError **)error {
+  NSString *const objName = @"GLTFAccessorSparseIndices";
+  GLTFAccessorSparseIndices *obj = [[GLTFAccessorSparseIndices alloc] init];
+
+  obj.bufferView = [GLTFDecoder getUInt:jsonDict
+                                    key:@"bufferView"
+                               required:YES
+                                objName:objName
+                                  error:error];
+  if (*error)
+    return nil;
+
+  obj.byteOffset = [GLTFDecoder getUInt:jsonDict
+                                    key:@"byteOffset"
+                               required:NO
+                                objName:objName
+                                  error:error];
+  if (*error)
+    return nil;
+
+  NSUInteger componentType = [GLTFDecoder getUInt:jsonDict
+                                              key:@"componentType"
+                                         required:YES
+                                          objName:objName
+                                            error:error];
+  if (*error)
+    return nil;
+  switch (componentType) {
+  case GLTFAccessorSparseIndicesComponentTypeUnsignedByte:
+    obj.componentType = GLTFAccessorSparseIndicesComponentTypeUnsignedByte;
+    break;
+  case GLTFAccessorSparseIndicesComponentTypeUnsignedShort:
+    obj.componentType = GLTFAccessorSparseIndicesComponentTypeUnsignedShort;
+    break;
+  case GLTFAccessorSparseIndicesComponentTypeUnsignedInt:
+    obj.componentType = GLTFAccessorSparseIndicesComponentTypeUnsignedInt;
+    break;
+  default:
+    *error = [GLTFDecoder invalidFormatErrorWithKey:@"componentType"
+                                            objName:objName];
+    return nil;
+  }
+
+  obj.extensions = [GLTFDecoder getExtensions:jsonDict];
+  obj.extras = [GLTFDecoder getExtras:jsonDict];
+
+  return obj;
+}
+
+#pragma mark - GLTFAccessorSparseValues
+
++ (nullable GLTFAccessorSparseValues *)
+    decodeAccessorSparseValuesFromJson:(NSDictionary *)jsonDict
+                                 error:(NSError **)error {
+  NSString *const objName = @"GLTFAccessorSparseValues";
+  GLTFAccessorSparseValues *obj = [[GLTFAccessorSparseValues alloc] init];
+
+  obj.bufferView = [GLTFDecoder getUInt:jsonDict
+                                    key:@"bufferView"
+                               required:YES
+                                objName:objName
+                                  error:error];
+  if (*error)
+    return nil;
+
+  obj.byteOffset = [GLTFDecoder getUInt:jsonDict
+                                    key:@"byteOffset"
+                               required:NO
+                                objName:objName
+                                  error:error];
+  if (*error)
+    return nil;
+
+  obj.extensions = [GLTFDecoder getExtensions:jsonDict];
+  obj.extras = [GLTFDecoder getExtras:jsonDict];
+
+  return obj;
 }
 
 @end

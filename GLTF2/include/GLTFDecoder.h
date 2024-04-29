@@ -1,4 +1,5 @@
 #import "GLTFAccessorSparseIndices.h"
+#import "GLTFAccessorSparseValues.h"
 #import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN
@@ -15,7 +16,9 @@ typedef NS_ENUM(NSInteger, GLTF2ErrorCode) {
 + (nullable GLTFAccessorSparseIndices *)
     decodeAccessorSparseIndicesFromJson:(NSDictionary *)jsonDict
                                   error:(NSError **)error;
-
++ (nullable GLTFAccessorSparseValues *)
+    decodeAccessorSparseValuesFromJson:(NSDictionary *)jsonDict
+                                 error:(NSError **)error;
 @end
 
 NS_ASSUME_NONNULL_END

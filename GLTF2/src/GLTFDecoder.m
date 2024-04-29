@@ -54,20 +54,65 @@
   }
 }
 
-+ (nullable NSDictionary *)getExtensions:(const NSDictionary *)jsonDict {
-  id extensions = jsonDict[@"extensions"];
++ (nullable NSDictionary *)getDict:(const NSDictionary *)jsonDict
+                               key:(const NSString *)key {
+  id extensions = jsonDict[key];
   if ([extensions isKindOfClass:[NSDictionary class]]) {
     return extensions;
   }
   return nil;
 }
 
++ (nullable NSDictionary *)getExtensions:(const NSDictionary *)jsonDict {
+  return [GLTFDecoder getDict:jsonDict key:@"extensions"];
+}
+
 + (nullable NSDictionary *)getExtras:(const NSDictionary *)jsonDict {
-  id extras = jsonDict[@"extras"];
-  if ([extras isKindOfClass:[NSDictionary class]]) {
-    return extras;
+  return [GLTFDecoder getDict:jsonDict key:@"extras"];
+}
+
+#pragma mark - GLTFAccessorSparse
+
++ (nullable GLTFAccessorSparse *)
+    decodeAccessorSparseFromJson:(NSDictionary *)jsonDict
+                           error:(NSError **)error {
+  NSString *const objName = @"GLTFAccessorSparse";
+  GLTFAccessorSparse *sparse = [[GLTFAccessorSparse alloc] init];
+
+  sparse.count = [GLTFDecoder getUInt:jsonDict
+                                  key:@"count"
+                             required:YES
+                              objName:objName
+                                error:error];
+  if (*error)
+    return nil;
+
+  NSDictionary *indicesDict = [GLTFDecoder getDict:jsonDict key:@"indices"];
+  if (!indicesDict) {
+    *error = [GLTFDecoder invalidFormatErrorWithKey:@"indices" objName:objName];
+    return nil;
   }
-  return nil;
+  GLTFAccessorSparseIndices *indices =
+      [GLTFDecoder decodeAccessorSparseIndicesFromJson:indicesDict error:error];
+  if (*error)
+    return nil;
+  sparse.indices = indices;
+
+  NSDictionary *valuesDict = [GLTFDecoder getDict:jsonDict key:@"values"];
+  if (!valuesDict) {
+    *error = [GLTFDecoder invalidFormatErrorWithKey:@"values" objName:objName];
+    return nil;
+  }
+  GLTFAccessorSparseValues *values =
+      [GLTFDecoder decodeAccessorSparseValuesFromJson:valuesDict error:error];
+  if (*error)
+    return nil;
+  sparse.values = values;
+
+  sparse.extensions = [GLTFDecoder getExtensions:jsonDict];
+  sparse.extras = [GLTFDecoder getExtras:jsonDict];
+
+  return sparse;
 }
 
 #pragma mark - GLTFAccessorSparseIndices

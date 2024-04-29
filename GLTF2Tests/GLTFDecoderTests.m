@@ -6,6 +6,106 @@
 
 @implementation GLTFDecoderTests
 
+#pragma mark - GLTFAccessorSparse
+
+- (void)testDecodeAccessorSparseFromJsonWithValidData {
+  NSDictionary *validJson = @{
+    @"count" : @3,
+    @"indices" : @{
+      @"bufferView" : @0,
+      @"byteOffset" : @0,
+      @"componentType" : @5123,
+      @"extensions" : @{@"exampleExtension" : @true},
+      @"extras" : @{@"note" : @"This is a test."}
+    },
+    @"values" : @{
+      @"bufferView" : @1,
+      @"byteOffset" : @0,
+      @"componentType" : @5126,
+      @"extensions" : @{@"exampleExtension" : @true},
+      @"extras" : @{@"note" : @"This is a test."}
+    },
+    @"extensions" : @{@"exampleExtension" : @true},
+    @"extras" : @{@"note" : @"This is a test."}
+  };
+
+  NSError *error = nil;
+  GLTFAccessorSparse *sparse =
+      [GLTFDecoder decodeAccessorSparseFromJson:validJson error:&error];
+
+  XCTAssertNotNil(sparse, @"Decoding should succeed");
+  XCTAssertNil(error, @"There should be no error");
+
+  XCTAssertEqual(sparse.count, 3, @"Count should be 3");
+
+  XCTAssertNotNil(sparse.indices, @"Indices should not be nil");
+  XCTAssertEqual(sparse.indices.bufferView, 0,
+                 @"Indices bufferView should be 0");
+
+  XCTAssertNotNil(sparse.values, @"Values should not be nil");
+  XCTAssertEqual(sparse.values.bufferView, 1, @"Values bufferView should be 1");
+
+  XCTAssertEqualObjects(sparse.extensions, validJson[@"extensions"],
+                        @"Extensions should match");
+  XCTAssertEqualObjects(sparse.extras, validJson[@"extras"],
+                        @"Extras should match");
+}
+
+- (void)testDecodeAccessorSparseFromJsonWithMissingData {
+  NSDictionary *missingDataJson = @{
+    @"values" : @{
+      @"bufferView" : @1,
+      @"byteOffset" : @0,
+      @"componentType" : @5126,
+      @"extensions" : @{@"exampleExtension" : @true},
+      @"extras" : @{@"note" : @"This is a test."}
+    },
+    @"extensions" : @{@"exampleExtension" : @true},
+    @"extras" : @{@"note" : @"This is a test."}
+  };
+
+  NSError *error = nil;
+  GLTFAccessorSparse *sparse =
+      [GLTFDecoder decodeAccessorSparseFromJson:missingDataJson error:&error];
+
+  XCTAssertNil(sparse, @"Sparse should be nil due to missing 'count' key");
+  XCTAssertNotNil(error, @"There should be an error");
+  XCTAssertEqual(error.code, GLTF2ErrorMissingData,
+                 @"Error code should indicate missing data");
+}
+
+- (void)testDecodeAccessorSparseFromJsonWithInvalidDataType {
+  NSDictionary *invalidDataTypeJson = @{
+    @"count" : @"This is a string, not a number.",
+    @"indices" : @{
+      @"bufferView" : @0,
+      @"byteOffset" : @0,
+      @"componentType" : @5123,
+      @"extensions" : @{@"exampleExtension" : @true},
+      @"extras" : @{@"note" : @"This is a test."}
+    },
+    @"values" : @{
+      @"bufferView" : @1,
+      @"byteOffset" : @0,
+      @"componentType" : @5126,
+      @"extensions" : @{@"exampleExtension" : @true},
+      @"extras" : @{@"note" : @"This is a test."}
+    },
+    @"extensions" : @{@"exampleExtension" : @true},
+    @"extras" : @{@"note" : @"This is a test."}
+  };
+
+  NSError *error = nil;
+  GLTFAccessorSparse *sparse =
+      [GLTFDecoder decodeAccessorSparseFromJson:invalidDataTypeJson
+                                          error:&error];
+
+  XCTAssertNil(sparse, @"Sparse should be nil due to invalid data type");
+  XCTAssertNotNil(error, @"There should be an error");
+  XCTAssertEqual(error.code, GLTF2ErrorInvalidFormat,
+                 @"Error code should indicate invalid format");
+}
+
 #pragma mark - GLTFAccessorSparseIndices
 
 - (void)testDecodeAccessorSparseIndicesFromJsonWithValidData {

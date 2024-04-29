@@ -1,3 +1,4 @@
+#import "GLTFAccessorSparse.h"
 #import "GLTFAccessorSparseIndices.h"
 #import "GLTFAccessorSparseValues.h"
 #import <Foundation/Foundation.h>
@@ -13,6 +14,9 @@ typedef NS_ENUM(NSInteger, GLTF2ErrorCode) {
 
 @interface GLTFDecoder : NSObject
 
++ (nullable GLTFAccessorSparse *)decodeAccessorSparseFromJson:
+                                     (NSDictionary *)jsonDict
+                                                        error:(NSError **)error;
 + (nullable GLTFAccessorSparseIndices *)
     decodeAccessorSparseIndicesFromJson:(NSDictionary *)jsonDict
                                   error:(NSError **)error;

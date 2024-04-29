@@ -448,6 +448,76 @@
   return obj;
 }
 
+#pragma mark - GLTFMaterialPBRMetallicRoughness
+
++ (nullable GLTFMaterialPBRMetallicRoughness *)
+    decodeMaterialPBRMetallicRoughnessFromJson:(NSDictionary *)jsonDict
+                                         error:(NSError **)error {
+  NSString *const objName = @"GLTFMaterialPBRMetallicRoughness";
+
+  GLTFMaterialPBRMetallicRoughness *material =
+      [[GLTFMaterialPBRMetallicRoughness alloc] init];
+
+  material.baseColorFactor = [self getNumberArray:jsonDict
+                                              key:@"baseColorFactor"
+                                         required:NO
+                                          objName:objName
+                                            error:error];
+  if (*error)
+    return nil;
+  if (!material.baseColorFactor)
+    material.baseColorFactor = @[ @1, @1, @1, @1 ];
+
+  NSDictionary *baseColorTextureDict = jsonDict[@"baseColorTexture"];
+  if (baseColorTextureDict) {
+    if ([baseColorTextureDict isKindOfClass:[NSDictionary class]]) {
+      material.baseColorTexture =
+          [self decodeTextureInfoFromJson:baseColorTextureDict error:error];
+      if (*error)
+        return nil;
+    } else {
+      *error = [GLTFDecoder invalidFormatErrorWithKey:@"baseColorTexture"
+                                              objName:objName];
+      return nil;
+    }
+  }
+
+  NSNumber *metallicFactor = jsonDict[@"metallicFactor"];
+  if (metallicFactor) {
+    material.metallicFactor = [metallicFactor floatValue];
+  } else {
+    material.metallicFactor = 1;
+  }
+
+  NSNumber *roughnessFactor = jsonDict[@"roughnessFactor"];
+  if (roughnessFactor) {
+    material.roughnessFactor = [roughnessFactor floatValue];
+  } else {
+    material.roughnessFactor = 1;
+  }
+
+  NSDictionary *metallicRoughnessTextureDict =
+      jsonDict[@"metallicRoughnessTexture"];
+  if (metallicRoughnessTextureDict) {
+    if ([metallicRoughnessTextureDict isKindOfClass:[NSDictionary class]]) {
+      material.metallicRoughnessTexture =
+          [self decodeTextureInfoFromJson:metallicRoughnessTextureDict
+                                    error:error];
+      if (*error)
+        return nil;
+    } else {
+      *error = [GLTFDecoder invalidFormatErrorWithKey:@"baseColorTexture"
+                                              objName:objName];
+      return nil;
+    }
+  }
+
+  material.extensions = [self getExtensions:jsonDict];
+  material.extras = [self getExtras:jsonDict];
+
+  return material;
+}
+
 #pragma mark - GLTFMesh
 
 + (nullable GLTFMesh *)decodeMeshFromJson:(NSDictionary *)jsonDict

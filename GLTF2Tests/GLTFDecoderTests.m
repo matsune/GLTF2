@@ -384,6 +384,79 @@
                  "Error code should indicate invalid data format.");
 }
 
+#pragma mark - GLTFMaterialPBRMetallicRoughness
+
+- (void)testDecodeMaterialPBRMetallicRoughnessWithValidData {
+  NSDictionary *validJson = @{
+    @"baseColorFactor" : @[ @0.5, @0.5, @0.5, @1.0 ],
+    @"metallicFactor" : @1.0,
+    @"roughnessFactor" : @0.5,
+    @"extensions" : @{@"someExtension" : @{}},
+    @"extras" : @{@"someData" : @"value"}
+  };
+
+  NSError *error = nil;
+  GLTFMaterialPBRMetallicRoughness *material =
+      [GLTFDecoder decodeMaterialPBRMetallicRoughnessFromJson:validJson
+                                                        error:&error];
+
+  XCTAssertNotNil(material, @"Decoding should succeed.");
+  XCTAssertNil(error, @"There should be no error.");
+  XCTAssertEqualObjects(material.baseColorFactor, (@[ @0.5, @0.5, @0.5, @1.0 ]),
+                        @"Base color factor should match.");
+  XCTAssertEqual(material.metallicFactor, 1.0,
+                 @"Metallic factor should be 1.0.");
+  XCTAssertEqual(material.roughnessFactor, 0.5,
+                 @"Roughness factor should be 0.5.");
+  XCTAssertNotNil(material.extensions, @"Extensions should not be nil.");
+  XCTAssertNotNil(material.extras, @"Extras should not be nil.");
+}
+
+- (void)testDecodeMaterialPBRMetallicRoughnessWithDefaultValues {
+  NSDictionary *validJson = @{
+      // Empty JSON to trigger defaults
+      // No values provided, should default all
+  };
+
+  NSError *error = nil;
+  GLTFMaterialPBRMetallicRoughness *material =
+      [GLTFDecoder decodeMaterialPBRMetallicRoughnessFromJson:validJson
+                                                        error:&error];
+
+  XCTAssertNotNil(material, @"Decoding should succeed.");
+  XCTAssertNil(error, @"There should be no error.");
+  XCTAssertEqualObjects(material.baseColorFactor, (@[ @1.0, @1.0, @1.0, @1.0 ]),
+                        @"Base color factor should default to [1,1,1,1].");
+  XCTAssertEqual(material.metallicFactor, 1.0,
+                 @"Default metallic factor should be 1.0.");
+  XCTAssertEqual(material.roughnessFactor, 1.0,
+                 @"Default roughness factor should be 1.0.");
+  XCTAssertNil(material.baseColorTexture,
+               @"Base color texture should be nil if not provided.");
+  XCTAssertNil(material.metallicRoughnessTexture,
+               @"Metallic roughness texture should be nil if not provided.");
+  XCTAssertNil(material.extensions,
+               @"Extensions should be nil if not provided.");
+  XCTAssertNil(material.extras, @"Extras should be nil if not provided.");
+}
+
+- (void)testDecodeMaterialPBRMetallicRoughnessWithInvalidData {
+  NSDictionary *invalidJson = @{
+    @"baseColorFactor" : @"Not an array",
+    @"metallicFactor" : @"Not a number",
+    @"roughnessFactor" : @"Also not a number"
+  };
+
+  NSError *error = nil;
+  GLTFMaterialPBRMetallicRoughness *material =
+      [GLTFDecoder decodeMaterialPBRMetallicRoughnessFromJson:invalidJson
+                                                        error:&error];
+
+  XCTAssertNil(material, @"Decoding should fail due to invalid data.");
+  XCTAssertNotNil(error,
+                  @"There should be an error due to invalid data types.");
+}
+
 #pragma mark - GLTFMesh
 
 - (void)testDecodeMeshFromJsonWithValidData {

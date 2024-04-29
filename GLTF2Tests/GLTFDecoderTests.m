@@ -229,4 +229,69 @@
                  "Error code should indicate invalid data format.");
 }
 
+#pragma mark - GLTFTexture
+
+- (void)testDecodeTextureFromJsonWithValidData {
+  NSDictionary *validJson = @{
+    @"sampler" : @1,
+    @"source" : @2,
+    @"name" : @"testTexture",
+    @"extensions" : @{@"exampleExtension" : @true},
+    @"extras" : @{@"note" : @"This is a test."}
+  };
+  NSError *error;
+
+  GLTFTexture *texture = [GLTFDecoder decodeTextureFromJson:validJson
+                                                      error:&error];
+
+  XCTAssertNotNil(texture, "The decoded object should not be nil.");
+  XCTAssertNil(error, "There should be no error during the decoding process.");
+
+  XCTAssertEqual(texture.sampler, 1,
+                 "The sampler should be decoded correctly.");
+  XCTAssertEqual(texture.source, 2, "The source should be decoded correctly.");
+  XCTAssertEqualObjects(texture.name, @"testTexture",
+                        "The name should be decoded correctly.");
+
+  NSDictionary *expectedExtensions = @{@"exampleExtension" : @true};
+  XCTAssertEqualObjects(texture.extensions, expectedExtensions,
+                        "The extensions should be decoded correctly.");
+
+  NSDictionary *expectedExtras = @{@"note" : @"This is a test."};
+  XCTAssertEqualObjects(texture.extras, expectedExtras,
+                        "The extras should be decoded correctly.");
+}
+
+- (void)testDecodeTextureFromJsonWithEmptyData {
+  NSDictionary *emptyJson = @{};
+  NSError *error = nil;
+  GLTFTexture *texture = [GLTFDecoder decodeTextureFromJson:emptyJson
+                                                      error:&error];
+
+  XCTAssertNotNil(texture, "Texture object should not be nil.");
+  XCTAssertNil(error, "There should be no error for empty JSON data.");
+
+  XCTAssertEqual(texture.sampler, NSNotFound,
+                 "Sampler index should default to NSNotFound.");
+  XCTAssertEqual(texture.source, NSNotFound,
+                 "Source index should default to NSNotFound.");
+  XCTAssertNil(texture.name, "Name should be nil for empty JSON.");
+  XCTAssertNil(texture.extensions, "Extensions should be nil for empty JSON.");
+  XCTAssertNil(texture.extras, "Extras should be nil for empty JSON.");
+}
+
+- (void)testDecodeTextureFromJsonWithInvalidDataType {
+  NSDictionary *invalidDataTypeJson =
+      @{@"sampler" : @"This is a string, not a number."};
+  NSError *error = nil;
+  GLTFTexture *texture = [GLTFDecoder decodeTextureFromJson:invalidDataTypeJson
+                                                      error:&error];
+
+  XCTAssertNil(texture, "Texture should be nil because of invalid data type.");
+  XCTAssertNotNil(
+      error, "Error should not be nil because the data type is incorrect.");
+  XCTAssertEqual(error.code, GLTF2ErrorInvalidFormat,
+                 "Error code should indicate invalid data format.");
+}
+
 @end

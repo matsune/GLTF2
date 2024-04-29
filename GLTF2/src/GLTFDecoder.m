@@ -31,26 +31,75 @@
 
 + (NSUInteger)getUInt:(const NSDictionary *)jsonDict
                   key:(const NSString *)key
-             required:(BOOL)required
               objName:(const NSString *)objName
                 error:(NSError **)error {
   NSNumber *value = jsonDict[key];
 
   if (!value) {
-    if (required) {
-      *error = [GLTFDecoder missingDataErrorWithKey:key objName:objName];
-      return 0;
-    } else {
-      // default value
-      return 0;
-    }
+    *error = [GLTFDecoder missingDataErrorWithKey:key objName:objName];
+    return NSNotFound;
   }
 
   if ([value isKindOfClass:[NSNumber class]]) {
     return [value unsignedIntegerValue];
   } else {
     *error = [GLTFDecoder invalidFormatErrorWithKey:key objName:objName];
-    return 0;
+    return NSNotFound;
+  }
+}
+
++ (NSUInteger)getUInt:(const NSDictionary *)jsonDict
+                  key:(const NSString *)key
+         defaultValue:(NSUInteger)defaultValue
+              objName:(const NSString *)objName
+                error:(NSError **)error {
+  NSNumber *value = jsonDict[key];
+
+  if (!value) {
+    return defaultValue;
+  }
+
+  if ([value isKindOfClass:[NSNumber class]]) {
+    return [value unsignedIntegerValue];
+  } else {
+    *error = [GLTFDecoder invalidFormatErrorWithKey:key objName:objName];
+    return NSNotFound;
+  }
+}
+
++ (NSString *)getString:(const NSDictionary *)jsonDict
+                    key:(const NSString *)key
+                objName:(const NSString *)objName
+                  error:(NSError **)error {
+  NSString *value = jsonDict[key];
+  if (!value) {
+    *error = [GLTFDecoder missingDataErrorWithKey:key objName:objName];
+    return nil;
+  }
+
+  if ([value isKindOfClass:[NSString class]]) {
+    return value;
+  } else {
+    *error = [GLTFDecoder invalidFormatErrorWithKey:key objName:objName];
+    return nil;
+  }
+}
+
++ (NSString *)getString:(const NSDictionary *)jsonDict
+                    key:(const NSString *)key
+           defaultValue:(NSString *)defaultValue
+                objName:(const NSString *)objName
+                  error:(NSError **)error {
+  NSString *value = jsonDict[key];
+  if (!value) {
+    return defaultValue;
+  }
+
+  if ([value isKindOfClass:[NSString class]]) {
+    return value;
+  } else {
+    *error = [GLTFDecoder invalidFormatErrorWithKey:key objName:objName];
+    return nil;
   }
 }
 
@@ -81,7 +130,6 @@
 
   sparse.count = [GLTFDecoder getUInt:jsonDict
                                   key:@"count"
-                             required:YES
                               objName:objName
                                 error:error];
   if (*error)
@@ -125,7 +173,6 @@
 
   obj.bufferView = [GLTFDecoder getUInt:jsonDict
                                     key:@"bufferView"
-                               required:YES
                                 objName:objName
                                   error:error];
   if (*error)
@@ -133,7 +180,7 @@
 
   obj.byteOffset = [GLTFDecoder getUInt:jsonDict
                                     key:@"byteOffset"
-                               required:NO
+                           defaultValue:0
                                 objName:objName
                                   error:error];
   if (*error)
@@ -141,7 +188,6 @@
 
   NSUInteger componentType = [GLTFDecoder getUInt:jsonDict
                                               key:@"componentType"
-                                         required:YES
                                           objName:objName
                                             error:error];
   if (*error)
@@ -178,7 +224,6 @@
 
   obj.bufferView = [GLTFDecoder getUInt:jsonDict
                                     key:@"bufferView"
-                               required:YES
                                 objName:objName
                                   error:error];
   if (*error)
@@ -186,7 +231,7 @@
 
   obj.byteOffset = [GLTFDecoder getUInt:jsonDict
                                     key:@"byteOffset"
-                               required:NO
+                           defaultValue:0
                                 objName:objName
                                   error:error];
   if (*error)
@@ -196,6 +241,43 @@
   obj.extras = [GLTFDecoder getExtras:jsonDict];
 
   return obj;
+}
+
+#pragma mark - GLTFTexture
+
++ (nullable GLTFTexture *)decodeTextureFromJson:(NSDictionary *)jsonDict
+                                          error:(NSError **)error {
+  NSString *const objName = @"GLTFTexture";
+  GLTFTexture *texture = [[GLTFTexture alloc] init];
+
+  texture.sampler = [self getUInt:jsonDict
+                              key:@"sampler"
+                     defaultValue:NSNotFound
+                          objName:objName
+                            error:error];
+  if (*error)
+    return nil;
+
+  texture.source = [self getUInt:jsonDict
+                             key:@"source"
+                    defaultValue:NSNotFound
+                         objName:objName
+                           error:error];
+  if (*error)
+    return nil;
+
+  texture.name = [self getString:jsonDict
+                             key:@"name"
+                    defaultValue:nil
+                         objName:objName
+                           error:error];
+  if (*error)
+    return nil;
+
+  texture.extensions = [self getExtensions:jsonDict];
+  texture.extras = [self getExtras:jsonDict];
+
+  return texture;
 }
 
 @end

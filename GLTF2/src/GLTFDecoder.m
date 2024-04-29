@@ -378,6 +378,51 @@
   return obj;
 }
 
+#pragma mark - GLTFSkin
+
++ (nullable GLTFSkin *)decodeSkinFromJson:(NSDictionary *)jsonDict
+                                    error:(NSError **)error {
+  NSString *const objName = @"GLTFSkin";
+  GLTFSkin *skin = [[GLTFSkin alloc] init];
+
+  skin.inverseBindMatrices = [self getUInt:jsonDict
+                                       key:@"inverseBindMatrices"
+                                  required:NO
+                                   objName:objName
+                                     error:error];
+  if (*error)
+    return nil;
+
+  skin.skeleton = [self getUInt:jsonDict
+                            key:@"skeleton"
+                       required:NO
+                        objName:objName
+                          error:error];
+  if (*error)
+    return nil;
+
+  skin.joints = [self getUIntegerArray:jsonDict
+                                   key:@"joints"
+                              required:YES
+                               objName:objName
+                                 error:error];
+  if (*error)
+    return nil;
+
+  skin.name = [self getString:jsonDict
+                          key:@"name"
+                     required:NO
+                      objName:objName
+                        error:error];
+  if (*error)
+    return nil;
+
+  skin.extensions = [self getExtensions:jsonDict];
+  skin.extras = [self getExtras:jsonDict];
+
+  return skin;
+}
+
 #pragma mark - GLTFTexture
 
 + (nullable GLTFTexture *)decodeTextureFromJson:(NSDictionary *)jsonDict

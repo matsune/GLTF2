@@ -2,6 +2,7 @@
 #import "GLTFAccessorSparse.h"
 #import "GLTFAccessorSparseIndices.h"
 #import "GLTFAccessorSparseValues.h"
+#import "GLTFSkin.h"
 #import "GLTFTexture.h"
 #import "GLTFTextureInfo.h"
 #import <Foundation/Foundation.h>
@@ -28,6 +29,8 @@ typedef NS_ENUM(NSInteger, GLTF2ErrorCode) {
 + (nullable GLTFAccessorSparseValues *)
     decodeAccessorSparseValuesFromJson:(NSDictionary *)jsonDict
                                  error:(NSError **)error;
++ (nullable GLTFSkin *)decodeSkinFromJson:(NSDictionary *)jsonDict
+                                    error:(NSError **)error;
 + (nullable GLTFTexture *)decodeTextureFromJson:(NSDictionary *)jsonDict
                                           error:(NSError **)error;
 + (nullable GLTFTextureInfo *)decodeTextureInfoFromJson:(NSDictionary *)jsonDict

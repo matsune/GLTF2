@@ -384,6 +384,74 @@
                  "Error code should indicate invalid data format.");
 }
 
+#pragma mark - GLTFSkin
+
+- (void)testDecodeSkinFromJsonWithValidData {
+  NSDictionary *validJson = @{
+    @"inverseBindMatrices" : @1,
+    @"skeleton" : @2,
+    @"joints" : @[ @3, @4, @5 ],
+    @"name" : @"testSkin",
+    @"extensions" : @{@"exampleExtension" : @true},
+    @"extras" : @{@"note" : @"This is a test."}
+  };
+
+  NSError *error = nil;
+  GLTFSkin *skin = [GLTFDecoder decodeSkinFromJson:validJson error:&error];
+
+  XCTAssertNotNil(skin, "The decoded object should not be nil.");
+  XCTAssertNil(error, "There should be no error during the decoding process.");
+
+  XCTAssertEqual(skin.inverseBindMatrices, 1,
+                 "The inverseBindMatrices should be decoded correctly.");
+  XCTAssertEqual(skin.skeleton, 2, "The skeleton should be decoded correctly.");
+  NSArray *joints = @[ @3, @4, @5 ];
+  XCTAssertEqualObjects(skin.joints, joints,
+                        "The joints should be decoded correctly.");
+  XCTAssertEqualObjects(skin.name, @"testSkin",
+                        "The name should be decoded correctly.");
+
+  NSDictionary *expectedExtensions = @{@"exampleExtension" : @true};
+  XCTAssertEqualObjects(skin.extensions, expectedExtensions,
+                        "The extensions should be decoded correctly.");
+
+  NSDictionary *expectedExtras = @{@"note" : @"This is a test."};
+  XCTAssertEqualObjects(skin.extras, expectedExtras,
+                        "The extras should be decoded correctly.");
+}
+
+- (void)testDecodeSkinFromJsonWithEmptyData {
+  NSDictionary *emptyJson = @{@"joints" : @[]};
+  NSError *error = nil;
+  GLTFSkin *skin = [GLTFDecoder decodeSkinFromJson:emptyJson error:&error];
+
+  XCTAssertNotNil(skin, "Skin object should not be nil.");
+  XCTAssertNil(error, "There should be no error for empty JSON data.");
+
+  XCTAssertEqual(skin.inverseBindMatrices, 0,
+                 "InverseBindMatrices should default to 0.");
+  XCTAssertEqual(skin.skeleton, 0, "Skeleton should default to 0.");
+  XCTAssertEqualObjects(skin.joints, @[],
+                        "Joints should default to an empty array.");
+  XCTAssertNil(skin.name, "Name should be nil for empty JSON.");
+  XCTAssertNil(skin.extensions, "Extensions should be nil for empty JSON.");
+  XCTAssertNil(skin.extras, "Extras should be nil for empty JSON.");
+}
+
+- (void)testDecodeSkinFromJsonWithInvalidDataType {
+  NSDictionary *invalidDataTypeJson =
+      @{@"inverseBindMatrices" : @"This is a string, not a number."};
+  NSError *error = nil;
+  GLTFSkin *skin = [GLTFDecoder decodeSkinFromJson:invalidDataTypeJson
+                                             error:&error];
+
+  XCTAssertNil(skin, "Skin should be nil because of invalid data type.");
+  XCTAssertNotNil(
+      error, "Error should not be nil because the data type is incorrect.");
+  XCTAssertEqual(error.code, GLTF2ErrorInvalidFormat,
+                 "Error code should indicate invalid data format.");
+}
+
 #pragma mark - GLTFTexture
 
 - (void)testDecodeTextureFromJsonWithValidData {

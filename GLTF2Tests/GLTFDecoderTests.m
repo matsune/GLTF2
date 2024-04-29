@@ -384,6 +384,127 @@
                  "Error code should indicate invalid data format.");
 }
 
+#pragma mark - GLTFNode
+
+- (void)testDecodeNodeWithValidData {
+  NSDictionary *validJson = @{
+    @"camera" : @1,
+    @"children" : @[ @2, @3 ],
+    @"skin" : @4,
+    @"matrix" :
+        @[ @1, @0, @0, @0, @0, @1, @0, @0, @0, @0, @1, @0, @0, @0, @0, @1 ],
+    @"mesh" : @5,
+    @"rotation" : @[ @0, @0, @0, @1 ],
+    @"scale" : @[ @1, @1, @1 ],
+    @"translation" : @[ @0, @0, @0 ],
+    @"weights" : @[ @0.5, @0.5 ],
+    @"name" : @"testNode",
+    @"extensions" : @{@"exampleExtension" : @true},
+    @"extras" : @{@"note" : @"This is a test."}
+  };
+
+  NSError *error = nil;
+  GLTFNode *node = [GLTFDecoder decodeNodeFromJson:validJson error:&error];
+
+  XCTAssertNotNil(node, "The decoded object should not be nil.");
+  XCTAssertNil(error, "There should be no error during the decoding process.");
+
+  XCTAssertEqual(node.camera, 1,
+                 "The camera index should be decoded correctly.");
+  NSArray *children = @[ @2, @3 ];
+  XCTAssertEqualObjects(node.children, children,
+                        "The children array should be decoded correctly.");
+  XCTAssertEqual(node.skin, 4, "The skin index should be decoded correctly.");
+  simd_float4x4 matrix =
+      (simd_float4x4){(simd_float4){1, 0, 0, 0}, (simd_float4){0, 1, 0, 0},
+                      (simd_float4){0, 0, 1, 0}, (simd_float4){0, 0, 0, 1}};
+  for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 4; j++) {
+      XCTAssertEqual(node.matrix.columns[i][j], matrix.columns[i][j],
+                     @"The element at row %d column %d should match", i, j);
+    }
+  }
+  XCTAssertEqual(node.mesh, 5, "The mesh index should be decoded correctly.");
+  NSArray *rotation = @[ @0, @0, @0, @1 ];
+  XCTAssertEqualObjects(node.rotation, rotation,
+                        "The rotation should be decoded correctly.");
+  NSArray *scale = @[ @1, @1, @1 ];
+  XCTAssertEqualObjects(node.scale, scale,
+                        "The scale should be decoded correctly.");
+  NSArray *translation = @[ @0, @0, @0 ];
+  XCTAssertEqualObjects(node.translation, translation,
+                        "The translation should be decoded correctly.");
+  NSArray *weights = @[ @0.5, @0.5 ];
+  XCTAssertEqualObjects(node.weights, weights,
+                        "The weights should be decoded correctly.");
+  XCTAssertEqualObjects(node.name, @"testNode",
+                        "The name should be decoded correctly.");
+
+  NSDictionary *expectedExtensions = @{@"exampleExtension" : @true};
+  XCTAssertEqualObjects(node.extensions, expectedExtensions,
+                        "The extensions should be decoded correctly.");
+
+  NSDictionary *expectedExtras = @{@"note" : @"This is a test."};
+  XCTAssertEqualObjects(node.extras, expectedExtras,
+                        "The extras should be decoded correctly.");
+}
+
+- (void)testDefaultValues {
+  NSDictionary *emptyJson = @{};
+  NSError *error = nil;
+  GLTFNode *node = [GLTFDecoder decodeNodeFromJson:emptyJson error:&error];
+
+  XCTAssertNotNil(node, "Node object should not be nil.");
+  XCTAssertNil(error, "There should be no error for empty JSON data.");
+
+  XCTAssertEqual(node.camera, 0, "Default value for camera should be 0.");
+  XCTAssertNil(node.children, "Default value for children should be nil.");
+  XCTAssertEqual(node.skin, 0, "Default value for skin should be 0.");
+
+  simd_float4x4 defaultMatrix =
+      (simd_float4x4){(simd_float4){1, 0, 0, 0}, (simd_float4){0, 1, 0, 0},
+                      (simd_float4){0, 0, 1, 0}, (simd_float4){0, 0, 0, 1}};
+  for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 4; j++) {
+      XCTAssertEqual(node.matrix.columns[i][j], defaultMatrix.columns[i][j],
+                     @"Default value for matrix should be identity matrix.");
+    }
+  }
+
+  XCTAssertEqual(node.mesh, 0, "Default value for mesh should be 0.");
+
+  NSArray *defaultRotation = @[ @0, @0, @0, @1 ];
+  XCTAssertEqualObjects(node.rotation, defaultRotation,
+                        "Default value for rotation should be [0, 0, 0, 1].");
+
+  NSArray *defaultScale = @[ @1, @1, @1 ];
+  XCTAssertEqualObjects(node.scale, defaultScale,
+                        "Default value for scale should be [1, 1, 1].");
+
+  NSArray *defaultTranslation = @[ @0, @0, @0 ];
+  XCTAssertEqualObjects(node.translation, defaultTranslation,
+                        "Default value for translation should be [0, 0, 0].");
+
+  XCTAssertNil(node.weights, "Default value for weights should be nil.");
+  XCTAssertNil(node.name, "Default value for name should be nil.");
+  XCTAssertNil(node.extensions, "Default value for extensions should be nil.");
+  XCTAssertNil(node.extras, "Default value for extras should be nil.");
+}
+
+- (void)testDecodeNodeWithInvalidData {
+  NSDictionary *invalidDataJson =
+      @{@"matrix" : @"This is a string, not an array."};
+  NSError *error = nil;
+  GLTFNode *node = [GLTFDecoder decodeNodeFromJson:invalidDataJson
+                                             error:&error];
+
+  XCTAssertNil(node, "Node should be nil because of invalid data.");
+  XCTAssertNotNil(error,
+                  "Error should not be nil because the data is incorrect.");
+  XCTAssertEqual(error.code, GLTF2ErrorInvalidFormat,
+                 "Error code should indicate invalid data format.");
+}
+
 #pragma mark - GLTFSampler
 
 - (void)testDecodeSamplerFromJsonWithValidData {

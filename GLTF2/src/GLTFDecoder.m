@@ -144,6 +144,76 @@
   }
 }
 
++ (nullable NSArray<NSNumber *> *)getNumberArray:(const NSDictionary *)jsonDict
+                                             key:(const NSString *)key
+                                        required:(BOOL)required
+                                         objName:(const NSString *)objName
+                                           error:(NSError **)error {
+  id value = jsonDict[key];
+  if (!value) {
+    if (required) {
+      *error = [GLTFDecoder missingDataErrorWithKey:key objName:objName];
+    }
+    return nil;
+  }
+
+  if ([value isKindOfClass:[NSArray class]]) {
+    NSMutableArray<NSNumber *> *numArray = [NSMutableArray array];
+    for (id item in value) {
+      if ([item isKindOfClass:[NSNumber class]]) {
+        [numArray addObject:item];
+      } else {
+        // Found a non-NSNumber object in the array, return nil
+        *error = [GLTFDecoder invalidFormatErrorWithKey:key objName:objName];
+        return nil;
+      }
+    }
+    return [numArray copy];
+  } else {
+    *error = [GLTFDecoder invalidFormatErrorWithKey:key objName:objName];
+    return nil;
+  }
+}
+
++ (simd_float4x4)getMatrix4x4:(const NSDictionary *)jsonDict
+                          key:(const NSString *)key
+                 defaultValue:(simd_float4x4)defaultValue
+                      objName:(const NSString *)objName
+                        error:(NSError **)error {
+  id value = jsonDict[key];
+  if (!value) {
+    return defaultValue;
+  }
+
+  if ([value isKindOfClass:[NSArray class]]) {
+    NSArray<NSNumber *> *matrixValues = (NSArray<NSNumber *> *)value;
+    if (matrixValues.count != 16) {
+      *error = [GLTFDecoder invalidFormatErrorWithKey:key objName:objName];
+      return matrix_identity_float4x4;
+    }
+
+    float values[16];
+    for (NSUInteger i = 0; i < 16; i++) {
+      NSNumber *number = matrixValues[i];
+      if (![number isKindOfClass:[NSNumber class]]) {
+        *error = [GLTFDecoder invalidFormatErrorWithKey:key objName:objName];
+        return matrix_identity_float4x4;
+      }
+      values[i] = [number floatValue];
+    }
+
+    return (simd_float4x4){
+        (simd_float4){values[0], values[1], values[2], values[3]},
+        (simd_float4){values[4], values[5], values[6], values[7]},
+        (simd_float4){values[8], values[9], values[10], values[11]},
+        (simd_float4){values[12], values[13], values[14], values[15]}};
+
+  } else {
+    *error = [GLTFDecoder invalidFormatErrorWithKey:key objName:objName];
+    return matrix_identity_float4x4;
+  }
+}
+
 + (nullable NSDictionary *)getExtensions:(const NSDictionary *)jsonDict {
   return [GLTFDecoder getDict:jsonDict key:@"extensions"];
 }
@@ -376,6 +446,111 @@
   obj.extras = [GLTFDecoder getExtras:jsonDict];
 
   return obj;
+}
+
+#pragma mark - GLTFNode
+
++ (nullable GLTFNode *)decodeNodeFromJson:(NSDictionary *)jsonDict
+                                    error:(NSError **)error {
+  NSString *const objName = @"GLTFNode";
+  GLTFNode *node = [[GLTFNode alloc] init];
+
+  node.camera = [GLTFDecoder getUInt:jsonDict
+                                 key:@"camera"
+                            required:NO
+                             objName:objName
+                               error:error];
+  if (*error)
+    return nil;
+
+  node.children = [GLTFDecoder getUIntegerArray:jsonDict
+                                            key:@"children"
+                                       required:NO
+                                        objName:objName
+                                          error:error];
+  if (*error)
+    return nil;
+
+  node.skin = [GLTFDecoder getUInt:jsonDict
+                               key:@"skin"
+                          required:NO
+                           objName:objName
+                             error:error];
+  if (*error)
+    return nil;
+
+  simd_float4x4 defaultMatrix =
+      (simd_float4x4){(simd_float4){1, 0, 0, 0}, (simd_float4){0, 1, 0, 0},
+                      (simd_float4){0, 0, 1, 0}, (simd_float4){0, 0, 0, 1}};
+  node.matrix = [GLTFDecoder getMatrix4x4:jsonDict
+                                      key:@"matrix"
+                             defaultValue:defaultMatrix
+                                  objName:objName
+                                    error:error];
+  if (*error)
+    return nil;
+
+  node.mesh = [GLTFDecoder getUInt:jsonDict
+                               key:@"mesh"
+                          required:NO
+                           objName:objName
+                             error:error];
+  if (*error)
+    return nil;
+
+  NSArray *defaultRotation = @[ @0, @0, @0, @1 ];
+  node.rotation = [GLTFDecoder getNumberArray:jsonDict
+                                          key:@"rotation"
+                                     required:NO
+                                      objName:objName
+                                        error:error];
+  if (*error)
+    return nil;
+  if (!node.rotation)
+    node.rotation = defaultRotation;
+
+  NSArray *defaultScale = @[ @1, @1, @1 ];
+  node.scale = [GLTFDecoder getNumberArray:jsonDict
+                                       key:@"scale"
+                                  required:NO
+                                   objName:objName
+                                     error:error];
+  if (*error)
+    return nil;
+  if (!node.scale)
+    node.scale = defaultScale;
+
+  NSArray *defaultTranslation = @[ @0, @0, @0 ];
+  node.translation = [GLTFDecoder getNumberArray:jsonDict
+                                             key:@"translation"
+                                        required:NO
+                                         objName:objName
+                                           error:error];
+  if (*error)
+    return nil;
+  if (!node.translation)
+    node.translation = defaultTranslation;
+
+  node.weights = [GLTFDecoder getNumberArray:jsonDict
+                                         key:@"weights"
+                                    required:NO
+                                     objName:objName
+                                       error:error];
+  if (*error)
+    return nil;
+
+  node.name = [GLTFDecoder getString:jsonDict
+                                 key:@"name"
+                            required:NO
+                             objName:objName
+                               error:error];
+  if (*error)
+    return nil;
+
+  node.extensions = [GLTFDecoder getExtensions:jsonDict];
+  node.extras = [GLTFDecoder getExtras:jsonDict];
+
+  return node;
 }
 
 #pragma mark - GLTFSampler

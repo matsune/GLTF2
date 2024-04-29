@@ -6,6 +6,161 @@
 
 @implementation GLTFDecoderTests
 
+#pragma mark - GLTFAccessor
+
+- (void)testDecodeAccessorFromJsonWithValidData {
+  NSDictionary *validJson = @{
+    @"bufferView" : @1,
+    @"byteOffset" : @256,
+    @"componentType" : @5126,
+    @"normalized" : @false,
+    @"count" : @100,
+    @"type" : @"VEC3",
+    @"max" : @[ @1.0, @2.0, @3.0 ],
+    @"min" : @[ @0.0, @0.0, @0.0 ],
+    @"sparse" : @{
+      @"count" : @3,
+      @"indices" : @{
+        @"bufferView" : @0,
+        @"byteOffset" : @0,
+        @"componentType" : @5123,
+        @"extensions" : @{@"exampleExtension" : @true},
+        @"extras" : @{@"note" : @"This is a test."}
+      },
+      @"values" : @{
+        @"bufferView" : @1,
+        @"byteOffset" : @0,
+        @"componentType" : @5126,
+        @"extensions" : @{@"exampleExtension" : @true},
+        @"extras" : @{@"note" : @"This is a test."}
+      },
+      @"extensions" : @{@"exampleExtension" : @true},
+      @"extras" : @{@"note" : @"This is a test."}
+    },
+    @"name" : @"test_accessor",
+    @"extensions" : @{@"exampleExtension" : @true},
+    @"extras" : @{@"note" : @"This is a test."}
+  };
+
+  NSError *error = nil;
+  GLTFAccessor *accessor = [GLTFDecoder decodeAccessorFromJson:validJson
+                                                         error:&error];
+
+  XCTAssertNotNil(accessor, @"Decoding should succeed");
+  XCTAssertNil(error, @"There should be no error");
+
+  XCTAssertEqual(accessor.bufferView, 1, @"BufferView should be 1");
+  XCTAssertEqual(accessor.byteOffset, 256, @"ByteOffset should be 256");
+  XCTAssertEqual(accessor.componentType, GLTFAccessorComponentTypeFloat,
+                 @"ComponentType should be GLTFAccessorComponentTypeFloat");
+  XCTAssertFalse(accessor.normalized, @"Normalized should be false");
+  XCTAssertEqual(accessor.count, 100, @"Count should be 100");
+  XCTAssertEqual(accessor.type, GLTFAccessorTypeVec3,
+                 @"Type should be GLTFAccessorTypeVec3");
+  NSArray *max = @[ @(1.0), @(2.0), @(3.0) ];
+  XCTAssertEqualObjects(accessor.max, max, @"Max values should match");
+  NSArray *min = @[ @(0.0), @(0.0), @(0.0) ];
+  XCTAssertEqualObjects(accessor.min, min, @"Min values should match");
+
+  XCTAssertEqualObjects(accessor.name, @"test_accessor", @"Name should match");
+
+  XCTAssertNotNil(accessor.sparse, @"Sparse should not be nil");
+  XCTAssertEqual(accessor.sparse.count, 3, @"Sparse count should be 3");
+
+  XCTAssertEqualObjects(accessor.extensions, validJson[@"extensions"],
+                        @"Extensions should match");
+  XCTAssertEqualObjects(accessor.extras, validJson[@"extras"],
+                        @"Extras should match");
+}
+
+- (void)testDecodeAccessorFromJsonWithMissingData {
+  NSDictionary *missingDataJson = @{
+    @"byteOffset" : @256,
+    @"componentType" : @5126,
+    @"normalized" : @false,
+    @"count" : @100,
+    @"type" : @"VEC3",
+    @"max" : @[ @1.0, @2.0, @3.0 ],
+    @"min" : @[ @0.0, @0.0, @0.0 ],
+    @"sparse" : @{
+      @"count" : @3,
+      @"indices" : @{
+        @"bufferView" : @0,
+        @"byteOffset" : @0,
+        @"componentType" : @5123,
+        @"extensions" : @{@"exampleExtension" : @true},
+        @"extras" : @{@"note" : @"This is a test."}
+      },
+      @"values" : @{
+        @"bufferView" : @1,
+        @"byteOffset" : @0,
+        @"componentType" : @5126,
+        @"extensions" : @{@"exampleExtension" : @true},
+        @"extras" : @{@"note" : @"This is a test."}
+      },
+      @"extensions" : @{@"exampleExtension" : @true},
+      @"extras" : @{@"note" : @"This is a test."}
+    },
+    @"name" : @"test_accessor",
+    @"extensions" : @{@"exampleExtension" : @true},
+    @"extras" : @{@"note" : @"This is a test."}
+  };
+
+  NSError *error = nil;
+  GLTFAccessor *accessor = [GLTFDecoder decodeAccessorFromJson:missingDataJson
+                                                         error:&error];
+
+  XCTAssertNil(accessor,
+               @"Accessor should be nil due to missing 'bufferView' key");
+  XCTAssertNotNil(error, @"There should be an error");
+  XCTAssertEqual(error.code, GLTF2ErrorMissingData,
+                 @"Error code should indicate missing data");
+}
+
+- (void)testDecodeAccessorFromJsonWithInvalidDataType {
+  NSDictionary *invalidDataTypeJson = @{
+    @"bufferView" : @1,
+    @"byteOffset" : @256,
+    @"componentType" : @"This is a string, not a number.",
+    @"normalized" : @false,
+    @"count" : @100,
+    @"type" : @"VEC3",
+    @"max" : @[ @1.0, @2.0, @3.0 ],
+    @"min" : @[ @0.0, @0.0, @0.0 ],
+    @"sparse" : @{
+      @"count" : @3,
+      @"indices" : @{
+        @"bufferView" : @0,
+        @"byteOffset" : @0,
+        @"componentType" : @5123,
+        @"extensions" : @{@"exampleExtension" : @true},
+        @"extras" : @{@"note" : @"This is a test."}
+      },
+      @"values" : @{
+        @"bufferView" : @1,
+        @"byteOffset" : @0,
+        @"componentType" : @5126,
+        @"extensions" : @{@"exampleExtension" : @true},
+        @"extras" : @{@"note" : @"This is a test."}
+      },
+      @"extensions" : @{@"exampleExtension" : @true},
+      @"extras" : @{@"note" : @"This is a test."}
+    },
+    @"name" : @"test_accessor",
+    @"extensions" : @{@"exampleExtension" : @true},
+    @"extras" : @{@"note" : @"This is a test."}
+  };
+
+  NSError *error = nil;
+  GLTFAccessor *accessor =
+      [GLTFDecoder decodeAccessorFromJson:invalidDataTypeJson error:&error];
+
+  XCTAssertNil(accessor, @"Accessor should be nil due to invalid data type");
+  XCTAssertNotNil(error, @"There should be an error");
+  XCTAssertEqual(error.code, GLTF2ErrorInvalidFormat,
+                 @"Error code should indicate invalid format");
+}
+
 #pragma mark - GLTFAccessorSparse
 
 - (void)testDecodeAccessorSparseFromJsonWithValidData {
@@ -271,10 +426,8 @@
   XCTAssertNotNil(texture, "Texture object should not be nil.");
   XCTAssertNil(error, "There should be no error for empty JSON data.");
 
-  XCTAssertEqual(texture.sampler, NSNotFound,
-                 "Sampler index should default to NSNotFound.");
-  XCTAssertEqual(texture.source, NSNotFound,
-                 "Source index should default to NSNotFound.");
+  XCTAssertEqual(texture.sampler, 0, "Sampler index should default to 0.");
+  XCTAssertEqual(texture.source, 0, "Source index should default to 0.");
   XCTAssertNil(texture.name, "Name should be nil for empty JSON.");
   XCTAssertNil(texture.extensions, "Extensions should be nil for empty JSON.");
   XCTAssertNil(texture.extras, "Extras should be nil for empty JSON.");

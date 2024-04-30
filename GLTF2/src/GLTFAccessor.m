@@ -1,6 +1,6 @@
 #import "GLTFAccessor.h"
 
-BOOL isValidGLTFAccessorComponentType(NSUInteger value) {
+BOOL isValidGLTFAccessorComponentType(NSInteger value) {
   return value == GLTFAccessorComponentTypeByte ||
          value == GLTFAccessorComponentTypeUnsignedByte ||
          value == GLTFAccessorComponentTypeShort ||
@@ -9,7 +9,7 @@ BOOL isValidGLTFAccessorComponentType(NSUInteger value) {
          value == GLTFAccessorComponentTypeFloat;
 }
 
-NSUInteger GLTFAccessorTypeFromString(NSString *typeString) {
+NSInteger GLTFAccessorTypeFromString(NSString *typeString) {
   if ([typeString isEqualToString:@"SCALAR"]) {
     return GLTFAccessorTypeScalar;
   } else if ([typeString isEqualToString:@"VEC2"]) {

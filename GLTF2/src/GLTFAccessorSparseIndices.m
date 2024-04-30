@@ -1,10 +1,10 @@
 #import "GLTFAccessorSparseIndices.h"
 
-BOOL isValidGLTFAccessorSparseIndicesComponentType(NSUInteger value) {
-  return value == GLTFAccessorSparseIndicesComponentTypeUnsignedByte ||
-         value == GLTFAccessorSparseIndicesComponentTypeUnsignedShort ||
-         value == GLTFAccessorSparseIndicesComponentTypeUnsignedInt;
-}
+//BOOL isValidGLTFAccessorSparseIndicesComponentType(NSInteger value) {
+//  return value == GLTFAccessorSparseIndicesComponentTypeUnsignedByte ||
+//         value == GLTFAccessorSparseIndicesComponentTypeUnsignedShort ||
+//         value == GLTFAccessorSparseIndicesComponentTypeUnsignedInt;
+//}
 
 @implementation GLTFAccessorSparseIndices
 

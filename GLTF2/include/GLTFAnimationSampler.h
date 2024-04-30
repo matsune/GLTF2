@@ -2,26 +2,17 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef NS_ENUM(NSUInteger, GLTFAnimationSamplerInterpolation) {
-  GLTFAnimationSamplerInterpolationLinear,
-  GLTFAnimationSamplerInterpolationStep,
-  GLTFAnimationSamplerInterpolationCubicSpline
-};
-
-GLTFAnimationSamplerInterpolation
-GLTFAnimationSamplerInterpolationFromNSString(NSString *string) {
-  if ([string isEqualToString:@"LINEAR"]) {
-    return GLTFAnimationSamplerInterpolationLinear;
-  } else if ([string isEqualToString:@"STEP"]) {
-    return GLTFAnimationSamplerInterpolationStep;
-  } else if ([string isEqualToString:@"CUBICSPLINE"]) {
-    return GLTFAnimationSamplerInterpolationCubicSpline;
-  } else {
-    return NSNotFound;
-  }
-}
+static NSString * const GLTFAnimationSamplerInterpolationLinear = @"LINEAR";
+static NSString * const GLTFAnimationSamplerInterpolationStep = @"STEP";
+static NSString * const GLTFAnimationSamplerInterpolationCubicSpline = @"CUBICSPLINE";
 
 @interface GLTFAnimationSampler : NSObject
+
+@property(nonatomic, assign) NSInteger input;
+@property(nonatomic, copy) NSString *interpolation;
+@property(nonatomic, assign) NSInteger output;
+@property(nonatomic, strong, nullable) NSDictionary *extensions;
+@property(nonatomic, strong, nullable) NSDictionary *extras;
 
 @end
 

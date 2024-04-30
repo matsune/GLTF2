@@ -4,8 +4,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface GLTFTexture : NSObject
 
-@property(nonatomic, assign) NSUInteger sampler;
-@property(nonatomic, assign) NSUInteger source;
+@property(nonatomic, strong, nullable) NSNumber *sampler;
+@property(nonatomic, strong, nullable) NSNumber *source;
 @property(nonatomic, copy, nullable) NSString *name;
 @property(nonatomic, strong, nullable) NSDictionary *extensions;
 @property(nonatomic, strong, nullable) NSDictionary *extras;

@@ -6,7 +6,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface GLTFAccessorSparse : NSObject
 
-@property(nonatomic, assign) NSUInteger count;
+@property(nonatomic, assign) NSInteger count;
 @property(nonatomic, strong) GLTFAccessorSparseIndices *indices;
 @property(nonatomic, strong) GLTFAccessorSparseValues *values;
 @property(nonatomic, strong, nullable) NSDictionary *extensions;

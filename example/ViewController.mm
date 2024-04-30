@@ -12,9 +12,16 @@
   [super viewDidLoad];
   NSString *path = [[NSBundle mainBundle] pathForResource:@"2CylinderEngine"
                                                    ofType:@"glb"];
-  NSData *data = [NSData dataWithContentsOfURL:[NSURL fileURLWithPath:path]];
-  GLTFBinary *binary = [GLTFBinary binaryWithData:data error:nil];
-  NSLog(@">>>%@", binary);
+  //  NSData *data = [NSData dataWithContentsOfURL:[NSURL
+  //  fileURLWithPath:path]]; GLTFBinary *binary = [GLTFBinary
+  //  binaryWithData:data error:nil];
+  NSError *err;
+  GLTFObject *object = [GLTFObject objectWithGlbFile:path error:&err];
+  if (err) {
+    NSLog(@"%@", err);
+    abort();
+  }
+  NSLog(@">>>%@", object);
 }
 
 - (void)setRepresentedObject:(id)representedObject {

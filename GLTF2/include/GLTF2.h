@@ -23,6 +23,7 @@
 #import "GLTFMesh.h"
 #import "GLTFMeshPrimitive.h"
 #import "GLTFNode.h"
+#import "GLTFObject.h"
 #import "GLTFSampler.h"
 #import "GLTFScene.h"
 #import "GLTFSkin.h"

@@ -27,7 +27,7 @@ extern NSString *const GLTFAccessorTypeMat4;
 @property(nonatomic, assign) NSInteger componentType;
 @property(nonatomic, assign) BOOL normalized;
 @property(nonatomic, assign) NSInteger count;
-@property(nonatomic, assign) NSInteger type;
+@property(nonatomic, assign) NSString *type;
 @property(nonatomic, strong, nullable) NSArray<NSNumber *> *max;
 @property(nonatomic, strong, nullable) NSArray<NSNumber *> *min;
 @property(nonatomic, strong, nullable) GLTFAccessorSparse *sparse;

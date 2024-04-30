@@ -6,6 +6,19 @@ option(BUILD_EXAMPLE "Build example" OFF)
 
 include(FetchContent)
 
+# ios_cmake
+set(IOS_CMAKE_VERSION "4.4.1")
+FetchContent_Declare(
+    ios_cmake
+    URL https://github.com/leetal/ios-cmake/archive/${IOS_CMAKE_VERSION}.zip
+)
+
+FetchContent_GetProperties(ios_cmake)
+
+if(NOT ios_cmake_POPULATED)
+    FetchContent_Populate(ios_cmake)
+endif()
+
 file(GLOB_RECURSE GLB_FILES "${PROJECT_SOURCE_DIR}/gltf-sample-models/*.glb")
 file(GLOB_RECURSE BIN_FILES "${PROJECT_SOURCE_DIR}/gltf-sample-models/*.bin")
 file(GLOB_RECURSE GLTF_FILES "${PROJECT_SOURCE_DIR}/gltf-sample-models/*.gltf")
@@ -24,7 +37,15 @@ endif()
 find_program(CLANG_FORMAT "clang-format")
 
 if(CLANG_FORMAT)
-    set(DIRECTORIES "GLTF2" "GLTF2Tests" "example")
+    set(DIRECTORIES "GLTF2")
+
+    if(BUILD_TESTS)
+        list(APPEND DIRECTORIES "GLTF2Tests")
+    endif()
+
+    if(BUILD_EXAMPLE)
+        list(APPEND DIRECTORIES "example")
+    endif()
 
     set(EXTENSIONS "*.m" "*.mm" "*.h")
 

@@ -1,25 +1,5 @@
-EXECUTE_PROCESS(COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE ARCHITECTURE)
-
-# ios_cmake
-set(IOS_CMAKE_VERSION "4.4.1")
-FetchContent_Declare(
-    ios_cmake
-    URL https://github.com/leetal/ios-cmake/archive/${IOS_CMAKE_VERSION}.zip
-)
-
-FetchContent_GetProperties(ios_cmake)
-
-if(NOT ios_cmake_POPULATED)
-    FetchContent_Populate(ios_cmake)
-
-    if(${ARCHITECTURE} STREQUAL "arm64")
-        set(PLATFORM "MAC_ARM64")
-    else()
-        set(PLATFORM "MAC")
-    endif()
-
-    include(${ios_cmake_SOURCE_DIR}/ios.toolchain.cmake)
-endif()
+set(PLATFORM "MAC_UNIVERSAL")
+include(${ios_cmake_SOURCE_DIR}/ios.toolchain.cmake)
 
 # Info.plist
 set(INFO_PLIST_IN_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in)
@@ -43,7 +23,7 @@ find_library(COCOA_LIBRARY Cocoa)
 find_library(FOUNDATION_LIBRARY Foundation)
 find_library(SCENEKIT_LIBRARY SceneKit)
 
-target_link_libraries(example ${PROJECT_NAME} ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY} ${SCENEKIT_LIBRARY} gltf2)
+target_link_libraries(example GLTF2 ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY} ${SCENEKIT_LIBRARY})
 
 target_include_directories(example PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -56,7 +36,7 @@ set_target_properties(example PROPERTIES
     MACOSX_BUNDLE_INFO_PLIST ${INFO_PLIST_PATH}
     XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES
     XCODE_ATTRIBUTE_INFOPLIST_FILE ${INFO_PLIST_PATH}
-    XCODE_EMBED_FRAMEWORKS ${PROJECT_NAME}
+    XCODE_EMBED_FRAMEWORKS GLTF2
     XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY TRUE
     XCODE_EMBED_FRAMEWORKS_REMOVE_HEADERS_ON_COPY TRUE
 )

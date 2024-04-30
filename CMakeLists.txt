@@ -25,6 +25,7 @@ file(GLOB_RECURSE GLTF_FILES "${PROJECT_SOURCE_DIR}/gltf-sample-models/*.gltf")
 set(MODEL_FILES ${GLB_FILES} ${BIN_FILES} ${GLTF_FILES})
 
 add_subdirectory(GLTF2)
+add_subdirectory(GLTF2SceneKit)
 
 if(BUILD_TESTS)
     add_subdirectory(GLTF2Tests)
@@ -37,7 +38,7 @@ endif()
 find_program(CLANG_FORMAT "clang-format")
 
 if(CLANG_FORMAT)
-    set(DIRECTORIES "GLTF2")
+    set(DIRECTORIES "GLTF2" "GLTF2SceneKit")
 
     if(BUILD_TESTS)
         list(APPEND DIRECTORIES "GLTF2Tests")

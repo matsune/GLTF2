@@ -8,6 +8,7 @@
 #import "GLTFAnimationChannelTarget.h"
 #import "GLTFAnimationSampler.h"
 #import "GLTFAsset.h"
+#import "GLTFBinary.h"
 #import "GLTFBuffer.h"
 #import "GLTFBufferView.h"
 #import "GLTFCamera.h"

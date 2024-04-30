@@ -23,7 +23,7 @@ find_library(COCOA_LIBRARY Cocoa)
 find_library(FOUNDATION_LIBRARY Foundation)
 find_library(SCENEKIT_LIBRARY SceneKit)
 
-target_link_libraries(example GLTF2 ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY} ${SCENEKIT_LIBRARY})
+target_link_libraries(example GLTF2SceneKit ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY} ${SCENEKIT_LIBRARY})
 
 target_include_directories(example PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}

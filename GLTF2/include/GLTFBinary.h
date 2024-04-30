@@ -9,7 +9,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, strong) GLTFJson *json;
 @property(nonatomic, strong, nullable) NSData *binary;
 
-+ (nullable instancetype)binaryWithData:(NSData *)data error:(NSError **)error;
++ (nullable instancetype)binaryWithData:(NSData *)data
+                                  error:(NSError *_Nullable *_Nullable)error;
 
 @end
 

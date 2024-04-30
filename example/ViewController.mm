@@ -1,4 +1,6 @@
 #import "ViewController.h"
+#import "GLTF2.h"
+#import <Foundation/Foundation.h>
 
 @interface ViewController ()
 
@@ -8,6 +10,11 @@
 
 - (void)viewDidLoad {
   [super viewDidLoad];
+  NSString *path = [[NSBundle mainBundle] pathForResource:@"2CylinderEngine"
+                                                   ofType:@"glb"];
+  NSData *data = [NSData dataWithContentsOfURL:[NSURL fileURLWithPath:path]];
+  GLTFBinary *binary = [GLTFBinary binaryWithData:data error:nil];
+  NSLog(@">>>%@", binary);
 }
 
 - (void)setRepresentedObject:(id)representedObject {

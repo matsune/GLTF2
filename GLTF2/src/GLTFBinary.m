@@ -73,9 +73,13 @@ static uint32_t const GLTF2BinaryChunkTypeBIN = 0x004E4942;
   return self;
 }
 
-+ (nullable instancetype)binaryWithData:(NSData *)data error:(NSError **)error {
++ (nullable instancetype)binaryWithData:(NSData *)data
+                                  error:(NSError *_Nullable *_Nullable)error {
+  NSError *err;
   GLTFBinary *binary = [[GLTFBinary alloc] init];
-  if (![binary loadWithData:data error:error]) {
+  if (![binary loadWithData:data error:&err]) {
+    if (error)
+      *error = err;
     return nil;
   }
   return binary;
@@ -87,7 +91,7 @@ static uint32_t const GLTF2BinaryChunkTypeBIN = 0x004E4942;
                          userInfo:@{NSLocalizedDescriptionKey : description}];
 }
 
-- (BOOL)loadWithData:(NSData *)data error:(NSError **)error {
+- (BOOL)loadWithData:(NSData *)data error:(NSError *_Nullable *)error {
   GLTFBinaryReader *reader = [[GLTFBinaryReader alloc] initWithData:data];
 
   // Header

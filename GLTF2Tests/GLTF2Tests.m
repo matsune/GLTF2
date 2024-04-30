@@ -1,4 +1,4 @@
-#import "GLTFDecoder.h"
+#import "GLTFJSONDecoder.h"
 #import "config.h"
 #import <XCTest/XCTest.h>
 
@@ -24,7 +24,7 @@
           @"gltf-sample-models/2CylinderEngine/glTF/2CylinderEngine.gltf"];
   NSData *data = [NSData dataWithContentsOfURL:url];
   NSError *error;
-  GLTFJson *json = [GLTFDecoder decodeJsonData:data error:&error];
+  GLTFJson *json = [GLTFJSONDecoder decodeJsonData:data error:&error];
   XCTAssertNil(error);
   XCTAssertNotNil(json);
 }

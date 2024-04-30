@@ -1,6 +1,6 @@
 #import "GLTFObject.h"
 #import "GLTFBinary.h"
-#import "GLTFDecoder.h"
+#import "GLTFJSONDecoder.h"
 
 @implementation GLTFObject
 
@@ -36,7 +36,7 @@
                                           (NSError *_Nullable *_Nullable)error {
   NSError *err;
   NSData *jsonData = [NSData dataWithContentsOfFile:path];
-  GLTFJson *json = [GLTFDecoder decodeJsonData:jsonData error:&err];
+  GLTFJson *json = [GLTFJSONDecoder decodeJsonData:jsonData error:&err];
   if (err) {
     if (error)
       *error = err;

@@ -1,6 +1,6 @@
 #import "GLTFBinary.h"
 #import "Errors.h"
-#import "GLTFDecoder.h"
+#import "GLTFJSONDecoder.h"
 
 #pragma mark - GLTFBinaryReader
 
@@ -135,7 +135,7 @@ static uint32_t const GLTF2BinaryChunkTypeBIN = 0x004E4942;
     return NO;
   }
   NSData *jsonChunkData = [reader readDataWithLength:jsonChunkHead.chunkLength];
-  self.json = [GLTFDecoder decodeJsonData:jsonChunkData error:error];
+  self.json = [GLTFJSONDecoder decodeJsonData:jsonChunkData error:error];
   if (*error)
     return NO;
 

@@ -1,3 +1,4 @@
+#import "Errors.h"
 #import "GLTFDecoder.h"
 #import <XCTest/XCTest.h>
 
@@ -216,7 +217,7 @@
                "Accessor should be nil when a required field is missing");
   XCTAssertNotNil(error,
                   "Error should not be nil when a required field is missing");
-  XCTAssertEqual(error.code, GLTF2ErrorMissingData,
+  XCTAssertEqual(error.code, GLTF2DecodeErrorMissingData,
                  "Error code should indicate missing data");
 }
 
@@ -279,7 +280,7 @@
   XCTAssertNil(sparse, "Sparse should be nil when a required field is missing");
   XCTAssertNotNil(error,
                   "Error should not be nil when a required field is missing");
-  XCTAssertEqual(error.code, GLTF2ErrorMissingData,
+  XCTAssertEqual(error.code, GLTF2DecodeErrorMissingData,
                  "Error code should indicate missing data");
 }
 
@@ -344,7 +345,7 @@
 
   XCTAssertNil(indices);
   XCTAssertNotNil(error);
-  XCTAssertEqual(error.code, GLTF2ErrorMissingData);
+  XCTAssertEqual(error.code, GLTF2DecodeErrorMissingData);
   XCTAssertTrue([error.localizedDescription
       containsString:@"Key 'componentType' not found"]);
 }
@@ -407,7 +408,7 @@
                "Sparse values should be nil when required field is missing");
   XCTAssertNotNil(error,
                   "Error should not be nil when a required field is missing");
-  XCTAssertEqual(error.code, GLTF2ErrorMissingData,
+  XCTAssertEqual(error.code, GLTF2DecodeErrorMissingData,
                  "Error code should indicate missing data");
 }
 
@@ -471,7 +472,7 @@
 
   XCTAssertNil(animation);
   XCTAssertNotNil(error);
-  XCTAssertEqual(error.code, GLTF2ErrorMissingData);
+  XCTAssertEqual(error.code, GLTF2DecodeErrorMissingData);
 }
 
 - (void)testDecodeAnimationWithOptionalFieldsMissing {
@@ -536,7 +537,7 @@
                "Channel should be nil when required fields are missing");
   XCTAssertNotNil(error,
                   "Error should not be nil when required fields are missing");
-  XCTAssertEqual(error.code, GLTF2ErrorMissingData,
+  XCTAssertEqual(error.code, GLTF2DecodeErrorMissingData,
                  "Error code should indicate missing required fields");
 }
 
@@ -602,7 +603,7 @@
       error,
       "Error should not be nil when the required field 'path' is missing");
   XCTAssertEqual(
-      error.code, GLTF2ErrorMissingData,
+      error.code, GLTF2DecodeErrorMissingData,
       "Error code should indicate missing data due to lack of required field");
 }
 
@@ -669,7 +670,7 @@
                "Sampler should be nil when required fields are missing");
   XCTAssertNotNil(error,
                   "Error should not be nil when required fields are missing");
-  XCTAssertEqual(error.code, GLTF2ErrorMissingData,
+  XCTAssertEqual(error.code, GLTF2DecodeErrorMissingData,
                  "Error code should indicate missing required fields");
 }
 
@@ -761,7 +762,7 @@
   XCTAssertNotNil(
       error,
       "Error should not be nil when required field 'version' is missing");
-  XCTAssertEqual(error.code, GLTF2ErrorMissingData,
+  XCTAssertEqual(error.code, GLTF2DecodeErrorMissingData,
                  "Error code should indicate missing required fields");
 }
 

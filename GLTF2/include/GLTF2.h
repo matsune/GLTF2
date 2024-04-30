@@ -1,3 +1,4 @@
+#import "Errors.h"
 #import "GLTFAccessor.h"
 #import "GLTFAccessorSparse.h"
 #import "GLTFAccessorSparseIndices.h"

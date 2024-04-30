@@ -4,91 +4,90 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-extern NSString *const GLTF2DecodeErrorDomain;
-
-typedef NS_ENUM(NSInteger, GLTF2ErrorCode) {
-  GLTF2ErrorMissingData = 1001,
-};
-
 @interface GLTFDecoder : NSObject
 
-+ (nullable GLTFJson *)decodeJsonData:(NSData *)data error:(NSError **)error;
++ (nullable GLTFJson *)decodeJsonData:(NSData *)data
+                                error:(NSError *_Nullable *_Nullable)error;
 
 + (nullable GLTFJson *)decodeJsonDict:(NSDictionary *)jsonDict
-                                error:(NSError **)error;
+                                error:(NSError *_Nullable *_Nullable)error;
 
 - (nullable GLTFJson *)decodeJson:(NSDictionary *)jsonDict
-                            error:(NSError **)error;
+                            error:(NSError *_Nullable *_Nullable)error;
 
 - (nullable GLTFAccessor *)decodeAccessor:(NSDictionary *)jsonDict
-                                    error:(NSError **)error;
+                                    error:(NSError *_Nullable *_Nullable)error;
 
-- (nullable GLTFAccessorSparse *)decodeAccessorSparse:(NSDictionary *)jsonDict
-                                                error:(NSError **)error;
+- (nullable GLTFAccessorSparse *)
+    decodeAccessorSparse:(NSDictionary *)jsonDict
+                   error:(NSError *_Nullable *_Nullable)error;
 
 - (nullable GLTFAccessorSparseIndices *)
     decodeAccessorSparseIndices:(NSDictionary *)jsonDict
-                          error:(NSError **)error;
+                          error:(NSError *_Nullable *_Nullable)error;
 
 - (nullable GLTFAccessorSparseValues *)
     decodeAccessorSparseValues:(NSDictionary *)jsonDict
-                         error:(NSError **)error;
+                         error:(NSError *_Nullable *_Nullable)error;
 
 - (nullable GLTFAnimation *)decodeAnimation:(NSDictionary *)jsonDict
-                                      error:(NSError **)error;
+                                      error:
+                                          (NSError *_Nullable *_Nullable)error;
 
-- (nullable GLTFAnimationChannel *)decodeAnimationChannel:
-                                       (NSDictionary *)jsonDict
-                                                    error:(NSError **)error;
+- (nullable GLTFAnimationChannel *)
+    decodeAnimationChannel:(NSDictionary *)jsonDict
+                     error:(NSError *_Nullable *_Nullable)error;
 
 - (nullable GLTFAnimationChannelTarget *)
     decodeAnimationChannelTarget:(NSDictionary *)jsonDict
-                           error:(NSError **)error;
+                           error:(NSError *_Nullable *_Nullable)error;
 
-- (nullable GLTFAnimationSampler *)decodeAnimationSampler:
-                                       (NSDictionary *)jsonDict
-                                                    error:(NSError **)error;
+- (nullable GLTFAnimationSampler *)
+    decodeAnimationSampler:(NSDictionary *)jsonDict
+                     error:(NSError *_Nullable *_Nullable)error;
 
 - (nullable GLTFAsset *)decodeAsset:(NSDictionary *)jsonDict
-                              error:(NSError **)error;
+                              error:(NSError *_Nullable *_Nullable)error;
 
 - (nullable GLTFBuffer *)decodeBuffer:(NSDictionary *)jsonDict
-                                error:(NSError **)error;
+                                error:(NSError *_Nullable *_Nullable)error;
 
 - (nullable GLTFBufferView *)decodeBufferView:(NSDictionary *)jsonDict
-                                        error:(NSError **)error;
+                                        error:(NSError *_Nullable *_Nullable)
+                                                  error;
 
 - (nullable GLTFCamera *)decodeCamera:(NSDictionary *)jsonDict
-                                error:(NSError **)error;
+                                error:(NSError *_Nullable *_Nullable)error;
 
-- (nullable GLTFCameraOrthographic *)decodeCameraOrthographic:
-                                         (NSDictionary *)jsonDict
-                                                        error:(NSError **)error;
-- (nullable GLTFCameraPerspective *)decodeCameraPerspective:
-                                        (NSDictionary *)jsonDict
-                                                      error:(NSError **)error;
+- (nullable GLTFCameraOrthographic *)
+    decodeCameraOrthographic:(NSDictionary *)jsonDict
+                       error:(NSError *_Nullable *_Nullable)error;
+- (nullable GLTFCameraPerspective *)
+    decodeCameraPerspective:(NSDictionary *)jsonDict
+                      error:(NSError *_Nullable *_Nullable)error;
 
 - (GLTFImage *)decodeImage:(NSDictionary *)jsonDict;
 
 - (nullable GLTFMaterial *)decodeMaterial:(NSDictionary *)jsonDict
-                                    error:(NSError **)error;
+                                    error:(NSError *_Nullable *_Nullable)error;
 
 - (nullable GLTFMaterialNormalTextureInfo *)
     decodeMaterialNormalTextureInfo:(NSDictionary *)jsonDict
-                              error:(NSError **)error;
+                              error:(NSError *_Nullable *_Nullable)error;
 
 - (nullable GLTFMaterialOcclusionTextureInfo *)
     decodeMaterialOcclusionTextureInfo:(NSDictionary *)jsonDict
-                                 error:(NSError **)error;
+                                 error:(NSError *_Nullable *_Nullable)error;
 
 - (nullable GLTFMaterialPBRMetallicRoughness *)
     decodeMaterialPBRMetallicRoughness:(NSDictionary *)jsonDict
-                                 error:(NSError **)error;
+                                 error:(NSError *_Nullable *_Nullable)error;
 
 - (nullable GLTFMesh *)decodeMesh:(NSDictionary *)jsonDict
-                            error:(NSError **)error;
-- (nullable GLTFMeshPrimitive *)decodeMeshPrimitive:(NSDictionary *)jsonDict
-                                              error:(NSError **)error;
+                            error:(NSError *_Nullable *_Nullable)error;
+- (nullable GLTFMeshPrimitive *)
+    decodeMeshPrimitive:(NSDictionary *)jsonDict
+                  error:(NSError *_Nullable *_Nullable)error;
 
 - (GLTFNode *)decodeNode:(NSDictionary *)jsonDict;
 
@@ -97,12 +96,13 @@ typedef NS_ENUM(NSInteger, GLTF2ErrorCode) {
 - (GLTFScene *)decodeScene:(NSDictionary *)jsonDict;
 
 - (nullable GLTFSkin *)decodeSkin:(NSDictionary *)jsonDict
-                            error:(NSError **)error;
+                            error:(NSError *_Nullable *_Nullable)error;
 
 - (GLTFTexture *)decodeTexture:(NSDictionary *)jsonDict;
 
 - (nullable GLTFTextureInfo *)decodeTextureInfo:(NSDictionary *)jsonDict
-                                          error:(NSError **)error;
+                                          error:(NSError *_Nullable *_Nullable)
+                                                    error;
 
 @end
 

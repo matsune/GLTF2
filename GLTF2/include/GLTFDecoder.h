@@ -4,13 +4,18 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-NSString *const GLTF2DecodeErrorDomain = @"GLTF2.DecodeError";
+extern NSString *const GLTF2DecodeErrorDomain;
 
 typedef NS_ENUM(NSInteger, GLTF2ErrorCode) {
   GLTF2ErrorMissingData = 1001,
 };
 
 @interface GLTFDecoder : NSObject
+
++ (nullable GLTFJson *)decodeJsonData:(NSData *)data error:(NSError **)error;
+
++ (nullable GLTFJson *)decodeJsonDict:(NSDictionary *)jsonDict
+                                error:(NSError **)error;
 
 - (nullable GLTFJson *)decodeJson:(NSDictionary *)jsonDict
                             error:(NSError **)error;

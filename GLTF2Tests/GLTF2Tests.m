@@ -1,4 +1,4 @@
-#import "GLTFJson.h"
+#import "GLTFDecoder.h"
 #import "config.h"
 #import <XCTest/XCTest.h>
 
@@ -18,20 +18,15 @@
   // test method in the class.
 }
 
-//- (void)testExample {
-//  // This is an example of a functional test case.
-//  // Use XCTAssert and related functions to verify your tests produce the
-//  // correct results.
-//  NSURL *url = [[NSURL fileURLWithPath:@PROJECT_SOURCE_DIR]
-//      URLByAppendingPathComponent:
-//          @"gltf-sample-models/2CylinderEngine/glTF/2CylinderEngine.gltf"];
-//}
-
-//- (void)testPerformanceExample {
-//  // This is an example of a performance test case.
-//  [self measureBlock:^{
-//      // Put the code you want to measure the time of here.
-//  }];
-//}
+- (void)testExample {
+  NSURL *url = [[NSURL fileURLWithPath:@PROJECT_SOURCE_DIR]
+      URLByAppendingPathComponent:
+          @"gltf-sample-models/2CylinderEngine/glTF/2CylinderEngine.gltf"];
+  NSData *data = [NSData dataWithContentsOfURL:url];
+  NSError *error;
+  GLTFJson *json = [GLTFDecoder decodeJsonData:data error:&error];
+  XCTAssertNil(error);
+  XCTAssertNotNil(json);
+}
 
 @end

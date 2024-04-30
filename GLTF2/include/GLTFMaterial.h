@@ -6,9 +6,9 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-static NSString *const GLTFMaterialAlphaModeOpaque = @"OPAQUE";
-static NSString *const GLTFMaterialAlphaModeMask = @"MASK";
-static NSString *const GLTFMaterialAlphaModeBlend = @"BLEND";
+extern NSString *const GLTFMaterialAlphaModeOpaque;
+extern NSString *const GLTFMaterialAlphaModeMask;
+extern NSString *const GLTFMaterialAlphaModeBlend;
 
 @interface GLTFMaterial : NSObject
 

@@ -12,13 +12,13 @@ typedef NS_ENUM(NSInteger, GLTFAccessorComponentType) {
   GLTFAccessorComponentTypeFloat = 5126
 };
 
-static NSString *const GLTFAccessorTypeScalar = @"SCALAR";
-static NSString *const GLTFAccessorTypeVec2 = @"VEC2";
-static NSString *const GLTFAccessorTypeVec3 = @"VEC3";
-static NSString *const GLTFAccessorTypeVec4 = @"VEC4";
-static NSString *const GLTFAccessorTypeMat2 = @"MAT2";
-static NSString *const GLTFAccessorTypeMat3 = @"MAT3";
-static NSString *const GLTFAccessorTypeMat4 = @"MAT4";
+extern NSString *const GLTFAccessorTypeScalar;
+extern NSString *const GLTFAccessorTypeVec2;
+extern NSString *const GLTFAccessorTypeVec3;
+extern NSString *const GLTFAccessorTypeVec4;
+extern NSString *const GLTFAccessorTypeMat2;
+extern NSString *const GLTFAccessorTypeMat3;
+extern NSString *const GLTFAccessorTypeMat4;
 
 @interface GLTFAccessor : NSObject
 

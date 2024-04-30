@@ -1,5 +1,9 @@
 #import "GLTFAnimationSampler.h"
 
+NSString *const GLTFAnimationSamplerInterpolationLinear = @"LINEAR";
+NSString *const GLTFAnimationSamplerInterpolationStep = @"STEP";
+NSString *const GLTFAnimationSamplerInterpolationCubicSpline = @"CUBICSPLINE";
+
 @implementation GLTFAnimationSampler
 
 - (instancetype)init {

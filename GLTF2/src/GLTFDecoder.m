@@ -1,5 +1,7 @@
 #import "GLTFDecoder.h"
 
+NSString *const GLTF2DecodeErrorDomain = @"GLTF2.DecodeError";
+
 @interface DecodeContext : NSObject
 
 @property(nonatomic, strong, nonnull) NSMutableArray<NSString *> *stacks;
@@ -177,8 +179,8 @@
 }
 
 - (nullable NSArray *)getTArray:(NSDictionary *)jsonDict
-                                            key:(const NSString *)key
-                                          class:(Class)class {
+                            key:(const NSString *)key
+                          class:(Class)class {
   NSArray *array = [self getArray:jsonDict key:key];
   if (!array) {
     return nil;
@@ -217,6 +219,21 @@
 }
 
 #pragma mark - GLTFJson
+
++ (nullable GLTFJson *)decodeJsonData:(NSData *)data error:(NSError **)error {
+  NSDictionary *jsonDict = [NSJSONSerialization JSONObjectWithData:data
+                                                           options:0
+                                                             error:error];
+  if (*error)
+    return nil;
+  return [self decodeJsonDict:jsonDict error:error];
+}
+
++ (nullable GLTFJson *)decodeJsonDict:(NSDictionary *)jsonDict
+                                error:(NSError **)error {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  return [decoder decodeJson:jsonDict error:error];
+}
 
 - (nullable GLTFJson *)decodeJson:(NSDictionary *)jsonDict
                             error:(NSError **)error {

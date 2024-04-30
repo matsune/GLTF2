@@ -1,5 +1,9 @@
 #import "GLTFMaterial.h"
 
+NSString *const GLTFMaterialAlphaModeOpaque = @"OPAQUE";
+NSString *const GLTFMaterialAlphaModeMask = @"MASK";
+NSString *const GLTFMaterialAlphaModeBlend = @"BLEND";
+
 @implementation GLTFMaterial
 
 - (instancetype)init {

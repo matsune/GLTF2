@@ -176,7 +176,7 @@
   return numberArray;
 }
 
-- (nullable NSArray<NSDictionary *> *)getTArray:(NSDictionary *)jsonDict
+- (nullable NSArray *)getTArray:(NSDictionary *)jsonDict
                                             key:(const NSString *)key
                                           class:(Class)class {
   NSArray *array = [self getArray:jsonDict key:key];

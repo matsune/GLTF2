@@ -7,8 +7,6 @@ typedef NS_ENUM(NSInteger, GLTFAccessorSparseIndicesComponentType) {
   GLTFAccessorSparseIndicesComponentTypeUnsignedShort = 5123,
   GLTFAccessorSparseIndicesComponentTypeUnsignedInt = 5125
 };
-//
-//BOOL isValidGLTFAccessorSparseIndicesComponentType(NSInteger value);
 
 @interface GLTFAccessorSparseIndices : NSObject
 

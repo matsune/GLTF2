@@ -6,9 +6,7 @@ typedef NS_ENUM(NSInteger, GLTFSamplerMagFilter) {
   GLTFSamplerMagFilterNearest = 9728,
   GLTFSamplerMagFilterLinear = 9729
 };
-//
-//BOOL isValidGLTFSamplerMagFilter(NSInteger value);
-//
+
 typedef NS_ENUM(NSInteger, GLTFSamplerMinFilter) {
   GLTFSamplerMinFilterNearest = 9728,
   GLTFSamplerMinFilterLinear = 9729,
@@ -17,16 +15,12 @@ typedef NS_ENUM(NSInteger, GLTFSamplerMinFilter) {
   GLTFSamplerMinFilterNearestMipmapLinear = 9986,
   GLTFSamplerMinFilterLinearMipmapLinear = 9987
 };
-//
-//BOOL isValidGLTFSamplerMinFilter(NSInteger value);
-//
+
 typedef NS_ENUM(NSInteger, GLTFSamplerWrapMode) {
   GLTFSamplerWrapModeClampToEdge = 33071,
   GLTFSamplerWrapModeMirroredRepeat = 33648,
   GLTFSamplerWrapModeRepeat = 10497
 };
-//
-//BOOL isValidGLTFSamplerWrapMode(NSInteger value);
 
 @interface GLTFSampler : NSObject
 

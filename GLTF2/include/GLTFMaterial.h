@@ -1,14 +1,14 @@
-#import <Foundation/Foundation.h>
 #import "GLTFMaterialNormalTextureInfo.h"
 #import "GLTFMaterialOcclusionTextureInfo.h"
 #import "GLTFMaterialPBRMetallicRoughness.h"
 #import "GLTFTextureInfo.h"
+#import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
-static NSString * const GLTFMaterialAlphaModeOpaque = @"OPAQUE";
-static NSString * const GLTFMaterialAlphaModeMask = @"MASK";
-static NSString * const GLTFMaterialAlphaModeBlend = @"BLEND";
+static NSString *const GLTFMaterialAlphaModeOpaque = @"OPAQUE";
+static NSString *const GLTFMaterialAlphaModeMask = @"MASK";
+static NSString *const GLTFMaterialAlphaModeBlend = @"BLEND";
 
 @interface GLTFMaterial : NSObject
 
@@ -22,7 +22,7 @@ static NSString * const GLTFMaterialAlphaModeBlend = @"BLEND";
 @property(nonatomic, strong, nullable)
     GLTFMaterialOcclusionTextureInfo *occlusionTexture;
 @property(nonatomic, strong, nullable) GLTFTextureInfo *emissiveTexture;
-@property(nonatomic, assign) NSArray<NSNumber *> *emissiveFactor;
+@property(nonatomic, strong) NSArray<NSNumber *> *emissiveFactor;
 @property(nonatomic, copy) NSString *alphaMode;
 @property(nonatomic, assign) float alphaCutoff;
 @property(nonatomic, assign) BOOL doubleSided;

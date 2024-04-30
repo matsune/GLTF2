@@ -6,1218 +6,1722 @@
 
 @implementation GLTFDecoderTests
 
-//#pragma mark - GLTFAccessor
-//
-//- (void)testDecodeAccessorFromJsonWithValidData {
-//  NSDictionary *validJson = @{
-//    @"bufferView" : @1,
-//    @"byteOffset" : @256,
-//    @"componentType" : @5126,
-//    @"normalized" : @false,
-//    @"count" : @100,
-//    @"type" : @"VEC3",
-//    @"max" : @[ @1.0, @2.0, @3.0 ],
-//    @"min" : @[ @0.0, @0.0, @0.0 ],
-//    @"sparse" : @{
-//      @"count" : @3,
-//      @"indices" : @{
-//        @"bufferView" : @0,
-//        @"byteOffset" : @0,
-//        @"componentType" : @5123,
-//        @"extensions" : @{@"exampleExtension" : @true},
-//        @"extras" : @{@"note" : @"This is a test."}
-//      },
-//      @"values" : @{
-//        @"bufferView" : @1,
-//        @"byteOffset" : @0,
-//        @"componentType" : @5126,
-//        @"extensions" : @{@"exampleExtension" : @true},
-//        @"extras" : @{@"note" : @"This is a test."}
-//      },
-//      @"extensions" : @{@"exampleExtension" : @true},
-//      @"extras" : @{@"note" : @"This is a test."}
-//    },
-//    @"name" : @"test_accessor",
-//    @"extensions" : @{@"exampleExtension" : @true},
-//    @"extras" : @{@"note" : @"This is a test."}
-//  };
-//
-//  NSError *error = nil;
-//  GLTFAccessor *accessor = [GLTFDecoder decodeAccessorFromJson:validJson
-//                                                         error:&error];
-//
-//  XCTAssertNotNil(accessor, @"Decoding should succeed");
-//  XCTAssertNil(error, @"There should be no error");
-//
-//  XCTAssertEqual(accessor.bufferView, 1, @"BufferView should be 1");
-//  XCTAssertEqual(accessor.byteOffset, 256, @"ByteOffset should be 256");
-//  XCTAssertEqual(accessor.componentType, GLTFAccessorComponentTypeFloat,
-//                 @"ComponentType should be GLTFAccessorComponentTypeFloat");
-//  XCTAssertFalse(accessor.normalized, @"Normalized should be false");
-//  XCTAssertEqual(accessor.count, 100, @"Count should be 100");
-//  XCTAssertEqual(accessor.type, GLTFAccessorTypeVec3,
-//                 @"Type should be GLTFAccessorTypeVec3");
-//  NSArray *max = @[ @(1.0), @(2.0), @(3.0) ];
-//  XCTAssertEqualObjects(accessor.max, max, @"Max values should match");
-//  NSArray *min = @[ @(0.0), @(0.0), @(0.0) ];
-//  XCTAssertEqualObjects(accessor.min, min, @"Min values should match");
-//
-//  XCTAssertEqualObjects(accessor.name, @"test_accessor", @"Name should match");
-//
-//  XCTAssertNotNil(accessor.sparse, @"Sparse should not be nil");
-//  XCTAssertEqual(accessor.sparse.count, 3, @"Sparse count should be 3");
-//
-//  XCTAssertEqualObjects(accessor.extensions, validJson[@"extensions"],
-//                        @"Extensions should match");
-//  XCTAssertEqualObjects(accessor.extras, validJson[@"extras"],
-//                        @"Extras should match");
-//}
-//
-//- (void)testDecodeAccessorFromJsonWithMissingData {
-//  NSDictionary *missingDataJson = @{
-//    @"byteOffset" : @256,
-//    @"componentType" : @5126,
-//    @"normalized" : @false,
-//    @"count" : @100,
-//    @"type" : @"VEC3",
-//    @"max" : @[ @1.0, @2.0, @3.0 ],
-//    @"min" : @[ @0.0, @0.0, @0.0 ],
-//    @"sparse" : @{
-//      @"count" : @3,
-//      @"indices" : @{
-//        @"bufferView" : @0,
-//        @"byteOffset" : @0,
-//        @"componentType" : @5123,
-//        @"extensions" : @{@"exampleExtension" : @true},
-//        @"extras" : @{@"note" : @"This is a test."}
-//      },
-//      @"values" : @{
-//        @"bufferView" : @1,
-//        @"byteOffset" : @0,
-//        @"componentType" : @5126,
-//        @"extensions" : @{@"exampleExtension" : @true},
-//        @"extras" : @{@"note" : @"This is a test."}
-//      },
-//      @"extensions" : @{@"exampleExtension" : @true},
-//      @"extras" : @{@"note" : @"This is a test."}
-//    },
-//    @"name" : @"test_accessor",
-//    @"extensions" : @{@"exampleExtension" : @true},
-//    @"extras" : @{@"note" : @"This is a test."}
-//  };
-//
-//  NSError *error = nil;
-//  GLTFAccessor *accessor = [GLTFDecoder decodeAccessorFromJson:missingDataJson
-//                                                         error:&error];
-//
-//  XCTAssertNil(accessor,
-//               @"Accessor should be nil due to missing 'bufferView' key");
-//  XCTAssertNotNil(error, @"There should be an error");
-//  XCTAssertEqual(error.code, GLTF2ErrorMissingData,
-//                 @"Error code should indicate missing data");
-//}
-//
-//- (void)testDecodeAccessorFromJsonWithInvalidDataType {
-//  NSDictionary *invalidDataTypeJson = @{
-//    @"bufferView" : @1,
-//    @"byteOffset" : @256,
-//    @"componentType" : @"This is a string, not a number.",
-//    @"normalized" : @false,
-//    @"count" : @100,
-//    @"type" : @"VEC3",
-//    @"max" : @[ @1.0, @2.0, @3.0 ],
-//    @"min" : @[ @0.0, @0.0, @0.0 ],
-//    @"sparse" : @{
-//      @"count" : @3,
-//      @"indices" : @{
-//        @"bufferView" : @0,
-//        @"byteOffset" : @0,
-//        @"componentType" : @5123,
-//        @"extensions" : @{@"exampleExtension" : @true},
-//        @"extras" : @{@"note" : @"This is a test."}
-//      },
-//      @"values" : @{
-//        @"bufferView" : @1,
-//        @"byteOffset" : @0,
-//        @"componentType" : @5126,
-//        @"extensions" : @{@"exampleExtension" : @true},
-//        @"extras" : @{@"note" : @"This is a test."}
-//      },
-//      @"extensions" : @{@"exampleExtension" : @true},
-//      @"extras" : @{@"note" : @"This is a test."}
-//    },
-//    @"name" : @"test_accessor",
-//    @"extensions" : @{@"exampleExtension" : @true},
-//    @"extras" : @{@"note" : @"This is a test."}
-//  };
-//
-//  NSError *error = nil;
-//  GLTFAccessor *accessor =
-//      [GLTFDecoder decodeAccessorFromJson:invalidDataTypeJson error:&error];
-//
-//  XCTAssertNil(accessor, @"Accessor should be nil due to invalid data type");
-//  XCTAssertNotNil(error, @"There should be an error");
-//  XCTAssertEqual(error.code, GLTF2ErrorInvalidFormat,
-//                 @"Error code should indicate invalid format");
-//}
-//
-//#pragma mark - GLTFAccessorSparse
-//
-//- (void)testDecodeAccessorSparseFromJsonWithValidData {
-//  NSDictionary *validJson = @{
-//    @"count" : @3,
-//    @"indices" : @{
-//      @"bufferView" : @0,
-//      @"byteOffset" : @0,
-//      @"componentType" : @5123,
-//      @"extensions" : @{@"exampleExtension" : @true},
-//      @"extras" : @{@"note" : @"This is a test."}
-//    },
-//    @"values" : @{
-//      @"bufferView" : @1,
-//      @"byteOffset" : @0,
-//      @"componentType" : @5126,
-//      @"extensions" : @{@"exampleExtension" : @true},
-//      @"extras" : @{@"note" : @"This is a test."}
-//    },
-//    @"extensions" : @{@"exampleExtension" : @true},
-//    @"extras" : @{@"note" : @"This is a test."}
-//  };
-//
-//  NSError *error = nil;
-//  GLTFAccessorSparse *sparse =
-//      [GLTFDecoder decodeAccessorSparseFromJson:validJson error:&error];
-//
-//  XCTAssertNotNil(sparse, @"Decoding should succeed");
-//  XCTAssertNil(error, @"There should be no error");
-//
-//  XCTAssertEqual(sparse.count, 3, @"Count should be 3");
-//
-//  XCTAssertNotNil(sparse.indices, @"Indices should not be nil");
-//  XCTAssertEqual(sparse.indices.bufferView, 0,
-//                 @"Indices bufferView should be 0");
-//
-//  XCTAssertNotNil(sparse.values, @"Values should not be nil");
-//  XCTAssertEqual(sparse.values.bufferView, 1, @"Values bufferView should be 1");
-//
-//  XCTAssertEqualObjects(sparse.extensions, validJson[@"extensions"],
-//                        @"Extensions should match");
-//  XCTAssertEqualObjects(sparse.extras, validJson[@"extras"],
-//                        @"Extras should match");
-//}
-//
-//- (void)testDecodeAccessorSparseFromJsonWithMissingData {
-//  NSDictionary *missingDataJson = @{
-//    @"values" : @{
-//      @"bufferView" : @1,
-//      @"byteOffset" : @0,
-//      @"componentType" : @5126,
-//      @"extensions" : @{@"exampleExtension" : @true},
-//      @"extras" : @{@"note" : @"This is a test."}
-//    },
-//    @"extensions" : @{@"exampleExtension" : @true},
-//    @"extras" : @{@"note" : @"This is a test."}
-//  };
-//
-//  NSError *error = nil;
-//  GLTFAccessorSparse *sparse =
-//      [GLTFDecoder decodeAccessorSparseFromJson:missingDataJson error:&error];
-//
-//  XCTAssertNil(sparse, @"Sparse should be nil due to missing 'count' key");
-//  XCTAssertNotNil(error, @"There should be an error");
-//  XCTAssertEqual(error.code, GLTF2ErrorMissingData,
-//                 @"Error code should indicate missing data");
-//}
-//
-//- (void)testDecodeAccessorSparseFromJsonWithInvalidDataType {
-//  NSDictionary *invalidDataTypeJson = @{
-//    @"count" : @"This is a string, not a number.",
-//    @"indices" : @{
-//      @"bufferView" : @0,
-//      @"byteOffset" : @0,
-//      @"componentType" : @5123,
-//      @"extensions" : @{@"exampleExtension" : @true},
-//      @"extras" : @{@"note" : @"This is a test."}
-//    },
-//    @"values" : @{
-//      @"bufferView" : @1,
-//      @"byteOffset" : @0,
-//      @"componentType" : @5126,
-//      @"extensions" : @{@"exampleExtension" : @true},
-//      @"extras" : @{@"note" : @"This is a test."}
-//    },
-//    @"extensions" : @{@"exampleExtension" : @true},
-//    @"extras" : @{@"note" : @"This is a test."}
-//  };
-//
-//  NSError *error = nil;
-//  GLTFAccessorSparse *sparse =
-//      [GLTFDecoder decodeAccessorSparseFromJson:invalidDataTypeJson
-//                                          error:&error];
-//
-//  XCTAssertNil(sparse, @"Sparse should be nil due to invalid data type");
-//  XCTAssertNotNil(error, @"There should be an error");
-//  XCTAssertEqual(error.code, GLTF2ErrorInvalidFormat,
-//                 @"Error code should indicate invalid format");
-//}
-//
-//#pragma mark - GLTFAccessorSparseIndices
-//
-//- (void)testDecodeAccessorSparseIndicesFromJsonWithValidData {
-//  NSDictionary *validJson = @{
-//    @"bufferView" : @1,
-//    @"byteOffset" : @256,
-//    @"componentType" : @5123, // UNSIGNED_SHORT
-//    @"extensions" : @{@"exampleExtension" : @true},
-//    @"extras" : @{@"note" : @"This is a test."}
-//  };
-//  NSError *error = nil;
-//
-//  GLTFAccessorSparseIndices *indices =
-//      [GLTFDecoder decodeAccessorSparseIndicesFromJson:validJson error:&error];
-//
-//  XCTAssertNotNil(indices, "The decoded object should not be nil.");
-//  XCTAssertNil(error, "There should be no error during the decoding process.");
-//
-//  XCTAssertEqual(indices.bufferView, 1,
-//                 "The bufferView should be decoded correctly.");
-//  XCTAssertEqual(indices.byteOffset, 256,
-//                 "The byteOffset should be decoded correctly.");
-//  XCTAssertEqual(indices.componentType, 5123,
-//                 "The componentType should be decoded correctly.");
-//
-//  NSDictionary *expectedExtensions = @{@"exampleExtension" : @true};
-//  XCTAssertEqualObjects(indices.extensions, expectedExtensions,
-//                        "The extensions should be decoded correctly.");
-//
-//  NSDictionary *expectedExtras = @{@"note" : @"This is a test."};
-//  XCTAssertEqualObjects(indices.extras, expectedExtras,
-//                        "The extras should be decoded correctly.");
-//}
-//
-//- (void)testDecodeAccessorSparseIndicesFromJsonWithMissingData {
-//  NSDictionary *missingDataJson = @{};
-//  NSError *error = nil;
-//  GLTFAccessorSparseIndices *indices =
-//      [GLTFDecoder decodeAccessorSparseIndicesFromJson:missingDataJson
-//                                                 error:&error];
-//
-//  XCTAssertNil(indices, "Indices should be nil because of missing data.");
-//  XCTAssertNotNil(
-//      error, "Error should not be nil because the required key is missing.");
-//  XCTAssertEqual(error.code, GLTF2ErrorMissingData,
-//                 "Error code should indicate missing data.");
-//}
-//
-//- (void)testDecodeAccessorSparseIndicesFromJsonWithInvalidDataType {
-//  NSDictionary *invalidDataTypeJson =
-//      @{@"bufferView" : @"This is a string, not a number."};
-//  NSError *error = nil;
-//  GLTFAccessorSparseIndices *indices =
-//      [GLTFDecoder decodeAccessorSparseIndicesFromJson:invalidDataTypeJson
-//                                                 error:&error];
-//
-//  XCTAssertNil(indices, "Indices should be nil because of invalid data type.");
-//  XCTAssertNotNil(
-//      error, "Error should not be nil because the data type is incorrect.");
-//  XCTAssertEqual(error.code, GLTF2ErrorInvalidFormat,
-//                 "Error code should indicate invalid data format.");
-//}
-//
-//#pragma mark - GLTFAccessorSparseValues
-//
-//- (void)testDecodeAccessorSparseValuesFromJsonWithValidData {
-//  NSDictionary *validJson = @{
-//    @"bufferView" : @1,
-//    @"byteOffset" : @256,
-//    @"extensions" : @{@"exampleExtension" : @true},
-//    @"extras" : @{@"note" : @"This is a test."}
-//  };
-//  NSError *error;
-//
-//  GLTFAccessorSparseValues *values =
-//      [GLTFDecoder decodeAccessorSparseValuesFromJson:validJson error:&error];
-//
-//  XCTAssertNotNil(values, "The decoded object should not be nil.");
-//  XCTAssertNil(error, "There should be no error during the decoding process.");
-//
-//  XCTAssertEqual(values.bufferView, 1,
-//                 "The bufferView should be decoded correctly.");
-//  XCTAssertEqual(values.byteOffset, 256,
-//                 "The byteOffset should be decoded correctly.");
-//
-//  NSDictionary *expectedExtensions = @{@"exampleExtension" : @true};
-//  XCTAssertEqualObjects(values.extensions, expectedExtensions,
-//                        "The extensions should be decoded correctly.");
-//
-//  NSDictionary *expectedExtras = @{@"note" : @"This is a test."};
-//  XCTAssertEqualObjects(values.extras, expectedExtras,
-//                        "The extras should be decoded correctly.");
-//}
-//
-//- (void)testDecodeAccessorSparseValuesFromJsonWithMissingData {
-//  NSDictionary *missingDataJson = @{};
-//  NSError *error = nil;
-//  GLTFAccessorSparseValues *values =
-//      [GLTFDecoder decodeAccessorSparseValuesFromJson:missingDataJson
-//                                                error:&error];
-//
-//  XCTAssertNil(values, "Values should be nil because of missing data.");
-//  XCTAssertNotNil(
-//      error, "Error should not be nil because the required key is missing.");
-//  XCTAssertEqual(error.code, GLTF2ErrorMissingData,
-//                 "Error code should indicate missing data.");
-//}
-//
-//- (void)testDecodeAccessorSparseValuesFromJsonWithInvalidDataType {
-//  NSDictionary *invalidDataTypeJson =
-//      @{@"bufferView" : @"This is a string, not a number."};
-//  NSError *error = nil;
-//  GLTFAccessorSparseValues *values =
-//      [GLTFDecoder decodeAccessorSparseValuesFromJson:invalidDataTypeJson
-//                                                error:&error];
-//
-//  XCTAssertNil(values, "Values should be nil because of invalid data type.");
-//  XCTAssertNotNil(
-//      error, "Error should not be nil because the data type is incorrect.");
-//  XCTAssertEqual(error.code, GLTF2ErrorInvalidFormat,
-//                 "Error code should indicate invalid data format.");
-//}
-//
-//#pragma mark - GLTFMaterialNormalTextureInfo
-//
-//- (void)testDecodeMaterialNormalTextureInfoFromJsonWithValidData {
-//  NSDictionary *validJson = @{
-//    @"index" : @1,
-//    @"texCoord" : @2,
-//    @"scale" : @0.5,
-//    @"extensions" : @{@"exampleExtension" : @true},
-//    @"extras" : @{@"note" : @"This is a test."}
-//  };
-//
-//  NSError *error = nil;
-//  GLTFMaterialNormalTextureInfo *normalTextureInfo =
-//      [GLTFDecoder decodeMaterialNormalTextureInfoFromJson:validJson
-//                                                     error:&error];
-//
-//  XCTAssertNotNil(normalTextureInfo, @"Decoding should succeed.");
-//  XCTAssertNil(error, @"There should be no error.");
-//
-//  XCTAssertEqual(normalTextureInfo.index, 1, @"Index should match.");
-//  XCTAssertEqual(normalTextureInfo.texCoord, 2, @"TexCoord should match.");
-//  XCTAssertEqual(normalTextureInfo.scale, 0.5, @"Scale should match.");
-//
-//  NSDictionary *expectedExtensions = @{@"exampleExtension" : @true};
-//  XCTAssertEqualObjects(normalTextureInfo.extensions, expectedExtensions,
-//                        @"Extensions should match.");
-//
-//  NSDictionary *expectedExtras = @{@"note" : @"This is a test."};
-//  XCTAssertEqualObjects(normalTextureInfo.extras, expectedExtras,
-//                        @"Extras should match.");
-//}
-//
-//- (void)testDecodeMaterialNormalTextureInfoFromJsonWithMissingData {
-//  NSDictionary *missingDataJson = @{
-//    // Missing index
-//    @"texCoord" : @2,
-//    @"scale" : @0.5,
-//    @"extensions" : @{@"exampleExtension" : @true},
-//    @"extras" : @{@"note" : @"This is a test."}
-//  };
-//
-//  NSError *error = nil;
-//  GLTFMaterialNormalTextureInfo *normalTextureInfo =
-//      [GLTFDecoder decodeMaterialNormalTextureInfoFromJson:missingDataJson
-//                                                     error:&error];
-//
-//  XCTAssertNil(normalTextureInfo,
-//               @"NormalTextureInfo should be nil due to missing 'index'.");
-//  XCTAssertNotNil(error, @"There should be an error.");
-//  XCTAssertEqual(error.code, GLTF2ErrorMissingData,
-//                 @"Error code should indicate missing data.");
-//}
-//
-//- (void)testDecodeMaterialNormalTextureInfoFromJsonWithInvalidDataType {
-//  NSDictionary *invalidDataTypeJson = @{
-//    @"index" : @"This should be a number, not a string.",
-//    @"texCoord" : @2,
-//    @"scale" : @0.5,
-//    @"extensions" : @{@"exampleExtension" : @true},
-//    @"extras" : @{@"note" : @"This is a test."}
-//  };
-//
-//  NSError *error = nil;
-//  GLTFMaterialNormalTextureInfo *normalTextureInfo =
-//      [GLTFDecoder decodeMaterialNormalTextureInfoFromJson:invalidDataTypeJson
-//                                                     error:&error];
-//
-//  XCTAssertNil(
-//      normalTextureInfo,
-//      @"NormalTextureInfo should be nil due to invalid data type for index.");
-//  XCTAssertNotNil(error, @"There should be an error.");
-//  XCTAssertEqual(error.code, GLTF2ErrorInvalidFormat,
-//                 @"Error code should indicate invalid format.");
-//}
-//
-//#pragma mark - GLTFMaterialOcclusionTextureInfo
-//
-//- (void)testDecodeWithValidData {
-//  NSDictionary *validJson = @{
-//    @"index" : @1,
-//    @"texCoord" : @2,
-//    @"strength" : @0.5,
-//    @"extensions" : @{@"dummyExtension" : @{}},
-//    @"extras" : @{@"dummyExtra" : @"data"}
-//  };
-//
-//  NSError *error = nil;
-//  GLTFMaterialOcclusionTextureInfo *textureInfo =
-//      [GLTFDecoder decodeMaterialOcclusionTextureInfoFromJson:validJson
-//                                                        error:&error];
-//
-//  XCTAssertNotNil(textureInfo, @"Texture info should not be nil.");
-//  XCTAssertNil(error, @"Error should be nil.");
-//  XCTAssertEqual(textureInfo.index, 1, @"Index should be 1.");
-//  XCTAssertEqual(textureInfo.texCoord, 2, @"TexCoord should be 2.");
-//  XCTAssertEqual(textureInfo.strength, 0.5, @"Strength should be 0.5.");
-//  XCTAssertNotNil(textureInfo.extensions, @"Extensions should not be nil.");
-//  XCTAssertNotNil(textureInfo.extras, @"Extras should not be nil.");
-//}
-//
-//- (void)testDecodeWithMissingOptionalData {
-//  NSDictionary *jsonWithMissingOptionals = @{
-//    @"index" : @1
-//    // Missing texCoord, strength, extensions, and extras
-//  };
-//
-//  NSError *error = nil;
-//  GLTFMaterialOcclusionTextureInfo *textureInfo = [GLTFDecoder
-//      decodeMaterialOcclusionTextureInfoFromJson:jsonWithMissingOptionals
-//                                           error:&error];
-//
-//  XCTAssertNotNil(textureInfo,
-//                  @"Texture info should not be nil despite missing optionals.");
-//  XCTAssertNil(error, @"Error should be nil when optional data is missing.");
-//  XCTAssertEqual(textureInfo.index, 1, @"Index should still be 1.");
-//  XCTAssertEqual(textureInfo.texCoord, 0, @"TexCoord should default to 0.");
-//  XCTAssertEqual(textureInfo.strength, 1.0, @"Strength should default to 1.0.");
-//  XCTAssertNil(textureInfo.extensions,
-//               @"Extensions should be nil if not provided.");
-//  XCTAssertNil(textureInfo.extras, @"Extras should be nil if not provided.");
-//}
-//
-//- (void)testDecodeWithInvalidData {
-//  NSDictionary *invalidJson = @{
-//    @"index" : @"invalid",    // Index should be an integer
-//    @"texCoord" : @"invalid", // texCoord should be an integer
-//    @"strength" : @"invalid"  // strength should be a number
-//  };
-//
-//  NSError *error = nil;
-//  GLTFMaterialOcclusionTextureInfo *textureInfo =
-//      [GLTFDecoder decodeMaterialOcclusionTextureInfoFromJson:invalidJson
-//                                                        error:&error];
-//
-//  XCTAssertNil(textureInfo, @"Texture info should be nil due to invalid data.");
-//  XCTAssertNotNil(error,
-//                  @"An error should be reported due to invalid data types.");
-//}
-//
-//#pragma mark - GLTFMaterialPBRMetallicRoughness
-//
-//- (void)testDecodeMaterialPBRMetallicRoughnessWithValidData {
-//  NSDictionary *validJson = @{
-//    @"baseColorFactor" : @[ @0.5, @0.5, @0.5, @1.0 ],
-//    @"metallicFactor" : @1.0,
-//    @"roughnessFactor" : @0.5,
-//    @"extensions" : @{@"someExtension" : @{}},
-//    @"extras" : @{@"someData" : @"value"}
-//  };
-//
-//  NSError *error = nil;
-//  GLTFMaterialPBRMetallicRoughness *material =
-//      [GLTFDecoder decodeMaterialPBRMetallicRoughnessFromJson:validJson
-//                                                        error:&error];
-//
-//  XCTAssertNotNil(material, @"Decoding should succeed.");
-//  XCTAssertNil(error, @"There should be no error.");
-//  XCTAssertEqualObjects(material.baseColorFactor, (@[ @0.5, @0.5, @0.5, @1.0 ]),
-//                        @"Base color factor should match.");
-//  XCTAssertEqual(material.metallicFactor, 1.0,
-//                 @"Metallic factor should be 1.0.");
-//  XCTAssertEqual(material.roughnessFactor, 0.5,
-//                 @"Roughness factor should be 0.5.");
-//  XCTAssertNotNil(material.extensions, @"Extensions should not be nil.");
-//  XCTAssertNotNil(material.extras, @"Extras should not be nil.");
-//}
-//
-//- (void)testDecodeMaterialPBRMetallicRoughnessWithDefaultValues {
-//  NSDictionary *validJson = @{
-//      // Empty JSON to trigger defaults
-//      // No values provided, should default all
-//  };
-//
-//  NSError *error = nil;
-//  GLTFMaterialPBRMetallicRoughness *material =
-//      [GLTFDecoder decodeMaterialPBRMetallicRoughnessFromJson:validJson
-//                                                        error:&error];
-//
-//  XCTAssertNotNil(material, @"Decoding should succeed.");
-//  XCTAssertNil(error, @"There should be no error.");
-//  XCTAssertEqualObjects(material.baseColorFactor, (@[ @1.0, @1.0, @1.0, @1.0 ]),
-//                        @"Base color factor should default to [1,1,1,1].");
-//  XCTAssertEqual(material.metallicFactor, 1.0,
-//                 @"Default metallic factor should be 1.0.");
-//  XCTAssertEqual(material.roughnessFactor, 1.0,
-//                 @"Default roughness factor should be 1.0.");
-//  XCTAssertNil(material.baseColorTexture,
-//               @"Base color texture should be nil if not provided.");
-//  XCTAssertNil(material.metallicRoughnessTexture,
-//               @"Metallic roughness texture should be nil if not provided.");
-//  XCTAssertNil(material.extensions,
-//               @"Extensions should be nil if not provided.");
-//  XCTAssertNil(material.extras, @"Extras should be nil if not provided.");
-//}
-//
-//- (void)testDecodeMaterialPBRMetallicRoughnessWithInvalidData {
-//  NSDictionary *invalidJson = @{
-//    @"baseColorFactor" : @"Not an array",
-//    @"metallicFactor" : @"Not a number",
-//    @"roughnessFactor" : @"Also not a number"
-//  };
-//
-//  NSError *error = nil;
-//  GLTFMaterialPBRMetallicRoughness *material =
-//      [GLTFDecoder decodeMaterialPBRMetallicRoughnessFromJson:invalidJson
-//                                                        error:&error];
-//
-//  XCTAssertNil(material, @"Decoding should fail due to invalid data.");
-//  XCTAssertNotNil(error,
-//                  @"There should be an error due to invalid data types.");
-//}
-//
-//#pragma mark - GLTFMesh
-//
-//- (void)testDecodeMeshFromJsonWithValidData {
-//  NSDictionary *validJson = @{
-//    @"primitives" : @[ @{
-//      @"attributes" : @{@"POSITION" : @0, @"NORMAL" : @1},
-//      @"indices" : @2,
-//      @"material" : @3,
-//      @"mode" : @"TRIANGLES",
-//      @"targets" : @[ @4, @5 ],
-//      @"extensions" : @{@"exampleExtension" : @true},
-//      @"extras" : @{@"note" : @"This is a test."}
-//    } ],
-//    @"weights" : @[ @0.5, @0.5 ],
-//    @"name" : @"testMesh",
-//    @"extensions" : @{@"exampleExtension" : @true},
-//    @"extras" : @{@"note" : @"This is a note."}
-//  };
-//
-//  NSError *error = nil;
-//  GLTFMesh *mesh = [GLTFDecoder decodeMeshFromJson:validJson error:&error];
-//
-//  XCTAssertNotNil(mesh, @"Decoding should succeed.");
-//  XCTAssertNil(error, @"There should be no error.");
-//  XCTAssertEqual(mesh.primitives.count, 1, @"There should be one primitive.");
-//  NSArray *weights = @[ @0.5, @0.5 ];
-//  XCTAssertEqualObjects(mesh.weights, weights, @"Weights should match.");
-//  XCTAssertEqualObjects(mesh.name, @"testMesh", @"Name should match.");
-//  NSDictionary *expectedExtensions = @{@"exampleExtension" : @true};
-//  XCTAssertEqualObjects(mesh.extensions, expectedExtensions,
-//                        @"Extensions should match.");
-//  NSDictionary *expectedExtras = @{@"note" : @"This is a note."};
-//  XCTAssertEqualObjects(mesh.extras, expectedExtras, @"Extras should match.");
-//}
-//
-//- (void)testDecodeMeshFromJsonWithMissingData {
-//  NSDictionary *missingDataJson = @{
-//    // Missing primitives
-//    @"weights" : @[ @0.5, @0.5 ],
-//    @"name" : @"testMesh",
-//    @"extensions" : @{@"exampleExtension" : @true},
-//    @"extras" : @{@"note" : @"This is a note."}
-//  };
-//
-//  NSError *error = nil;
-//  GLTFMesh *mesh = [GLTFDecoder decodeMeshFromJson:missingDataJson
-//                                             error:&error];
-//
-//  XCTAssertNil(mesh, @"Mesh should be nil due to missing 'primitives'.");
-//  XCTAssertNotNil(error, @"There should be an error.");
-//  XCTAssertEqual(error.code, GLTF2ErrorMissingData,
-//                 @"Error code should indicate missing data.");
-//}
-//
-//- (void)testDecodeMeshFromJsonWithInvalidDataType {
-//  NSDictionary *invalidDataTypeJson = @{
-//    @"primitives" : @"This should be an array, not a string.",
-//    @"weights" : @[ @0.5, @0.5 ],
-//    @"name" : @"testMesh",
-//    @"extensions" : @{@"exampleExtension" : @true},
-//    @"extras" : @{@"note" : @"This is a note."}
-//  };
-//
-//  NSError *error = nil;
-//  GLTFMesh *mesh = [GLTFDecoder decodeMeshFromJson:invalidDataTypeJson
-//                                             error:&error];
-//
-//  XCTAssertNil(
-//      mesh, @"Mesh should be nil due to invalid data type for 'primitives'.");
-//  XCTAssertNotNil(error, @"There should be an error.");
-//  XCTAssertEqual(error.code, GLTF2ErrorInvalidFormat,
-//                 @"Error code should indicate invalid format.");
-//}
-//
-//#pragma mark - GLTFMeshPrimitive
-//
-//- (void)testDecodeMeshPrimitiveFromJsonWithValidData {
-//  NSDictionary *validJson = @{
-//    @"attributes" : @{@"POSITION" : @0, @"NORMAL" : @1},
-//    @"indices" : @2,
-//    @"material" : @3,
-//    @"mode" : @"TRIANGLES",
-//    @"targets" : @[ @4, @5 ],
-//    @"extensions" : @{@"exampleExtension" : @true},
-//    @"extras" : @{@"note" : @"This is a test."}
-//  };
-//
-//  NSError *error = nil;
-//  GLTFMeshPrimitive *primitive =
-//      [GLTFDecoder decodeMeshPrimitiveFromJson:validJson error:&error];
-//
-//  XCTAssertNotNil(primitive, @"Decoding should succeed.");
-//  XCTAssertNil(error, @"There should be no error.");
-//
-//  NSDictionary *expectedAttributes = @{@"POSITION" : @0, @"NORMAL" : @1};
-//  XCTAssertEqualObjects(primitive.attributes, expectedAttributes,
-//                        @"Attributes should match.");
-//  XCTAssertEqual(primitive.indices, 2, @"Indices should match.");
-//  XCTAssertEqual(primitive.material, 3, @"Material should match.");
-//  XCTAssertEqual(primitive.mode, GLTFPrimitiveModeTriangles,
-//                 @"Mode should be triangles.");
-//
-//  NSArray *expectedTargets = @[ @4, @5 ];
-//  XCTAssertEqualObjects(primitive.targets, expectedTargets,
-//                        @"Targets should match.");
-//
-//  NSDictionary *expectedExtensions = @{@"exampleExtension" : @true};
-//  XCTAssertEqualObjects(primitive.extensions, expectedExtensions,
-//                        @"Extensions should match.");
-//
-//  NSDictionary *expectedExtras = @{@"note" : @"This is a test."};
-//  XCTAssertEqualObjects(primitive.extras, expectedExtras,
-//                        @"Extras should match.");
-//}
-//
-//- (void)testDecodeMeshPrimitiveFromJsonWithMissingData {
-//  NSDictionary *missingDataJson = @{
-//    // Missing attributes
-//    @"indices" : @2,
-//    @"material" : @3,
-//    @"mode" : @"TRIANGLES",
-//    @"targets" : @[ @{@"POSITION" : @4}, @{@"NORMAL" : @5} ],
-//    @"extensions" : @{@"exampleExtension" : @true},
-//    @"extras" : @{@"note" : @"This is a test."}
-//  };
-//
-//  NSError *error = nil;
-//  GLTFMeshPrimitive *primitive =
-//      [GLTFDecoder decodeMeshPrimitiveFromJson:missingDataJson error:&error];
-//
-//  XCTAssertNil(primitive,
-//               @"Primitive should be nil due to missing 'attributes'.");
-//  XCTAssertNotNil(error, @"There should be an error.");
-//  XCTAssertEqual(error.code, GLTF2ErrorMissingData,
-//                 @"Error code should indicate missing data.");
-//}
-//
-//- (void)testDecodeMeshPrimitiveFromJsonWithInvalidDataType {
-//  NSDictionary *invalidDataTypeJson = @{
-//    @"attributes" : @"This should be a dictionary, not a string.",
-//    @"indices" : @2,
-//    @"material" : @3,
-//    @"mode" : @"TRIANGLES",
-//    @"targets" : @[ @{@"POSITION" : @4}, @{@"NORMAL" : @5} ],
-//    @"extensions" : @{@"exampleExtension" : @true},
-//    @"extras" : @{@"note" : @"This is a test."}
-//  };
-//
-//  NSError *error = nil;
-//  GLTFMeshPrimitive *primitive =
-//      [GLTFDecoder decodeMeshPrimitiveFromJson:invalidDataTypeJson
-//                                         error:&error];
-//
-//  XCTAssertNil(
-//      primitive,
-//      @"Primitive should be nil due to invalid data type for attributes.");
-//  XCTAssertNotNil(error, @"There should be an error.");
-//  XCTAssertEqual(error.code, GLTF2ErrorInvalidFormat,
-//                 @"Error code should indicate invalid format.");
-//}
-//
-//#pragma mark - GLTFNode
-//
-//- (void)testDecodeNodeWithValidData {
-//  NSDictionary *validJson = @{
-//    @"camera" : @1,
-//    @"children" : @[ @2, @3 ],
-//    @"skin" : @4,
-//    @"matrix" :
-//        @[ @1, @0, @0, @0, @0, @1, @0, @0, @0, @0, @1, @0, @0, @0, @0, @1 ],
-//    @"mesh" : @5,
-//    @"rotation" : @[ @0, @0, @0, @1 ],
-//    @"scale" : @[ @1, @1, @1 ],
-//    @"translation" : @[ @0, @0, @0 ],
-//    @"weights" : @[ @0.5, @0.5 ],
-//    @"name" : @"testNode",
-//    @"extensions" : @{@"exampleExtension" : @true},
-//    @"extras" : @{@"note" : @"This is a test."}
-//  };
-//
-//  NSError *error = nil;
-//  GLTFNode *node = [GLTFDecoder decodeNodeFromJson:validJson error:&error];
-//
-//  XCTAssertNotNil(node, "The decoded object should not be nil.");
-//  XCTAssertNil(error, "There should be no error during the decoding process.");
-//
-//  XCTAssertEqual(node.camera, 1,
-//                 "The camera index should be decoded correctly.");
-//  NSArray *children = @[ @2, @3 ];
-//  XCTAssertEqualObjects(node.children, children,
-//                        "The children array should be decoded correctly.");
-//  XCTAssertEqual(node.skin, 4, "The skin index should be decoded correctly.");
-//  simd_float4x4 matrix =
-//      (simd_float4x4){(simd_float4){1, 0, 0, 0}, (simd_float4){0, 1, 0, 0},
-//                      (simd_float4){0, 0, 1, 0}, (simd_float4){0, 0, 0, 1}};
-//  for (int i = 0; i < 4; i++) {
-//    for (int j = 0; j < 4; j++) {
-//      XCTAssertEqual(node.matrix.columns[i][j], matrix.columns[i][j],
-//                     @"The element at row %d column %d should match", i, j);
-//    }
-//  }
-//  XCTAssertEqual(node.mesh, 5, "The mesh index should be decoded correctly.");
-//  NSArray *rotation = @[ @0, @0, @0, @1 ];
-//  XCTAssertEqualObjects(node.rotation, rotation,
-//                        "The rotation should be decoded correctly.");
-//  NSArray *scale = @[ @1, @1, @1 ];
-//  XCTAssertEqualObjects(node.scale, scale,
-//                        "The scale should be decoded correctly.");
-//  NSArray *translation = @[ @0, @0, @0 ];
-//  XCTAssertEqualObjects(node.translation, translation,
-//                        "The translation should be decoded correctly.");
-//  NSArray *weights = @[ @0.5, @0.5 ];
-//  XCTAssertEqualObjects(node.weights, weights,
-//                        "The weights should be decoded correctly.");
-//  XCTAssertEqualObjects(node.name, @"testNode",
-//                        "The name should be decoded correctly.");
-//
-//  NSDictionary *expectedExtensions = @{@"exampleExtension" : @true};
-//  XCTAssertEqualObjects(node.extensions, expectedExtensions,
-//                        "The extensions should be decoded correctly.");
-//
-//  NSDictionary *expectedExtras = @{@"note" : @"This is a test."};
-//  XCTAssertEqualObjects(node.extras, expectedExtras,
-//                        "The extras should be decoded correctly.");
-//}
-//
-//- (void)testDefaultValues {
-//  NSDictionary *emptyJson = @{};
-//  NSError *error = nil;
-//  GLTFNode *node = [GLTFDecoder decodeNodeFromJson:emptyJson error:&error];
-//
-//  XCTAssertNotNil(node, "Node object should not be nil.");
-//  XCTAssertNil(error, "There should be no error for empty JSON data.");
-//
-//  XCTAssertEqual(node.camera, 0, "Default value for camera should be 0.");
-//  XCTAssertNil(node.children, "Default value for children should be nil.");
-//  XCTAssertEqual(node.skin, 0, "Default value for skin should be 0.");
-//
-//  simd_float4x4 defaultMatrix =
-//      (simd_float4x4){(simd_float4){1, 0, 0, 0}, (simd_float4){0, 1, 0, 0},
-//                      (simd_float4){0, 0, 1, 0}, (simd_float4){0, 0, 0, 1}};
-//  for (int i = 0; i < 4; i++) {
-//    for (int j = 0; j < 4; j++) {
-//      XCTAssertEqual(node.matrix.columns[i][j], defaultMatrix.columns[i][j],
-//                     @"Default value for matrix should be identity matrix.");
-//    }
-//  }
-//
-//  XCTAssertEqual(node.mesh, 0, "Default value for mesh should be 0.");
-//
-//  NSArray *defaultRotation = @[ @0, @0, @0, @1 ];
-//  XCTAssertEqualObjects(node.rotation, defaultRotation,
-//                        "Default value for rotation should be [0, 0, 0, 1].");
-//
-//  NSArray *defaultScale = @[ @1, @1, @1 ];
-//  XCTAssertEqualObjects(node.scale, defaultScale,
-//                        "Default value for scale should be [1, 1, 1].");
-//
-//  NSArray *defaultTranslation = @[ @0, @0, @0 ];
-//  XCTAssertEqualObjects(node.translation, defaultTranslation,
-//                        "Default value for translation should be [0, 0, 0].");
-//
-//  XCTAssertNil(node.weights, "Default value for weights should be nil.");
-//  XCTAssertNil(node.name, "Default value for name should be nil.");
-//  XCTAssertNil(node.extensions, "Default value for extensions should be nil.");
-//  XCTAssertNil(node.extras, "Default value for extras should be nil.");
-//}
-//
-//- (void)testDecodeNodeWithInvalidData {
-//  NSDictionary *invalidDataJson =
-//      @{@"matrix" : @"This is a string, not an array."};
-//  NSError *error = nil;
-//  GLTFNode *node = [GLTFDecoder decodeNodeFromJson:invalidDataJson
-//                                             error:&error];
-//
-//  XCTAssertNil(node, "Node should be nil because of invalid data.");
-//  XCTAssertNotNil(error,
-//                  "Error should not be nil because the data is incorrect.");
-//  XCTAssertEqual(error.code, GLTF2ErrorInvalidFormat,
-//                 "Error code should indicate invalid data format.");
-//}
-//
-//#pragma mark - GLTFSampler
-//
-//- (void)testDecodeSamplerFromJsonWithValidData {
-//  NSDictionary *validJson = @{
-//    @"magFilter" : @9728, // NEAREST
-//    @"minFilter" : @9729, // LINEAR
-//    @"wrapS" : @10497,    // REPEAT
-//    @"wrapT" : @10497,    // REPEAT
-//    @"name" : @"testSampler",
-//    @"extensions" : @{@"exampleExtension" : @true},
-//    @"extras" : @{@"note" : @"This is a test."}
-//  };
-//
-//  NSError *error = nil;
-//  GLTFSampler *sampler = [GLTFDecoder decodeSamplerFromJson:validJson
-//                                                      error:&error];
-//
-//  XCTAssertNotNil(sampler, "The decoded object should not be nil.");
-//  XCTAssertNil(error, "There should be no error during the decoding process.");
-//
-//  XCTAssertEqual(sampler.magFilter, 9728,
-//                 "The magFilter should be decoded correctly.");
-//  XCTAssertEqual(sampler.minFilter, 9729,
-//                 "The minFilter should be decoded correctly.");
-//  XCTAssertEqual(sampler.wrapS, 10497,
-//                 "The wrapS should be decoded correctly.");
-//  XCTAssertEqual(sampler.wrapT, 10497,
-//                 "The wrapT should be decoded correctly.");
-//  XCTAssertEqualObjects(sampler.name, @"testSampler",
-//                        "The name should be decoded correctly.");
-//
-//  NSDictionary *expectedExtensions = @{@"exampleExtension" : @true};
-//  XCTAssertEqualObjects(sampler.extensions, expectedExtensions,
-//                        "The extensions should be decoded correctly.");
-//
-//  NSDictionary *expectedExtras = @{@"note" : @"This is a test."};
-//  XCTAssertEqualObjects(sampler.extras, expectedExtras,
-//                        "The extras should be decoded correctly.");
-//}
-//
-//- (void)testDecodeSamplerFromJsonWithEmptyData {
-//  NSDictionary *emptyJson = @{};
-//  NSError *error = nil;
-//  GLTFSampler *sampler = [GLTFDecoder decodeSamplerFromJson:emptyJson
-//                                                      error:&error];
-//
-//  XCTAssertNotNil(sampler, "Sampler object should not be nil.");
-//  XCTAssertNil(error, "There should be no error for empty JSON data.");
-//
-//  // Check default values
-//  XCTAssertEqual(sampler.magFilter, 0, "MagFilter should default to 0.");
-//  XCTAssertEqual(sampler.minFilter, 0, "MinFilter should default to 0.");
-//  XCTAssertEqual(sampler.wrapS, 10497, // Default value
-//                 "WrapS should default to 10497.");
-//  XCTAssertEqual(sampler.wrapT, 10497, // Default value
-//                 "WrapT should default to 10497.");
-//  XCTAssertNil(sampler.name, "Name should be nil for empty JSON.");
-//  XCTAssertNil(sampler.extensions, "Extensions should be nil for empty JSON.");
-//  XCTAssertNil(sampler.extras, "Extras should be nil for empty JSON.");
-//}
-//
-//- (void)testDecodeSamplerFromJsonWithInvalidDataType {
-//  NSDictionary *invalidDataTypeJson =
-//      @{@"magFilter" : @"This is a string, not a number."};
-//  NSError *error = nil;
-//  GLTFSampler *sampler = [GLTFDecoder decodeSamplerFromJson:invalidDataTypeJson
-//                                                      error:&error];
-//
-//  XCTAssertNil(sampler, "Sampler should be nil because of invalid data type.");
-//  XCTAssertNotNil(
-//      error, "Error should not be nil because the data type is incorrect.");
-//  XCTAssertEqual(error.code, GLTF2ErrorInvalidFormat,
-//                 "Error code should indicate invalid data format.");
-//}
-//
-//#pragma mark - GLTFScene
-//
-//- (void)testDecodeSceneFromJsonWithValidData {
-//  NSDictionary *validJson = @{
-//    @"nodes" : @[ @1, @2, @3 ],
-//    @"name" : @"testScene",
-//    @"extensions" : @{@"exampleExtension" : @true},
-//    @"extras" : @{@"note" : @"This is a test."}
-//  };
-//  NSError *error;
-//
-//  GLTFScene *scene = [GLTFDecoder decodeSceneFromJson:validJson error:&error];
-//
-//  XCTAssertNotNil(scene, "The decoded object should not be nil.");
-//  XCTAssertNil(error, "There should be no error during the decoding process.");
-//
-//  NSArray *nodes = @[ @1, @2, @3 ];
-//  XCTAssertEqualObjects(scene.nodes, nodes,
-//                        "The nodes should be decoded correctly.");
-//  XCTAssertEqualObjects(scene.name, @"testScene",
-//                        "The name should be decoded correctly.");
-//
-//  NSDictionary *expectedExtensions = @{@"exampleExtension" : @true};
-//  XCTAssertEqualObjects(scene.extensions, expectedExtensions,
-//                        "The extensions should be decoded correctly.");
-//
-//  NSDictionary *expectedExtras = @{@"note" : @"This is a test."};
-//  XCTAssertEqualObjects(scene.extras, expectedExtras,
-//                        "The extras should be decoded correctly.");
-//}
-//
-//- (void)testDecodeSceneFromJsonWithEmptyData {
-//  NSDictionary *emptyJson = @{};
-//  NSError *error = nil;
-//  GLTFScene *scene = [GLTFDecoder decodeSceneFromJson:emptyJson error:&error];
-//
-//  XCTAssertNotNil(scene, "Scene object should not be nil.");
-//  XCTAssertNil(error, "There should be no error for empty JSON data.");
-//
-//  XCTAssertNil(scene.nodes, "Nodes should be nil for empty JSON.");
-//  XCTAssertNil(scene.name, "Name should be nil for empty JSON.");
-//  XCTAssertNil(scene.extensions, "Extensions should be nil for empty JSON.");
-//  XCTAssertNil(scene.extras, "Extras should be nil for empty JSON.");
-//}
-//
-//- (void)testDecodeSceneFromJsonWithMissingData {
-//  NSDictionary *missingDataJson = @{};
-//  NSError *error = nil;
-//  GLTFScene *scene = [GLTFDecoder decodeSceneFromJson:missingDataJson
-//                                                error:&error];
-//
-//  XCTAssertNotNil(scene, "Scene object should not be nil for empty JSON data.");
-//
-//  XCTAssertNil(scene.nodes, "Nodes should be nil for empty JSON data.");
-//  XCTAssertNil(scene.name, "Name should be nil for empty JSON data.");
-//  XCTAssertNil(scene.extensions,
-//               "Extensions should be nil for empty JSON data.");
-//  XCTAssertNil(scene.extras, "Extras should be nil for empty JSON data.");
-//  XCTAssertNil(error, "There should be no error for empty JSON data.");
-//}
-//
-//- (void)testDecodeSceneFromJsonWithInvalidDataType {
-//  NSDictionary *invalidDataTypeJson =
-//      @{@"nodes" : @"This is a string, not an array."};
-//  NSError *error = nil;
-//  GLTFScene *scene = [GLTFDecoder decodeSceneFromJson:invalidDataTypeJson
-//                                                error:&error];
-//
-//  XCTAssertNil(scene, "Scene object should be nil due to invalid data type.");
-//  XCTAssertNotNil(error, "There should be an error.");
-//  XCTAssertEqual(error.code, GLTF2ErrorInvalidFormat,
-//                 "Error code should indicate invalid data format.");
-//}
-//
-//#pragma mark - GLTFSkin
-//
-//- (void)testDecodeSkinFromJsonWithValidData {
-//  NSDictionary *validJson = @{
-//    @"inverseBindMatrices" : @1,
-//    @"skeleton" : @2,
-//    @"joints" : @[ @3, @4, @5 ],
-//    @"name" : @"testSkin",
-//    @"extensions" : @{@"exampleExtension" : @true},
-//    @"extras" : @{@"note" : @"This is a test."}
-//  };
-//
-//  NSError *error = nil;
-//  GLTFSkin *skin = [GLTFDecoder decodeSkinFromJson:validJson error:&error];
-//
-//  XCTAssertNotNil(skin, "The decoded object should not be nil.");
-//  XCTAssertNil(error, "There should be no error during the decoding process.");
-//
-//  XCTAssertEqual(skin.inverseBindMatrices, 1,
-//                 "The inverseBindMatrices should be decoded correctly.");
-//  XCTAssertEqual(skin.skeleton, 2, "The skeleton should be decoded correctly.");
-//  NSArray *joints = @[ @3, @4, @5 ];
-//  XCTAssertEqualObjects(skin.joints, joints,
-//                        "The joints should be decoded correctly.");
-//  XCTAssertEqualObjects(skin.name, @"testSkin",
-//                        "The name should be decoded correctly.");
-//
-//  NSDictionary *expectedExtensions = @{@"exampleExtension" : @true};
-//  XCTAssertEqualObjects(skin.extensions, expectedExtensions,
-//                        "The extensions should be decoded correctly.");
-//
-//  NSDictionary *expectedExtras = @{@"note" : @"This is a test."};
-//  XCTAssertEqualObjects(skin.extras, expectedExtras,
-//                        "The extras should be decoded correctly.");
-//}
-//
-//- (void)testDecodeSkinFromJsonWithEmptyData {
-//  NSDictionary *emptyJson = @{@"joints" : @[]};
-//  NSError *error = nil;
-//  GLTFSkin *skin = [GLTFDecoder decodeSkinFromJson:emptyJson error:&error];
-//
-//  XCTAssertNotNil(skin, "Skin object should not be nil.");
-//  XCTAssertNil(error, "There should be no error for empty JSON data.");
-//
-//  XCTAssertEqual(skin.inverseBindMatrices, 0,
-//                 "InverseBindMatrices should default to 0.");
-//  XCTAssertEqual(skin.skeleton, 0, "Skeleton should default to 0.");
-//  XCTAssertEqualObjects(skin.joints, @[],
-//                        "Joints should default to an empty array.");
-//  XCTAssertNil(skin.name, "Name should be nil for empty JSON.");
-//  XCTAssertNil(skin.extensions, "Extensions should be nil for empty JSON.");
-//  XCTAssertNil(skin.extras, "Extras should be nil for empty JSON.");
-//}
-//
-//- (void)testDecodeSkinFromJsonWithInvalidDataType {
-//  NSDictionary *invalidDataTypeJson =
-//      @{@"inverseBindMatrices" : @"This is a string, not a number."};
-//  NSError *error = nil;
-//  GLTFSkin *skin = [GLTFDecoder decodeSkinFromJson:invalidDataTypeJson
-//                                             error:&error];
-//
-//  XCTAssertNil(skin, "Skin should be nil because of invalid data type.");
-//  XCTAssertNotNil(
-//      error, "Error should not be nil because the data type is incorrect.");
-//  XCTAssertEqual(error.code, GLTF2ErrorInvalidFormat,
-//                 "Error code should indicate invalid data format.");
-//}
-//
-//#pragma mark - GLTFTexture
-//
-//- (void)testDecodeTextureFromJsonWithValidData {
-//  NSDictionary *validJson = @{
-//    @"sampler" : @1,
-//    @"source" : @2,
-//    @"name" : @"testTexture",
-//    @"extensions" : @{@"exampleExtension" : @true},
-//    @"extras" : @{@"note" : @"This is a test."}
-//  };
-//  NSError *error;
-//
-//  GLTFTexture *texture = [GLTFDecoder decodeTextureFromJson:validJson
-//                                                      error:&error];
-//
-//  XCTAssertNotNil(texture, "The decoded object should not be nil.");
-//  XCTAssertNil(error, "There should be no error during the decoding process.");
-//
-//  XCTAssertEqual(texture.sampler, 1,
-//                 "The sampler should be decoded correctly.");
-//  XCTAssertEqual(texture.source, 2, "The source should be decoded correctly.");
-//  XCTAssertEqualObjects(texture.name, @"testTexture",
-//                        "The name should be decoded correctly.");
-//
-//  NSDictionary *expectedExtensions = @{@"exampleExtension" : @true};
-//  XCTAssertEqualObjects(texture.extensions, expectedExtensions,
-//                        "The extensions should be decoded correctly.");
-//
-//  NSDictionary *expectedExtras = @{@"note" : @"This is a test."};
-//  XCTAssertEqualObjects(texture.extras, expectedExtras,
-//                        "The extras should be decoded correctly.");
-//}
-//
-//- (void)testDecodeTextureFromJsonWithEmptyData {
-//  NSDictionary *emptyJson = @{};
-//  NSError *error = nil;
-//  GLTFTexture *texture = [GLTFDecoder decodeTextureFromJson:emptyJson
-//                                                      error:&error];
-//
-//  XCTAssertNotNil(texture, "Texture object should not be nil.");
-//  XCTAssertNil(error, "There should be no error for empty JSON data.");
-//
-//  XCTAssertEqual(texture.sampler, 0, "Sampler index should default to 0.");
-//  XCTAssertEqual(texture.source, 0, "Source index should default to 0.");
-//  XCTAssertNil(texture.name, "Name should be nil for empty JSON.");
-//  XCTAssertNil(texture.extensions, "Extensions should be nil for empty JSON.");
-//  XCTAssertNil(texture.extras, "Extras should be nil for empty JSON.");
-//}
-//
-//- (void)testDecodeTextureFromJsonWithInvalidDataType {
-//  NSDictionary *invalidDataTypeJson =
-//      @{@"sampler" : @"This is a string, not a number."};
-//  NSError *error = nil;
-//  GLTFTexture *texture = [GLTFDecoder decodeTextureFromJson:invalidDataTypeJson
-//                                                      error:&error];
-//
-//  XCTAssertNil(texture, "Texture should be nil because of invalid data type.");
-//  XCTAssertNotNil(
-//      error, "Error should not be nil because the data type is incorrect.");
-//  XCTAssertEqual(error.code, GLTF2ErrorInvalidFormat,
-//                 "Error code should indicate invalid data format.");
-//}
-//
-//#pragma mark - GLTFTextureInfo
-//
-//- (void)testDecodeTextureInfoFromJsonWithValidData {
-//  NSDictionary *validJson = @{
-//    @"index" : @1,
-//    @"texCoord" : @2,
-//    @"extensions" : @{@"exampleExtension" : @true},
-//    @"extras" : @{@"note" : @"This is a test."}
-//  };
-//
-//  NSError *error = nil;
-//  GLTFTextureInfo *textureInfo =
-//      [GLTFDecoder decodeTextureInfoFromJson:validJson error:&error];
-//
-//  XCTAssertNotNil(textureInfo, "Decoding should succeed.");
-//  XCTAssertNil(error, "There should be no error during decoding.");
-//
-//  XCTAssertEqual(textureInfo.index, 1,
-//                 "The index should be decoded correctly.");
-//  XCTAssertEqual(textureInfo.texCoord, 2,
-//                 "The texCoord should be decoded correctly.");
-//
-//  NSDictionary *expectedExtensions = @{@"exampleExtension" : @true};
-//  XCTAssertEqualObjects(textureInfo.extensions, expectedExtensions,
-//                        "Extensions should be decoded correctly.");
-//
-//  NSDictionary *expectedExtras = @{@"note" : @"This is a test."};
-//  XCTAssertEqualObjects(textureInfo.extras, expectedExtras,
-//                        "Extras should be decoded correctly.");
-//}
-//
-//- (void)testDecodeTextureInfoFromJsonWithEmptyData {
-//  NSDictionary *emptyJson = @{@"index" : @1};
-//  NSError *error = nil;
-//  GLTFTextureInfo *textureInfo =
-//      [GLTFDecoder decodeTextureInfoFromJson:emptyJson error:&error];
-//
-//  XCTAssertNotNil(textureInfo, "TextureInfo object should not be nil.");
-//  XCTAssertNil(error, "There should be no error for empty JSON data.");
-//
-//  XCTAssertEqual(textureInfo.index, 1, "Index should default to 1.");
-//  XCTAssertEqual(textureInfo.texCoord, 0, "TexCoord should default to 0.");
-//  XCTAssertNil(textureInfo.extensions,
-//               "Extensions should be nil for empty JSON.");
-//  XCTAssertNil(textureInfo.extras, "Extras should be nil for empty JSON.");
-//}
-//
-//- (void)testDecodeTextureInfoFromJsonWithInvalidDataType {
-//  NSDictionary *invalidDataTypeJson =
-//      @{@"index" : @"This is a string, not a number."};
-//  NSError *error = nil;
-//  GLTFTextureInfo *textureInfo =
-//      [GLTFDecoder decodeTextureInfoFromJson:invalidDataTypeJson error:&error];
-//
-//  XCTAssertNil(textureInfo,
-//               "TextureInfo should be nil due to invalid data type.");
-//  XCTAssertNotNil(
-//      error, "Error should not be nil because the data type is incorrect.");
-//  XCTAssertEqual(error.code, GLTF2ErrorInvalidFormat,
-//                 "Error code should indicate invalid data format.");
-//}
+#pragma mark - GLTFJson
+
+- (void)testDecodeJsonWithAllFieldsPresent {
+  // Creating a GLTFDecoder instance
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+
+  // Sample JSON Dictionary representing a full glTF asset
+  NSDictionary *jsonDict = @{
+    @"extensionsUsed" : @[ @"KHR_lights_punctual" ],
+    @"extensionsRequired" : @[ @"KHR_texture_transform" ],
+    @"accessors" : @[ @{
+      @"bufferView" : @1,
+      @"componentType" : @5123,
+      @"type" : @"SCALAR",
+      @"count" : @3
+    } ],
+    @"animations" : @[ @{
+      @"channels" : @[ @{
+        @"sampler" : @0,
+        @"target" : @{@"node" : @1, @"path" : @"translation"}
+      } ],
+      @"samplers" :
+          @[ @{@"input" : @1, @"output" : @2, @"interpolation" : @"LINEAR"} ]
+    } ],
+    @"asset" : @{@"version" : @"2.0", @"generator" : @"ExampleGenerator"},
+    @"buffers" : @[ @{@"byteLength" : @1024} ],
+    @"bufferViews" : @[ @{@"buffer" : @0, @"byteLength" : @512} ],
+    @"cameras" : @[ @{
+      @"type" : @"perspective",
+      @"perspective" : @{@"yfov" : @1.047, @"znear" : @0.01}
+    } ],
+    @"images" : @[ @{@"uri" : @"image.png"} ],
+    @"materials" : @[ @{@"name" : @"Material1"} ],
+    @"meshes" :
+        @[ @{@"primitives" : @[ @{@"attributes" : @{@"POSITION" : @0}} ]} ],
+    @"nodes" : @[ @{@"mesh" : @0} ],
+    @"samplers" : @[ @{@"magFilter" : @9729, @"minFilter" : @9986} ],
+    @"scene" : @0,
+    @"scenes" : @[ @{@"nodes" : @[ @0 ]} ],
+    @"skins" : @[ @{@"inverseBindMatrices" : @0, @"joints" : @[ @0 ]} ],
+    @"textures" : @[ @{@"source" : @0} ],
+    @"extensions" : @{@"someExtension" : @{@"value" : @123}},
+    @"extras" : @{@"someExtraData" : @"data"}
+  };
+
+  NSError *error = nil;
+
+  // Decode the JSON into a GLTFJson object
+  GLTFJson *decodedJson = [decoder decodeJson:jsonDict error:&error];
+
+  // Assertions to ensure all fields are correctly decoded and present
+  XCTAssertNotNil(
+      decodedJson,
+      "GLTFJson should not be nil when all required fields are present");
+  XCTAssertNotNil(decodedJson.extensionsUsed,
+                  "Extensions used should be decoded");
+  XCTAssertNotNil(decodedJson.extensionsRequired,
+                  "Extensions required should be decoded");
+  XCTAssertNotNil(decodedJson.accessors, "Accessors should be decoded");
+  XCTAssertNotNil(decodedJson.animations,
+                  "Animations should be decoded and not nil");
+  XCTAssertEqual(decodedJson.animations.firstObject.channels.count, 1,
+                 "There should be one channel in the first animation");
+  XCTAssertEqual(decodedJson.animations.firstObject.samplers.count, 1,
+                 "There should be one sampler in the first animation");
+  XCTAssertNotNil(decodedJson.asset, "Asset should be decoded");
+  XCTAssertNotNil(decodedJson.buffers, "Buffers should be decoded");
+  XCTAssertNotNil(decodedJson.bufferViews, "BufferViews should be decoded");
+  XCTAssertNotNil(decodedJson.cameras, "Cameras should be decoded");
+  XCTAssertNotNil(decodedJson.images, "Images should be decoded");
+  XCTAssertNotNil(decodedJson.materials, "Materials should be decoded");
+  XCTAssertNotNil(decodedJson.meshes, "Meshes should be decoded");
+  XCTAssertNotNil(decodedJson.nodes, "Nodes should be decoded");
+  XCTAssertNotNil(decodedJson.samplers, "Samplers should be decoded");
+  XCTAssertEqual(decodedJson.scene, @0, "Scene index should be decoded");
+  XCTAssertNotNil(decodedJson.scenes, "Scenes should be decoded");
+  XCTAssertNotNil(decodedJson.skins, "Skins should be decoded");
+  XCTAssertNotNil(decodedJson.textures, "Textures should be decoded");
+  XCTAssertNotNil(decodedJson.extensions, "Extensions should be decoded");
+  XCTAssertNotNil(decodedJson.extras, "Extras should be decoded");
+  XCTAssertNil(
+      error, "Error should be nil when decoding is successful with all fields");
+}
+
+- (void)testDecodeJsonWithMissingRequiredFields {
+  // Creating a GLTFDecoder instance
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+
+  // JSON Dictionary with missing 'asset' field which is required
+  NSDictionary *jsonDict = @{@"extensionsUsed" : @[ @"KHR_lights_punctual" ]};
+
+  NSError *error = nil;
+
+  // Attempt to decode the incomplete JSON
+  GLTFJson *decodedJson = [decoder decodeJson:jsonDict error:&error];
+
+  // Assertions to check proper error handling
+  XCTAssertNil(decodedJson,
+               "GLTFJson should be nil when a required field is missing");
+  XCTAssertNotNil(error,
+                  "Error should not be nil when a required field is missing");
+}
+
+- (void)testDecodeJsonWithOptionalFieldsMissing {
+  // Creating a GLTFDecoder instance
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+
+  // JSON Dictionary with only the required 'asset' field
+  NSDictionary *jsonDict = @{@"asset" : @{@"version" : @"2.0"}};
+
+  NSError *error = nil;
+
+  // Decode the minimal JSON
+  GLTFJson *decodedJson = [decoder decodeJson:jsonDict error:&error];
+
+  // Assertions to ensure the decoding still works with only required fields
+  XCTAssertNotNil(
+      decodedJson,
+      "GLTFJson should not be nil even if optional fields are missing");
+  XCTAssertNil(decodedJson.extensionsUsed,
+               "Extensions used should be nil when not provided");
+  XCTAssertNil(decodedJson.extensionsRequired,
+               "Extensions required should be nil when not provided");
+  XCTAssertNil(decodedJson.accessors,
+               "Accessors should be nil when not provided");
+  XCTAssertNil(decodedJson.animations,
+               "Animations should be nil when not provided");
+  XCTAssertNil(decodedJson.buffers, "Buffers should be nil when not provided");
+  XCTAssertNil(decodedJson.bufferViews,
+               "BufferViews should be nil when not provided");
+  XCTAssertNil(decodedJson.cameras, "Cameras should be nil when not provided");
+  XCTAssertNil(decodedJson.images, "Images should be nil when not provided");
+  XCTAssertNil(decodedJson.materials,
+               "Materials should be nil when not provided");
+  XCTAssertNil(decodedJson.meshes, "Meshes should be nil when not provided");
+  XCTAssertNil(decodedJson.nodes, "Nodes should be nil when not provided");
+  XCTAssertNil(decodedJson.samplers,
+               "Samplers should be nil when not provided");
+  XCTAssertNil(decodedJson.scenes, "Scenes should be nil when not provided");
+  XCTAssertNil(decodedJson.skins, "Skins should be nil when not provided");
+  XCTAssertNil(decodedJson.textures,
+               "Textures should be nil when not provided");
+  XCTAssertNil(decodedJson.extensions,
+               "Extensions should be nil when not provided");
+  XCTAssertNil(decodedJson.extras, "Extras should be nil when not provided");
+  XCTAssertNil(error, "Error should be nil when optional fields are missing");
+}
+
+#pragma mark - GLTFAccessor
+
+- (void)testDecodeAccessorWithAllFieldsPresentAndOptionalFields {
+  // Create a GLTFDecoder instance
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+
+  NSDictionary *jsonDict = @{
+    @"bufferView" : @1,
+    @"byteOffset" : @10,
+    @"componentType" : @5123,
+    @"normalized" : @YES,
+    @"count" : @34,
+    @"type" : @"VEC3",
+    @"max" : @[ @1, @1, @1 ],
+    @"min" : @[ @0, @0, @0 ],
+    @"sparse" : @{
+      @"count" : @3,
+      @"indices" :
+          @{@"bufferView" : @2, @"byteOffset" : @0, @"componentType" : @5125},
+      @"values" : @{@"bufferView" : @3, @"byteOffset" : @0}
+    },
+    @"name" : @"ExampleAccessor",
+    @"extensions" : @{@"someExtension" : @{@"value" : @123}},
+    @"extras" : @{@"someExtraData" : @"data"}
+  };
+  NSError *error = nil;
+
+  GLTFAccessor *accessor = [decoder decodeAccessor:jsonDict error:&error];
+
+  XCTAssertNotNil(
+      accessor,
+      "Accessor should not be nil when all required fields are present");
+  XCTAssertEqual(accessor.bufferView, @1);
+  XCTAssertEqual(accessor.byteOffset, 10);
+  XCTAssertEqual(accessor.componentType, 5123);
+  XCTAssertTrue(accessor.normalized);
+  XCTAssertEqual(accessor.count, 34);
+  XCTAssertEqualObjects(accessor.type, @"VEC3");
+  XCTAssertEqualObjects(accessor.max, (@[ @1, @1, @1 ]));
+  XCTAssertEqualObjects(accessor.min, (@[ @0, @0, @0 ]));
+  XCTAssertNotNil(accessor.sparse, "Sparse should not be nil when provided");
+  XCTAssertEqualObjects(accessor.name, @"ExampleAccessor");
+  XCTAssertEqualObjects(accessor.extensions,
+                        @{@"someExtension" : @{@"value" : @123}});
+  XCTAssertEqualObjects(accessor.extras, @{@"someExtraData" : @"data"});
+  XCTAssertNil(
+      error, "Error should be nil when decoding is successful with all fields");
+}
+
+- (void)testDecodeAccessorWithMissingRequiredFields {
+  // Create a GLTFDecoder instance
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+
+  NSDictionary *jsonDict = @{};
+  NSError *error = nil;
+
+  GLTFAccessor *accessor = [decoder decodeAccessor:jsonDict error:&error];
+
+  XCTAssertNil(accessor,
+               "Accessor should be nil when a required field is missing");
+  XCTAssertNotNil(error,
+                  "Error should not be nil when a required field is missing");
+  XCTAssertEqual(error.code, GLTF2ErrorMissingData,
+                 "Error code should indicate missing data");
+}
+
+- (void)testDecodeAccessorWithOptionalFieldsMissing {
+  // Create a GLTFDecoder instance
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+
+  NSDictionary *jsonDict =
+      @{@"componentType" : @5121, @"count" : @34, @"type" : @"MAT4"};
+  NSError *error = nil;
+
+  GLTFAccessor *accessor = [decoder decodeAccessor:jsonDict error:&error];
+
+  XCTAssertNotNil(accessor);
+  XCTAssertEqual(accessor.componentType, 5121);
+  XCTAssertEqual(accessor.count, 34);
+  XCTAssertEqualObjects(accessor.type, @"MAT4");
+  XCTAssertNil(error, "Error should be nil when optional fields are missing");
+}
+
+#pragma mark - GLTFAccessorSparse
+
+- (void)testDecodeSparseWithAllFieldsPresent {
+  NSDictionary *jsonDict = @{
+    @"count" : @3,
+    @"indices" :
+        @{@"bufferView" : @1, @"byteOffset" : @0, @"componentType" : @5123},
+    @"values" : @{@"bufferView" : @2, @"byteOffset" : @0},
+    @"extensions" : @{@"someKey" : @"someValue"},
+    @"extras" : @{@"anotherKey" : @"anotherValue"}
+  };
+  NSError *error = nil;
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+
+  GLTFAccessorSparse *sparse = [decoder decodeAccessorSparse:jsonDict
+                                                       error:&error];
+
+  XCTAssertNotNil(sparse);
+  XCTAssertEqual(sparse.count, 3);
+  XCTAssertNotNil(sparse.indices);
+  XCTAssertNotNil(sparse.values);
+  XCTAssertEqualObjects(sparse.extensions, @{@"someKey" : @"someValue"});
+  XCTAssertEqualObjects(sparse.extras, @{@"anotherKey" : @"anotherValue"});
+  XCTAssertNil(error, "Error should be nil when decoding is successful");
+}
+
+- (void)testDecodeSparseWithMissingRequiredFields {
+  NSDictionary *jsonDict = @{
+    @"count" : @3,
+    @"indices" :
+        @{@"bufferView" : @1, @"byteOffset" : @0, @"componentType" : @5123}
+    // 'indices' field is missing
+  };
+  NSError *error = nil;
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+
+  GLTFAccessorSparse *sparse = [decoder decodeAccessorSparse:jsonDict
+                                                       error:&error];
+
+  XCTAssertNil(sparse, "Sparse should be nil when a required field is missing");
+  XCTAssertNotNil(error,
+                  "Error should not be nil when a required field is missing");
+  XCTAssertEqual(error.code, GLTF2ErrorMissingData,
+                 "Error code should indicate missing data");
+}
+
+- (void)testDecodeSparseWithOptionalFieldsMissing {
+  // Optional 'extensions' and 'extras' are missing
+  NSDictionary *jsonDict = @{
+    @"count" : @3,
+    @"indices" :
+        @{@"bufferView" : @1, @"byteOffset" : @0, @"componentType" : @5123},
+    @"values" : @{@"bufferView" : @2, @"byteOffset" : @0}
+  };
+  NSError *error = nil;
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+
+  GLTFAccessorSparse *sparse = [decoder decodeAccessorSparse:jsonDict
+                                                       error:&error];
+
+  XCTAssertNotNil(
+      sparse, "Sparse should not be nil even if optional fields are missing");
+  XCTAssertEqual(sparse.count, 3);
+  XCTAssertNotNil(sparse.indices);
+  XCTAssertNotNil(sparse.values);
+  XCTAssertNil(sparse.extensions, "Extensions should be nil when not provided");
+  XCTAssertNil(sparse.extras, "Extras should be nil when not provided");
+  XCTAssertNil(error, "Error should be nil when optional fields are missing");
+}
+
+#pragma mark - GLTFAccessorSparseIndices
+
+- (void)testSuccessfulDecode {
+  // Sample JSON with all fields correctly set
+  NSDictionary *jsonDict = @{
+    @"bufferView" : @1,
+    @"byteOffset" : @0,
+    @"componentType" : @5123,
+    @"extensions" : @{@"someKey" : @"someValue"},
+    @"extras" : @{@"anotherKey" : @"anotherValue"}
+  };
+  NSError *error = nil;
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+
+  GLTFAccessorSparseIndices *indices =
+      [decoder decodeAccessorSparseIndices:jsonDict error:&error];
+
+  XCTAssertNotNil(indices);
+  XCTAssertEqual(indices.bufferView, 1);
+  XCTAssertEqual(indices.byteOffset, 0);
+  XCTAssertEqual(indices.componentType, 5123);
+  XCTAssertEqualObjects(indices.extensions, @{@"someKey" : @"someValue"});
+  XCTAssertEqualObjects(indices.extras, @{@"anotherKey" : @"anotherValue"});
+  XCTAssertNil(error);
+}
+
+- (void)testMissingRequiredFields {
+  // Sample JSON missing the 'componentType' field
+  NSDictionary *jsonDict = @{@"bufferView" : @1};
+  NSError *error = nil;
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+
+  GLTFAccessorSparseIndices *indices =
+      [decoder decodeAccessorSparseIndices:jsonDict error:&error];
+
+  XCTAssertNil(indices);
+  XCTAssertNotNil(error);
+  XCTAssertEqual(error.code, GLTF2ErrorMissingData);
+  XCTAssertTrue([error.localizedDescription
+      containsString:@"Key 'componentType' not found"]);
+}
+
+- (void)testOptionalFieldDefaults {
+  // Sample JSON without 'byteOffset'
+  NSDictionary *jsonDict = @{@"bufferView" : @1, @"componentType" : @5123};
+  NSError *error = nil;
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+
+  GLTFAccessorSparseIndices *indices =
+      [decoder decodeAccessorSparseIndices:jsonDict error:&error];
+
+  XCTAssertNotNil(indices);
+  XCTAssertEqual(indices.byteOffset,
+                 0); // Confirm default value is correctly used
+  XCTAssertNil(error);
+}
+
+#pragma mark - GLTFAccessorSparseValues
+
+- (void)testDecodeSparseValuesWithAllFieldsPresent {
+  NSDictionary *jsonDict = @{
+    @"bufferView" : @5,
+    @"byteOffset" : @10,
+    @"extensions" : @{@"someKey" : @"someValue"},
+    @"extras" : @{@"anotherKey" : @"anotherValue"}
+  };
+  NSError *error = nil;
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+
+  GLTFAccessorSparseValues *values =
+      [decoder decodeAccessorSparseValues:jsonDict error:&error];
+
+  XCTAssertNotNil(
+      values, "Sparse values should not be nil when all fields are provided");
+  XCTAssertEqual(values.bufferView, 5,
+                 "Buffer view should match the provided JSON value");
+  XCTAssertEqual(values.byteOffset, 10,
+                 "Byte offset should match the provided JSON value");
+  XCTAssertEqualObjects(values.extensions, @{@"someKey" : @"someValue"},
+                        "Extensions should match the provided JSON");
+  XCTAssertEqualObjects(values.extras, @{@"anotherKey" : @"anotherValue"},
+                        "Extras should match the provided JSON");
+  XCTAssertNil(error, "Error should be nil when decoding is successful");
+}
+
+- (void)testDecodeSparseValuesWithMissingRequiredField {
+  NSDictionary *jsonDict = @{
+    // 'bufferView' is omitted to simulate a missing required field
+    @"byteOffset" : @10
+  };
+  NSError *error = nil;
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+
+  GLTFAccessorSparseValues *values =
+      [decoder decodeAccessorSparseValues:jsonDict error:&error];
+
+  XCTAssertNil(values,
+               "Sparse values should be nil when required field is missing");
+  XCTAssertNotNil(error,
+                  "Error should not be nil when a required field is missing");
+  XCTAssertEqual(error.code, GLTF2ErrorMissingData,
+                 "Error code should indicate missing data");
+}
+
+- (void)testDecodeSparseValuesWithOptionalFieldsMissing {
+  NSDictionary *jsonDict = @{
+    @"bufferView" : @5
+    // 'byteOffset', 'extensions', and 'extras' are omitted
+  };
+  NSError *error = nil;
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+
+  GLTFAccessorSparseValues *values =
+      [decoder decodeAccessorSparseValues:jsonDict error:&error];
+
+  XCTAssertNotNil(
+      values,
+      "Sparse values should not be nil even if optional fields are missing");
+  XCTAssertEqual(values.bufferView, 5,
+                 "Buffer view should match the provided JSON value");
+  XCTAssertEqual(values.byteOffset, 0,
+                 "Byte offset should default to 0 when not provided");
+  XCTAssertNil(values.extensions, "Extensions should be nil when not provided");
+  XCTAssertNil(values.extras, "Extras should be nil when not provided");
+  XCTAssertNil(error, "Error should be nil when optional fields are missing");
+}
+
+#pragma mark - GLTFAnimation
+
+- (void)testDecodeAnimationWithAllFieldsPresent {
+  NSDictionary *jsonDict = @{
+    @"channels" : @[
+      @{@"sampler" : @0, @"target" : @{@"node" : @1, @"path" : @"translation"}}
+    ],
+    @"samplers" : @[ @{@"input" : @1, @"output" : @2} ],
+    @"name" : @"Walk",
+    @"extensions" : @{@"customExtension" : @{}},
+    @"extras" : @{@"customData" : @"data"}
+  };
+  NSError *error = nil;
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+
+  GLTFAnimation *animation = [decoder decodeAnimation:jsonDict error:&error];
+
+  XCTAssertNotNil(animation);
+  XCTAssertEqual(animation.channels.count, 1);
+  XCTAssertEqual(animation.samplers.count, 1);
+  XCTAssertEqualObjects(animation.name, @"Walk");
+  XCTAssertNotNil(animation.extensions);
+  XCTAssertNotNil(animation.extras);
+  XCTAssertNil(error);
+}
+
+- (void)testDecodeAnimationWithMissingRequiredFields {
+  NSDictionary *jsonDict = @{
+      // Missing 'channels' and 'samplers'
+  };
+  NSError *error = nil;
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+
+  GLTFAnimation *animation = [decoder decodeAnimation:jsonDict error:&error];
+
+  XCTAssertNil(animation);
+  XCTAssertNotNil(error);
+  XCTAssertEqual(error.code, GLTF2ErrorMissingData);
+}
+
+- (void)testDecodeAnimationWithOptionalFieldsMissing {
+  NSDictionary *jsonDict = @{
+    @"channels" : @[
+      @{@"sampler" : @0, @"target" : @{@"node" : @1, @"path" : @"translation"}}
+    ],
+    @"samplers" : @[ @{@"input" : @1, @"output" : @2} ]
+    // Missing 'name', 'extensions', and 'extras'
+  };
+  NSError *error = nil;
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+
+  GLTFAnimation *animation = [decoder decodeAnimation:jsonDict error:&error];
+
+  XCTAssertNotNil(animation);
+  XCTAssertNil(animation.name);
+  XCTAssertNil(animation.extensions);
+  XCTAssertNil(animation.extras);
+  XCTAssertNil(error);
+}
+
+#pragma mark - GLTFAnimationChannel
+
+- (void)testDecodeAnimationChannelWithAllFieldsPresent {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{
+    @"sampler" : @0,
+    @"target" : @{@"node" : @1, @"path" : @"rotation"},
+    @"extensions" : @{@"extensionData" : @{}},
+    @"extras" : @{@"extraData" : @{}}
+  };
+  NSError *error = nil;
+
+  GLTFAnimationChannel *channel = [decoder decodeAnimationChannel:jsonDict
+                                                            error:&error];
+
+  XCTAssertNotNil(channel,
+                  "Channel should not be nil when all fields are present");
+  XCTAssertEqual(channel.sampler, 0,
+                 "Sampler index should be correctly decoded");
+  XCTAssertNotNil(channel.target, "Target should not be nil");
+  XCTAssertEqualObjects(channel.target.node, @1,
+                        "Node should be correctly decoded");
+  XCTAssertEqualObjects(channel.target.path, @"rotation",
+                        "Path should be correctly decoded");
+  XCTAssertNotNil(channel.extensions, "Extensions should be present");
+  XCTAssertNotNil(channel.extras, "Extras should be present");
+  XCTAssertNil(
+      error, "Error should be nil when decoding is successful with all fields");
+}
+
+- (void)testDecodeAnimationChannelWithMissingRequiredFields {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{}; // Empty dictionary to simulate missing fields
+  NSError *error = nil;
+
+  GLTFAnimationChannel *channel = [decoder decodeAnimationChannel:jsonDict
+                                                            error:&error];
+
+  XCTAssertNil(channel,
+               "Channel should be nil when required fields are missing");
+  XCTAssertNotNil(error,
+                  "Error should not be nil when required fields are missing");
+  XCTAssertEqual(error.code, GLTF2ErrorMissingData,
+                 "Error code should indicate missing required fields");
+}
+
+- (void)testDecodeAnimationChannelWithOptionalFieldsMissing {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{
+    @"sampler" : @0,
+    @"target" : @{@"node" : @1, @"path" : @"rotation"}
+    // 'extensions' and 'extras' are omitted
+  };
+  NSError *error = nil;
+
+  GLTFAnimationChannel *channel = [decoder decodeAnimationChannel:jsonDict
+                                                            error:&error];
+
+  XCTAssertNotNil(
+      channel, "Channel should not be nil even if optional fields are missing");
+  XCTAssertNil(channel.extensions,
+               "Extensions should be nil when not provided");
+  XCTAssertNil(channel.extras, "Extras should be nil when not provided");
+  XCTAssertNil(error, "Error should be nil when optional fields are missing");
+}
+
+#pragma mark - GLTFAnimationChannelTarget
+
+- (void)testDecodeAnimationChannelTargetWithAllFieldsPresent {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{
+    @"node" : @10,
+    @"path" : @"translation",
+    @"extensions" : @{@"customExtension" : @{@"param" : @"value"}},
+    @"extras" : @{@"info" : @"extra data"}
+  };
+  NSError *error = nil;
+
+  GLTFAnimationChannelTarget *target =
+      [decoder decodeAnimationChannelTarget:jsonDict error:&error];
+
+  XCTAssertNotNil(target,
+                  "Target should not be nil when all fields are present");
+  XCTAssertEqualObjects(target.node, @10, "Node should be correctly decoded");
+  XCTAssertEqualObjects(target.path, @"translation",
+                        "Path should be correctly decoded");
+  XCTAssertEqualObjects(target.extensions,
+                        @{@"customExtension" : @{@"param" : @"value"}},
+                        "Extensions should be correctly decoded");
+  XCTAssertEqualObjects(target.extras, @{@"info" : @"extra data"},
+                        "Extras should be correctly decoded");
+  XCTAssertNil(error, "Error should be nil when all fields are provided");
+}
+
+- (void)testDecodeAnimationChannelTargetWithMissingRequiredPath {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{};
+  NSError *error = nil;
+
+  GLTFAnimationChannelTarget *target =
+      [decoder decodeAnimationChannelTarget:jsonDict error:&error];
+
+  XCTAssertNil(
+      target, "Target should be nil when the required field 'path' is missing");
+  XCTAssertNotNil(
+      error,
+      "Error should not be nil when the required field 'path' is missing");
+  XCTAssertEqual(
+      error.code, GLTF2ErrorMissingData,
+      "Error code should indicate missing data due to lack of required field");
+}
+
+- (void)testDecodeAnimationChannelTargetWithOptionalFieldsMissing {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{@"path" : @"rotation"};
+  NSError *error = nil;
+
+  GLTFAnimationChannelTarget *target =
+      [decoder decodeAnimationChannelTarget:jsonDict error:&error];
+
+  XCTAssertNotNil(
+      target, "Target should not be nil even if optional fields are missing");
+  XCTAssertNil(target.node, "Node should be nil when not provided");
+  XCTAssertEqualObjects(target.path, @"rotation",
+                        "Path should be correctly decoded");
+  XCTAssertNil(target.extensions, "Extensions should be nil when not provided");
+  XCTAssertNil(target.extras, "Extras should be nil when not provided");
+  XCTAssertNil(error, "Error should be nil when optional fields are missing");
+}
+
+#pragma mark - GLTFAnimationSampler
+
+- (void)testDecodeAnimationSamplerWithAllFieldsPresent {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{
+    @"input" : @0,
+    @"interpolation" : @"CUBICSPLINE",
+    @"output" : @1,
+    @"extensions" : @{@"extensionData" : @{}},
+    @"extras" : @{@"extraData" : @{}}
+  };
+  NSError *error = nil;
+
+  GLTFAnimationSampler *sampler = [decoder decodeAnimationSampler:jsonDict
+                                                            error:&error];
+
+  XCTAssertNotNil(sampler,
+                  "Sampler should not be nil when all fields are present");
+  XCTAssertEqual(sampler.input, 0, "Input index should be correctly decoded");
+  XCTAssertEqualObjects(
+      sampler.interpolation, @"CUBICSPLINE",
+      "Interpolation should be correctly decoded as 'CUBICSPLINE'");
+  XCTAssertEqual(sampler.output, 1, "Output index should be correctly decoded");
+  XCTAssertNotNil(sampler.extensions, "Extensions should be present");
+  XCTAssertNotNil(sampler.extras, "Extras should be present");
+  XCTAssertNil(
+      error, "Error should be nil when decoding is successful with all fields");
+}
+
+- (void)testDecodeAnimationSamplerWithMissingRequiredFields {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{
+    // 'input' is missing
+    @"output" : @1,
+    @"interpolation" : @"LINEAR"
+  };
+  NSError *error = nil;
+
+  GLTFAnimationSampler *sampler = [decoder decodeAnimationSampler:jsonDict
+                                                            error:&error];
+
+  XCTAssertNil(sampler,
+               "Sampler should be nil when required fields are missing");
+  XCTAssertNotNil(error,
+                  "Error should not be nil when required fields are missing");
+  XCTAssertEqual(error.code, GLTF2ErrorMissingData,
+                 "Error code should indicate missing required fields");
+}
+
+- (void)testDecodeAnimationSamplerWithDefaultInterpolation {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{
+    @"input" : @0,
+    @"output" : @1
+    // 'interpolation' is missing
+  };
+  NSError *error = nil;
+
+  GLTFAnimationSampler *sampler = [decoder decodeAnimationSampler:jsonDict
+                                                            error:&error];
+
+  XCTAssertNotNil(
+      sampler, "Sampler should not be nil even if 'interpolation' is missing");
+  XCTAssertEqualObjects(
+      sampler.interpolation, @"LINEAR",
+      "Interpolation should default to 'LINEAR' when not provided");
+  XCTAssertNil(error, "Error should be nil when optional fields are missing");
+}
+
+- (void)testDecodeAnimationSamplerWithOptionalFieldsMissing {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{
+    @"input" : @0,
+    @"interpolation" : @"LINEAR",
+    @"output" : @1
+    // 'extensions' and 'extras' are omitted
+  };
+  NSError *error = nil;
+
+  GLTFAnimationSampler *sampler = [decoder decodeAnimationSampler:jsonDict
+                                                            error:&error];
+
+  XCTAssertNotNil(
+      sampler, "Sampler should not be nil even if optional fields are missing");
+  XCTAssertNil(sampler.extensions,
+               "Extensions should be nil when not provided");
+  XCTAssertNil(sampler.extras, "Extras should be nil when not provided");
+  XCTAssertNil(error, "Error should be nil when optional fields are missing");
+}
+
+#pragma mark - GLTFAsset
+
+- (void)testDecodeAssetWithAllFieldsPresent {
+  NSDictionary *jsonDict = @{
+    @"version" : @"2.0",
+    @"copyright" : @"Copyright 2021 by Example Co.",
+    @"generator" : @"ExampleGenerator 1.0",
+    @"minVersion" : @"1.0",
+    @"extensions" : @{@"someExtension" : @{@"value" : @123}},
+    @"extras" : @{@"someExtraInfo" : @"value"}
+  };
+  NSError *error = nil;
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+
+  GLTFAsset *asset = [decoder decodeAsset:jsonDict error:&error];
+
+  XCTAssertNotNil(asset, "Asset should not be nil when all fields are present");
+  XCTAssertEqualObjects(asset.version, @"2.0",
+                        "Version should be correctly decoded");
+  XCTAssertEqualObjects(asset.copyright, @"Copyright 2021 by Example Co.",
+                        "Copyright should be correctly decoded");
+  XCTAssertEqualObjects(asset.generator, @"ExampleGenerator 1.0",
+                        "Generator should be correctly decoded");
+  XCTAssertEqualObjects(asset.minVersion, @"1.0",
+                        "MinVersion should be correctly decoded");
+  XCTAssertNotNil(asset.extensions, "Extensions should be present");
+  XCTAssertNotNil(asset.extras, "Extras should be present");
+  XCTAssertNil(
+      error, "Error should be nil when decoding is successful with all fields");
+}
+
+- (void)testDecodeAssetWithMissingRequiredField {
+  NSDictionary *jsonDict = @{
+    // 'version' is missing
+    @"copyright" : @"Copyright 2021 by Example Co.",
+    @"generator" : @"ExampleGenerator 1.0"
+  };
+  NSError *error = nil;
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+
+  GLTFAsset *asset = [decoder decodeAsset:jsonDict error:&error];
+
+  XCTAssertNil(asset,
+               "Asset should be nil when required field 'version' is missing");
+  XCTAssertNotNil(
+      error,
+      "Error should not be nil when required field 'version' is missing");
+  XCTAssertEqual(error.code, GLTF2ErrorMissingData,
+                 "Error code should indicate missing required fields");
+}
+
+- (void)testDecodeAssetWithOptionalFieldsMissing {
+  NSDictionary *jsonDict = @{
+    @"version" : @"2.0"
+    // Optional fields are missing
+  };
+  NSError *error = nil;
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+
+  GLTFAsset *asset = [decoder decodeAsset:jsonDict error:&error];
+
+  XCTAssertNotNil(
+      asset, "Asset should not be nil even if optional fields are missing");
+  XCTAssertEqualObjects(asset.version, @"2.0",
+                        "Version should be correctly decoded");
+  XCTAssertNil(asset.copyright, "Copyright should be nil when not provided");
+  XCTAssertNil(asset.generator, "Generator should be nil when not provided");
+  XCTAssertNil(asset.minVersion, "MinVersion should be nil when not provided");
+  XCTAssertNil(asset.extensions, "Extensions should be nil when not provided");
+  XCTAssertNil(asset.extras, "Extras should be nil when not provided");
+  XCTAssertNil(error, "Error should be nil when optional fields are missing");
+}
+
+#pragma mark - GLTFBuffer
+
+- (void)testDecodeBufferWithAllFieldsPresent {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{
+    @"byteLength" : @1024,
+    @"uri" : @"http://example.com/buffer.bin",
+    @"name" : @"ExampleBuffer",
+    @"extensions" : @{@"customExtension" : @{@"key" : @"value"}},
+    @"extras" : @{@"info" : @"data"}
+  };
+  NSError *error = nil;
+
+  GLTFBuffer *buffer = [decoder decodeBuffer:jsonDict error:&error];
+
+  XCTAssertNotNil(buffer,
+                  "Buffer should not be nil when all fields are present");
+  XCTAssertEqual(buffer.byteLength, 1024,
+                 "Byte length should be correctly decoded");
+  XCTAssertEqualObjects(buffer.uri, @"http://example.com/buffer.bin",
+                        "URI should be correctly decoded");
+  XCTAssertEqualObjects(buffer.name, @"ExampleBuffer",
+                        "Name should be correctly decoded");
+  XCTAssertNotNil(buffer.extensions, "Extensions should be correctly parsed");
+  XCTAssertNotNil(buffer.extras, "Extras should be correctly parsed");
+  XCTAssertNil(error,
+               "Error should be nil when all fields are correctly provided");
+}
+
+- (void)testDecodeBufferWithMissingRequiredFields {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{}; // Missing 'byteLength'
+  NSError *error = nil;
+
+  GLTFBuffer *buffer = [decoder decodeBuffer:jsonDict error:&error];
+
+  XCTAssertNil(buffer, "Buffer should be nil when required fields are missing");
+  XCTAssertNotNil(
+      error,
+      "Error should be present when required field 'byteLength' is missing");
+}
+
+- (void)testDecodeBufferWithOptionalFieldsMissing {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{
+    @"byteLength" : @2048 // Only the required field
+  };
+  NSError *error = nil;
+
+  GLTFBuffer *buffer = [decoder decodeBuffer:jsonDict error:&error];
+
+  XCTAssertNotNil(
+      buffer, "Buffer should not be nil even if optional fields are missing");
+  XCTAssertEqual(buffer.byteLength, 2048,
+                 "Byte length should still be correctly decoded");
+  XCTAssertNil(buffer.uri, "URI should be nil when not provided");
+  XCTAssertNil(buffer.name, "Name should be nil when not provided");
+  XCTAssertNil(buffer.extensions, "Extensions should be nil when not provided");
+  XCTAssertNil(buffer.extras, "Extras should be nil when not provided");
+  XCTAssertNil(error,
+               "Error should be nil when only optional fields are missing");
+}
+
+#pragma mark - GLTFBufferView
+
+- (void)testDecodeBufferViewWithAllFieldsPresent {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{
+    @"buffer" : @1,
+    @"byteLength" : @1024,
+    @"byteOffset" : @256,
+    @"byteStride" : @16,
+    @"target" : @34962,
+    @"name" : @"TestBufferView"
+  };
+  NSError *error = nil;
+
+  GLTFBufferView *bufferView = [decoder decodeBufferView:jsonDict error:&error];
+
+  XCTAssertNotNil(bufferView,
+                  "BufferView should not be nil when all fields are present");
+  XCTAssertEqual(bufferView.buffer, 1);
+  XCTAssertEqual(bufferView.byteLength, 1024);
+  XCTAssertEqual(bufferView.byteOffset, 256);
+  XCTAssertEqual(bufferView.byteStride.integerValue, 16);
+  XCTAssertEqual(bufferView.target.integerValue, 34962);
+  XCTAssertEqualObjects(bufferView.name, @"TestBufferView");
+  XCTAssertNil(error, "Error should be nil when all fields are valid");
+}
+
+- (void)testDecodeBufferViewWithMissingRequiredFields {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{};
+  NSError *error = nil;
+
+  GLTFBufferView *bufferView = [decoder decodeBufferView:jsonDict error:&error];
+
+  XCTAssertNil(bufferView,
+               "BufferView should be nil when required fields are missing");
+  XCTAssertNotNil(error,
+                  "Error should be present when required fields are missing");
+}
+
+#pragma mark - GLTFCamera
+
+- (void)testDecodeCameraWithAllFieldsPresent {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{
+    @"type" : @"perspective",
+    @"perspective" : @{@"yfov" : @1.5, @"znear" : @0.1},
+    @"name" : @"TestCamera"
+  };
+  NSError *error = nil;
+
+  GLTFCamera *camera = [decoder decodeCamera:jsonDict error:&error];
+
+  XCTAssertNotNil(camera,
+                  "Camera should not be nil when all fields are present");
+  XCTAssertEqualObjects(camera.type, @"perspective");
+  XCTAssertNotNil(camera.perspective);
+  XCTAssertEqualObjects(camera.name, @"TestCamera");
+  XCTAssertNil(error, "Error should be nil when all fields are valid");
+}
+
+- (void)testDecodeCameraWithMissingRequiredFields {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{}; // Missing 'type'
+  NSError *error = nil;
+
+  GLTFCamera *camera = [decoder decodeCamera:jsonDict error:&error];
+
+  XCTAssertNil(camera, "Camera should be nil when required fields are missing");
+  XCTAssertNotNil(error,
+                  "Error should be present when required fields are missing");
+}
+
+#pragma mark - GLTFCameraOrthographic
+
+- (void)testDecodeCameraOrthographicWithAllFieldsPresent {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict =
+      @{@"xmag" : @1.0, @"ymag" : @1.0, @"zfar" : @100.0, @"znear" : @0.1};
+  NSError *error = nil;
+
+  GLTFCameraOrthographic *cameraOrtho =
+      [decoder decodeCameraOrthographic:jsonDict error:&error];
+
+  XCTAssertNotNil(
+      cameraOrtho,
+      "CameraOrthographic should not be nil when all fields are present");
+  XCTAssertEqualWithAccuracy(
+      cameraOrtho.xmag, 1.0, 0.001,
+      "xmag should be as expected with a small tolerance");
+  XCTAssertEqualWithAccuracy(
+      cameraOrtho.ymag, 1.0, 0.001,
+      "ymag should be as expected with a small tolerance");
+  XCTAssertEqualWithAccuracy(
+      cameraOrtho.zfar, 100.0, 0.001,
+      "zfar should be as expected with a small tolerance");
+  XCTAssertEqualWithAccuracy(
+      cameraOrtho.znear, 0.1, 0.001,
+      "znear should be as expected with a small tolerance");
+  XCTAssertNil(error,
+               "Error should be nil when all fields are present and valid");
+}
+
+- (void)testDecodeCameraOrthographicWithMissingRequiredFields {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{}; // Missing 'xmag', 'ymag', 'zfar', 'znear'
+  NSError *error = nil;
+
+  GLTFCameraOrthographic *cameraOrtho =
+      [decoder decodeCameraOrthographic:jsonDict error:&error];
+
+  XCTAssertNil(
+      cameraOrtho,
+      "CameraOrthographic should be nil when required fields are missing");
+  XCTAssertNotNil(error,
+                  "Error should be present when required fields are missing");
+}
+
+#pragma mark - GLTFCameraPerspective
+
+- (void)testDecodeCameraPerspectiveWithAllFieldsPresent {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{
+    @"yfov" : @1.5,
+    @"znear" : @0.1,
+    @"aspectRatio" : @1.77,
+    @"zfar" : @100.0
+  };
+  NSError *error = nil;
+
+  GLTFCameraPerspective *camera = [decoder decodeCameraPerspective:jsonDict
+                                                             error:&error];
+
+  XCTAssertNotNil(camera, "Camera perspective should not be nil");
+  XCTAssertEqualWithAccuracy(
+      camera.yfov, 1.5, 0.001,
+      "yfov should be as expected with a small tolerance");
+  XCTAssertEqualWithAccuracy(
+      camera.znear, 0.1, 0.001,
+      "znear should be as expected with a small tolerance");
+  XCTAssertEqualWithAccuracy(
+      camera.aspectRatio.floatValue, 1.77, 0.001,
+      "aspectRatio should be as expected with a small tolerance");
+  XCTAssertEqualWithAccuracy(
+      camera.zfar.floatValue, 100.0, 0.001,
+      "zfar should be as expected with a small tolerance");
+  XCTAssertNil(error,
+               "Error should be nil when all fields are present and valid");
+}
+
+- (void)testDecodeCameraPerspectiveWithMissingRequiredFields {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{}; // Missing 'yfov' and 'znear'
+  NSError *error = nil;
+
+  GLTFCameraPerspective *camera = [decoder decodeCameraPerspective:jsonDict
+                                                             error:&error];
+
+  XCTAssertNil(
+      camera,
+      "Camera perspective should be nil when required fields are missing");
+  XCTAssertNotNil(error,
+                  "Error should be generated when required fields are missing");
+}
+
+#pragma mark - GLTFImage
+
+- (void)testDecodeImageWithAllFieldsPresent {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{
+    @"uri" : @"http://example.com/image.png",
+    @"mimeType" : @"image/png",
+    @"bufferView" : @2,
+    @"name" : @"ExampleImage"
+  };
+
+  GLTFImage *image = [decoder decodeImage:jsonDict];
+
+  XCTAssertNotNil(image, "Image should not be nil when all fields are present");
+  XCTAssertEqualObjects(image.uri, @"http://example.com/image.png");
+  XCTAssertEqualObjects(image.mimeType, @"image/png");
+  XCTAssertEqualObjects(image.bufferView, @2);
+  XCTAssertEqualObjects(image.name, @"ExampleImage");
+}
+
+- (void)testDecodeImageWithOptionalFieldsMissing {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{}; // No optional fields provided
+
+  GLTFImage *image = [decoder decodeImage:jsonDict];
+
+  XCTAssertNotNil(
+      image, "Image should not be nil even if optional fields are missing");
+  XCTAssertNil(image.uri);
+  XCTAssertNil(image.mimeType);
+  XCTAssertNil(image.bufferView);
+  XCTAssertNil(image.name);
+}
+
+#pragma mark - GLTFMaterial
+
+- (void)testDecodeMaterialWithAllFieldsPresent {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{
+    @"name" : @"TestMaterial",
+    @"pbrMetallicRoughness" : @{
+      @"baseColorFactor" : @[ @0.5, @0.5, @0.5, @1.0 ],
+      @"baseColorTexture" : @{@"index" : @0},
+      @"metallicFactor" : @1.0,
+      @"roughnessFactor" : @0.5,
+      @"metallicRoughnessTexture" : @{@"index" : @1}
+    },
+    @"normalTexture" : @{@"index" : @2, @"scale" : @1.0},
+    @"occlusionTexture" : @{@"index" : @3, @"strength" : @0.5},
+    @"emissiveTexture" : @{@"index" : @4},
+    @"emissiveFactor" : @[ @1.0, @0.0, @0.0 ],
+    @"alphaMode" : @"BLEND",
+    @"alphaCutoff" : @0.5,
+    @"doubleSided" : @YES
+  };
+  NSError *error = nil;
+
+  GLTFMaterial *material = [decoder decodeMaterial:jsonDict error:&error];
+
+  XCTAssertNotNil(material,
+                  "Material should not be nil when all fields are present");
+  XCTAssertEqualObjects(material.name, @"TestMaterial");
+
+  // PBR Metallic Roughness
+  XCTAssertNotNil(material.pbrMetallicRoughness,
+                  "PBR Metallic Roughness should not be nil");
+  XCTAssertEqualObjects(material.pbrMetallicRoughness.baseColorFactor,
+                        (@[ @0.5, @0.5, @0.5, @1.0 ]));
+  XCTAssertNotNil(material.pbrMetallicRoughness.baseColorTexture);
+  XCTAssertEqual(material.pbrMetallicRoughness.metallicFactor, 1.0);
+  XCTAssertEqual(material.pbrMetallicRoughness.roughnessFactor, 0.5);
+  XCTAssertNotNil(material.pbrMetallicRoughness.metallicRoughnessTexture);
+
+  // Normal Texture
+  XCTAssertNotNil(material.normalTexture, "Normal Texture should not be nil");
+  XCTAssertEqual(material.normalTexture.index, 2);
+  XCTAssertEqual(material.normalTexture.scale, 1.0);
+
+  // Occlusion Texture
+  XCTAssertNotNil(material.occlusionTexture,
+                  "Occlusion Texture should not be nil");
+  XCTAssertEqual(material.occlusionTexture.index, 3);
+  XCTAssertEqual(material.occlusionTexture.strength, 0.5);
+
+  // Emissive Texture
+  XCTAssertNotNil(material.emissiveTexture,
+                  "Emissive Texture should not be nil");
+  XCTAssertEqual(material.emissiveTexture.index, 4);
+
+  // Other properties
+  XCTAssertEqualObjects(material.emissiveFactor, (@[ @1.0, @0.0, @0.0 ]));
+  XCTAssertEqualObjects(material.alphaMode, @"BLEND");
+  XCTAssertEqual(material.alphaCutoff, 0.5);
+  XCTAssertTrue(material.doubleSided);
+  XCTAssertNil(error,
+               "Error should be nil when all fields are provided and valid");
+}
+
+- (void)testDecodeMaterialWithMissingOptionalFields {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{}; // No fields provided
+
+  NSError *error = nil;
+  GLTFMaterial *material = [decoder decodeMaterial:jsonDict error:&error];
+
+  XCTAssertNotNil(material,
+                  "Material should not be nil even if all fields are missing");
+  XCTAssertNil(material.name);
+  XCTAssertNil(material.pbrMetallicRoughness);
+  XCTAssertNil(material.normalTexture);
+  XCTAssertNil(material.occlusionTexture);
+  XCTAssertNil(material.emissiveTexture);
+  XCTAssertEqualObjects(material.emissiveFactor, (@[ @0.0, @0.0, @0.0 ]));
+  XCTAssertEqualObjects(material.alphaMode, @"OPAQUE");
+  XCTAssertEqual(material.alphaCutoff, 0.5);
+  XCTAssertNil(material.doubleSided);
+  XCTAssertNil(error, "Error should be nil when optional fields are missing");
+}
+
+#pragma mark - GLTFMaterialNormalTextureInfo
+
+- (void)testDecodeMaterialNormalTextureInfoWithAllFieldsPresent {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{
+    @"index" : @1,
+    @"texCoord" : @2,
+    @"scale" : @1.5,
+    @"extensions" : @{@"someExtension" : @{}},
+    @"extras" : @{@"someExtra" : @"data"}
+  };
+  NSError *error = nil;
+
+  GLTFMaterialNormalTextureInfo *textureInfo =
+      [decoder decodeMaterialNormalTextureInfo:jsonDict error:&error];
+
+  XCTAssertNotNil(textureInfo,
+                  "TextureInfo should not be nil when all fields are present");
+  XCTAssertEqual(textureInfo.index, 1);
+  XCTAssertEqual(textureInfo.texCoord, 2);
+  XCTAssertEqual(textureInfo.scale, 1.5);
+  XCTAssertNotNil(textureInfo.extensions);
+  XCTAssertNotNil(textureInfo.extras);
+  XCTAssertNil(error);
+}
+
+- (void)testDecodeMaterialNormalTextureInfoWithMissingRequiredFields {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{  // Missing 'index'
+        @"texCoord": @2,
+        @"scale": @1.5
+    };
+  NSError *error = nil;
+
+  GLTFMaterialNormalTextureInfo *textureInfo =
+      [decoder decodeMaterialNormalTextureInfo:jsonDict error:&error];
+
+  XCTAssertNil(
+      textureInfo,
+      "TextureInfo should be nil when required 'index' field is missing");
+  XCTAssertNotNil(
+      error, "Error should not be nil when required field 'index' is missing");
+}
+
+#pragma mark - GLTFMaterialOcclusionTextureInfo
+
+- (void)testDecodeMaterialOcclusionTextureInfoWithAllFieldsPresent {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{
+    @"index" : @1,
+    @"texCoord" : @2,
+    @"strength" : @0.8,
+    @"extensions" : @{@"extension" : @{}},
+    @"extras" : @{@"extra" : @"info"}
+  };
+  NSError *error = nil;
+
+  GLTFMaterialOcclusionTextureInfo *textureInfo =
+      [decoder decodeMaterialOcclusionTextureInfo:jsonDict error:&error];
+
+  XCTAssertNotNil(textureInfo,
+                  "TextureInfo should not be nil when all fields are present");
+  XCTAssertEqual(textureInfo.index, 1);
+  XCTAssertEqual(textureInfo.texCoord, 2);
+  XCTAssertEqualWithAccuracy(textureInfo.strength, 0.8, 0.001,
+                             "Strength should be approximately 0.8");
+  XCTAssertNotNil(textureInfo.extensions);
+  XCTAssertNotNil(textureInfo.extras);
+  XCTAssertNil(error);
+}
+
+- (void)testDecodeMaterialOcclusionTextureInfoWithMissingRequiredFields {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{  // Missing 'index'
+        @"strength": @0.8
+    };
+  NSError *error = nil;
+
+  GLTFMaterialOcclusionTextureInfo *textureInfo =
+      [decoder decodeMaterialOcclusionTextureInfo:jsonDict error:&error];
+
+  XCTAssertNil(
+      textureInfo,
+      "TextureInfo should be nil when required 'index' field is missing");
+  XCTAssertNotNil(
+      error, "Error should not be nil when required field 'index' is missing");
+}
+
+#pragma mark - GLTFMaterialPBRMetallicRoughness
+
+- (void)testDecodeMaterialPBRMetallicRoughnessWithAllFieldsPresent {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{
+    @"baseColorFactor" : @[ @1.0, @0.5, @0.5, @1.0 ],
+    @"baseColorTexture" : @{@"index" : @1},
+    @"metallicFactor" : @0.5,
+    @"roughnessFactor" : @0.5,
+    @"metallicRoughnessTexture" : @{@"index" : @2},
+    @"extensions" : @{@"extension" : @{}},
+    @"extras" : @{@"extra" : @"info"}
+  };
+  NSError *error = nil;
+
+  GLTFMaterialPBRMetallicRoughness *roughness =
+      [decoder decodeMaterialPBRMetallicRoughness:jsonDict error:&error];
+
+  XCTAssertNotNil(
+      roughness,
+      "PBRMetallicRoughness should not be nil when all fields are present");
+  XCTAssertEqualObjects(roughness.baseColorFactor,
+                        (@[ @1.0, @0.5, @0.5, @1.0 ]));
+  XCTAssertNotNil(roughness.baseColorTexture);
+  XCTAssertEqual(roughness.metallicFactor, 0.5);
+  XCTAssertEqual(roughness.roughnessFactor, 0.5);
+  XCTAssertNotNil(roughness.metallicRoughnessTexture);
+  XCTAssertNotNil(roughness.extensions);
+  XCTAssertNotNil(roughness.extras);
+  XCTAssertNil(error);
+}
+
+- (void)testDecodeMaterialPBRMetallicRoughnessWithMissingOptionalFields {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{}; // All optional fields missing
+  NSError *error = nil;
+
+  GLTFMaterialPBRMetallicRoughness *roughness =
+      [decoder decodeMaterialPBRMetallicRoughness:jsonDict error:&error];
+
+  XCTAssertNotNil(roughness, "PBRMetallicRoughness should not be nil even if "
+                             "optional fields are missing");
+  XCTAssertEqualObjects(roughness.baseColorFactor, (@[ @1, @1, @1, @1 ]));
+  XCTAssertNil(roughness.baseColorTexture);
+  XCTAssertEqual(roughness.metallicFactor, 1);
+  XCTAssertEqual(roughness.roughnessFactor, 1);
+  XCTAssertNil(roughness.metallicRoughnessTexture);
+  XCTAssertNil(roughness.extensions);
+  XCTAssertNil(roughness.extras);
+  XCTAssertNil(error);
+}
+
+#pragma mark - GLTFMesh
+
+- (void)testDecodeMeshWithAllFieldsPresent {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{
+    @"primitives" : @[ @{@"attributes" : @{@"POSITION" : @0}} ],
+    @"weights" : @[ @1.0, @0.5 ],
+    @"name" : @"ExampleMesh",
+    @"extensions" : @{@"extensionData" : @{}},
+    @"extras" : @{@"extraData" : @"data"}
+  };
+  NSError *error = nil;
+
+  GLTFMesh *mesh = [decoder decodeMesh:jsonDict error:&error];
+
+  XCTAssertNotNil(mesh, "Mesh should not be nil when all fields are present");
+  XCTAssertEqual(mesh.primitives.count, 1, "There should be one primitive");
+  XCTAssertEqualObjects(mesh.weights, (@[ @1.0, @0.5 ]),
+                        "Weights should be correctly decoded");
+  XCTAssertEqualObjects(mesh.name, @"ExampleMesh",
+                        "Name should be correctly decoded");
+  XCTAssertNotNil(mesh.extensions, "Extensions should be present");
+  XCTAssertNotNil(mesh.extras, "Extras should be present");
+  XCTAssertNil(
+      error, "Error should be nil when decoding is successful with all fields");
+}
+
+- (void)testDecodeMeshWithMissingRequiredFields {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{}; // Missing 'primitives', which is required
+  NSError *error = nil;
+
+  GLTFMesh *mesh = [decoder decodeMesh:jsonDict error:&error];
+
+  XCTAssertNil(mesh, "Mesh should be nil when required fields are missing");
+  XCTAssertNotNil(
+      error,
+      "Error should not be nil when required field 'primitives' is missing");
+}
+
+#pragma mark - GLTFMeshPrimitive
+
+- (void)testDecodeMeshPrimitiveWithAllFieldsPresent {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{
+    @"attributes" : @{@"POSITION" : @0},
+    @"indices" : @1,
+    @"material" : @2,
+    @"mode" : @3,
+    @"targets" : @[ @4, @5 ],
+    @"extensions" : @{@"extensionData" : @{}},
+    @"extras" : @{@"extraData" : @"data"}
+  };
+  NSError *error = nil;
+
+  GLTFMeshPrimitive *primitive = [decoder decodeMeshPrimitive:jsonDict
+                                                        error:&error];
+
+  XCTAssertNotNil(
+      primitive, "MeshPrimitive should not be nil when all fields are present");
+  XCTAssertEqualObjects(primitive.attributes, @{@"POSITION" : @0},
+                        "Attributes should be correctly decoded");
+  XCTAssertEqualObjects(primitive.indices, @1,
+                        "Indices should be correctly decoded");
+  XCTAssertEqualObjects(primitive.material, @2,
+                        "Material should be correctly decoded");
+  XCTAssertEqual(primitive.mode, 3, "Mode should be correctly decoded");
+  XCTAssertEqualObjects(primitive.targets, (@[ @4, @5 ]),
+                        "Targets should be correctly decoded");
+  XCTAssertNotNil(primitive.extensions, "Extensions should be present");
+  XCTAssertNotNil(primitive.extras, "Extras should be present");
+  XCTAssertNil(
+      error, "Error should be nil when decoding is successful with all fields");
+}
+
+- (void)testDecodeMeshPrimitiveWithMissingRequiredFields {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{}; // Missing 'attributes', which is required
+  NSError *error = nil;
+
+  GLTFMeshPrimitive *primitive = [decoder decodeMeshPrimitive:jsonDict
+                                                        error:&error];
+
+  XCTAssertNil(primitive,
+               "MeshPrimitive should be nil when required fields are missing");
+  XCTAssertNotNil(
+      error,
+      "Error should not be nil when required field 'attributes' is missing");
+}
+
+#pragma mark - GLTFNode
+
+- (void)testDecodeNodeWithNonDefaultValues {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{
+    @"camera" : @1,
+    @"children" : @[ @2, @3 ],
+    @"skin" : @4,
+    @"matrix" :
+        @[ @0, @1, @0, @0, @1, @0, @0, @0, @0, @0, @0, @1, @1, @1, @1, @0 ],
+    @"mesh" : @5,
+    @"rotation" : @[ @1, @0, @0, @0 ],   // Non-default quaternion
+    @"scale" : @[ @2, @2, @2 ],          // Non-default scale factors
+    @"translation" : @[ @10, @20, @30 ], // Non-default translation values
+    @"weights" : @[ @0.75, @0.25 ],      // Different weights
+    @"name" : @"NodeA",
+    @"extensions" : @{@"someExtension" : @{@"key" : @"value"}},
+    @"extras" : @{@"someExtra" : @"data"}
+  };
+
+  GLTFNode *node = [decoder decodeNode:jsonDict];
+
+  XCTAssertEqualObjects(node.camera, @1);
+  XCTAssertEqualObjects(node.children, (@[ @2, @3 ]));
+  XCTAssertEqualObjects(node.skin, @4);
+  XCTAssertTrue(node.matrix.columns[0].x == 0 && node.matrix.columns[1].x == 1,
+                "Matrix should be set as provided");
+  XCTAssertEqualObjects(node.mesh, @5);
+  XCTAssertEqualObjects(node.rotation, (@[ @1, @0, @0, @0 ]),
+                        "Rotation should be set as provided");
+  XCTAssertEqualObjects(node.scale, (@[ @2, @2, @2 ]),
+                        "Scale should be set as provided");
+  XCTAssertEqualObjects(node.translation, (@[ @10, @20, @30 ]),
+                        "Translation should be set as provided");
+  XCTAssertEqualObjects(node.weights, (@[ @0.75, @0.25 ]),
+                        "Weights should be set as provided");
+  XCTAssertEqualObjects(node.name, @"NodeA");
+  XCTAssertNotNil(node.extensions);
+  XCTAssertNotNil(node.extras);
+}
+
+- (void)testDecodeNodeWithOptionalFieldsMissing {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{}; // No optional fields provided
+
+  GLTFNode *node = [decoder decodeNode:jsonDict];
+
+  XCTAssertNil(node.camera);
+  XCTAssertNil(node.children);
+  XCTAssertNil(node.skin);
+  XCTAssertTrue([self isIdentityMatrix:node.matrix],
+                "Matrix should be identity by default");
+  XCTAssertNil(node.mesh);
+  XCTAssertEqualObjects(node.rotation,
+                        (@[ @0, @0, @0, @1 ]));         // Default rotation
+  XCTAssertEqualObjects(node.scale, (@[ @1, @1, @1 ])); // Default scale
+  XCTAssertEqualObjects(node.translation,
+                        (@[ @0, @0, @0 ])); // Default translation
+  XCTAssertNil(node.weights);
+  XCTAssertNil(node.name);
+  XCTAssertNil(node.extensions);
+  XCTAssertNil(node.extras);
+}
+
+// Helper method to check if a matrix is the identity matrix
+- (BOOL)isIdentityMatrix:(simd_float4x4)matrix {
+  simd_float4x4 identity = matrix_identity_float4x4;
+  for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 4; j++) {
+      if (matrix.columns[i][j] != identity.columns[i][j]) {
+        return NO;
+      }
+    }
+  }
+  return YES;
+}
+
+#pragma mark - GLTFSampler
+
+- (void)testDecodeSamplerWithAllFieldsPresent {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{
+    @"magFilter" : @9729,
+    @"minFilter" : @9986,
+    @"wrapS" : @10497,
+    @"wrapT" : @33071,
+    @"name" : @"DefaultSampler",
+    @"extensions" : @{@"someExtension" : @{@"param" : @"value"}},
+    @"extras" : @{@"info" : @"extra data"}
+  };
+  GLTFSampler *sampler = [decoder decodeSampler:jsonDict];
+
+  XCTAssertEqualObjects(sampler.magFilter, @9729,
+                        "MagFilter should be correctly decoded");
+  XCTAssertEqualObjects(sampler.minFilter, @9986,
+                        "MinFilter should be correctly decoded");
+  XCTAssertEqual(sampler.wrapS, 10497, "WrapS should be correctly decoded");
+  XCTAssertEqual(sampler.wrapT, 33071, "WrapT should be correctly decoded");
+  XCTAssertEqualObjects(sampler.name, @"DefaultSampler",
+                        "Name should be correctly decoded");
+  XCTAssertNotNil(sampler.extensions, "Extensions should be correctly decoded");
+  XCTAssertNotNil(sampler.extras, "Extras should be correctly decoded");
+}
+
+- (void)testDecodeSamplerWithDefaultValues {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict =
+      @{}; // No fields provided, default values should be used
+
+  GLTFSampler *sampler = [decoder decodeSampler:jsonDict];
+
+  XCTAssertNil(sampler.magFilter, "MagFilter should be nil when not provided");
+  XCTAssertNil(sampler.minFilter, "MinFilter should be nil when not provided");
+  XCTAssertEqual(sampler.wrapS, 10497,
+                 "WrapS should default to 10497 when not provided");
+  XCTAssertEqual(sampler.wrapT, 10497,
+                 "WrapT should default to 10497 when not provided");
+  XCTAssertNil(sampler.name, "Name should be nil when not provided");
+  XCTAssertNil(sampler.extensions,
+               "Extensions should be nil when not provided");
+  XCTAssertNil(sampler.extras, "Extras should be nil when not provided");
+}
+
+#pragma mark - GLTFScene
+
+- (void)testDecodeSceneWithAllFieldsPresent {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{
+    @"nodes" : @[ @1, @2, @3 ],
+    @"name" : @"MainScene",
+    @"extensions" : @{@"someExtension" : @{@"param" : @"value"}},
+    @"extras" : @{@"info" : @"extra data"}
+  };
+
+  GLTFScene *scene = [decoder decodeScene:jsonDict];
+
+  XCTAssertEqualObjects(scene.nodes, (@[ @1, @2, @3 ]),
+                        "Nodes should be correctly decoded");
+  XCTAssertEqualObjects(scene.name, @"MainScene",
+                        "Name should be correctly decoded");
+  XCTAssertNotNil(scene.extensions, "Extensions should be correctly decoded");
+  XCTAssertNotNil(scene.extras, "Extras should be correctly decoded");
+}
+
+- (void)testDecodeSceneWithOptionalFieldsMissing {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{}; // No fields provided
+
+  GLTFScene *scene = [decoder decodeScene:jsonDict];
+
+  XCTAssertNil(scene.nodes, "Nodes should be nil when not provided");
+  XCTAssertNil(scene.name, "Name should be nil when not provided");
+  XCTAssertNil(scene.extensions, "Extensions should be nil when not provided");
+  XCTAssertNil(scene.extras, "Extras should be nil when not provided");
+}
+
+#pragma mark - GLTFSkin
+
+- (void)testDecodeSkinWithAllFieldsPresent {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{
+    @"joints" : @[ @1, @2, @3 ],
+    @"inverseBindMatrices" : @5,
+    @"skeleton" : @10,
+    @"name" : @"TestSkin",
+    @"extensions" : @{@"someExtension" : @{@"key" : @"value"}},
+    @"extras" : @{@"someExtra" : @"data"}
+  };
+  NSError *error = nil;
+
+  GLTFSkin *skin = [decoder decodeSkin:jsonDict error:&error];
+
+  XCTAssertNotNil(skin, "Skin should not be nil when all fields are present");
+  XCTAssertEqualObjects(skin.joints, (@[ @1, @2, @3 ]),
+                        "Joints should be correctly decoded");
+  XCTAssertEqualObjects(skin.inverseBindMatrices, @5,
+                        "InverseBindMatrices should be correctly decoded");
+  XCTAssertEqualObjects(skin.skeleton, @10,
+                        "Skeleton should be correctly decoded");
+  XCTAssertEqualObjects(skin.name, @"TestSkin",
+                        "Name should be correctly decoded");
+  XCTAssertEqualObjects(skin.extensions,
+                        @{@"someExtension" : @{@"key" : @"value"}},
+                        "Extensions should be correctly decoded");
+  XCTAssertEqualObjects(skin.extras, @{@"someExtra" : @"data"},
+                        "Extras should be correctly decoded");
+  XCTAssertNil(
+      error, "Error should be nil when decoding is successful with all fields");
+}
+
+- (void)testDecodeSkinWithMissingRequiredFields {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{  // Missing 'joints', which is required
+        @"inverseBindMatrices": @5,
+        @"name": @"TestSkin"
+    };
+  NSError *error = nil;
+
+  GLTFSkin *skin = [decoder decodeSkin:jsonDict error:&error];
+
+  XCTAssertNil(skin,
+               "Skin should be nil when required 'joints' field is missing");
+  XCTAssertNotNil(
+      error, "Error should not be nil when required field 'joints' is missing");
+}
+
+- (void)testDecodeSkinWithOptionalFieldsMissing {
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+  NSDictionary *jsonDict = @{
+    @"joints" : @[
+      @1, @2, @3
+    ] // Optional fields 'inverseBindMatrices', 'skeleton', 'name' are missing
+  };
+  NSError *error = nil;
+
+  GLTFSkin *skin = [decoder decodeSkin:jsonDict error:&error];
+
+  XCTAssertNotNil(skin,
+                  "Skin should not be nil even if optional fields are missing");
+  XCTAssertEqualObjects(skin.joints, (@[ @1, @2, @3 ]),
+                        "Joints should be correctly decoded");
+  XCTAssertNil(skin.inverseBindMatrices,
+               "InverseBindMatrices should be nil when not provided");
+  XCTAssertNil(skin.skeleton, "Skeleton should be nil when not provided");
+  XCTAssertNil(skin.name, "Name should be nil when not provided");
+  XCTAssertNil(skin.extensions, "Extensions should be nil when not provided");
+  XCTAssertNil(skin.extras, "Extras should be nil when not provided");
+  XCTAssertNil(error, "Error should be nil when optional fields are missing");
+}
+
+#pragma mark - GLTFTexture
+
+- (void)testDecodeTextureWithAllFieldsPresent {
+  NSDictionary *jsonDict = @{
+    @"sampler" : @1,
+    @"source" : @2,
+    @"name" : @"ExampleTexture",
+    @"extensions" : @{@"extensionKey" : @"extensionValue"},
+    @"extras" : @{@"extraKey" : @"extraValue"}
+  };
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+
+  GLTFTexture *texture = [decoder decodeTexture:jsonDict];
+
+  XCTAssertEqualObjects(texture.sampler, @1,
+                        "Sampler should be correctly decoded");
+  XCTAssertEqualObjects(texture.source, @2,
+                        "Source should be correctly decoded");
+  XCTAssertEqualObjects(texture.name, @"ExampleTexture",
+                        "Name should be correctly decoded");
+  XCTAssertEqualObjects(texture.extensions,
+                        @{@"extensionKey" : @"extensionValue"},
+                        "Extensions should be correctly decoded");
+  XCTAssertEqualObjects(texture.extras, @{@"extraKey" : @"extraValue"},
+                        "Extras should be correctly decoded");
+}
+
+- (void)testDecodeTextureWithOptionalFieldsMissing {
+  NSDictionary *jsonDict = @{}; // Empty dictionary to simulate missing fields
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+
+  GLTFTexture *texture = [decoder decodeTexture:jsonDict];
+
+  XCTAssertNil(texture.sampler, "Sampler should be nil when not provided");
+  XCTAssertNil(texture.source, "Source should be nil when not provided");
+  XCTAssertNil(texture.name, "Name should be nil when not provided");
+  XCTAssertNil(texture.extensions,
+               "Extensions should be nil when not provided");
+  XCTAssertNil(texture.extras, "Extras should be nil when not provided");
+}
+
+- (void)testDecodeTextureWithIncorrectTypes {
+  NSDictionary *jsonDict = @{
+    @"sampler" : @"incorrectType",
+    @"source" : @"alsoIncorrect",
+    @"name" : @123,      // Incorrect type, should be a string
+    @"extensions" : @[], // Incorrect type, should be a dictionary
+    @"extras" : @123     // Incorrect type, should be a dictionary
+  };
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+
+  GLTFTexture *texture = [decoder decodeTexture:jsonDict];
+
+  XCTAssertNil(texture.sampler,
+               "Sampler should be nil when the type is incorrect");
+  XCTAssertNil(texture.source,
+               "Source should be nil when the type is incorrect");
+  XCTAssertNil(texture.name, "Name should be nil when the type is incorrect");
+  XCTAssertNil(texture.extensions,
+               "Extensions should be nil when the type is incorrect");
+  XCTAssertNil(texture.extras,
+               "Extras should be nil when the type is incorrect");
+}
+
+#pragma mark - GLTFTextureInfo
+
+- (void)testDecodeTextureInfoWithAllFieldsPresent {
+  NSDictionary *jsonDict = @{
+    @"index" : @2,
+    @"texCoord" : @1,
+    @"extensions" : @{@"someExtension" : @{@"param" : @"value"}},
+    @"extras" : @{@"someData" : @"data"}
+  };
+  NSError *error = nil;
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+
+  GLTFTextureInfo *textureInfo = [decoder decodeTextureInfo:jsonDict
+                                                      error:&error];
+
+  XCTAssertNotNil(textureInfo,
+                  "TextureInfo should not be nil when all fields are present");
+  XCTAssertEqual(textureInfo.index, 2, "Index should be correctly decoded");
+  XCTAssertEqual(textureInfo.texCoord, 1,
+                 "TexCoord should be correctly decoded");
+  XCTAssertNotNil(textureInfo.extensions,
+                  "Extensions should be correctly decoded");
+  XCTAssertNotNil(textureInfo.extras, "Extras should be correctly decoded");
+  XCTAssertNil(
+      error, "Error should be nil when decoding is successful with all fields");
+}
+
+- (void)testDecodeTextureInfoWithMissingRequiredField {
+  NSDictionary *jsonDict = @{ // Missing 'index'
+        @"texCoord": @1
+    };
+  NSError *error = nil;
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+
+  GLTFTextureInfo *textureInfo = [decoder decodeTextureInfo:jsonDict
+                                                      error:&error];
+
+  XCTAssertNil(
+      textureInfo,
+      "TextureInfo should be nil when required 'index' field is missing");
+  XCTAssertNotNil(
+      error, "Error should not be nil when required field 'index' is missing");
+}
+
+- (void)testDecodeTextureInfoWithOptionalFieldsMissing {
+  NSDictionary *jsonDict = @{
+    @"index" : @2 // Optional 'texCoord', 'extensions', and 'extras' are missing
+  };
+  NSError *error = nil;
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
+
+  GLTFTextureInfo *textureInfo = [decoder decodeTextureInfo:jsonDict
+                                                      error:&error];
+
+  XCTAssertNotNil(
+      textureInfo,
+      "TextureInfo should not be nil even if optional fields are missing");
+  XCTAssertEqual(textureInfo.index, 2, "Index should be correctly decoded");
+  XCTAssertEqual(textureInfo.texCoord, 0,
+                 "TexCoord should default to 0 when not provided");
+  XCTAssertNil(textureInfo.extensions,
+               "Extensions should be nil when not provided");
+  XCTAssertNil(textureInfo.extras, "Extras should be nil when not provided");
+  XCTAssertNil(error, "Error should be nil when optional fields are missing");
+}
 
 @end

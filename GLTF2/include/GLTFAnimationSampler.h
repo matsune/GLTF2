@@ -2,9 +2,10 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-static NSString * const GLTFAnimationSamplerInterpolationLinear = @"LINEAR";
-static NSString * const GLTFAnimationSamplerInterpolationStep = @"STEP";
-static NSString * const GLTFAnimationSamplerInterpolationCubicSpline = @"CUBICSPLINE";
+static NSString *const GLTFAnimationSamplerInterpolationLinear = @"LINEAR";
+static NSString *const GLTFAnimationSamplerInterpolationStep = @"STEP";
+static NSString *const GLTFAnimationSamplerInterpolationCubicSpline =
+    @"CUBICSPLINE";
 
 @interface GLTFAnimationSampler : NSObject
 

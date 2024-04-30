@@ -1,18 +1,5 @@
-#import "GLTFAccessor.h"
-#import "GLTFAccessorSparse.h"
-#import "GLTFAccessorSparseIndices.h"
-#import "GLTFAccessorSparseValues.h"
-#import "GLTFMaterialNormalTextureInfo.h"
-#import "GLTFMaterialOcclusionTextureInfo.h"
-#import "GLTFMaterialPBRMetallicRoughness.h"
-#import "GLTFMesh.h"
+#import "GLTFJson.h"
 #import "GLTFMeshPrimitive.h"
-#import "GLTFNode.h"
-#import "GLTFSampler.h"
-#import "GLTFScene.h"
-#import "GLTFSkin.h"
-#import "GLTFTexture.h"
-#import "GLTFTextureInfo.h"
 #import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN
@@ -21,62 +8,97 @@ NSString *const GLTF2DecodeErrorDomain = @"GLTF2.DecodeError";
 
 typedef NS_ENUM(NSInteger, GLTF2ErrorCode) {
   GLTF2ErrorMissingData = 1001,
-  GLTF2ErrorInvalidFormat = 1002,
 };
 
 @interface GLTFDecoder : NSObject
 
-//+ (nullable GLTFAccessor *)decodeAccessorFromJson:(NSDictionary *)jsonDict
-//                                            error:(NSError **)error;
-//
-//+ (nullable GLTFAccessorSparse *)decodeAccessorSparseFromJson:
-//                                     (NSDictionary *)jsonDict
-//                                                        error:(NSError **)error;
-//
-//+ (nullable GLTFAccessorSparseIndices *)
-//    decodeAccessorSparseIndicesFromJson:(NSDictionary *)jsonDict
-//                                  error:(NSError **)error;
-//
-//+ (nullable GLTFAccessorSparseValues *)
-//    decodeAccessorSparseValuesFromJson:(NSDictionary *)jsonDict
-//                                 error:(NSError **)error;
-//
-//+ (nullable GLTFMaterialNormalTextureInfo *)
-//    decodeMaterialNormalTextureInfoFromJson:(NSDictionary *)jsonDict
-//                                      error:(NSError **)error;
-//
-//+ (nullable GLTFMaterialOcclusionTextureInfo *)
-//    decodeMaterialOcclusionTextureInfoFromJson:(NSDictionary *)jsonDict
-//                                         error:(NSError **)error;
-//
-//+ (nullable GLTFMaterialPBRMetallicRoughness *)
-//    decodeMaterialPBRMetallicRoughnessFromJson:(NSDictionary *)jsonDict
-//                                         error:(NSError **)error;
-//
-//+ (nullable GLTFMesh *)decodeMeshFromJson:(NSDictionary *)jsonDict
-//                                    error:(NSError **)error;
-//
-//+ (nullable GLTFMeshPrimitive *)decodeMeshPrimitiveFromJson:
-//                                    (NSDictionary *)jsonDict
-//                                                      error:(NSError **)error;
-//
-//+ (nullable GLTFNode *)decodeNodeFromJson:(NSDictionary *)jsonDict
-//                                    error:(NSError **)error;
-//
-//+ (nullable GLTFSampler *)decodeSamplerFromJson:(NSDictionary *)jsonDict
-//                                          error:(NSError **)error;
-//
-//+ (nullable GLTFScene *)decodeSceneFromJson:(NSDictionary *)jsonDict
-//                                      error:(NSError **)error;
-//
-//+ (nullable GLTFSkin *)decodeSkinFromJson:(NSDictionary *)jsonDict
-//                                    error:(NSError **)error;
-//
-//+ (nullable GLTFTexture *)decodeTextureFromJson:(NSDictionary *)jsonDict
-//                                          error:(NSError **)error;
-//
-//+ (nullable GLTFTextureInfo *)decodeTextureInfoFromJson:(NSDictionary *)jsonDict
-//                                                  error:(NSError **)error;
+- (nullable GLTFJson *)decodeJson:(NSDictionary *)jsonDict
+                            error:(NSError **)error;
+
+- (nullable GLTFAccessor *)decodeAccessor:(NSDictionary *)jsonDict
+                                    error:(NSError **)error;
+
+- (nullable GLTFAccessorSparse *)decodeAccessorSparse:(NSDictionary *)jsonDict
+                                                error:(NSError **)error;
+
+- (nullable GLTFAccessorSparseIndices *)
+    decodeAccessorSparseIndices:(NSDictionary *)jsonDict
+                          error:(NSError **)error;
+
+- (nullable GLTFAccessorSparseValues *)
+    decodeAccessorSparseValues:(NSDictionary *)jsonDict
+                         error:(NSError **)error;
+
+- (nullable GLTFAnimation *)decodeAnimation:(NSDictionary *)jsonDict
+                                      error:(NSError **)error;
+
+- (nullable GLTFAnimationChannel *)decodeAnimationChannel:
+                                       (NSDictionary *)jsonDict
+                                                    error:(NSError **)error;
+
+- (nullable GLTFAnimationChannelTarget *)
+    decodeAnimationChannelTarget:(NSDictionary *)jsonDict
+                           error:(NSError **)error;
+
+- (nullable GLTFAnimationSampler *)decodeAnimationSampler:
+                                       (NSDictionary *)jsonDict
+                                                    error:(NSError **)error;
+
+- (nullable GLTFAsset *)decodeAsset:(NSDictionary *)jsonDict
+                              error:(NSError **)error;
+
+- (nullable GLTFBuffer *)decodeBuffer:(NSDictionary *)jsonDict
+                                error:(NSError **)error;
+
+- (nullable GLTFBufferView *)decodeBufferView:(NSDictionary *)jsonDict
+                                        error:(NSError **)error;
+
+- (nullable GLTFCamera *)decodeCamera:(NSDictionary *)jsonDict
+                                error:(NSError **)error;
+
+- (nullable GLTFCameraOrthographic *)decodeCameraOrthographic:
+                                         (NSDictionary *)jsonDict
+                                                        error:(NSError **)error;
+- (nullable GLTFCameraPerspective *)decodeCameraPerspective:
+                                        (NSDictionary *)jsonDict
+                                                      error:(NSError **)error;
+
+- (GLTFImage *)decodeImage:(NSDictionary *)jsonDict;
+
+- (nullable GLTFMaterial *)decodeMaterial:(NSDictionary *)jsonDict
+                                    error:(NSError **)error;
+
+- (nullable GLTFMaterialNormalTextureInfo *)
+    decodeMaterialNormalTextureInfo:(NSDictionary *)jsonDict
+                              error:(NSError **)error;
+
+- (nullable GLTFMaterialOcclusionTextureInfo *)
+    decodeMaterialOcclusionTextureInfo:(NSDictionary *)jsonDict
+                                 error:(NSError **)error;
+
+- (nullable GLTFMaterialPBRMetallicRoughness *)
+    decodeMaterialPBRMetallicRoughness:(NSDictionary *)jsonDict
+                                 error:(NSError **)error;
+
+- (nullable GLTFMesh *)decodeMesh:(NSDictionary *)jsonDict
+                            error:(NSError **)error;
+- (nullable GLTFMeshPrimitive *)decodeMeshPrimitive:(NSDictionary *)jsonDict
+                                              error:(NSError **)error;
+
+- (GLTFNode *)decodeNode:(NSDictionary *)jsonDict;
+
+- (GLTFSampler *)decodeSampler:(NSDictionary *)jsonDict;
+
+- (GLTFScene *)decodeScene:(NSDictionary *)jsonDict;
+
+- (nullable GLTFSkin *)decodeSkin:(NSDictionary *)jsonDict
+                            error:(NSError **)error;
+
+- (GLTFTexture *)decodeTexture:(NSDictionary *)jsonDict;
+
+- (nullable GLTFTextureInfo *)decodeTextureInfo:(NSDictionary *)jsonDict
+                                          error:(NSError **)error;
+
 @end
 
 NS_ASSUME_NONNULL_END

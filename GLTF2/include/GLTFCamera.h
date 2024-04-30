@@ -1,6 +1,6 @@
-#import <Foundation/Foundation.h>
 #import "GLTFCameraOrthographic.h"
 #import "GLTFCameraPerspective.h"
+#import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN
 

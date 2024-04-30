@@ -2,10 +2,11 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-static NSString * const GLTFAnimationChannelTargetPathTranslation = @"translation";
-static NSString * const GLTFAnimationChannelTargetPathRotation = @"rotation";
-static NSString * const GLTFAnimationChannelTargetPathScale = @"scale";
-static NSString * const GLTFAnimationChannelTargetPathWeights = @"weights";
+static NSString *const GLTFAnimationChannelTargetPathTranslation =
+    @"translation";
+static NSString *const GLTFAnimationChannelTargetPathRotation = @"rotation";
+static NSString *const GLTFAnimationChannelTargetPathScale = @"scale";
+static NSString *const GLTFAnimationChannelTargetPathWeights = @"weights";
 
 @interface GLTFAnimationChannelTarget : NSObject
 

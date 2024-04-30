@@ -1,4 +1,3 @@
-#import <Foundation/Foundation.h>
 #import "GLTFAccessor.h"
 #import "GLTFAnimation.h"
 #import "GLTFAsset.h"
@@ -13,6 +12,7 @@
 #import "GLTFScene.h"
 #import "GLTFSkin.h"
 #import "GLTFTexture.h"
+#import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN
 

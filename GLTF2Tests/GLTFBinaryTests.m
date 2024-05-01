@@ -10,9 +10,9 @@
 @implementation GLTFBinaryTests
 
 - (void)testExample {
-  NSURL *url = [[NSURL fileURLWithPath:@PROJECT_SOURCE_DIR]
+  NSURL *url = [[NSURL fileURLWithPath:SAMPLE_MODELS_DIR]
       URLByAppendingPathComponent:
-          @"gltf-sample-models/2CylinderEngine/glb/2CylinderEngine.glb"];
+          @"2CylinderEngine/glTF-Binary/2CylinderEngine.glb"];
   NSData *data = [NSData dataWithContentsOfURL:url];
   NSError *error;
   GLTFBinary *binary = [GLTFBinary binaryWithData:data error:&error];

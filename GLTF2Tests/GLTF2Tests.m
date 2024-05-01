@@ -19,9 +19,8 @@
 }
 
 - (void)testExample {
-  NSURL *url = [[NSURL fileURLWithPath:@PROJECT_SOURCE_DIR]
-      URLByAppendingPathComponent:
-          @"gltf-sample-models/2CylinderEngine/glTF/2CylinderEngine.gltf"];
+  NSURL *url = [[NSURL fileURLWithPath:SAMPLE_MODELS_DIR]
+      URLByAppendingPathComponent:@"2CylinderEngine/glTF/2CylinderEngine.gltf"];
   NSData *data = [NSData dataWithContentsOfURL:url];
   NSError *error;
   GLTFJson *json = [GLTFJSONDecoder decodeJsonData:data error:&error];

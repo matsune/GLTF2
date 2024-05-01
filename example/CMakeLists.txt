@@ -8,7 +8,7 @@ configure_file(${INFO_PLIST_IN_PATH} ${INFO_PLIST_PATH})
 
 set(APP_RESOURCES
     Main.storyboard
-    ${MODEL_FILES}
+    ${GLB_FILES}
 )
 
 file(GLOB_RECURSE SOURCES "*.m" "*.mm")

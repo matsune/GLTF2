@@ -24,7 +24,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, strong) GLTFJSONAsset *asset;
 @property(nonatomic, strong, nullable) NSArray<GLTFJSONAnimation *> *animations;
 @property(nonatomic, strong, nullable) NSArray<GLTFJSONBuffer *> *buffers;
-@property(nonatomic, strong, nullable) NSArray<GLTFJSONBufferView *> *bufferViews;
+@property(nonatomic, strong, nullable)
+    NSArray<GLTFJSONBufferView *> *bufferViews;
 @property(nonatomic, strong, nullable) NSArray<GLTFJSONCamera *> *cameras;
 @property(nonatomic, strong, nullable) NSArray<GLTFJSONImage *> *images;
 @property(nonatomic, strong, nullable) NSArray<GLTFJSONMaterial *> *materials;

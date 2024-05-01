@@ -1,5 +1,10 @@
 set(LIB_NAME GLTF2)
 add_library(${LIB_NAME} SHARED)
+if(BUILD_FRAMEWORK)
+    set_target_properties(${LIB_NAME} PROPERTIES
+        FRAMEWORK TRUE
+    )
+endif()
 
 file(GLOB HEADERS "include/*.h")
 file(GLOB SOURCES "src/*.m")
@@ -16,8 +21,7 @@ find_library(FOUNDATION_LIBRARY Foundation)
 target_link_libraries(${LIB_NAME} ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY})
 
 set_target_properties(${LIB_NAME} PROPERTIES
-    FRAMEWORK TRUE
-    VERSION 1.0.0
+    VERSION 1.0
     PUBLIC_HEADER "${HEADERS}"
     XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC "YES"
     XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH "NO"

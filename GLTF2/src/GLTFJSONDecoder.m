@@ -269,7 +269,8 @@
     NSMutableArray<GLTFJSONAccessor *> *accessors =
         [NSMutableArray arrayWithCapacity:accessorsArray.count];
     for (NSDictionary *accessorDict in accessorsArray) {
-      GLTFJSONAccessor *accessor = [self decodeAccessor:accessorDict error:error];
+      GLTFJSONAccessor *accessor = [self decodeAccessor:accessorDict
+                                                  error:error];
       if (*error) {
         [self.context pop];
         return nil;
@@ -287,7 +288,7 @@
         [NSMutableArray arrayWithCapacity:animationsArray.count];
     for (NSDictionary *animationDict in animationsArray) {
       GLTFJSONAnimation *animation = [self decodeAnimation:animationDict
-                                                 error:error];
+                                                     error:error];
       if (*error) {
         [self.context pop];
         return nil;
@@ -336,7 +337,7 @@
         [NSMutableArray arrayWithCapacity:bufferViewsArray.count];
     for (NSDictionary *bufferViewDict in bufferViewsArray) {
       GLTFJSONBufferView *bufferView = [self decodeBufferView:bufferViewDict
-                                                    error:error];
+                                                        error:error];
       if (*error) {
         [self.context pop];
         return nil;
@@ -383,7 +384,8 @@
     NSMutableArray<GLTFJSONMaterial *> *materials =
         [NSMutableArray arrayWithCapacity:materialsArray.count];
     for (NSDictionary *materialDict in materialsArray) {
-      GLTFJSONMaterial *material = [self decodeMaterial:materialDict error:error];
+      GLTFJSONMaterial *material = [self decodeMaterial:materialDict
+                                                  error:error];
       if (*error) {
         [self.context pop];
         return nil;
@@ -495,7 +497,7 @@
 #pragma mark - GLTFJSONAccessor
 
 - (nullable GLTFJSONAccessor *)decodeAccessor:(NSDictionary *)jsonDict
-                                    error:(NSError *_Nullable *)error {
+                                        error:(NSError *_Nullable *)error {
   [self.context push:@"GLTFJSONAccessor"];
 
   GLTFJSONAccessor *accessor = [[GLTFJSONAccessor alloc] init];
@@ -556,9 +558,9 @@
 
 #pragma mark - GLTFJSONAccessorSparse
 
-- (nullable GLTFJSONAccessorSparse *)decodeAccessorSparse:(NSDictionary *)jsonDict
-                                                error:(NSError *_Nullable *)
-                                                          error {
+- (nullable GLTFJSONAccessorSparse *)
+    decodeAccessorSparse:(NSDictionary *)jsonDict
+                   error:(NSError *_Nullable *)error {
   [self.context push:@"GLTFJSONAccessorSparse"];
 
   GLTFJSONAccessorSparse *sparse = [[GLTFJSONAccessorSparse alloc] init];
@@ -609,7 +611,8 @@
                           error:(NSError *_Nullable *)error {
   [self.context push:@"GLTFJSONAccessorSparseIndices"];
 
-  GLTFJSONAccessorSparseIndices *obj = [[GLTFJSONAccessorSparseIndices alloc] init];
+  GLTFJSONAccessorSparseIndices *obj =
+      [[GLTFJSONAccessorSparseIndices alloc] init];
 
   obj.bufferView = [self getRequiredInteger:jsonDict
                                         key:@"bufferView"
@@ -645,7 +648,8 @@
                          error:(NSError *_Nullable *)error {
   [self.context push:@"GLTFJSONAccessorSparseValues"];
 
-  GLTFJSONAccessorSparseValues *obj = [[GLTFJSONAccessorSparseValues alloc] init];
+  GLTFJSONAccessorSparseValues *obj =
+      [[GLTFJSONAccessorSparseValues alloc] init];
 
   obj.bufferView = [self getRequiredInteger:jsonDict
                                         key:@"bufferView"
@@ -669,7 +673,7 @@
 #pragma mark - GLTFJSONAnimation
 
 - (nullable GLTFJSONAnimation *)decodeAnimation:(NSDictionary *)jsonDict
-                                      error:(NSError *_Nullable *)error {
+                                          error:(NSError *_Nullable *)error {
   [self.context push:@"GLTFJSONAnimation"];
 
   GLTFJSONAnimation *animation = [[GLTFJSONAnimation alloc] init];
@@ -684,8 +688,8 @@
   NSMutableArray<GLTFJSONAnimationChannel *> *channels = [NSMutableArray array];
   for (id channelDict in channelsArray) {
     if ([channelDict isKindOfClass:[NSDictionary class]]) {
-      GLTFJSONAnimationChannel *channel = [self decodeAnimationChannel:channelDict
-                                                             error:error];
+      GLTFJSONAnimationChannel *channel =
+          [self decodeAnimationChannel:channelDict error:error];
       if (*error) {
         [self.context pop];
         return nil;
@@ -705,8 +709,8 @@
   NSMutableArray<GLTFJSONAnimationSampler *> *samplers = [NSMutableArray array];
   for (id samplerDict in samplersArray) {
     if ([samplerDict isKindOfClass:[NSDictionary class]]) {
-      GLTFJSONAnimationSampler *sampler = [self decodeAnimationSampler:samplerDict
-                                                             error:error];
+      GLTFJSONAnimationSampler *sampler =
+          [self decodeAnimationSampler:samplerDict error:error];
       if (*error) {
         [self.context pop];
         return nil;
@@ -831,7 +835,7 @@
 #pragma mark - GLTFJSONAsset
 
 - (nullable GLTFJSONAsset *)decodeAsset:(NSDictionary *)jsonDict
-                              error:(NSError *_Nullable *)error {
+                                  error:(NSError *_Nullable *)error {
   [self.context push:@"GLTFJSONAsset"];
 
   // Required 'version' property
@@ -859,7 +863,7 @@
 #pragma mark - GLTFJSONBuffer
 
 - (nullable GLTFJSONBuffer *)decodeBuffer:(NSDictionary *)jsonDict
-                                error:(NSError *_Nullable *)error {
+                                    error:(NSError *_Nullable *)error {
   [self.context push:@"GLTFJSONBuffer"];
 
   GLTFJSONBuffer *buffer = [[GLTFJSONBuffer alloc] init];
@@ -884,7 +888,7 @@
 #pragma mark - GLTFJSONBufferView
 
 - (nullable GLTFJSONBufferView *)decodeBufferView:(NSDictionary *)jsonDict
-                                        error:(NSError *_Nullable *)error {
+                                            error:(NSError *_Nullable *)error {
   [self.context push:@"GLTFJSONBufferView"];
 
   GLTFJSONBufferView *bufferView = [[GLTFJSONBufferView alloc] init];
@@ -922,7 +926,7 @@
 #pragma mark - GLTFJSONCamera
 
 - (nullable GLTFJSONCamera *)decodeCamera:(NSDictionary *)jsonDict
-                                error:(NSError *_Nullable *)error {
+                                    error:(NSError *_Nullable *)error {
   [self.context push:@"GLTFJSONCamera"];
 
   GLTFJSONCamera *camera = [[GLTFJSONCamera alloc] init];
@@ -968,7 +972,8 @@
                        error:(NSError *_Nullable *)error {
   [self.context push:@"GLTFJSONCameraOrthographic"];
 
-  GLTFJSONCameraOrthographic *camera = [[GLTFJSONCameraOrthographic alloc] init];
+  GLTFJSONCameraOrthographic *camera =
+      [[GLTFJSONCameraOrthographic alloc] init];
 
   NSNumber *xmag = [self getRequiredNumber:jsonDict key:@"xmag" error:error];
   if (*error) {
@@ -1058,7 +1063,7 @@
 #pragma mark - GLTFJSONMaterial
 
 - (nullable GLTFJSONMaterial *)decodeMaterial:(NSDictionary *)jsonDict
-                                    error:(NSError *_Nullable *)error {
+                                        error:(NSError *_Nullable *)error {
   [self.context push:@"GLTFJSONMaterial"];
 
   GLTFJSONMaterial *material = [[GLTFJSONMaterial alloc] init];
@@ -1261,7 +1266,7 @@
 #pragma mark - GLTFJSONMesh
 
 - (nullable GLTFJSONMesh *)decodeMesh:(NSDictionary *)jsonDict
-                            error:(NSError *_Nullable *)error {
+                                error:(NSError *_Nullable *)error {
   [self.context push:@"GLTFJSONMesh"];
 
   NSArray *primitivesArray = [self getRequiredArray:jsonDict
@@ -1275,7 +1280,7 @@
   for (id primitiveDict in primitivesArray) {
     if ([primitiveDict isKindOfClass:[NSDictionary class]]) {
       GLTFJSONMeshPrimitive *primitive = [self decodeMeshPrimitive:primitiveDict
-                                                         error:error];
+                                                             error:error];
       if (*error) {
         [self.context pop];
         return nil;
@@ -1299,8 +1304,8 @@
 #pragma mark - GLTFJSONMeshPrimitive
 
 - (nullable GLTFJSONMeshPrimitive *)decodeMeshPrimitive:(NSDictionary *)jsonDict
-                                              error:
-                                                  (NSError *_Nullable *)error {
+                                                  error:(NSError *_Nullable *)
+                                                            error {
   [self.context push:@"GLTFJSONMeshPrimitive"];
 
   NSDictionary *attributesDict = [self getRequiredDict:jsonDict
@@ -1435,7 +1440,7 @@
 #pragma mark - GLTFJSONSkin
 
 - (nullable GLTFJSONSkin *)decodeSkin:(NSDictionary *)jsonDict
-                            error:(NSError *_Nullable *)error {
+                                error:(NSError *_Nullable *)error {
   [self.context push:@"GLTFJSONSkin"];
 
   NSArray *joints = [self getRequiredNumberArray:jsonDict
@@ -1480,7 +1485,8 @@
 #pragma mark - GLTFJSONTextureInfo
 
 - (nullable GLTFJSONTextureInfo *)decodeTextureInfo:(NSDictionary *)jsonDict
-                                          error:(NSError *_Nullable *)error {
+                                              error:
+                                                  (NSError *_Nullable *)error {
   [self.context push:@"GLTFJSONTextureInfo"];
 
   GLTFJSONTextureInfo *textureInfo = [[GLTFJSONTextureInfo alloc] init];

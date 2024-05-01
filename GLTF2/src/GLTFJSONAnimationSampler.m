@@ -2,7 +2,8 @@
 
 NSString *const GLTFJSONAnimationSamplerInterpolationLinear = @"LINEAR";
 NSString *const GLTFJSONAnimationSamplerInterpolationStep = @"STEP";
-NSString *const GLTFJSONAnimationSamplerInterpolationCubicSpline = @"CUBICSPLINE";
+NSString *const GLTFJSONAnimationSamplerInterpolationCubicSpline =
+    @"CUBICSPLINE";
 
 @implementation GLTFJSONAnimationSampler
 

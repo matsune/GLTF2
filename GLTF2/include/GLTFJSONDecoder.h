@@ -1,5 +1,5 @@
-#import "GLTFJson.h"
 #import "GLTFJSONMeshPrimitive.h"
+#import "GLTFJson.h"
 #import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN
@@ -16,11 +16,11 @@ NS_ASSUME_NONNULL_BEGIN
                             error:(NSError *_Nullable *)error;
 
 - (nullable GLTFJSONAccessor *)decodeAccessor:(NSDictionary *)jsonDict
-                                    error:(NSError *_Nullable *)error;
+                                        error:(NSError *_Nullable *)error;
 
-- (nullable GLTFJSONAccessorSparse *)decodeAccessorSparse:(NSDictionary *)jsonDict
-                                                error:
-                                                    (NSError *_Nullable *)error;
+- (nullable GLTFJSONAccessorSparse *)
+    decodeAccessorSparse:(NSDictionary *)jsonDict
+                   error:(NSError *_Nullable *)error;
 
 - (nullable GLTFJSONAccessorSparseIndices *)
     decodeAccessorSparseIndices:(NSDictionary *)jsonDict
@@ -31,7 +31,7 @@ NS_ASSUME_NONNULL_BEGIN
                          error:(NSError *_Nullable *)error;
 
 - (nullable GLTFJSONAnimation *)decodeAnimation:(NSDictionary *)jsonDict
-                                      error:(NSError *_Nullable *)error;
+                                          error:(NSError *_Nullable *)error;
 
 - (nullable GLTFJSONAnimationChannel *)
     decodeAnimationChannel:(NSDictionary *)jsonDict
@@ -46,16 +46,16 @@ NS_ASSUME_NONNULL_BEGIN
                      error:(NSError *_Nullable *)error;
 
 - (nullable GLTFJSONAsset *)decodeAsset:(NSDictionary *)jsonDict
-                              error:(NSError *_Nullable *)error;
+                                  error:(NSError *_Nullable *)error;
 
 - (nullable GLTFJSONBuffer *)decodeBuffer:(NSDictionary *)jsonDict
-                                error:(NSError *_Nullable *)error;
+                                    error:(NSError *_Nullable *)error;
 
 - (nullable GLTFJSONBufferView *)decodeBufferView:(NSDictionary *)jsonDict
-                                        error:(NSError *_Nullable *)error;
+                                            error:(NSError *_Nullable *)error;
 
 - (nullable GLTFJSONCamera *)decodeCamera:(NSDictionary *)jsonDict
-                                error:(NSError *_Nullable *)error;
+                                    error:(NSError *_Nullable *)error;
 
 - (nullable GLTFJSONCameraOrthographic *)
     decodeCameraOrthographic:(NSDictionary *)jsonDict
@@ -67,7 +67,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (GLTFJSONImage *)decodeImage:(NSDictionary *)jsonDict;
 
 - (nullable GLTFJSONMaterial *)decodeMaterial:(NSDictionary *)jsonDict
-                                    error:(NSError *_Nullable *)error;
+                                        error:(NSError *_Nullable *)error;
 
 - (nullable GLTFJSONMaterialNormalTextureInfo *)
     decodeMaterialNormalTextureInfo:(NSDictionary *)jsonDict
@@ -82,9 +82,10 @@ NS_ASSUME_NONNULL_BEGIN
                                  error:(NSError *_Nullable *)error;
 
 - (nullable GLTFJSONMesh *)decodeMesh:(NSDictionary *)jsonDict
-                            error:(NSError *_Nullable *)error;
+                                error:(NSError *_Nullable *)error;
 - (nullable GLTFJSONMeshPrimitive *)decodeMeshPrimitive:(NSDictionary *)jsonDict
-                                              error:(NSError *_Nullable *)error;
+                                                  error:(NSError *_Nullable *)
+                                                            error;
 
 - (GLTFJSONNode *)decodeNode:(NSDictionary *)jsonDict;
 
@@ -93,12 +94,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (GLTFJSONScene *)decodeScene:(NSDictionary *)jsonDict;
 
 - (nullable GLTFJSONSkin *)decodeSkin:(NSDictionary *)jsonDict
-                            error:(NSError *_Nullable *)error;
+                                error:(NSError *_Nullable *)error;
 
 - (GLTFJSONTexture *)decodeTexture:(NSDictionary *)jsonDict;
 
 - (nullable GLTFJSONTextureInfo *)decodeTextureInfo:(NSDictionary *)jsonDict
-                                          error:(NSError *_Nullable *)error;
+                                              error:(NSError *_Nullable *)error;
 
 @end
 

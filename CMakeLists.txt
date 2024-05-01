@@ -6,6 +6,8 @@ option(BUILD_EXAMPLE "Build example" OFF)
 
 include(FetchContent)
 
+option(BUILD_FRAMEWORK "Build as a framework instead of a dynamic library" OFF)
+
 # ios_cmake
 set(IOS_CMAKE_VERSION "4.4.1")
 FetchContent_Declare(

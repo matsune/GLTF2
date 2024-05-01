@@ -5,9 +5,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface GLTFObject : NSObject
 
-@property(nonatomic, strong) GLTFJson *json;
-@property(nonatomic, strong) NSArray<NSData *> *bufferDatas;
-@property(nonatomic, strong) NSArray<NSData *> *imageDatas;
+@property(nonatomic, strong, readonly) GLTFJson *json;
+@property(nonatomic, strong, readonly) NSArray<NSData *> *bufferDatas;
+@property(nonatomic, strong, readonly) NSArray<NSData *> *imageDatas;
 
 - (instancetype)initWithJson:(GLTFJson *)json;
 - (instancetype)initWithJson:(GLTFJson *)json

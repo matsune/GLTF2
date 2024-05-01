@@ -41,11 +41,14 @@
   }
 
   GLTFObject *object = [[GLTFObject alloc] init];
+  [object loadGlbBinary:binary];
+  return object;
+}
 
+- (void)loadGlbBinary:(GLTFBinary *)binary {
   GLTFJson *json = binary.json;
   NSData *bufferData = binary.binary;
-
-  object.bufferDatas = [NSArray arrayWithObject:bufferData];
+  _bufferDatas = [NSArray arrayWithObject:bufferData];
 
   if (json.images) {
     NSMutableArray<NSData *> *imageDatas =
@@ -56,14 +59,12 @@
         // use bufferView, mimeType
         GLTFJSONBufferView *bufferView =
             json.bufferViews[[jsonImage.bufferView integerValue]];
-        data = [object dataFromBufferView:bufferView];
+        data = [self dataFromBufferView:bufferView];
       }
       [imageDatas addObject:data];
     }
-    object.imageDatas = [imageDatas copy];
+    _imageDatas = [imageDatas copy];
   }
-
-  return object;
 }
 
 + (NSData *)dataOfUri:(NSString *)uri relativeToPath:(NSString *)basePath {
@@ -90,16 +91,21 @@
   }
 
   GLTFObject *object = [[GLTFObject alloc] init];
+  [object loadGltfJson:json path:path];
 
+  return object;
+}
+
+- (void)loadGltfJson:(GLTFJson *)json path:(NSString *)path {
   if (json.buffers) {
     NSMutableArray<NSData *> *bufferDatas =
         [NSMutableArray arrayWithCapacity:json.buffers.count];
     for (GLTFJSONBuffer *jsonBuffer in json.buffers) {
       NSString *uri = jsonBuffer.uri;
-      NSData *data = [self dataOfUri:uri relativeToPath:path];
+      NSData *data = [GLTFObject dataOfUri:uri relativeToPath:path];
       [bufferDatas addObject:data];
     }
-    object.bufferDatas = [bufferDatas copy];
+    _bufferDatas = [bufferDatas copy];
   }
 
   if (json.images) {
@@ -111,18 +117,16 @@
         // use bufferView, mimeType
         GLTFJSONBufferView *bufferView =
             json.bufferViews[[jsonImage.bufferView integerValue]];
-        data = [object dataFromBufferView:bufferView];
+        data = [self dataFromBufferView:bufferView];
       } else {
         // use uri
         NSString *uri = jsonImage.uri;
-        data = [self dataOfUri:uri relativeToPath:path];
+        data = [GLTFObject dataOfUri:uri relativeToPath:path];
       }
       [imageDatas addObject:data];
     }
-    object.imageDatas = [imageDatas copy];
+    _imageDatas = [imageDatas copy];
   }
-
-  return object;
 }
 
 - (NSData *)dataFromBufferView:(GLTFJSONBufferView *)bufferView {

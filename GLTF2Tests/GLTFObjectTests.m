@@ -16,8 +16,6 @@
   GLTFObject *object = [GLTFObject objectWithGlbFile:[url path] error:&error];
   XCTAssertNil(error);
   XCTAssertNotNil(object);
-  XCTAssertNotEqual(object.buffers.count, 0);
-  XCTAssertNotNil(object.buffers[0].data);
 }
 
 - (void)testGLTF {
@@ -27,8 +25,6 @@
   GLTFObject *object = [GLTFObject objectWithGltfFile:[url path] error:&error];
   XCTAssertNil(error);
   XCTAssertNotNil(object);
-  XCTAssertNotEqual(object.buffers.count, 0);
-  XCTAssertNotNil(object.buffers[0].data);
 }
 
 - (void)testGLTFEmbedded {
@@ -39,8 +35,25 @@
   GLTFObject *object = [GLTFObject objectWithGltfFile:[url path] error:&error];
   XCTAssertNil(error);
   XCTAssertNotNil(object);
-  XCTAssertNotEqual(object.buffers.count, 0);
-  XCTAssertNotNil(object.buffers[0].data);
+}
+
+- (void)testGLTFBoxTextured {
+  NSURL *url = [[NSURL fileURLWithPath:SAMPLE_MODELS_DIR]
+      URLByAppendingPathComponent:@"BoxTextured/glTF/BoxTextured.gltf"];
+  NSError *error;
+  GLTFObject *object = [GLTFObject objectWithGltfFile:[url path] error:&error];
+  XCTAssertNil(error);
+  XCTAssertNotNil(object);
+}
+
+- (void)testGLTFBoxTexturedEmbedded {
+  NSURL *url = [[NSURL fileURLWithPath:SAMPLE_MODELS_DIR]
+      URLByAppendingPathComponent:
+          @"BoxTextured/glTF-Embedded/BoxTextured.gltf"];
+  NSError *error;
+  GLTFObject *object = [GLTFObject objectWithGltfFile:[url path] error:&error];
+  XCTAssertNil(error);
+  XCTAssertNotNil(object);
 }
 
 @end

@@ -26,6 +26,12 @@ set(DOWNLOAD_PATHS
     "2CylinderEngine/glTF-Embedded/2CylinderEngine.gltf"
     "2CylinderEngine/glTF/2CylinderEngine.gltf"
     "2CylinderEngine/glTF/2CylinderEngine0.bin"
+
+    "BoxTextured/glTF-Binary/BoxTextured.glb"
+    "BoxTextured/glTF-Embedded/BoxTextured.gltf"
+    "BoxTextured/glTF/BoxTextured.gltf"
+    "BoxTextured/glTF/BoxTextured0.bin"
+    "BoxTextured/glTF/CesiumLogoFlat.png"
 )
 
 foreach(path IN LISTS DOWNLOAD_PATHS)

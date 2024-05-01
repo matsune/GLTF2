@@ -40,7 +40,7 @@
     return nil;
   }
 
-  GLTFObject *object = [[GLTFObject alloc] init];
+  GLTFObject *object = [[GLTFObject alloc] initWithJson:binary.json];
   [object loadGlbBinary:binary];
   return object;
 }
@@ -90,7 +90,7 @@
     return nil;
   }
 
-  GLTFObject *object = [[GLTFObject alloc] init];
+  GLTFObject *object = [[GLTFObject alloc] initWithJson:json];
   [object loadGltfJson:json path:path];
 
   return object;

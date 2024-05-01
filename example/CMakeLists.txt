@@ -9,6 +9,7 @@ configure_file(${INFO_PLIST_IN_PATH} ${INFO_PLIST_PATH})
 set(APP_RESOURCES
     Main.storyboard
     ${GLB_FILES}
+    ${PNG_FILES}
 )
 
 file(GLOB_RECURSE SOURCES "*.m" "*.mm")
@@ -22,8 +23,10 @@ add_executable(example MACOSX_BUNDLE
 find_library(COCOA_LIBRARY Cocoa)
 find_library(FOUNDATION_LIBRARY Foundation)
 find_library(SCENEKIT_LIBRARY SceneKit)
+find_library(METAL_LIBRARY Metal)
+find_library(METALKIT_LIBRARY MetalKit)
 
-target_link_libraries(example GLTF2SceneKit ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY} ${SCENEKIT_LIBRARY})
+target_link_libraries(example GLTF2SceneKit ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY} ${SCENEKIT_LIBRARY} ${METAL_LIBRARY} ${METALKIT_LIBRARY})
 
 target_include_directories(example PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}

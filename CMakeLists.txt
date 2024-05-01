@@ -29,7 +29,7 @@ set(MODEL_FILES ${GLB_FILES} ${BIN_FILES} ${GLTF_FILES})
 add_subdirectory(GLTF2)
 add_subdirectory(GLTF2SceneKit)
 
-if(BUILD_TESTS)
+if(BUILD_FRAMEWORK AND BUILD_TESTS)
     add_subdirectory(GLTF2Tests)
 endif()
 

@@ -1,11 +1,8 @@
 #import "GLTFObject.h"
 #import "GLTFBinary.h"
-#import "GLTFBuffer.h"
 #import "GLTFJSONDecoder.h"
 
 @interface GLTFObject ()
-
-@property(nonatomic, strong) NSArray<GLTFBinary *> *buffers;
 
 @end
 
@@ -63,6 +60,24 @@
   }
 
   GLTFObject *object = [[GLTFObject alloc] init];
+  if (json.buffers && json.buffers.count > 0) {
+    NSMutableArray<GLTFBuffer *> *buffers =
+        [NSMutableArray arrayWithCapacity:json.buffers.count];
+    for (GLTFJSONBuffer *buffer in json.buffers) {
+      if ([[NSURL URLWithString:buffer.uri].scheme isEqualToString:@"data"]) {
+        NSData *bufferData =
+            [NSData dataWithContentsOfURL:[NSURL URLWithString:buffer.uri]];
+        [buffers addObject:[GLTFBuffer data:bufferData name:buffer.name]];
+      } else {
+        // external file, relative path
+        NSURL *bufferURL = [NSURL fileURLWithPath:buffer.uri
+                                    relativeToURL:[NSURL URLWithString:path]];
+        NSData *bufferData = [NSData dataWithContentsOfFile:[bufferURL path]];
+        [buffers addObject:[GLTFBuffer data:bufferData name:buffer.name]];
+      }
+    }
+    object.buffers = [buffers copy];
+  }
 
   return object;
 }

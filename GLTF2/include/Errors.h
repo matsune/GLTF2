@@ -1,7 +1,8 @@
 #import <Foundation/Foundation.h>
+#import "GLTF2Availability.h"
 
-extern NSString *const GLTF2BinaryErrorDomain;
-extern NSString *const GLTF2DecodeErrorDomain;
+GLTF_EXPORT NSString *const GLTF2BinaryErrorDomain;
+GLTF_EXPORT NSString *const GLTF2DecodeErrorDomain;
 
 typedef NS_ENUM(NSInteger, GLTF2ErrorCode) {
   GLTF2BinaryErrorInvalidFormat = 1001,

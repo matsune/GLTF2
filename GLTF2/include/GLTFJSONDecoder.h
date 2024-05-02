@@ -1,10 +1,10 @@
-#import "GLTFJSONMeshPrimitive.h"
 #import "GLTFJson.h"
 #import <Foundation/Foundation.h>
+#import "GLTF2Availability.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface GLTFJSONDecoder : NSObject
+GLTF_EXPORT @interface GLTFJSONDecoder : NSObject
 
 + (nullable GLTFJson *)decodeJsonData:(NSData *)data
                                 error:(NSError *_Nullable *_Nullable)error;

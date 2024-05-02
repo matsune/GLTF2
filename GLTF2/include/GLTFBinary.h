@@ -1,9 +1,10 @@
 #import "GLTFJson.h"
 #import <Foundation/Foundation.h>
+#import "GLTF2Availability.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface GLTFBinary : NSObject
+GLTF_EXPORT @interface GLTFBinary : NSObject
 
 @property(nonatomic, assign) NSInteger version;
 @property(nonatomic, strong) GLTFJson *json;

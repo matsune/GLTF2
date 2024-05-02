@@ -9,7 +9,6 @@ endif()
 file(GLOB HEADERS "include/*.h")
 file(GLOB SOURCES "src/*.m")
 target_sources(${LIB_NAME} PRIVATE ${HEADERS} ${SOURCES})
-target_compile_options(${LIB_NAME} PRIVATE "-fvisibility=default")
 target_include_directories(${LIB_NAME} PUBLIC  
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include/${LIB_NAME}>

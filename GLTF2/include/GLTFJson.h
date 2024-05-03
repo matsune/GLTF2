@@ -1,6 +1,6 @@
+#import "GLTF2Availability.h"
 #import <Foundation/Foundation.h>
 #import <simd/simd.h>
-#import "GLTF2Availability.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -320,6 +320,9 @@ GLTF_EXPORT @interface GLTFJSONMeshPrimitive : NSObject
 @property(nonatomic, strong, nullable) NSArray<NSNumber *> *targets;
 @property(nonatomic, strong, nullable) NSDictionary *extensions;
 @property(nonatomic, strong, nullable) NSDictionary *extras;
+
+- (nullable NSNumber *)valueOfSemantic:(NSString *)semantic;
+- (NSArray<NSNumber *> *)valuesOfSemantic:(NSString *)semantic;
 
 @end
 

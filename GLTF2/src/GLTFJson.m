@@ -96,6 +96,47 @@ NSString *const GLTFJSONMaterialAlphaModeBlend = @"BLEND";
   return self;
 }
 
+- (nullable NSNumber *)valueOfSemantic:(NSString *)semantic {
+  return [self.attributes valueForKey:semantic];
+}
+
+- (nullable NSNumber *)indexOfPrefixedKey:(NSString *)prefixedKey
+                                   prefix:(NSString *)prefix {
+  NSString *pattern = [NSString stringWithFormat:@"%@_(\\d+)", prefix];
+  NSRegularExpression *regex =
+      [NSRegularExpression regularExpressionWithPattern:pattern
+                                                options:0
+                                                  error:nil];
+  if (regex) {
+    NSTextCheckingResult *match =
+        [regex firstMatchInString:prefixedKey
+                          options:0
+                            range:NSMakeRange(0, prefixedKey.length)];
+    if (match) {
+      NSRange numberRange = [match rangeAtIndex:1];
+      if (numberRange.location != NSNotFound) {
+        NSString *numberString = [prefixedKey substringWithRange:numberRange];
+        NSInteger number = [numberString integerValue];
+        return @(number);
+      }
+    }
+  }
+  return nil;
+}
+
+- (NSArray<NSNumber *> *)valuesOfSemantic:(NSString *)semantic {
+  NSMutableArray<NSNumber *> *values = [NSMutableArray array];
+  NSArray<NSString *> *keys =
+      [self.attributes.allKeys sortedArrayUsingSelector:@selector(compare:)];
+  for (NSString *prefixedKey in keys) {
+    NSNumber *index = [self indexOfPrefixedKey:prefixedKey prefix:semantic];
+    if (index && values.count == [index integerValue]) {
+      [values addObject:self.attributes[prefixedKey]];
+    }
+  }
+  return [values copy];
+}
+
 @end
 
 @implementation GLTFJSONNode

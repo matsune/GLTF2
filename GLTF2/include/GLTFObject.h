@@ -1,6 +1,6 @@
+#import "GLTF2Availability.h"
 #import "GLTFJson.h"
 #import <Foundation/Foundation.h>
-#import "GLTF2Availability.h"
 
 NS_ASSUME_NONNULL_BEGIN
 

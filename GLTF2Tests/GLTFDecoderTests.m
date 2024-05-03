@@ -1325,7 +1325,7 @@
 - (void)testDecodeMeshPrimitiveWithAllFieldsPresent {
   GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
   NSDictionary *jsonDict = @{
-    @"attributes" : @{@"POSITION" : @0},
+    @"attributes" : @{@"POSITION" : @0, @"TEXCOORD_0" : @1, @"TEXCOORD_1" : @2},
     @"indices" : @1,
     @"material" : @2,
     @"mode" : @3,
@@ -1340,8 +1340,13 @@
 
   XCTAssertNotNil(
       primitive, "MeshPrimitive should not be nil when all fields are present");
-  XCTAssertEqualObjects(primitive.attributes, @{@"POSITION" : @0},
+  NSDictionary *attributes =
+      @{@"POSITION" : @0, @"TEXCOORD_0" : @1, @"TEXCOORD_1" : @2};
+  XCTAssertEqualObjects(primitive.attributes, attributes,
                         "Attributes should be correctly decoded");
+  XCTAssertEqual([primitive valueOfSemantic:@"POSITION"], @0);
+  NSArray *texcoords = @[ @1, @2 ];
+  XCTAssertEqualObjects([primitive valuesOfSemantic:@"TEXCOORD"], texcoords);
   XCTAssertEqualObjects(primitive.indices, @1,
                         "Indices should be correctly decoded");
   XCTAssertEqualObjects(primitive.material, @2,

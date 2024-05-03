@@ -1,5 +1,5 @@
-#import <Foundation/Foundation.h>
 #import "GLTF2Availability.h"
+#import <Foundation/Foundation.h>
 
 GLTF_EXPORT NSString *const GLTF2BinaryErrorDomain;
 GLTF_EXPORT NSString *const GLTF2DecodeErrorDomain;

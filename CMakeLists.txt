@@ -22,12 +22,12 @@ if(NOT ios_cmake_POPULATED)
 endif()
 
 if(BUILD_TESTS OR BUILD_EXAMPLE)
+    add_subdirectory(sample-models)
     file(GLOB_RECURSE GLB_FILES "${PROJECT_SOURCE_DIR}/sample-models/*.glb")
     file(GLOB_RECURSE BIN_FILES "${PROJECT_SOURCE_DIR}/sample-models/*.bin")
     file(GLOB_RECURSE GLTF_FILES "${PROJECT_SOURCE_DIR}/sample-models/*.gltf")
     file(GLOB_RECURSE PNG_FILES "${PROJECT_SOURCE_DIR}/sample-models/*.png")
     set(MODEL_FILES ${GLB_FILES} ${BIN_FILES} ${GLTF_FILES} ${PNG_FILES})
-    add_subdirectory(sample-models)
 endif()
 
 add_subdirectory(GLTF2)

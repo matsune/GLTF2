@@ -27,6 +27,13 @@ set(DOWNLOAD_PATHS
     "2CylinderEngine/glTF/2CylinderEngine.gltf"
     "2CylinderEngine/glTF/2CylinderEngine0.bin"
 
+    "Box/glTF-Binary/Box.glb"
+    "Box/glTF-Draco/Box.gltf"
+    "Box/glTF-Draco/Box.bin"
+    "Box/glTF-Embedded/Box.gltf"
+    "Box/glTF/Box.gltf"
+    "Box/glTF/Box0.bin"
+
     "BoxTextured/glTF-Binary/BoxTextured.glb"
     "BoxTextured/glTF-Embedded/BoxTextured.gltf"
     "BoxTextured/glTF/BoxTextured.gltf"

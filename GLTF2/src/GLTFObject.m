@@ -1,6 +1,6 @@
 #import "GLTFObject.h"
 #import "GLTFBinary.h"
-#import "GLTFJSONDecoder.h"
+#import "GLTFDecoder.h"
 
 @implementation GLTFObject
 
@@ -53,11 +53,11 @@
   if (json.images) {
     NSMutableArray<NSData *> *imageDatas =
         [NSMutableArray arrayWithCapacity:json.images.count];
-    for (GLTFJSONImage *jsonImage in json.images) {
+    for (GLTFImage *jsonImage in json.images) {
       NSData *data;
       if (jsonImage.bufferView) {
         // use bufferView, mimeType
-        GLTFJSONBufferView *bufferView =
+        GLTFBufferView *bufferView =
             json.bufferViews[[jsonImage.bufferView integerValue]];
         data = [self dataFromBufferView:bufferView];
       }
@@ -83,7 +83,7 @@
                                           (NSError *_Nullable *_Nullable)error {
   NSError *err;
   NSData *jsonData = [NSData dataWithContentsOfFile:path];
-  GLTFJson *json = [GLTFJSONDecoder decodeJsonData:jsonData error:&err];
+  GLTFJson *json = [GLTFDecoder decodeJsonData:jsonData error:&err];
   if (err) {
     if (error)
       *error = err;
@@ -100,7 +100,7 @@
   if (json.buffers) {
     NSMutableArray<NSData *> *bufferDatas =
         [NSMutableArray arrayWithCapacity:json.buffers.count];
-    for (GLTFJSONBuffer *jsonBuffer in json.buffers) {
+    for (GLTFBuffer *jsonBuffer in json.buffers) {
       NSString *uri = jsonBuffer.uri;
       NSData *data = [GLTFObject dataOfUri:uri relativeToPath:path];
       [bufferDatas addObject:data];
@@ -111,11 +111,11 @@
   if (json.images) {
     NSMutableArray<NSData *> *imageDatas =
         [NSMutableArray arrayWithCapacity:json.images.count];
-    for (GLTFJSONImage *jsonImage in json.images) {
+    for (GLTFImage *jsonImage in json.images) {
       NSData *data;
       if (jsonImage.bufferView) {
         // use bufferView, mimeType
-        GLTFJSONBufferView *bufferView =
+        GLTFBufferView *bufferView =
             json.bufferViews[[jsonImage.bufferView integerValue]];
         data = [self dataFromBufferView:bufferView];
       } else {
@@ -129,7 +129,7 @@
   }
 }
 
-- (NSData *)dataFromBufferView:(GLTFJSONBufferView *)bufferView {
+- (NSData *)dataFromBufferView:(GLTFBufferView *)bufferView {
   NSData *bufferData = self.bufferDatas[bufferView.buffer];
   if (bufferView.byteStride &&
       bufferView.byteLength < [bufferView.byteStride integerValue]) {

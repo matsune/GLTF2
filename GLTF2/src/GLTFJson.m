@@ -1,46 +1,46 @@
 #import "GLTFJson.h"
 
-NSString *const GLTFJSONAccessorTypeScalar = @"SCALAR";
-NSString *const GLTFJSONAccessorTypeVec2 = @"VEC2";
-NSString *const GLTFJSONAccessorTypeVec3 = @"VEC3";
-NSString *const GLTFJSONAccessorTypeVec4 = @"VEC4";
-NSString *const GLTFJSONAccessorTypeMat2 = @"MAT2";
-NSString *const GLTFJSONAccessorTypeMat3 = @"MAT3";
-NSString *const GLTFJSONAccessorTypeMat4 = @"MAT4";
+NSString *const GLTFAccessorTypeScalar = @"SCALAR";
+NSString *const GLTFAccessorTypeVec2 = @"VEC2";
+NSString *const GLTFAccessorTypeVec3 = @"VEC3";
+NSString *const GLTFAccessorTypeVec4 = @"VEC4";
+NSString *const GLTFAccessorTypeMat2 = @"MAT2";
+NSString *const GLTFAccessorTypeMat3 = @"MAT3";
+NSString *const GLTFAccessorTypeMat4 = @"MAT4";
 
-NSString *const GLTFJSONAnimationChannelTargetPathTranslation = @"translation";
-NSString *const GLTFJSONAnimationChannelTargetPathRotation = @"rotation";
-NSString *const GLTFJSONAnimationChannelTargetPathScale = @"scale";
-NSString *const GLTFJSONAnimationChannelTargetPathWeights = @"weights";
+NSString *const GLTFAnimationChannelTargetPathTranslation = @"translation";
+NSString *const GLTFAnimationChannelTargetPathRotation = @"rotation";
+NSString *const GLTFAnimationChannelTargetPathScale = @"scale";
+NSString *const GLTFAnimationChannelTargetPathWeights = @"weights";
 
-NSString *const GLTFJSONAnimationSamplerInterpolationLinear = @"LINEAR";
-NSString *const GLTFJSONAnimationSamplerInterpolationStep = @"STEP";
-NSString *const GLTFJSONAnimationSamplerInterpolationCubicSpline =
+NSString *const GLTFAnimationSamplerInterpolationLinear = @"LINEAR";
+NSString *const GLTFAnimationSamplerInterpolationStep = @"STEP";
+NSString *const GLTFAnimationSamplerInterpolationCubicSpline =
     @"CUBICSPLINE";
 
-@implementation GLTFJSONAnimationSampler
+@implementation GLTFAnimationSampler
 
 - (instancetype)init {
   self = [super init];
   if (self) {
-    _interpolation = GLTFJSONAnimationSamplerInterpolationLinear;
+    _interpolation = GLTFAnimationSamplerInterpolationLinear;
   }
   return self;
 }
 
 @end
 
-NSString *const GLTFJSONMaterialAlphaModeOpaque = @"OPAQUE";
-NSString *const GLTFJSONMaterialAlphaModeMask = @"MASK";
-NSString *const GLTFJSONMaterialAlphaModeBlend = @"BLEND";
+NSString *const GLTFMaterialAlphaModeOpaque = @"OPAQUE";
+NSString *const GLTFMaterialAlphaModeMask = @"MASK";
+NSString *const GLTFMaterialAlphaModeBlend = @"BLEND";
 
-@implementation GLTFJSONMaterial
+@implementation GLTFMaterial
 
 - (instancetype)init {
   self = [super init];
   if (self) {
     _emissiveFactor = @[ @0, @0, @0 ];
-    _alphaMode = GLTFJSONMaterialAlphaModeOpaque;
+    _alphaMode = GLTFMaterialAlphaModeOpaque;
     _alphaCutoff = 0.5;
   }
   return self;
@@ -48,7 +48,7 @@ NSString *const GLTFJSONMaterialAlphaModeBlend = @"BLEND";
 
 @end
 
-@implementation GLTFJSONMaterialNormalTextureInfo
+@implementation GLTFMaterialNormalTextureInfo
 
 - (instancetype)init {
   self = [super init];
@@ -60,7 +60,7 @@ NSString *const GLTFJSONMaterialAlphaModeBlend = @"BLEND";
 
 @end
 
-@implementation GLTFJSONMaterialOcclusionTextureInfo
+@implementation GLTFMaterialOcclusionTextureInfo
 
 - (instancetype)init {
   self = [super init];
@@ -72,7 +72,7 @@ NSString *const GLTFJSONMaterialAlphaModeBlend = @"BLEND";
 
 @end
 
-@implementation GLTFJSONMaterialPBRMetallicRoughness
+@implementation GLTFMaterialPBRMetallicRoughness
 
 - (instancetype)init {
   self = [super init];
@@ -86,12 +86,12 @@ NSString *const GLTFJSONMaterialAlphaModeBlend = @"BLEND";
 
 @end
 
-@implementation GLTFJSONMeshPrimitive
+@implementation GLTFMeshPrimitive
 
 - (instancetype)init {
   self = [super init];
   if (self) {
-    _mode = GLTFJSONMeshPrimitiveModeTriangles;
+    _mode = GLTFMeshPrimitiveModeTriangles;
   }
   return self;
 }
@@ -139,7 +139,7 @@ NSString *const GLTFJSONMaterialAlphaModeBlend = @"BLEND";
 
 @end
 
-@implementation GLTFJSONNode
+@implementation GLTFNode
 
 - (instancetype)init {
   self = [super init];
@@ -156,74 +156,74 @@ NSString *const GLTFJSONMaterialAlphaModeBlend = @"BLEND";
 
 @end
 
-@implementation GLTFJSONSampler
+@implementation GLTFSampler
 
 - (instancetype)init {
   self = [super init];
   if (self) {
-    _wrapS = GLTFJSONSamplerWrapModeRepeat;
-    _wrapT = GLTFJSONSamplerWrapModeRepeat;
+    _wrapS = GLTFSamplerWrapModeRepeat;
+    _wrapT = GLTFSamplerWrapModeRepeat;
   }
   return self;
 }
 
 @end
 
-@implementation GLTFJSONAccessorSparseIndices
+@implementation GLTFAccessorSparseIndices
 @end
 
-@implementation GLTFJSONAccessorSparseValues
+@implementation GLTFAccessorSparseValues
 @end
 
-@implementation GLTFJSONAccessorSparse
+@implementation GLTFAccessorSparse
 @end
 
-@implementation GLTFJSONAccessor
+@implementation GLTFAccessor
 @end
 
-@implementation GLTFJSONAnimationChannelTarget
+@implementation GLTFAnimationChannelTarget
 @end
 
-@implementation GLTFJSONAnimationChannel
+@implementation GLTFAnimationChannel
 @end
 
-@implementation GLTFJSONAnimation
+@implementation GLTFAnimation
 @end
 
-@implementation GLTFJSONAsset
+@implementation GLTFAsset
 @end
 
-@implementation GLTFJSONBuffer
+@implementation GLTFBuffer
 @end
 
-@implementation GLTFJSONBufferView
+@implementation GLTFBufferView
 @end
 
-@implementation GLTFJSONCameraOrthographic
+@implementation GLTFCameraOrthographic
 @end
 
-@implementation GLTFJSONCameraPerspective
+@implementation GLTFCameraPerspective
 @end
 
-@implementation GLTFJSONCamera
+@implementation GLTFCamera
 @end
 
-@implementation GLTFJSONImage
+@implementation GLTFImage
 @end
 
-@implementation GLTFJSONTexture
+@implementation GLTFTexture
 @end
 
-@implementation GLTFJSONTextureInfo
+@implementation GLTFTextureInfo
 @end
 
-@implementation GLTFJSONMesh
+@implementation GLTFMesh
 @end
 
-@implementation GLTFJSONScene
+@implementation GLTFScene
 @end
 
-@implementation GLTFJSONSkin
+@implementation GLTFSkin
 @end
 
 @implementation GLTFJson

@@ -1,17 +1,17 @@
 #import "Errors.h"
-#import "GLTFJSONDecoder.h"
+#import "GLTFDecoder.h"
 #import <XCTest/XCTest.h>
 
-@interface GLTFJSONDecoderTests : XCTestCase
+@interface GLTFDecoderTests : XCTestCase
 @end
 
-@implementation GLTFJSONDecoderTests
+@implementation GLTFDecoderTests
 
 #pragma mark - GLTFJson
 
 - (void)testDecodeJsonWithAllFieldsPresent {
-  // Creating a GLTFJSONDecoder instance
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  // Creating a GLTFDecoder instance
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
 
   // Sample JSON Dictionary representing a full glTF asset
   NSDictionary *jsonDict = @{
@@ -92,8 +92,8 @@
 }
 
 - (void)testDecodeJsonWithMissingRequiredFields {
-  // Creating a GLTFJSONDecoder instance
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  // Creating a GLTFDecoder instance
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
 
   // JSON Dictionary with missing 'asset' field which is required
   NSDictionary *jsonDict = @{@"extensionsUsed" : @[ @"KHR_lights_punctual" ]};
@@ -111,8 +111,8 @@
 }
 
 - (void)testDecodeJsonWithOptionalFieldsMissing {
-  // Creating a GLTFJSONDecoder instance
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  // Creating a GLTFDecoder instance
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
 
   // JSON Dictionary with only the required 'asset' field
   NSDictionary *jsonDict = @{@"asset" : @{@"version" : @"2.0"}};
@@ -155,11 +155,11 @@
   XCTAssertNil(error, "Error should be nil when optional fields are missing");
 }
 
-#pragma mark - GLTFJSONAccessor
+#pragma mark - GLTFAccessor
 
 - (void)testDecodeAccessorWithAllFieldsPresentAndOptionalFields {
-  // Create a GLTFJSONDecoder instance
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  // Create a GLTFDecoder instance
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
 
   NSDictionary *jsonDict = @{
     @"bufferView" : @1,
@@ -182,7 +182,7 @@
   };
   NSError *error = nil;
 
-  GLTFJSONAccessor *accessor = [decoder decodeAccessor:jsonDict error:&error];
+  GLTFAccessor *accessor = [decoder decodeAccessor:jsonDict error:&error];
 
   XCTAssertNotNil(
       accessor,
@@ -205,13 +205,13 @@
 }
 
 - (void)testDecodeAccessorWithMissingRequiredFields {
-  // Create a GLTFJSONDecoder instance
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  // Create a GLTFDecoder instance
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
 
   NSDictionary *jsonDict = @{};
   NSError *error = nil;
 
-  GLTFJSONAccessor *accessor = [decoder decodeAccessor:jsonDict error:&error];
+  GLTFAccessor *accessor = [decoder decodeAccessor:jsonDict error:&error];
 
   XCTAssertNil(accessor,
                "Accessor should be nil when a required field is missing");
@@ -222,14 +222,14 @@
 }
 
 - (void)testDecodeAccessorWithOptionalFieldsMissing {
-  // Create a GLTFJSONDecoder instance
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  // Create a GLTFDecoder instance
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
 
   NSDictionary *jsonDict =
       @{@"componentType" : @5121, @"count" : @34, @"type" : @"MAT4"};
   NSError *error = nil;
 
-  GLTFJSONAccessor *accessor = [decoder decodeAccessor:jsonDict error:&error];
+  GLTFAccessor *accessor = [decoder decodeAccessor:jsonDict error:&error];
 
   XCTAssertNotNil(accessor);
   XCTAssertEqual(accessor.componentType, 5121);
@@ -238,7 +238,7 @@
   XCTAssertNil(error, "Error should be nil when optional fields are missing");
 }
 
-#pragma mark - GLTFJSONAccessorSparse
+#pragma mark - GLTFAccessorSparse
 
 - (void)testDecodeSparseWithAllFieldsPresent {
   NSDictionary *jsonDict = @{
@@ -250,9 +250,9 @@
     @"extras" : @{@"anotherKey" : @"anotherValue"}
   };
   NSError *error = nil;
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
 
-  GLTFJSONAccessorSparse *sparse = [decoder decodeAccessorSparse:jsonDict
+  GLTFAccessorSparse *sparse = [decoder decodeAccessorSparse:jsonDict
                                                            error:&error];
 
   XCTAssertNotNil(sparse);
@@ -272,9 +272,9 @@
     // 'indices' field is missing
   };
   NSError *error = nil;
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
 
-  GLTFJSONAccessorSparse *sparse = [decoder decodeAccessorSparse:jsonDict
+  GLTFAccessorSparse *sparse = [decoder decodeAccessorSparse:jsonDict
                                                            error:&error];
 
   XCTAssertNil(sparse, "Sparse should be nil when a required field is missing");
@@ -293,9 +293,9 @@
     @"values" : @{@"bufferView" : @2, @"byteOffset" : @0}
   };
   NSError *error = nil;
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
 
-  GLTFJSONAccessorSparse *sparse = [decoder decodeAccessorSparse:jsonDict
+  GLTFAccessorSparse *sparse = [decoder decodeAccessorSparse:jsonDict
                                                            error:&error];
 
   XCTAssertNotNil(
@@ -308,7 +308,7 @@
   XCTAssertNil(error, "Error should be nil when optional fields are missing");
 }
 
-#pragma mark - GLTFJSONAccessorSparseIndices
+#pragma mark - GLTFAccessorSparseIndices
 
 - (void)testSuccessfulDecode {
   // Sample JSON with all fields correctly set
@@ -320,9 +320,9 @@
     @"extras" : @{@"anotherKey" : @"anotherValue"}
   };
   NSError *error = nil;
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
 
-  GLTFJSONAccessorSparseIndices *indices =
+  GLTFAccessorSparseIndices *indices =
       [decoder decodeAccessorSparseIndices:jsonDict error:&error];
 
   XCTAssertNotNil(indices);
@@ -338,9 +338,9 @@
   // Sample JSON missing the 'componentType' field
   NSDictionary *jsonDict = @{@"bufferView" : @1};
   NSError *error = nil;
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
 
-  GLTFJSONAccessorSparseIndices *indices =
+  GLTFAccessorSparseIndices *indices =
       [decoder decodeAccessorSparseIndices:jsonDict error:&error];
 
   XCTAssertNil(indices);
@@ -354,9 +354,9 @@
   // Sample JSON without 'byteOffset'
   NSDictionary *jsonDict = @{@"bufferView" : @1, @"componentType" : @5123};
   NSError *error = nil;
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
 
-  GLTFJSONAccessorSparseIndices *indices =
+  GLTFAccessorSparseIndices *indices =
       [decoder decodeAccessorSparseIndices:jsonDict error:&error];
 
   XCTAssertNotNil(indices);
@@ -365,7 +365,7 @@
   XCTAssertNil(error);
 }
 
-#pragma mark - GLTFJSONAccessorSparseValues
+#pragma mark - GLTFAccessorSparseValues
 
 - (void)testDecodeSparseValuesWithAllFieldsPresent {
   NSDictionary *jsonDict = @{
@@ -375,9 +375,9 @@
     @"extras" : @{@"anotherKey" : @"anotherValue"}
   };
   NSError *error = nil;
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
 
-  GLTFJSONAccessorSparseValues *values =
+  GLTFAccessorSparseValues *values =
       [decoder decodeAccessorSparseValues:jsonDict error:&error];
 
   XCTAssertNotNil(
@@ -399,9 +399,9 @@
     @"byteOffset" : @10
   };
   NSError *error = nil;
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
 
-  GLTFJSONAccessorSparseValues *values =
+  GLTFAccessorSparseValues *values =
       [decoder decodeAccessorSparseValues:jsonDict error:&error];
 
   XCTAssertNil(values,
@@ -418,9 +418,9 @@
     // 'byteOffset', 'extensions', and 'extras' are omitted
   };
   NSError *error = nil;
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
 
-  GLTFJSONAccessorSparseValues *values =
+  GLTFAccessorSparseValues *values =
       [decoder decodeAccessorSparseValues:jsonDict error:&error];
 
   XCTAssertNotNil(
@@ -435,7 +435,7 @@
   XCTAssertNil(error, "Error should be nil when optional fields are missing");
 }
 
-#pragma mark - GLTFJSONAnimation
+#pragma mark - GLTFAnimation
 
 - (void)testDecodeAnimationWithAllFieldsPresent {
   NSDictionary *jsonDict = @{
@@ -448,9 +448,9 @@
     @"extras" : @{@"customData" : @"data"}
   };
   NSError *error = nil;
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
 
-  GLTFJSONAnimation *animation = [decoder decodeAnimation:jsonDict
+  GLTFAnimation *animation = [decoder decodeAnimation:jsonDict
                                                     error:&error];
 
   XCTAssertNotNil(animation);
@@ -467,9 +467,9 @@
       // Missing 'channels' and 'samplers'
   };
   NSError *error = nil;
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
 
-  GLTFJSONAnimation *animation = [decoder decodeAnimation:jsonDict
+  GLTFAnimation *animation = [decoder decodeAnimation:jsonDict
                                                     error:&error];
 
   XCTAssertNil(animation);
@@ -486,9 +486,9 @@
     // Missing 'name', 'extensions', and 'extras'
   };
   NSError *error = nil;
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
 
-  GLTFJSONAnimation *animation = [decoder decodeAnimation:jsonDict
+  GLTFAnimation *animation = [decoder decodeAnimation:jsonDict
                                                     error:&error];
 
   XCTAssertNotNil(animation);
@@ -498,10 +498,10 @@
   XCTAssertNil(error);
 }
 
-#pragma mark - GLTFJSONAnimationChannel
+#pragma mark - GLTFAnimationChannel
 
 - (void)testDecodeAnimationChannelWithAllFieldsPresent {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{
     @"sampler" : @0,
     @"target" : @{@"node" : @1, @"path" : @"rotation"},
@@ -510,7 +510,7 @@
   };
   NSError *error = nil;
 
-  GLTFJSONAnimationChannel *channel = [decoder decodeAnimationChannel:jsonDict
+  GLTFAnimationChannel *channel = [decoder decodeAnimationChannel:jsonDict
                                                                 error:&error];
 
   XCTAssertNotNil(channel,
@@ -529,11 +529,11 @@
 }
 
 - (void)testDecodeAnimationChannelWithMissingRequiredFields {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{}; // Empty dictionary to simulate missing fields
   NSError *error = nil;
 
-  GLTFJSONAnimationChannel *channel = [decoder decodeAnimationChannel:jsonDict
+  GLTFAnimationChannel *channel = [decoder decodeAnimationChannel:jsonDict
                                                                 error:&error];
 
   XCTAssertNil(channel,
@@ -545,7 +545,7 @@
 }
 
 - (void)testDecodeAnimationChannelWithOptionalFieldsMissing {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{
     @"sampler" : @0,
     @"target" : @{@"node" : @1, @"path" : @"rotation"}
@@ -553,7 +553,7 @@
   };
   NSError *error = nil;
 
-  GLTFJSONAnimationChannel *channel = [decoder decodeAnimationChannel:jsonDict
+  GLTFAnimationChannel *channel = [decoder decodeAnimationChannel:jsonDict
                                                                 error:&error];
 
   XCTAssertNotNil(
@@ -564,10 +564,10 @@
   XCTAssertNil(error, "Error should be nil when optional fields are missing");
 }
 
-#pragma mark - GLTFJSONAnimationChannelTarget
+#pragma mark - GLTFAnimationChannelTarget
 
 - (void)testDecodeAnimationChannelTargetWithAllFieldsPresent {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{
     @"node" : @10,
     @"path" : @"translation",
@@ -576,7 +576,7 @@
   };
   NSError *error = nil;
 
-  GLTFJSONAnimationChannelTarget *target =
+  GLTFAnimationChannelTarget *target =
       [decoder decodeAnimationChannelTarget:jsonDict error:&error];
 
   XCTAssertNotNil(target,
@@ -593,11 +593,11 @@
 }
 
 - (void)testDecodeAnimationChannelTargetWithMissingRequiredPath {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{};
   NSError *error = nil;
 
-  GLTFJSONAnimationChannelTarget *target =
+  GLTFAnimationChannelTarget *target =
       [decoder decodeAnimationChannelTarget:jsonDict error:&error];
 
   XCTAssertNil(
@@ -611,11 +611,11 @@
 }
 
 - (void)testDecodeAnimationChannelTargetWithOptionalFieldsMissing {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{@"path" : @"rotation"};
   NSError *error = nil;
 
-  GLTFJSONAnimationChannelTarget *target =
+  GLTFAnimationChannelTarget *target =
       [decoder decodeAnimationChannelTarget:jsonDict error:&error];
 
   XCTAssertNotNil(
@@ -628,10 +628,10 @@
   XCTAssertNil(error, "Error should be nil when optional fields are missing");
 }
 
-#pragma mark - GLTFJSONAnimationSampler
+#pragma mark - GLTFAnimationSampler
 
 - (void)testDecodeAnimationSamplerWithAllFieldsPresent {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{
     @"input" : @0,
     @"interpolation" : @"CUBICSPLINE",
@@ -641,7 +641,7 @@
   };
   NSError *error = nil;
 
-  GLTFJSONAnimationSampler *sampler = [decoder decodeAnimationSampler:jsonDict
+  GLTFAnimationSampler *sampler = [decoder decodeAnimationSampler:jsonDict
                                                                 error:&error];
 
   XCTAssertNotNil(sampler,
@@ -658,7 +658,7 @@
 }
 
 - (void)testDecodeAnimationSamplerWithMissingRequiredFields {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{
     // 'input' is missing
     @"output" : @1,
@@ -666,7 +666,7 @@
   };
   NSError *error = nil;
 
-  GLTFJSONAnimationSampler *sampler = [decoder decodeAnimationSampler:jsonDict
+  GLTFAnimationSampler *sampler = [decoder decodeAnimationSampler:jsonDict
                                                                 error:&error];
 
   XCTAssertNil(sampler,
@@ -678,7 +678,7 @@
 }
 
 - (void)testDecodeAnimationSamplerWithDefaultInterpolation {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{
     @"input" : @0,
     @"output" : @1
@@ -686,7 +686,7 @@
   };
   NSError *error = nil;
 
-  GLTFJSONAnimationSampler *sampler = [decoder decodeAnimationSampler:jsonDict
+  GLTFAnimationSampler *sampler = [decoder decodeAnimationSampler:jsonDict
                                                                 error:&error];
 
   XCTAssertNotNil(
@@ -698,7 +698,7 @@
 }
 
 - (void)testDecodeAnimationSamplerWithOptionalFieldsMissing {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{
     @"input" : @0,
     @"interpolation" : @"LINEAR",
@@ -707,7 +707,7 @@
   };
   NSError *error = nil;
 
-  GLTFJSONAnimationSampler *sampler = [decoder decodeAnimationSampler:jsonDict
+  GLTFAnimationSampler *sampler = [decoder decodeAnimationSampler:jsonDict
                                                                 error:&error];
 
   XCTAssertNotNil(
@@ -718,7 +718,7 @@
   XCTAssertNil(error, "Error should be nil when optional fields are missing");
 }
 
-#pragma mark - GLTFJSONAsset
+#pragma mark - GLTFAsset
 
 - (void)testDecodeAssetWithAllFieldsPresent {
   NSDictionary *jsonDict = @{
@@ -730,9 +730,9 @@
     @"extras" : @{@"someExtraInfo" : @"value"}
   };
   NSError *error = nil;
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
 
-  GLTFJSONAsset *asset = [decoder decodeAsset:jsonDict error:&error];
+  GLTFAsset *asset = [decoder decodeAsset:jsonDict error:&error];
 
   XCTAssertNotNil(asset, "Asset should not be nil when all fields are present");
   XCTAssertEqualObjects(asset.version, @"2.0",
@@ -756,9 +756,9 @@
     @"generator" : @"ExampleGenerator 1.0"
   };
   NSError *error = nil;
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
 
-  GLTFJSONAsset *asset = [decoder decodeAsset:jsonDict error:&error];
+  GLTFAsset *asset = [decoder decodeAsset:jsonDict error:&error];
 
   XCTAssertNil(asset,
                "Asset should be nil when required field 'version' is missing");
@@ -775,9 +775,9 @@
     // Optional fields are missing
   };
   NSError *error = nil;
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
 
-  GLTFJSONAsset *asset = [decoder decodeAsset:jsonDict error:&error];
+  GLTFAsset *asset = [decoder decodeAsset:jsonDict error:&error];
 
   XCTAssertNotNil(
       asset, "Asset should not be nil even if optional fields are missing");
@@ -791,10 +791,10 @@
   XCTAssertNil(error, "Error should be nil when optional fields are missing");
 }
 
-#pragma mark - GLTFJSONBuffer
+#pragma mark - GLTFBuffer
 
 - (void)testDecodeBufferWithAllFieldsPresent {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{
     @"byteLength" : @1024,
     @"uri" : @"http://example.com/buffer.bin",
@@ -804,7 +804,7 @@
   };
   NSError *error = nil;
 
-  GLTFJSONBuffer *buffer = [decoder decodeBuffer:jsonDict error:&error];
+  GLTFBuffer *buffer = [decoder decodeBuffer:jsonDict error:&error];
 
   XCTAssertNotNil(buffer,
                   "Buffer should not be nil when all fields are present");
@@ -821,11 +821,11 @@
 }
 
 - (void)testDecodeBufferWithMissingRequiredFields {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{}; // Missing 'byteLength'
   NSError *error = nil;
 
-  GLTFJSONBuffer *buffer = [decoder decodeBuffer:jsonDict error:&error];
+  GLTFBuffer *buffer = [decoder decodeBuffer:jsonDict error:&error];
 
   XCTAssertNil(buffer, "Buffer should be nil when required fields are missing");
   XCTAssertNotNil(
@@ -834,13 +834,13 @@
 }
 
 - (void)testDecodeBufferWithOptionalFieldsMissing {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{
     @"byteLength" : @2048 // Only the required field
   };
   NSError *error = nil;
 
-  GLTFJSONBuffer *buffer = [decoder decodeBuffer:jsonDict error:&error];
+  GLTFBuffer *buffer = [decoder decodeBuffer:jsonDict error:&error];
 
   XCTAssertNotNil(
       buffer, "Buffer should not be nil even if optional fields are missing");
@@ -854,10 +854,10 @@
                "Error should be nil when only optional fields are missing");
 }
 
-#pragma mark - GLTFJSONBufferView
+#pragma mark - GLTFBufferView
 
 - (void)testDecodeBufferViewWithAllFieldsPresent {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{
     @"buffer" : @1,
     @"byteLength" : @1024,
@@ -868,7 +868,7 @@
   };
   NSError *error = nil;
 
-  GLTFJSONBufferView *bufferView = [decoder decodeBufferView:jsonDict
+  GLTFBufferView *bufferView = [decoder decodeBufferView:jsonDict
                                                        error:&error];
 
   XCTAssertNotNil(bufferView,
@@ -883,11 +883,11 @@
 }
 
 - (void)testDecodeBufferViewWithMissingRequiredFields {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{};
   NSError *error = nil;
 
-  GLTFJSONBufferView *bufferView = [decoder decodeBufferView:jsonDict
+  GLTFBufferView *bufferView = [decoder decodeBufferView:jsonDict
                                                        error:&error];
 
   XCTAssertNil(bufferView,
@@ -896,10 +896,10 @@
                   "Error should be present when required fields are missing");
 }
 
-#pragma mark - GLTFJSONCamera
+#pragma mark - GLTFCamera
 
 - (void)testDecodeCameraWithAllFieldsPresent {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{
     @"type" : @"perspective",
     @"perspective" : @{@"yfov" : @1.5, @"znear" : @0.1},
@@ -907,7 +907,7 @@
   };
   NSError *error = nil;
 
-  GLTFJSONCamera *camera = [decoder decodeCamera:jsonDict error:&error];
+  GLTFCamera *camera = [decoder decodeCamera:jsonDict error:&error];
 
   XCTAssertNotNil(camera,
                   "Camera should not be nil when all fields are present");
@@ -918,26 +918,26 @@
 }
 
 - (void)testDecodeCameraWithMissingRequiredFields {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{}; // Missing 'type'
   NSError *error = nil;
 
-  GLTFJSONCamera *camera = [decoder decodeCamera:jsonDict error:&error];
+  GLTFCamera *camera = [decoder decodeCamera:jsonDict error:&error];
 
   XCTAssertNil(camera, "Camera should be nil when required fields are missing");
   XCTAssertNotNil(error,
                   "Error should be present when required fields are missing");
 }
 
-#pragma mark - GLTFJSONCameraOrthographic
+#pragma mark - GLTFCameraOrthographic
 
 - (void)testDecodeCameraOrthographicWithAllFieldsPresent {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict =
       @{@"xmag" : @1.0, @"ymag" : @1.0, @"zfar" : @100.0, @"znear" : @0.1};
   NSError *error = nil;
 
-  GLTFJSONCameraOrthographic *cameraOrtho =
+  GLTFCameraOrthographic *cameraOrtho =
       [decoder decodeCameraOrthographic:jsonDict error:&error];
 
   XCTAssertNotNil(
@@ -960,11 +960,11 @@
 }
 
 - (void)testDecodeCameraOrthographicWithMissingRequiredFields {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{}; // Missing 'xmag', 'ymag', 'zfar', 'znear'
   NSError *error = nil;
 
-  GLTFJSONCameraOrthographic *cameraOrtho =
+  GLTFCameraOrthographic *cameraOrtho =
       [decoder decodeCameraOrthographic:jsonDict error:&error];
 
   XCTAssertNil(
@@ -974,10 +974,10 @@
                   "Error should be present when required fields are missing");
 }
 
-#pragma mark - GLTFJSONCameraPerspective
+#pragma mark - GLTFCameraPerspective
 
 - (void)testDecodeCameraPerspectiveWithAllFieldsPresent {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{
     @"yfov" : @1.5,
     @"znear" : @0.1,
@@ -986,7 +986,7 @@
   };
   NSError *error = nil;
 
-  GLTFJSONCameraPerspective *camera = [decoder decodeCameraPerspective:jsonDict
+  GLTFCameraPerspective *camera = [decoder decodeCameraPerspective:jsonDict
                                                                  error:&error];
 
   XCTAssertNotNil(camera, "Camera perspective should not be nil");
@@ -1007,11 +1007,11 @@
 }
 
 - (void)testDecodeCameraPerspectiveWithMissingRequiredFields {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{}; // Missing 'yfov' and 'znear'
   NSError *error = nil;
 
-  GLTFJSONCameraPerspective *camera = [decoder decodeCameraPerspective:jsonDict
+  GLTFCameraPerspective *camera = [decoder decodeCameraPerspective:jsonDict
                                                                  error:&error];
 
   XCTAssertNil(
@@ -1021,10 +1021,10 @@
                   "Error should be generated when required fields are missing");
 }
 
-#pragma mark - GLTFJSONImage
+#pragma mark - GLTFImage
 
 - (void)testDecodeImageWithAllFieldsPresent {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{
     @"uri" : @"http://example.com/image.png",
     @"mimeType" : @"image/png",
@@ -1032,7 +1032,7 @@
     @"name" : @"ExampleImage"
   };
 
-  GLTFJSONImage *image = [decoder decodeImage:jsonDict];
+  GLTFImage *image = [decoder decodeImage:jsonDict];
 
   XCTAssertNotNil(image, "Image should not be nil when all fields are present");
   XCTAssertEqualObjects(image.uri, @"http://example.com/image.png");
@@ -1042,10 +1042,10 @@
 }
 
 - (void)testDecodeImageWithOptionalFieldsMissing {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{}; // No optional fields provided
 
-  GLTFJSONImage *image = [decoder decodeImage:jsonDict];
+  GLTFImage *image = [decoder decodeImage:jsonDict];
 
   XCTAssertNotNil(
       image, "Image should not be nil even if optional fields are missing");
@@ -1055,10 +1055,10 @@
   XCTAssertNil(image.name);
 }
 
-#pragma mark - GLTFJSONMaterial
+#pragma mark - GLTFMaterial
 
 - (void)testDecodeMaterialWithAllFieldsPresent {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{
     @"name" : @"TestMaterial",
     @"pbrMetallicRoughness" : @{
@@ -1078,7 +1078,7 @@
   };
   NSError *error = nil;
 
-  GLTFJSONMaterial *material = [decoder decodeMaterial:jsonDict error:&error];
+  GLTFMaterial *material = [decoder decodeMaterial:jsonDict error:&error];
 
   XCTAssertNotNil(material,
                   "Material should not be nil when all fields are present");
@@ -1120,11 +1120,11 @@
 }
 
 - (void)testDecodeMaterialWithMissingOptionalFields {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{}; // No fields provided
 
   NSError *error = nil;
-  GLTFJSONMaterial *material = [decoder decodeMaterial:jsonDict error:&error];
+  GLTFMaterial *material = [decoder decodeMaterial:jsonDict error:&error];
 
   XCTAssertNotNil(material,
                   "Material should not be nil even if all fields are missing");
@@ -1140,10 +1140,10 @@
   XCTAssertNil(error, "Error should be nil when optional fields are missing");
 }
 
-#pragma mark - GLTFJSONMaterialNormalTextureInfo
+#pragma mark - GLTFMaterialNormalTextureInfo
 
 - (void)testDecodeMaterialNormalTextureInfoWithAllFieldsPresent {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{
     @"index" : @1,
     @"texCoord" : @2,
@@ -1153,7 +1153,7 @@
   };
   NSError *error = nil;
 
-  GLTFJSONMaterialNormalTextureInfo *textureInfo =
+  GLTFMaterialNormalTextureInfo *textureInfo =
       [decoder decodeMaterialNormalTextureInfo:jsonDict error:&error];
 
   XCTAssertNotNil(textureInfo,
@@ -1167,14 +1167,14 @@
 }
 
 - (void)testDecodeMaterialNormalTextureInfoWithMissingRequiredFields {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{  // Missing 'index'
         @"texCoord": @2,
         @"scale": @1.5
     };
   NSError *error = nil;
 
-  GLTFJSONMaterialNormalTextureInfo *textureInfo =
+  GLTFMaterialNormalTextureInfo *textureInfo =
       [decoder decodeMaterialNormalTextureInfo:jsonDict error:&error];
 
   XCTAssertNil(
@@ -1184,10 +1184,10 @@
       error, "Error should not be nil when required field 'index' is missing");
 }
 
-#pragma mark - GLTFJSONMaterialOcclusionTextureInfo
+#pragma mark - GLTFMaterialOcclusionTextureInfo
 
 - (void)testDecodeMaterialOcclusionTextureInfoWithAllFieldsPresent {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{
     @"index" : @1,
     @"texCoord" : @2,
@@ -1197,7 +1197,7 @@
   };
   NSError *error = nil;
 
-  GLTFJSONMaterialOcclusionTextureInfo *textureInfo =
+  GLTFMaterialOcclusionTextureInfo *textureInfo =
       [decoder decodeMaterialOcclusionTextureInfo:jsonDict error:&error];
 
   XCTAssertNotNil(textureInfo,
@@ -1212,13 +1212,13 @@
 }
 
 - (void)testDecodeMaterialOcclusionTextureInfoWithMissingRequiredFields {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{  // Missing 'index'
         @"strength": @0.8
     };
   NSError *error = nil;
 
-  GLTFJSONMaterialOcclusionTextureInfo *textureInfo =
+  GLTFMaterialOcclusionTextureInfo *textureInfo =
       [decoder decodeMaterialOcclusionTextureInfo:jsonDict error:&error];
 
   XCTAssertNil(
@@ -1228,10 +1228,10 @@
       error, "Error should not be nil when required field 'index' is missing");
 }
 
-#pragma mark - GLTFJSONMaterialPBRMetallicRoughness
+#pragma mark - GLTFMaterialPBRMetallicRoughness
 
 - (void)testDecodeMaterialPBRMetallicRoughnessWithAllFieldsPresent {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{
     @"baseColorFactor" : @[ @1.0, @0.5, @0.5, @1.0 ],
     @"baseColorTexture" : @{@"index" : @1},
@@ -1243,7 +1243,7 @@
   };
   NSError *error = nil;
 
-  GLTFJSONMaterialPBRMetallicRoughness *roughness =
+  GLTFMaterialPBRMetallicRoughness *roughness =
       [decoder decodeMaterialPBRMetallicRoughness:jsonDict error:&error];
 
   XCTAssertNotNil(
@@ -1261,11 +1261,11 @@
 }
 
 - (void)testDecodeMaterialPBRMetallicRoughnessWithMissingOptionalFields {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{}; // All optional fields missing
   NSError *error = nil;
 
-  GLTFJSONMaterialPBRMetallicRoughness *roughness =
+  GLTFMaterialPBRMetallicRoughness *roughness =
       [decoder decodeMaterialPBRMetallicRoughness:jsonDict error:&error];
 
   XCTAssertNotNil(roughness, "PBRMetallicRoughness should not be nil even if "
@@ -1280,10 +1280,10 @@
   XCTAssertNil(error);
 }
 
-#pragma mark - GLTFJSONMesh
+#pragma mark - GLTFMesh
 
 - (void)testDecodeMeshWithAllFieldsPresent {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{
     @"primitives" : @[ @{@"attributes" : @{@"POSITION" : @0}} ],
     @"weights" : @[ @1.0, @0.5 ],
@@ -1293,7 +1293,7 @@
   };
   NSError *error = nil;
 
-  GLTFJSONMesh *mesh = [decoder decodeMesh:jsonDict error:&error];
+  GLTFMesh *mesh = [decoder decodeMesh:jsonDict error:&error];
 
   XCTAssertNotNil(mesh, "Mesh should not be nil when all fields are present");
   XCTAssertEqual(mesh.primitives.count, 1, "There should be one primitive");
@@ -1308,11 +1308,11 @@
 }
 
 - (void)testDecodeMeshWithMissingRequiredFields {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{}; // Missing 'primitives', which is required
   NSError *error = nil;
 
-  GLTFJSONMesh *mesh = [decoder decodeMesh:jsonDict error:&error];
+  GLTFMesh *mesh = [decoder decodeMesh:jsonDict error:&error];
 
   XCTAssertNil(mesh, "Mesh should be nil when required fields are missing");
   XCTAssertNotNil(
@@ -1320,10 +1320,10 @@
       "Error should not be nil when required field 'primitives' is missing");
 }
 
-#pragma mark - GLTFJSONMeshPrimitive
+#pragma mark - GLTFMeshPrimitive
 
 - (void)testDecodeMeshPrimitiveWithAllFieldsPresent {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{
     @"attributes" : @{@"POSITION" : @0, @"TEXCOORD_0" : @1, @"TEXCOORD_1" : @2},
     @"indices" : @1,
@@ -1335,7 +1335,7 @@
   };
   NSError *error = nil;
 
-  GLTFJSONMeshPrimitive *primitive = [decoder decodeMeshPrimitive:jsonDict
+  GLTFMeshPrimitive *primitive = [decoder decodeMeshPrimitive:jsonDict
                                                             error:&error];
 
   XCTAssertNotNil(
@@ -1361,11 +1361,11 @@
 }
 
 - (void)testDecodeMeshPrimitiveWithMissingRequiredFields {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{}; // Missing 'attributes', which is required
   NSError *error = nil;
 
-  GLTFJSONMeshPrimitive *primitive = [decoder decodeMeshPrimitive:jsonDict
+  GLTFMeshPrimitive *primitive = [decoder decodeMeshPrimitive:jsonDict
                                                             error:&error];
 
   XCTAssertNil(primitive,
@@ -1375,10 +1375,10 @@
       "Error should not be nil when required field 'attributes' is missing");
 }
 
-#pragma mark - GLTFJSONNode
+#pragma mark - GLTFNode
 
 - (void)testDecodeNodeWithNonDefaultValues {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{
     @"camera" : @1,
     @"children" : @[ @2, @3 ],
@@ -1395,7 +1395,7 @@
     @"extras" : @{@"someExtra" : @"data"}
   };
 
-  GLTFJSONNode *node = [decoder decodeNode:jsonDict];
+  GLTFNode *node = [decoder decodeNode:jsonDict];
 
   XCTAssertEqualObjects(node.camera, @1);
   XCTAssertEqualObjects(node.children, (@[ @2, @3 ]));
@@ -1417,10 +1417,10 @@
 }
 
 - (void)testDecodeNodeWithOptionalFieldsMissing {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{}; // No optional fields provided
 
-  GLTFJSONNode *node = [decoder decodeNode:jsonDict];
+  GLTFNode *node = [decoder decodeNode:jsonDict];
 
   XCTAssertNil(node.camera);
   XCTAssertNil(node.children);
@@ -1452,10 +1452,10 @@
   return YES;
 }
 
-#pragma mark - GLTFJSONSampler
+#pragma mark - GLTFSampler
 
 - (void)testDecodeSamplerWithAllFieldsPresent {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{
     @"magFilter" : @9729,
     @"minFilter" : @9986,
@@ -1465,7 +1465,7 @@
     @"extensions" : @{@"someExtension" : @{@"param" : @"value"}},
     @"extras" : @{@"info" : @"extra data"}
   };
-  GLTFJSONSampler *sampler = [decoder decodeSampler:jsonDict];
+  GLTFSampler *sampler = [decoder decodeSampler:jsonDict];
 
   XCTAssertEqualObjects(sampler.magFilter, @9729,
                         "MagFilter should be correctly decoded");
@@ -1480,11 +1480,11 @@
 }
 
 - (void)testDecodeSamplerWithDefaultValues {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict =
       @{}; // No fields provided, default values should be used
 
-  GLTFJSONSampler *sampler = [decoder decodeSampler:jsonDict];
+  GLTFSampler *sampler = [decoder decodeSampler:jsonDict];
 
   XCTAssertNil(sampler.magFilter, "MagFilter should be nil when not provided");
   XCTAssertNil(sampler.minFilter, "MinFilter should be nil when not provided");
@@ -1498,10 +1498,10 @@
   XCTAssertNil(sampler.extras, "Extras should be nil when not provided");
 }
 
-#pragma mark - GLTFJSONScene
+#pragma mark - GLTFScene
 
 - (void)testDecodeSceneWithAllFieldsPresent {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{
     @"nodes" : @[ @1, @2, @3 ],
     @"name" : @"MainScene",
@@ -1509,7 +1509,7 @@
     @"extras" : @{@"info" : @"extra data"}
   };
 
-  GLTFJSONScene *scene = [decoder decodeScene:jsonDict];
+  GLTFScene *scene = [decoder decodeScene:jsonDict];
 
   XCTAssertEqualObjects(scene.nodes, (@[ @1, @2, @3 ]),
                         "Nodes should be correctly decoded");
@@ -1520,10 +1520,10 @@
 }
 
 - (void)testDecodeSceneWithOptionalFieldsMissing {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{}; // No fields provided
 
-  GLTFJSONScene *scene = [decoder decodeScene:jsonDict];
+  GLTFScene *scene = [decoder decodeScene:jsonDict];
 
   XCTAssertNil(scene.nodes, "Nodes should be nil when not provided");
   XCTAssertNil(scene.name, "Name should be nil when not provided");
@@ -1531,10 +1531,10 @@
   XCTAssertNil(scene.extras, "Extras should be nil when not provided");
 }
 
-#pragma mark - GLTFJSONSkin
+#pragma mark - GLTFSkin
 
 - (void)testDecodeSkinWithAllFieldsPresent {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{
     @"joints" : @[ @1, @2, @3 ],
     @"inverseBindMatrices" : @5,
@@ -1545,7 +1545,7 @@
   };
   NSError *error = nil;
 
-  GLTFJSONSkin *skin = [decoder decodeSkin:jsonDict error:&error];
+  GLTFSkin *skin = [decoder decodeSkin:jsonDict error:&error];
 
   XCTAssertNotNil(skin, "Skin should not be nil when all fields are present");
   XCTAssertEqualObjects(skin.joints, (@[ @1, @2, @3 ]),
@@ -1566,14 +1566,14 @@
 }
 
 - (void)testDecodeSkinWithMissingRequiredFields {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{  // Missing 'joints', which is required
         @"inverseBindMatrices": @5,
         @"name": @"TestSkin"
     };
   NSError *error = nil;
 
-  GLTFJSONSkin *skin = [decoder decodeSkin:jsonDict error:&error];
+  GLTFSkin *skin = [decoder decodeSkin:jsonDict error:&error];
 
   XCTAssertNil(skin,
                "Skin should be nil when required 'joints' field is missing");
@@ -1582,7 +1582,7 @@
 }
 
 - (void)testDecodeSkinWithOptionalFieldsMissing {
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
   NSDictionary *jsonDict = @{
     @"joints" : @[
       @1, @2, @3
@@ -1590,7 +1590,7 @@
   };
   NSError *error = nil;
 
-  GLTFJSONSkin *skin = [decoder decodeSkin:jsonDict error:&error];
+  GLTFSkin *skin = [decoder decodeSkin:jsonDict error:&error];
 
   XCTAssertNotNil(skin,
                   "Skin should not be nil even if optional fields are missing");
@@ -1605,7 +1605,7 @@
   XCTAssertNil(error, "Error should be nil when optional fields are missing");
 }
 
-#pragma mark - GLTFJSONTexture
+#pragma mark - GLTFTexture
 
 - (void)testDecodeTextureWithAllFieldsPresent {
   NSDictionary *jsonDict = @{
@@ -1615,9 +1615,9 @@
     @"extensions" : @{@"extensionKey" : @"extensionValue"},
     @"extras" : @{@"extraKey" : @"extraValue"}
   };
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
 
-  GLTFJSONTexture *texture = [decoder decodeTexture:jsonDict];
+  GLTFTexture *texture = [decoder decodeTexture:jsonDict];
 
   XCTAssertEqualObjects(texture.sampler, @1,
                         "Sampler should be correctly decoded");
@@ -1634,9 +1634,9 @@
 
 - (void)testDecodeTextureWithOptionalFieldsMissing {
   NSDictionary *jsonDict = @{}; // Empty dictionary to simulate missing fields
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
 
-  GLTFJSONTexture *texture = [decoder decodeTexture:jsonDict];
+  GLTFTexture *texture = [decoder decodeTexture:jsonDict];
 
   XCTAssertNil(texture.sampler, "Sampler should be nil when not provided");
   XCTAssertNil(texture.source, "Source should be nil when not provided");
@@ -1654,9 +1654,9 @@
     @"extensions" : @[], // Incorrect type, should be a dictionary
     @"extras" : @123     // Incorrect type, should be a dictionary
   };
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
 
-  GLTFJSONTexture *texture = [decoder decodeTexture:jsonDict];
+  GLTFTexture *texture = [decoder decodeTexture:jsonDict];
 
   XCTAssertNil(texture.sampler,
                "Sampler should be nil when the type is incorrect");
@@ -1669,7 +1669,7 @@
                "Extras should be nil when the type is incorrect");
 }
 
-#pragma mark - GLTFJSONTextureInfo
+#pragma mark - GLTFTextureInfo
 
 - (void)testDecodeTextureInfoWithAllFieldsPresent {
   NSDictionary *jsonDict = @{
@@ -1679,9 +1679,9 @@
     @"extras" : @{@"someData" : @"data"}
   };
   NSError *error = nil;
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
 
-  GLTFJSONTextureInfo *textureInfo = [decoder decodeTextureInfo:jsonDict
+  GLTFTextureInfo *textureInfo = [decoder decodeTextureInfo:jsonDict
                                                           error:&error];
 
   XCTAssertNotNil(textureInfo,
@@ -1701,9 +1701,9 @@
         @"texCoord": @1
     };
   NSError *error = nil;
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
 
-  GLTFJSONTextureInfo *textureInfo = [decoder decodeTextureInfo:jsonDict
+  GLTFTextureInfo *textureInfo = [decoder decodeTextureInfo:jsonDict
                                                           error:&error];
 
   XCTAssertNil(
@@ -1718,9 +1718,9 @@
     @"index" : @2 // Optional 'texCoord', 'extensions', and 'extras' are missing
   };
   NSError *error = nil;
-  GLTFJSONDecoder *decoder = [[GLTFJSONDecoder alloc] init];
+  GLTFDecoder *decoder = [[GLTFDecoder alloc] init];
 
-  GLTFJSONTextureInfo *textureInfo = [decoder decodeTextureInfo:jsonDict
+  GLTFTextureInfo *textureInfo = [decoder decodeTextureInfo:jsonDict
                                                           error:&error];
 
   XCTAssertNotNil(

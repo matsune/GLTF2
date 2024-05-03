@@ -1,5 +1,5 @@
 #import "Errors.h"
 #import "GLTFBinary.h"
-#import "GLTFJSONDecoder.h"
+#import "GLTFDecoder.h"
 #import "GLTFJson.h"
 #import "GLTFObject.h"

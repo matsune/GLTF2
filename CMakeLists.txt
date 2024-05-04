@@ -23,11 +23,8 @@ endif()
 
 if(BUILD_TESTS OR BUILD_EXAMPLE)
     add_subdirectory(sample-models)
-    file(GLOB_RECURSE GLB_FILES "${PROJECT_SOURCE_DIR}/sample-models/*.glb")
-    file(GLOB_RECURSE BIN_FILES "${PROJECT_SOURCE_DIR}/sample-models/*.bin")
-    file(GLOB_RECURSE GLTF_FILES "${PROJECT_SOURCE_DIR}/sample-models/*.gltf")
-    file(GLOB_RECURSE PNG_FILES "${PROJECT_SOURCE_DIR}/sample-models/*.png")
-    set(MODEL_FILES ${GLB_FILES} ${BIN_FILES} ${GLTF_FILES} ${PNG_FILES})
+    set(CONFIG_H ${CMAKE_BINARY_DIR}/config.h)
+    configure_file(config.h.in ${CONFIG_H})
 endif()
 
 add_subdirectory(GLTF2)

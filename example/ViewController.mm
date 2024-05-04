@@ -1,6 +1,7 @@
 #import "ViewController.h"
 #import "GLTF2.h"
 #import "GLTFJson.h"
+#import "config.h"
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
 
@@ -247,11 +248,11 @@ SCNGeometrySourceSemanticFromString(NSString *semantic) {
 
 - (void)viewDidLoad {
   [super viewDidLoad];
-  NSString *path = [[NSBundle mainBundle] pathForResource:@"Box"
-                                                   ofType:@"gltf"];
 
+  NSURL *url = [[NSURL fileURLWithPath:SAMPLE_MODELS_DIR]
+      URLByAppendingPathComponent:@"Box/glTF-Embedded/Box.gltf"];
   NSError *err;
-  GLTFObject *object = [GLTFObject objectWithGltfFile:path error:&err];
+  GLTFObject *object = [GLTFObject objectWithGltfFile:[url path] error:&err];
   if (err) {
     NSLog(@"%@", err);
     abort();

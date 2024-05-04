@@ -6,11 +6,8 @@ set(INFO_PLIST_IN_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in)
 set(INFO_PLIST_PATH ${CMAKE_CURRENT_BINARY_DIR}/Info.plist)
 configure_file(${INFO_PLIST_IN_PATH} ${INFO_PLIST_PATH})
 
-file(GLOB GLTF_FILE ${PROJECT_SOURCE_DIR}/sample-models/Box/glTF-Embedded/Box.gltf)
-
 set(APP_RESOURCES
     Main.storyboard
-    ${GLTF_FILE}
 )
 
 file(GLOB_RECURSE SOURCES "*.m" "*.mm")
@@ -19,6 +16,7 @@ add_executable(example MACOSX_BUNDLE
     ${HEADERS}
     ${SOURCES}
     ${APP_RESOURCES}
+    ${CONFIG_H}
 )
 
 find_library(COCOA_LIBRARY Cocoa)
@@ -31,6 +29,7 @@ target_link_libraries(example GLTF2SceneKit ${COCOA_LIBRARY} ${FOUNDATION_LIBRAR
 
 target_include_directories(example PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_BINARY_DIR}
 )
 
 set_target_properties(example PROPERTIES
@@ -50,5 +49,3 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES
     ${SOURCES}
     Main.storyboard
 )
-
-source_group(TREE ${PROJECT_SOURCE_DIR} FILES ${GLTF_FILE})

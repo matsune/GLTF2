@@ -6,10 +6,11 @@ set(INFO_PLIST_IN_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in)
 set(INFO_PLIST_PATH ${CMAKE_CURRENT_BINARY_DIR}/Info.plist)
 configure_file(${INFO_PLIST_IN_PATH} ${INFO_PLIST_PATH})
 
+file(GLOB GLTF_FILE ${PROJECT_SOURCE_DIR}/sample-models/Box/glTF-Embedded/Box.gltf)
+
 set(APP_RESOURCES
     Main.storyboard
-    ${GLB_FILES}
-    ${PNG_FILES}
+    ${GLTF_FILE}
 )
 
 file(GLOB_RECURSE SOURCES "*.m" "*.mm")
@@ -49,4 +50,5 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES
     ${SOURCES}
     Main.storyboard
 )
-source_group(TREE ${PROJECT_SOURCE_DIR} FILES ${MODEL_FILES})
+
+source_group(TREE ${PROJECT_SOURCE_DIR} FILES ${GLTF_FILE})

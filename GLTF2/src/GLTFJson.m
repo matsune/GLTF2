@@ -8,6 +8,43 @@ NSString *const GLTFAccessorTypeMat2 = @"MAT2";
 NSString *const GLTFAccessorTypeMat3 = @"MAT3";
 NSString *const GLTFAccessorTypeMat4 = @"MAT4";
 
+NSInteger componentsCountOfAccessorType(NSString *accessorType) {
+  if ([accessorType isEqualToString:GLTFAccessorTypeScalar])
+    return 1;
+  if ([accessorType isEqualToString:GLTFAccessorTypeVec2])
+    return 2;
+  if ([accessorType isEqualToString:GLTFAccessorTypeVec3])
+    return 3;
+  if ([accessorType isEqualToString:GLTFAccessorTypeVec4])
+    return 4;
+  if ([accessorType isEqualToString:GLTFAccessorTypeMat2])
+    return 4; // 2x2 matrix
+  if ([accessorType isEqualToString:GLTFAccessorTypeMat3])
+    return 9; // 3x3 matrix
+  if ([accessorType isEqualToString:GLTFAccessorTypeMat4])
+    return 16; // 4x4 matrix
+  return 0;
+}
+
+NSInteger sizeOfComponentType(GLTFAccessorComponentType componentType) {
+  switch (componentType) {
+  case GLTFAccessorComponentTypeByte:
+    return sizeof(int8_t);
+  case GLTFAccessorComponentTypeUnsignedByte:
+    return sizeof(uint8_t);
+  case GLTFAccessorComponentTypeShort:
+    return sizeof(int16_t);
+  case GLTFAccessorComponentTypeUnsignedShort:
+    return sizeof(uint16_t);
+  case GLTFAccessorComponentTypeUnsignedInt:
+    return sizeof(uint32_t);
+  case GLTFAccessorComponentTypeFloat:
+    return sizeof(float);
+  default:
+    return 0;
+  }
+}
+
 NSString *const GLTFAnimationChannelTargetPathTranslation = @"translation";
 NSString *const GLTFAnimationChannelTargetPathRotation = @"rotation";
 NSString *const GLTFAnimationChannelTargetPathScale = @"scale";
@@ -15,8 +52,7 @@ NSString *const GLTFAnimationChannelTargetPathWeights = @"weights";
 
 NSString *const GLTFAnimationSamplerInterpolationLinear = @"LINEAR";
 NSString *const GLTFAnimationSamplerInterpolationStep = @"STEP";
-NSString *const GLTFAnimationSamplerInterpolationCubicSpline =
-    @"CUBICSPLINE";
+NSString *const GLTFAnimationSamplerInterpolationCubicSpline = @"CUBICSPLINE";
 
 @implementation GLTFAnimationSampler
 

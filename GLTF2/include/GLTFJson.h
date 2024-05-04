@@ -58,6 +58,11 @@ GLTF_EXPORT NSString *const GLTFAccessorTypeMat2;
 GLTF_EXPORT NSString *const GLTFAccessorTypeMat3;
 GLTF_EXPORT NSString *const GLTFAccessorTypeMat4;
 
+GLTF_EXPORT NSInteger componentsCountOfAccessorType(NSString *accessorType);
+
+GLTF_EXPORT NSInteger
+sizeOfComponentType(GLTFAccessorComponentType componentType);
+
 GLTF_EXPORT @interface GLTFAccessor : NSObject
 
 @property(nonatomic, strong, nullable) NSNumber *bufferView;
@@ -413,8 +418,7 @@ GLTF_EXPORT @interface GLTFJson : NSObject
 @property(nonatomic, strong) GLTFAsset *asset;
 @property(nonatomic, strong, nullable) NSArray<GLTFAnimation *> *animations;
 @property(nonatomic, strong, nullable) NSArray<GLTFBuffer *> *buffers;
-@property(nonatomic, strong, nullable)
-    NSArray<GLTFBufferView *> *bufferViews;
+@property(nonatomic, strong, nullable) NSArray<GLTFBufferView *> *bufferViews;
 @property(nonatomic, strong, nullable) NSArray<GLTFCamera *> *cameras;
 @property(nonatomic, strong, nullable) NSArray<GLTFImage *> *images;
 @property(nonatomic, strong, nullable) NSArray<GLTFMaterial *> *materials;

@@ -8,9 +8,11 @@ GLTF_EXPORT @interface GLTFObject : NSObject
 
 @property(nonatomic, strong, readonly) GLTFJson *json;
 @property(nonatomic, strong, readonly) NSArray<NSData *> *bufferDatas;
+@property(nonatomic, strong, readonly) NSArray<NSData *> *imageDatas;
 
 - (instancetype)initWithJson:(GLTFJson *)json
-                 bufferDatas:(NSArray<NSData *> *)bufferDatas;
+                 bufferDatas:(NSArray<NSData *> *)bufferDatas
+                  imageDatas:(NSArray<NSData *> *)imageDatas;
 
 + (nullable instancetype)objectWithGlbFile:(NSString *)path
                                      error:(NSError *_Nullable *_Nullable)error;

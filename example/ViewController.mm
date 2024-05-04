@@ -84,6 +84,9 @@ SCNGeometrySourceSemanticFromString(NSString *semantic) {
                  isEqualToString:GLTFMeshPrimitiveAttributeSemanticTangent]) {
     return SCNGeometrySourceSemanticTangent;
   } else if ([semantic
+                 isEqualToString:GLTFMeshPrimitiveAttributeSemanticTexcoord]) {
+    return SCNGeometrySourceSemanticTexcoord;
+  } else if ([semantic
                  isEqualToString:GLTFMeshPrimitiveAttributeSemanticColor]) {
     return SCNGeometrySourceSemanticColor;
   } else if ([semantic
@@ -92,6 +95,8 @@ SCNGeometrySourceSemanticFromString(NSString *semantic) {
   } else if ([semantic
                  isEqualToString:GLTFMeshPrimitiveAttributeSemanticWeights]) {
     return SCNGeometrySourceSemanticBoneWeights;
+  } else {
+    abort();
   }
 }
 
@@ -118,6 +123,19 @@ SCNGeometrySourceSemanticFromString(NSString *semantic) {
     [sources addObject:SCNGeometrySourceFromAccessorWithSemantic(
                            object, accessor,
                            SCNGeometrySourceSemanticFromString(semantic))];
+  }
+}
+
+SCNWrapMode SCNWrapModeFromGLTFWrapMode(GLTFSamplerWrapMode mode) {
+  switch (mode) {
+  case GLTFSamplerWrapModeClampToEdge:
+    return SCNWrapModeClamp;
+  case GLTFSamplerWrapModeMirroredRepeat:
+    return SCNWrapModeMirror;
+  case GLTFSamplerWrapModeRepeat:
+    return SCNWrapModeRepeat;
+  default:
+    return SCNWrapModeRepeat;
   }
 }
 
@@ -178,7 +196,6 @@ SCNGeometrySourceSemanticFromString(NSString *semantic) {
                                                   elements:elements];
 
   if (primitive.material) {
-    // TODO:
     GLTFMaterial *material =
         object.json.materials[primitive.material.integerValue];
     SCNMaterial *scnMaterial = [SCNMaterial material];
@@ -191,6 +208,53 @@ SCNGeometrySourceSemanticFromString(NSString *semantic) {
                    green:[pbrMetallicRoughness.baseColorFactor[1] floatValue]
                     blue:[pbrMetallicRoughness.baseColorFactor[2] floatValue]
                    alpha:[pbrMetallicRoughness.baseColorFactor[3] floatValue]];
+    if (pbrMetallicRoughness.baseColorTexture) {
+      GLTFTexture *texture =
+          object.json.textures[pbrMetallicRoughness.baseColorTexture.index];
+      if (texture.source) {
+        NSData *imageData = object.imageDatas[texture.source.integerValue];
+        NSImage *image = [[NSImage alloc] initWithData:imageData];
+        scnMaterial.diffuse.contents = image;
+
+        if (texture.sampler) {
+          GLTFSampler *sampler =
+              object.json.samplers[texture.sampler.integerValue];
+          scnMaterial.diffuse.wrapS =
+              SCNWrapModeFromGLTFWrapMode(sampler.wrapS);
+          scnMaterial.diffuse.wrapT =
+              SCNWrapModeFromGLTFWrapMode(sampler.wrapT);
+          scnMaterial.diffuse.mipFilter = SCNFilterModeLinear;
+          if (sampler.magFilter) {
+            switch ([sampler.magFilter integerValue]) {
+            case GLTFSamplerMagFilterLinear:
+              scnMaterial.diffuse.magnificationFilter = SCNFilterModeLinear;
+              break;
+            case GLTFSamplerMagFilterNearest:
+              scnMaterial.diffuse.magnificationFilter = SCNFilterModeNearest;
+              break;
+            default:
+              break;
+            }
+          }
+          if (sampler.minFilter) {
+            switch ([sampler.minFilter integerValue]) {
+            case GLTFSamplerMinFilterLinear:
+            case GLTFSamplerMinFilterLinearMipmapNearest:
+            case GLTFSamplerMinFilterLinearMipmapLinear:
+              scnMaterial.diffuse.minificationFilter = SCNFilterModeLinear;
+              break;
+            case GLTFSamplerMinFilterNearest:
+            case GLTFSamplerMinFilterNearestMipmapNearest:
+            case GLTFSamplerMinFilterNearestMipmapLinear:
+              scnMaterial.diffuse.minificationFilter = SCNFilterModeNearest;
+              break;
+            default:
+              break;
+            }
+          }
+        }
+      }
+    }
     scnMaterial.metalness.intensity = pbrMetallicRoughness.metallicFactor;
     scnMaterial.roughness.intensity = pbrMetallicRoughness.roughnessFactor;
 
@@ -250,7 +314,8 @@ SCNGeometrySourceSemanticFromString(NSString *semantic) {
   [super viewDidLoad];
 
   NSURL *url = [[NSURL fileURLWithPath:SAMPLE_MODELS_DIR]
-      URLByAppendingPathComponent:@"Box/glTF-Embedded/Box.gltf"];
+      URLByAppendingPathComponent:
+          @"BoxTextured/glTF-Embedded/BoxTextured.gltf"];
   NSError *err;
   GLTFObject *object = [GLTFObject objectWithGltfFile:[url path] error:&err];
   if (err) {
@@ -290,7 +355,6 @@ SCNGeometrySourceSemanticFromString(NSString *semantic) {
       self.scnView.scene = scnScenes.firstObject;
     }
   }
-
 }
 
 @end

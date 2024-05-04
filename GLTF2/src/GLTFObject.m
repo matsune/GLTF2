@@ -6,11 +6,13 @@
 @implementation GLTFObject
 
 - (instancetype)initWithJson:(GLTFJson *)json
-                 bufferDatas:(NSArray<NSData *> *)bufferDatas {
+                 bufferDatas:(NSArray<NSData *> *)bufferDatas
+                  imageDatas:(NSArray<NSData *> *)imageDatas {
   self = [super init];
   if (self) {
     _json = json;
     _bufferDatas = bufferDatas;
+    _imageDatas = imageDatas;
   }
   return self;
 }
@@ -32,9 +34,31 @@
       *error = err;
     return nil;
   }
-  return
-      [[GLTFObject alloc] initWithJson:binary.json
-                           bufferDatas:[NSArray arrayWithObject:binary.binary]];
+  NSArray<NSData *> *bufferDatas = [NSArray arrayWithObject:binary.binary];
+
+  NSMutableArray<NSData *> *imageDatas = [NSMutableArray array];
+  if (binary.json.images) {
+    for (GLTFImage *jsonImage in binary.json.images) {
+      if (jsonImage.bufferView) {
+        // use bufferView, mimeType
+        GLTFBufferView *bufferView =
+            binary.json.bufferViews[jsonImage.bufferView.integerValue];
+        NSData *data = [bufferDatas[bufferView.buffer]
+            subdataWithRange:NSMakeRange(bufferView.byteOffset,
+                                         bufferView.byteLength)];
+        [imageDatas addObject:data];
+      } else if (jsonImage.uri) {
+        // use uri
+        NSString *uri = jsonImage.uri;
+        NSData *data = [self dataOfUri:uri relativeToPath:nil];
+        [imageDatas addObject:data];
+      }
+    }
+  }
+
+  return [[GLTFObject alloc] initWithJson:binary.json
+                              bufferDatas:bufferDatas
+                               imageDatas:[imageDatas copy]];
 }
 
 + (NSData *)dataOfUri:(NSString *)uri
@@ -79,7 +103,29 @@
     }
   }
 
-  return [[GLTFObject alloc] initWithJson:json bufferDatas:[bufferDatas copy]];
+  NSMutableArray<NSData *> *imageDatas = [NSMutableArray array];
+  if (json.images) {
+    for (GLTFImage *jsonImage in json.images) {
+      if (jsonImage.bufferView) {
+        // use bufferView, mimeType
+        GLTFBufferView *bufferView =
+            json.bufferViews[jsonImage.bufferView.integerValue];
+        NSData *data = [bufferDatas[bufferView.buffer]
+            subdataWithRange:NSMakeRange(bufferView.byteOffset,
+                                         bufferView.byteLength)];
+        [imageDatas addObject:data];
+      } else if (jsonImage.uri) {
+        // use uri
+        NSString *uri = jsonImage.uri;
+        NSData *data = [self dataOfUri:uri relativeToPath:path];
+        [imageDatas addObject:data];
+      }
+    }
+  }
+
+  return [[GLTFObject alloc] initWithJson:json
+                              bufferDatas:[bufferDatas copy]
+                               imageDatas:[imageDatas copy]];
 }
 
 + (nullable instancetype)objectWithGltfData:(NSData *)jsonData
@@ -102,7 +148,29 @@
     }
   }
 
-  return [[GLTFObject alloc] initWithJson:json bufferDatas:[bufferDatas copy]];
+  NSMutableArray<NSData *> *imageDatas = [NSMutableArray array];
+  if (json.images) {
+    for (GLTFImage *jsonImage in json.images) {
+      if (jsonImage.bufferView) {
+        // use bufferView, mimeType
+        GLTFBufferView *bufferView =
+            json.bufferViews[jsonImage.bufferView.integerValue];
+        NSData *data = [bufferDatas[bufferView.buffer]
+            subdataWithRange:NSMakeRange(bufferView.byteOffset,
+                                         bufferView.byteLength)];
+        [imageDatas addObject:data];
+      } else if (jsonImage.uri) {
+        // use uri
+        NSString *uri = jsonImage.uri;
+        NSData *data = [self dataOfUri:uri relativeToPath:nil];
+        [imageDatas addObject:data];
+      }
+    }
+  }
+
+  return [[GLTFObject alloc] initWithJson:json
+                              bufferDatas:[bufferDatas copy]
+                               imageDatas:[imageDatas copy]];
 }
 
 - (NSData *)dataFromBufferViewIndex:(NSInteger)bufferViewIndex

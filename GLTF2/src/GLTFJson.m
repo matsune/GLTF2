@@ -122,6 +122,14 @@ NSString *const GLTFMaterialAlphaModeBlend = @"BLEND";
 
 @end
 
+NSString *const GLTFMeshPrimitiveAttributeSemanticPosition = @"POSITION";
+NSString *const GLTFMeshPrimitiveAttributeSemanticNormal = @"NORMAL";
+NSString *const GLTFMeshPrimitiveAttributeSemanticTangent = @"TANGENT";
+NSString *const GLTFMeshPrimitiveAttributeSemanticTexcoord = @"TEXCOORD";
+NSString *const GLTFMeshPrimitiveAttributeSemanticColor = @"COLOR";
+NSString *const GLTFMeshPrimitiveAttributeSemanticJoints = @"JOINTS";
+NSString *const GLTFMeshPrimitiveAttributeSemanticWeights = @"WEIGHTS";
+
 @implementation GLTFMeshPrimitive
 
 - (instancetype)init {
@@ -180,9 +188,7 @@ NSString *const GLTFMaterialAlphaModeBlend = @"BLEND";
 - (instancetype)init {
   self = [super init];
   if (self) {
-    _matrix =
-        (simd_float4x4){(simd_float4){1, 0, 0, 0}, (simd_float4){0, 1, 0, 0},
-                        (simd_float4){0, 0, 1, 0}, (simd_float4){0, 0, 0, 1}};
+    _matrix = matrix_identity_float4x4;
     _rotation = @[ @0, @0, @0, @1 ];
     _scale = @[ @1, @1, @1 ];
     _translation = @[ @0, @0, @0 ];

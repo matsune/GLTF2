@@ -128,16 +128,20 @@
   [self fillData:data
                fromAccessor:accessor
       withComponentTypeSize:componentTypeSize
-         andComponentsCount:componentsCount];
+            componentsCount:componentsCount];
 
   if (accessor.sparse) {
-    [self applySparseDataToData:data
-                   fromAccessor:accessor
-          withComponentTypeSize:componentTypeSize
-             andComponentsCount:componentsCount];
+    [self applySparseToData:data
+                 fromAccessor:accessor
+        withComponentTypeSize:componentTypeSize
+              componentsCount:componentsCount];
   }
 
-  if (accessor.normalized) {
+  if (accessor.normalized &&
+      accessor.componentType != GLTFAccessorComponentTypeFloat &&
+      accessor.componentType != GLTFAccessorComponentTypeUnsignedInt) {
+    // accessor.normalized must not be true with component type float or
+    // unsigned int
     data = [self normalizeData:data
                   fromAccessor:accessor
            withComponentsCount:componentsCount];
@@ -149,7 +153,7 @@
 - (void)fillData:(NSMutableData *)data
              fromAccessor:(GLTFAccessor *)accessor
     withComponentTypeSize:(NSInteger)componentTypeSize
-       andComponentsCount:(NSInteger)componentsCount {
+          componentsCount:(NSInteger)componentsCount {
   if (accessor.bufferView) {
     GLTFBufferView *bufferView =
         self.json.bufferViews[accessor.bufferView.integerValue];
@@ -162,10 +166,10 @@
   }
 }
 
-- (void)applySparseDataToData:(NSMutableData *)data
-                 fromAccessor:(GLTFAccessor *)accessor
-        withComponentTypeSize:(NSInteger)componentTypeSize
-           andComponentsCount:(NSInteger)componentsCount {
+- (void)applySparseToData:(NSMutableData *)data
+             fromAccessor:(GLTFAccessor *)accessor
+    withComponentTypeSize:(NSInteger)componentTypeSize
+          componentsCount:(NSInteger)componentsCount {
   NSArray<NSNumber *> *indices =
       [self accessorSparseIndices:accessor.sparse.indices
                             count:accessor.sparse.count];
@@ -265,10 +269,10 @@
   }
   case GLTFAccessorComponentTypeFloat: {
     float value = *((float *)bytes + offset);
-    return value; // Floats are already normalized
+    return value;
   }
   default:
-    return 0.0f; // Default return for undefined component types
+    return 0.0f;
   }
 }
 

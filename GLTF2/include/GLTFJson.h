@@ -316,6 +316,14 @@ typedef NS_ENUM(NSInteger, GLTFMeshPrimitiveMode) {
   GLTFMeshPrimitiveModeTriangleFan = 6
 };
 
+GLTF_EXPORT NSString *const GLTFMeshPrimitiveAttributeSemanticPosition;
+GLTF_EXPORT NSString *const GLTFMeshPrimitiveAttributeSemanticNormal;
+GLTF_EXPORT NSString *const GLTFMeshPrimitiveAttributeSemanticTangent;
+GLTF_EXPORT NSString *const GLTFMeshPrimitiveAttributeSemanticTexcoord;
+GLTF_EXPORT NSString *const GLTFMeshPrimitiveAttributeSemanticColor;
+GLTF_EXPORT NSString *const GLTFMeshPrimitiveAttributeSemanticJoints;
+GLTF_EXPORT NSString *const GLTFMeshPrimitiveAttributeSemanticWeights;
+
 GLTF_EXPORT @interface GLTFMeshPrimitive : NSObject
 
 @property(nonatomic, strong) NSDictionary<NSString *, NSNumber *> *attributes;

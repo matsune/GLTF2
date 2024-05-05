@@ -6,14 +6,13 @@
 
 @implementation GLTFObject
 
-- (instancetype)initWithJson:(GLTFJson *)json
-                 bufferDatas:(NSArray<NSData *> *)bufferDatas
-                  imageDatas:(NSArray<NSData *> *)imageDatas {
+- (instancetype)initWithJson:(GLTFJson *)json path:(nullable NSString *)path {
   self = [super init];
   if (self) {
     _json = json;
-    _bufferDatas = bufferDatas;
-    _imageDatas = imageDatas;
+    _path = path;
+    _bufferDatas = [NSArray array];
+    _imageDatas = [NSArray array];
   }
   return self;
 }
@@ -46,11 +45,10 @@
   if (!binary)
     return nil;
 
-  NSArray<NSData *> *bufferDatas = [NSArray arrayWithObject:binary.binary];
-  return [self objectWithJson:binary.json
-                  bufferDatas:bufferDatas
-                         path:nil
-                        error:error];
+  GLTFObject *object = [[GLTFObject alloc] initWithJson:binary.json path:nil];
+  object.bufferDatas = [NSArray arrayWithObject:binary.binary];
+  [object prefetchImageDatas];
+  return object;
 }
 
 + (nullable instancetype)objectWithGltfData:(NSData *)data
@@ -61,51 +59,47 @@
   if (!json)
     return nil;
 
+  GLTFObject *object = [[GLTFObject alloc] initWithJson:json path:path];
+  [object prefetchBufferDatas];
+  [object prefetchImageDatas];
+  return object;
+}
+
+- (void)prefetchBufferDatas {
   NSMutableArray<NSData *> *bufferDatas = [NSMutableArray array];
-  if (json.buffers) {
-    for (GLTFBuffer *jsonBuffer in json.buffers) {
-      NSString *uri = jsonBuffer.uri;
-      NSData *data = [self dataOfUri:uri relativeToPath:path];
-      [bufferDatas addObject:data];
-    }
+  for (GLTFBuffer *buffer in self.json.buffers) {
+    [bufferDatas addObject:[self dataForBuffer:buffer]];
   }
-  return [self objectWithJson:json
-                  bufferDatas:[bufferDatas copy]
-                         path:path
-                        error:error];
+  self.bufferDatas = [bufferDatas copy];
 }
 
-+ (nullable instancetype)objectWithJson:(GLTFJson *)json
-                            bufferDatas:(NSArray<NSData *> *)bufferDatas
-                                   path:(nullable NSString *)path
-                                  error:(NSError *_Nullable *_Nullable)error {
+- (void)prefetchImageDatas {
   NSMutableArray<NSData *> *imageDatas = [NSMutableArray array];
-  if (json.images) {
-    for (GLTFImage *jsonImage in json.images) {
-      if (jsonImage.bufferView) {
-        // use bufferView, mimeType
-        GLTFBufferView *bufferView =
-            json.bufferViews[jsonImage.bufferView.integerValue];
-        NSData *data = [bufferDatas[bufferView.buffer]
-            subdataWithRange:NSMakeRange(bufferView.byteOffset,
-                                         bufferView.byteLength)];
-        [imageDatas addObject:data];
-      } else if (jsonImage.uri) {
-        // use uri
-        NSString *uri = jsonImage.uri;
-        NSData *data = [self dataOfUri:uri relativeToPath:path];
-        [imageDatas addObject:data];
-      }
-    }
+  for (GLTFImage *image in self.json.images) {
+    [imageDatas addObject:[self dataForImage:image]];
   }
-
-  return [[GLTFObject alloc] initWithJson:json
-                              bufferDatas:bufferDatas
-                               imageDatas:[imageDatas copy]];
+  self.imageDatas = [imageDatas copy];
 }
 
-+ (NSData *)dataOfUri:(NSString *)uri
-       relativeToPath:(nullable NSString *)basePath {
+- (NSData *)dataForBuffer:(GLTFBuffer *)buffer {
+  return [self dataOfUri:buffer.uri];
+}
+
+- (NSData *)dataForImage:(GLTFImage *)image {
+  if (image.bufferView) {
+    // use bufferView
+    GLTFBufferView *bufferView =
+        self.json.bufferViews[image.bufferView.integerValue];
+    return [self.bufferDatas[bufferView.buffer]
+        subdataWithRange:NSMakeRange(bufferView.byteOffset,
+                                     bufferView.byteLength)];
+  } else if (image.uri) {
+    // use uri
+    return [self dataOfUri:image.uri];
+  }
+}
+
+- (NSData *)dataOfUri:(NSString *)uri {
   if ([[NSURL URLWithString:uri].scheme isEqualToString:@"data"]) {
     NSRange range = [uri rangeOfString:@"base64,"];
     NSString *encodedString = uri;
@@ -117,11 +111,15 @@
                             options:
                                 NSDataBase64DecodingIgnoreUnknownCharacters];
   } else {
-    assert(basePath != nil);
-    // external file, relative path
-    NSURL *bufferURL = [NSURL fileURLWithPath:uri
-                                relativeToURL:[NSURL URLWithString:basePath]];
-    return [NSData dataWithContentsOfFile:[bufferURL path]];
+    if (self.path) {
+      // external file, relative path
+      NSURL *relativeURL =
+          [NSURL fileURLWithPath:uri
+                   relativeToURL:[NSURL URLWithString:self.path]];
+      return [NSData dataWithContentsOfFile:[relativeURL path]];
+    } else {
+      return [NSData dataWithContentsOfFile:uri];
+    }
   }
 }
 
@@ -167,7 +165,7 @@
            withComponentsCount:componentsCount];
   }
 
-  return data;
+  return [data copy];
 }
 
 - (void)fillData:(NSMutableData *)data

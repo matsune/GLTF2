@@ -191,6 +191,9 @@ GLTF_EXPORT @interface GLTFCameraPerspective : NSObject
 
 @end
 
+GLTF_EXPORT NSString *const GLTFCameraTypePerspective;
+GLTF_EXPORT NSString *const GLTFCameraTypeOrthographic;
+
 GLTF_EXPORT @interface GLTFCamera : NSObject
 
 @property(nonatomic, strong, nullable) GLTFCameraOrthographic *orthographic;

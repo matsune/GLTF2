@@ -20,12 +20,15 @@ endfunction()
 
 set(DOWNLOAD_URL_BASE "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/")
 set(DOWNLOAD_PATHS
-    "2CylinderEngine/glTF-Binary/2CylinderEngine.glb"
-    "2CylinderEngine/glTF-Draco/2CylinderEngine.gltf"
-    "2CylinderEngine/glTF-Draco/2CylinderEngine.bin"
-    "2CylinderEngine/glTF-Embedded/2CylinderEngine.gltf"
-    "2CylinderEngine/glTF/2CylinderEngine.gltf"
-    "2CylinderEngine/glTF/2CylinderEngine0.bin"
+    "AntiqueCamera/glTF-Binary/AntiqueCamera.glb"
+    "AntiqueCamera/glTF/AntiqueCamera.bin"
+    "AntiqueCamera/glTF/AntiqueCamera.gltf"
+    "AntiqueCamera/glTF/camera_camera_BaseColor.png"
+    "AntiqueCamera/glTF/camera_camera_Normal.png"
+    "AntiqueCamera/glTF/camera_camera_Roughness.png"
+    "AntiqueCamera/glTF/camera_tripod_BaseColor.png"
+    "AntiqueCamera/glTF/camera_tripod_Normal.png"
+    "AntiqueCamera/glTF/camera_tripod_Roughness.png"
 
     "Box/glTF-Binary/Box.glb"
     "Box/glTF-Draco/Box.gltf"

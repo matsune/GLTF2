@@ -247,6 +247,9 @@ NSString *const GLTFMeshPrimitiveAttributeSemanticWeights = @"WEIGHTS";
 @implementation GLTFCameraPerspective
 @end
 
+NSString *const GLTFCameraTypePerspective = @"perspective";
+NSString *const GLTFCameraTypeOrthographic = @"orthographic";
+
 @implementation GLTFCamera
 @end
 

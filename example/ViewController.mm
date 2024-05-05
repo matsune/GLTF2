@@ -255,6 +255,9 @@ SCNWrapMode SCNWrapModeFromGLTFWrapMode(GLTFSamplerWrapMode mode) {
         }
       }
     }
+    if (pbrMetallicRoughness.metallicRoughnessTexture) {
+      // TODO
+    }
     scnMaterial.metalness.intensity = pbrMetallicRoughness.metallicFactor;
     scnMaterial.roughness.intensity = pbrMetallicRoughness.roughnessFactor;
 
@@ -280,8 +283,49 @@ SCNWrapMode SCNWrapModeFromGLTFWrapMode(GLTFSamplerWrapMode mode) {
   return node;
 }
 
+- (SCNCamera *)scnCameraFromGLTFCamera:(GLTFCamera *)camera
+                                object:(GLTFObject *)object {
+  NSAssert(camera.orthographic != nil || camera.perspective != nil,
+           @"orthographic or perspective must be not nil");
+  SCNCamera *scnCamera = [SCNCamera camera];
+  scnCamera.name = camera.name;
+  scnCamera.usesOrthographicProjection =
+      camera.type == GLTFCameraTypeOrthographic;
+  if (camera.orthographic) {
+    scnCamera.zFar = camera.orthographic.zfar;
+    scnCamera.zNear = camera.orthographic.znear;
+  } else if (camera.perspective) {
+    if (camera.perspective.zfar) {
+      scnCamera.zFar = camera.perspective.zfar.floatValue;
+    } else {
+      scnCamera.zFar = 1000;
+    }
+    scnCamera.zNear = camera.perspective.znear;
+    scnCamera.fieldOfView = camera.perspective.yfov * (180.0 / M_PI);
+    if (camera.perspective.aspectRatio) {
+      float aspectRatio = camera.perspective.aspectRatio.floatValue;
+      float yFovRadians = scnCamera.fieldOfView * (M_PI / 180.0);
+      SCNMatrix4 projectionTransform = {
+          .m11 = 1.0 / (aspectRatio * tan(yFovRadians * 0.5)),
+          .m22 = 1.0 / tan(yFovRadians * 0.5),
+          .m33 = -(scnCamera.zFar + scnCamera.zNear) /
+                 (scnCamera.zFar - scnCamera.zNear),
+          .m34 = -1.0,
+          .m43 = -(2.0 * scnCamera.zFar * scnCamera.zNear) /
+                 (scnCamera.zFar - scnCamera.zNear)};
+      scnCamera.projectionTransform = projectionTransform;
+    }
+  }
+  return scnCamera;
+}
+
 - (SCNNode *)scnNodeFromGLTFNode:(GLTFNode *)node object:(GLTFObject *)object {
   SCNNode *scnNode = [SCNNode node];
+
+  if (node.camera) {
+    GLTFCamera *camera = object.json.cameras[node.camera.integerValue];
+    scnNode.camera = [self scnCameraFromGLTFCamera:camera object:object];
+  }
 
   if (node.mesh) {
     GLTFMesh *mesh = object.json.meshes[node.mesh.integerValue];
@@ -314,10 +358,9 @@ SCNWrapMode SCNWrapModeFromGLTFWrapMode(GLTFSamplerWrapMode mode) {
   [super viewDidLoad];
 
   NSURL *url = [[NSURL fileURLWithPath:SAMPLE_MODELS_DIR]
-      URLByAppendingPathComponent:
-          @"BoxTextured/glTF-Embedded/BoxTextured.gltf"];
+      URLByAppendingPathComponent:@"AntiqueCamera/glTF/AntiqueCamera.gltf"];
   NSError *err;
-  GLTFObject *object = [GLTFObject objectWithGltfFile:[url path] error:&err];
+  GLTFObject *object = [GLTFObject objectWithFile:[url path] error:&err];
   if (err) {
     NSLog(@"%@", err);
     abort();
@@ -335,14 +378,6 @@ SCNWrapMode SCNWrapModeFromGLTFWrapMode(GLTFSamplerWrapMode mode) {
         SCNNode *scnNode = [self scnNodeFromGLTFNode:node object:object];
         [scnScene.rootNode addChildNode:scnNode];
       }
-
-      //            // default camera
-      //            SCNCamera *camera = [SCNCamera camera];
-      //            SCNNode *cameraNode = [SCNNode node];
-      //            cameraNode.camera = camera;
-      //            cameraNode.position = SCNVector3Make(0, 0, 5);
-      //            [scnScene.rootNode addChildNode:cameraNode];
-
       [scnScenes addObject:scnScene];
     }
   }

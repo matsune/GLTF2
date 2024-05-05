@@ -14,6 +14,9 @@ GLTF_EXPORT @interface GLTFObject : NSObject
                  bufferDatas:(NSArray<NSData *> *)bufferDatas
                   imageDatas:(NSArray<NSData *> *)imageDatas;
 
++ (nullable instancetype)objectWithFile:(NSString *)path
+                                  error:(NSError *_Nullable *_Nullable)error;
+
 + (nullable instancetype)objectWithGlbFile:(NSString *)path
                                      error:(NSError *_Nullable *_Nullable)error;
 

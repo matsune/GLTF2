@@ -82,6 +82,15 @@
   }
 }
 
++ (nullable instancetype)objectWithFile:(NSString *)path
+                                  error:(NSError *_Nullable *_Nullable)error {
+  if ([path.pathExtension isEqualToString:@"glb"]) {
+    return [self objectWithGlbFile:path error:error];
+  } else {
+    return [self objectWithGltfFile:path error:error];
+  }
+}
+
 + (nullable instancetype)objectWithGltfFile:(NSString *)path
                                       error:
                                           (NSError *_Nullable *_Nullable)error {

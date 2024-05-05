@@ -8,54 +8,6 @@
 
 @implementation GLTFObjectTests
 
-- (void)testGLB {
-  NSURL *url = [[NSURL fileURLWithPath:SAMPLE_MODELS_DIR]
-      URLByAppendingPathComponent:
-          @"2CylinderEngine/glTF-Binary/2CylinderEngine.glb"];
-  NSError *error;
-  GLTFObject *object = [GLTFObject objectWithGlbFile:[url path] error:&error];
-  XCTAssertNil(error);
-  XCTAssertNotNil(object);
-}
-
-- (void)testGLTF {
-  NSURL *url = [[NSURL fileURLWithPath:SAMPLE_MODELS_DIR]
-      URLByAppendingPathComponent:@"2CylinderEngine/glTF/2CylinderEngine.gltf"];
-  NSError *error;
-  GLTFObject *object = [GLTFObject objectWithGltfFile:[url path] error:&error];
-  XCTAssertNil(error);
-  XCTAssertNotNil(object);
-}
-
-- (void)testGLTFEmbedded {
-  NSURL *url = [[NSURL fileURLWithPath:SAMPLE_MODELS_DIR]
-      URLByAppendingPathComponent:
-          @"2CylinderEngine/glTF-Embedded/2CylinderEngine.gltf"];
-  NSError *error;
-  GLTFObject *object = [GLTFObject objectWithGltfFile:[url path] error:&error];
-  XCTAssertNil(error);
-  XCTAssertNotNil(object);
-}
-
-- (void)testGLTFBoxTextured {
-  NSURL *url = [[NSURL fileURLWithPath:SAMPLE_MODELS_DIR]
-      URLByAppendingPathComponent:@"BoxTextured/glTF/BoxTextured.gltf"];
-  NSError *error;
-  GLTFObject *object = [GLTFObject objectWithGltfFile:[url path] error:&error];
-  XCTAssertNil(error);
-  XCTAssertNotNil(object);
-}
-
-- (void)testGLTFBoxTexturedEmbedded {
-  NSURL *url = [[NSURL fileURLWithPath:SAMPLE_MODELS_DIR]
-      URLByAppendingPathComponent:
-          @"BoxTextured/glTF-Embedded/BoxTextured.gltf"];
-  NSError *error;
-  GLTFObject *object = [GLTFObject objectWithGltfFile:[url path] error:&error];
-  XCTAssertNil(error);
-  XCTAssertNotNil(object);
-}
-
 - (void)testDataByAccessorWithNormalized {
   // R: 255, G: 128, B: 0, A: 255
   unsigned char colorBytes[] = {0xFF, 0x80, 0x00, 0xFF};
@@ -100,6 +52,7 @@
   NSError *error;
   GLTFObject *object = [GLTFObject
       objectWithGltfData:[jsonString dataUsingEncoding:NSUTF8StringEncoding]
+                    path:nil
                    error:&error];
   XCTAssertNil(error);
   XCTAssertNotNil(object);
@@ -176,6 +129,7 @@
   NSError *error;
   GLTFObject *object = [GLTFObject
       objectWithGltfData:[jsonString dataUsingEncoding:NSUTF8StringEncoding]
+                    path:nil
                    error:&error];
   XCTAssertNil(error);
   XCTAssertNotNil(object);

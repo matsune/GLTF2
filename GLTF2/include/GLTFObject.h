@@ -17,17 +17,11 @@ GLTF_EXPORT @interface GLTFObject : NSObject
 + (nullable instancetype)objectWithFile:(NSString *)path
                                   error:(NSError *_Nullable *_Nullable)error;
 
-+ (nullable instancetype)objectWithGlbFile:(NSString *)path
-                                     error:(NSError *_Nullable *_Nullable)error;
-
 + (nullable instancetype)objectWithGlbData:(NSData *)data
                                      error:(NSError *_Nullable *_Nullable)error;
 
-+ (nullable instancetype)objectWithGltfFile:(NSString *)path
-                                      error:
-                                          (NSError *_Nullable *_Nullable)error;
-
-+ (nullable instancetype)objectWithGltfData:(NSData *)jsonData
++ (nullable instancetype)objectWithGltfData:(NSData *)data
+                                       path:(nullable NSString *)path
                                       error:
                                           (NSError *_Nullable *_Nullable)error;
 

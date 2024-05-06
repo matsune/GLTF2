@@ -16,7 +16,8 @@
   [super viewDidLoad];
 
   NSURL *url = [[NSURL fileURLWithPath:SAMPLE_MODELS_DIR]
-      URLByAppendingPathComponent:@"AntiqueCamera/glTF/AntiqueCamera.gltf"];
+      URLByAppendingPathComponent:
+          @"primitive-modes/simple_rect_trinagle_fan.gltf"];
   NSError *err;
   GLTFObject *object = [GLTFObject objectWithFile:[url path] error:&err];
   if (err) {

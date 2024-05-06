@@ -7,6 +7,9 @@ NS_ASSUME_NONNULL_BEGIN
 @interface GLTFObject (SceneKitExtension)
 
 - (nullable SCNScene *)defaultScene;
+- (NSArray<SCNScene *> *)scnScenes;
+- (SCNScene *)scnSceneFromGLTFScene:(GLTFScene *)scene;
+- (SCNNode *)scnNodeFromGLTFNode:(GLTFNode *)node;
 
 @end
 

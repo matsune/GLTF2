@@ -43,3 +43,4 @@ build/
 
 sample-models/*
 !CMakeLists.txt
+!primitive-modes

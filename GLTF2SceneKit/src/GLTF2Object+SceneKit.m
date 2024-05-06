@@ -72,6 +72,7 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
   case GLTFMeshPrimitiveModeLines:
     return SCNGeometryPrimitiveTypeLine;
   case GLTFMeshPrimitiveModeTriangles:
+  case GLTFMeshPrimitiveModeTriangleFan:
     return SCNGeometryPrimitiveTypeTriangles;
   case GLTFMeshPrimitiveModeTriangleStrip:
     return SCNGeometryPrimitiveTypeTriangleStrip;
@@ -79,7 +80,6 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
     // TODO:
   case GLTFMeshPrimitiveModeLineLoop:
   case GLTFMeshPrimitiveModeLineStrip:
-  case GLTFMeshPrimitiveModeTriangleFan:
   default:
     abort();
   }
@@ -87,67 +87,131 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
 
 @implementation GLTFObject (SceneKitExtension)
 
-- (SCNGeometrySource *)scnGeometrySourceFromGLTFAccessor:
-                           (GLTFAccessor *)accessor
-                                            withSemantic:(NSString *)semantic {
-  NSData *data = [self dataByAccessor:accessor];
-  NSInteger componentsPerVector = componentsCountOfAccessorType(accessor.type);
-  NSInteger bytesPerComponent = sizeOfComponentType(accessor.componentType);
-  NSInteger dataStride = componentsPerVector * bytesPerComponent;
-  return [SCNGeometrySource
-      geometrySourceWithData:data
-                    semantic:
-                        SCNGeometrySourceSemanticFromGLTFMeshPrimitiveAttributeSemantic(
-                            semantic)
-                 vectorCount:accessor.count
-             floatComponents:accessor.componentType ==
-                             GLTFAccessorComponentTypeFloat
-         componentsPerVector:componentsPerVector
-           bytesPerComponent:bytesPerComponent
-                  dataOffset:0
-                  dataStride:dataStride];
-}
+#pragma mark - Scene
 
-- (void)addSCNGeometrySourceToArray:
-            (NSMutableArray<SCNGeometrySource *> *)sources
-                      fromPrimitive:(GLTFMeshPrimitive *)primitive
-                           semantic:(NSString *)semantic {
-  NSNumber *index = [primitive valueOfSemantic:semantic];
-  if (index) {
-    GLTFAccessor *accessor = self.json.accessors[index.integerValue];
-    [sources addObject:[self scnGeometrySourceFromGLTFAccessor:accessor
-                                                  withSemantic:semantic]];
+- (nullable SCNScene *)defaultScene {
+  NSArray<SCNScene *> *scnScenes = [self scnScenes];
+  if (self.json.scene) {
+    return scnScenes[self.json.scene.integerValue];
+  } else {
+    return scnScenes.firstObject;
   }
 }
 
-- (void)addSCNGeometrySourceListToArray:
-            (NSMutableArray<SCNGeometrySource *> *)sources
-                          fromPrimitive:(GLTFMeshPrimitive *)primitive
-                               semantic:(NSString *)semantic {
-  NSArray<NSNumber *> *indices = [primitive valuesOfSemantic:semantic];
-  for (NSNumber *index in indices) {
-    GLTFAccessor *accessor = self.json.accessors[index.integerValue];
-    [sources addObject:[self scnGeometrySourceFromGLTFAccessor:accessor
-                                                  withSemantic:semantic]];
+- (NSArray<SCNScene *> *)scnScenes {
+  NSMutableArray<SCNScene *> *scnScenes = [NSMutableArray array];
+  if (self.json.scenes) {
+    for (GLTFScene *scene in self.json.scenes) {
+      SCNScene *scnScene = [self scnSceneFromGLTFScene:scene];
+      [scnScenes addObject:scnScene];
+    }
   }
+  return [scnScenes copy];
 }
 
-- (void)addSCNGeometryElementToArray:
-            (NSMutableArray<SCNGeometryElement *> *)elements
-                       fromPrimitive:(GLTFMeshPrimitive *)primitive {
-  if (primitive.indices) {
-    GLTFAccessor *accessor =
-        self.json.accessors[primitive.indices.integerValue];
-    NSData *bufferData = [self dataByAccessor:accessor];
-    SCNGeometryElement *element = [SCNGeometryElement
-        geometryElementWithData:bufferData
-                  primitiveType:SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(
-                                    primitive.mode)
-                 primitiveCount:primitiveCountFromGLTFMeshPrimitiveMode(
-                                    accessor.count, primitive.mode)
-                  bytesPerIndex:sizeOfComponentType(accessor.componentType)];
-    [elements addObject:element];
+- (SCNScene *)scnSceneFromGLTFScene:(GLTFScene *)scene {
+  SCNScene *scnScene = [SCNScene scene];
+  for (NSNumber *nodeIndex in scene.nodes) {
+    GLTFNode *node = self.json.nodes[nodeIndex.integerValue];
+    SCNNode *scnNode = [self scnNodeFromGLTFNode:node];
+    [scnScene.rootNode addChildNode:scnNode];
   }
+  return scnScene;
+}
+
+#pragma mark - Node
+
+- (SCNNode *)scnNodeFromGLTFNode:(GLTFNode *)node {
+  SCNNode *scnNode = [SCNNode node];
+  scnNode.name = node.name;
+
+  if (node.camera) {
+    GLTFCamera *camera = self.json.cameras[node.camera.integerValue];
+    scnNode.camera = [self scnCameraFromGLTFCamera:camera];
+  }
+
+  if (node.children) {
+    for (NSNumber *childIndex in node.children) {
+      GLTFNode *childNode = self.json.nodes[childIndex.integerValue];
+      SCNNode *childScnNode = [self scnNodeFromGLTFNode:childNode];
+      [scnNode addChildNode:childScnNode];
+    }
+  }
+
+  if (node.skin) {
+    // TODO:
+  }
+
+  scnNode.simdTransform = node.matrix;
+
+  if (node.mesh) {
+    GLTFMesh *mesh = self.json.meshes[node.mesh.integerValue];
+    SCNNode *meshNode = [self scnNodeFromGLTFMesh:mesh];
+    [scnNode addChildNode:meshNode];
+  }
+
+  // TODO: rotation, scale, translation
+
+  if (node.weights) {
+    // TODO:
+  }
+
+  return scnNode;
+}
+
+#pragma mark - Camera
+
+- (SCNCamera *)scnCameraFromGLTFCamera:(GLTFCamera *)camera {
+  NSAssert(camera.orthographic != nil || camera.perspective != nil,
+           @"orthographic or perspective must be not nil");
+  SCNCamera *scnCamera = [SCNCamera camera];
+  scnCamera.name = camera.name;
+  scnCamera.usesOrthographicProjection =
+      camera.type == GLTFCameraTypeOrthographic;
+  if (camera.orthographic) {
+    scnCamera.orthographicScale =
+        MAX(camera.orthographic.xmag, camera.orthographic.ymag);
+    scnCamera.zFar = camera.orthographic.zfar;
+    scnCamera.zNear = camera.orthographic.znear;
+  } else if (camera.perspective) {
+    if (camera.perspective.zfar) {
+      scnCamera.zFar = camera.perspective.zfar.floatValue;
+    }
+    scnCamera.zNear = camera.perspective.znear;
+    scnCamera.fieldOfView = camera.perspective.yfov * (180.0 / M_PI); // degree
+    if (camera.perspective.aspectRatio) {
+      float aspectRatio = camera.perspective.aspectRatio.floatValue;
+      float yFovRadians = scnCamera.fieldOfView * (M_PI / 180.0);
+      SCNMatrix4 projectionTransform = {
+          .m11 = 1.0 / (aspectRatio * tan(yFovRadians * 0.5)),
+          .m22 = 1.0 / tan(yFovRadians * 0.5),
+          .m33 = -(scnCamera.zFar + scnCamera.zNear) /
+                 (scnCamera.zFar - scnCamera.zNear),
+          .m34 = -1.0,
+          .m43 = -(2.0 * scnCamera.zFar * scnCamera.zNear) /
+                 (scnCamera.zFar - scnCamera.zNear)};
+      scnCamera.projectionTransform = projectionTransform;
+    }
+  }
+  return scnCamera;
+}
+
+#pragma mark - Mesh
+
+- (SCNNode *)scnNodeFromGLTFMesh:(GLTFMesh *)mesh {
+  SCNNode *node = [SCNNode node];
+  node.name = mesh.name;
+
+  for (GLTFMeshPrimitive *primitive in mesh.primitives) {
+    SCNGeometry *geometry = [self scnGeometryFromGLTFMeshPrimitive:primitive];
+    [node addChildNode:[SCNNode nodeWithGeometry:geometry]];
+  }
+
+  if (mesh.weights) {
+    // TODO:
+  }
+
+  return node;
 }
 
 - (SCNGeometry *)scnGeometryFromGLTFMeshPrimitive:
@@ -259,113 +323,102 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
   return geometry;
 }
 
-- (SCNNode *)scnNodeFromGLTFMesh:(GLTFMesh *)mesh {
-  SCNNode *node = [SCNNode node];
-
-  NSMutableArray<SCNNode *> *childNodes = [NSMutableArray array];
-  for (GLTFMeshPrimitive *primitive in mesh.primitives) {
-    SCNGeometry *geometry = [self scnGeometryFromGLTFMeshPrimitive:primitive];
-    SCNNode *geometryNode = [SCNNode nodeWithGeometry:geometry];
-    [node addChildNode:geometryNode];
-  }
-  if (mesh.weights) {
-  }
-
-  return node;
+- (SCNGeometrySource *)scnGeometrySourceFromGLTFAccessor:
+                           (GLTFAccessor *)accessor
+                                            withSemantic:(NSString *)semantic {
+  NSData *data = [self dataByAccessor:accessor];
+  NSInteger componentsPerVector = componentsCountOfAccessorType(accessor.type);
+  NSInteger bytesPerComponent = sizeOfComponentType(accessor.componentType);
+  NSInteger dataStride = componentsPerVector * bytesPerComponent;
+  return [SCNGeometrySource
+      geometrySourceWithData:data
+                    semantic:
+                        SCNGeometrySourceSemanticFromGLTFMeshPrimitiveAttributeSemantic(
+                            semantic)
+                 vectorCount:accessor.count
+             floatComponents:accessor.componentType ==
+                             GLTFAccessorComponentTypeFloat
+         componentsPerVector:componentsPerVector
+           bytesPerComponent:bytesPerComponent
+                  dataOffset:0
+                  dataStride:dataStride];
 }
 
-- (SCNCamera *)scnCameraFromGLTFCamera:(GLTFCamera *)camera {
-  NSAssert(camera.orthographic != nil || camera.perspective != nil,
-           @"orthographic or perspective must be not nil");
-  SCNCamera *scnCamera = [SCNCamera camera];
-  scnCamera.name = camera.name;
-  scnCamera.usesOrthographicProjection =
-      camera.type == GLTFCameraTypeOrthographic;
-  if (camera.orthographic) {
-    scnCamera.zFar = camera.orthographic.zfar;
-    scnCamera.zNear = camera.orthographic.znear;
-  } else if (camera.perspective) {
-    if (camera.perspective.zfar) {
-      scnCamera.zFar = camera.perspective.zfar.floatValue;
-    } else {
-      scnCamera.zFar = 1000;
-    }
-    scnCamera.zNear = camera.perspective.znear;
-    scnCamera.fieldOfView = camera.perspective.yfov * (180.0 / M_PI); // degree
-    if (camera.perspective.aspectRatio) {
-      float aspectRatio = camera.perspective.aspectRatio.floatValue;
-      float yFovRadians = scnCamera.fieldOfView * (M_PI / 180.0);
-      SCNMatrix4 projectionTransform = {
-          .m11 = 1.0 / (aspectRatio * tan(yFovRadians * 0.5)),
-          .m22 = 1.0 / tan(yFovRadians * 0.5),
-          .m33 = -(scnCamera.zFar + scnCamera.zNear) /
-                 (scnCamera.zFar - scnCamera.zNear),
-          .m34 = -1.0,
-          .m43 = -(2.0 * scnCamera.zFar * scnCamera.zNear) /
-                 (scnCamera.zFar - scnCamera.zNear)};
-      scnCamera.projectionTransform = projectionTransform;
-    }
+- (void)addSCNGeometrySourceToArray:
+            (NSMutableArray<SCNGeometrySource *> *)sources
+                      fromPrimitive:(GLTFMeshPrimitive *)primitive
+                           semantic:(NSString *)semantic {
+  NSNumber *index = [primitive valueOfSemantic:semantic];
+  if (index) {
+    GLTFAccessor *accessor = self.json.accessors[index.integerValue];
+    [sources addObject:[self scnGeometrySourceFromGLTFAccessor:accessor
+                                                  withSemantic:semantic]];
   }
-  return scnCamera;
 }
 
-- (SCNNode *)scnNodeFromGLTFNode:(GLTFNode *)node {
-  SCNNode *scnNode = [SCNNode node];
-
-  if (node.camera) {
-    GLTFCamera *camera = self.json.cameras[node.camera.integerValue];
-    scnNode.camera = [self scnCameraFromGLTFCamera:camera];
+- (void)addSCNGeometrySourceListToArray:
+            (NSMutableArray<SCNGeometrySource *> *)sources
+                          fromPrimitive:(GLTFMeshPrimitive *)primitive
+                               semantic:(NSString *)semantic {
+  NSArray<NSNumber *> *indices = [primitive valuesOfSemantic:semantic];
+  for (NSNumber *index in indices) {
+    GLTFAccessor *accessor = self.json.accessors[index.integerValue];
+    [sources addObject:[self scnGeometrySourceFromGLTFAccessor:accessor
+                                                  withSemantic:semantic]];
   }
-
-  if (node.mesh) {
-    GLTFMesh *mesh = self.json.meshes[node.mesh.integerValue];
-    SCNNode *meshNode = [self scnNodeFromGLTFMesh:mesh];
-    [scnNode addChildNode:meshNode];
-  }
-
-  scnNode.simdTransform = node.matrix;
-
-  if (node.rotation) {
-  }
-  if (node.scale) {
-  }
-  if (node.translation) {
-  }
-
-  if (node.children) {
-    for (NSNumber *childIndex in node.children) {
-      GLTFNode *childNode = self.json.nodes[childIndex.integerValue];
-      SCNNode *childScnNode = [self scnNodeFromGLTFNode:childNode];
-      [scnNode addChildNode:childScnNode];
-    }
-  }
-
-  return scnNode;
 }
 
-- (NSArray<SCNScene *> *)scnScenes {
-  NSMutableArray<SCNScene *> *scnScenes = [NSMutableArray array];
-  if (self.json.scenes) {
-    for (GLTFScene *scene in self.json.scenes) {
-      SCNScene *scnScene = [SCNScene scene];
-      for (NSNumber *nodeIndex in scene.nodes) {
-        GLTFNode *node = self.json.nodes[nodeIndex.integerValue];
-        SCNNode *scnNode = [self scnNodeFromGLTFNode:node];
-        [scnScene.rootNode addChildNode:scnNode];
-      }
-      [scnScenes addObject:scnScene];
-    }
+- (void)addSCNGeometryElementToArray:
+            (NSMutableArray<SCNGeometryElement *> *)elements
+                       fromPrimitive:(GLTFMeshPrimitive *)primitive {
+  if (primitive.indices) {
+    GLTFAccessor *accessor =
+        self.json.accessors[primitive.indices.integerValue];
+    NSData *bufferData = [self dataByAccessor:accessor];
+
+    bufferData =
+        [self convertBufferData:bufferData
+                  primitiveMode:primitive.mode
+                  indexTypeSize:sizeOfComponentType(accessor.componentType)];
+    SCNGeometryElement *element = [SCNGeometryElement
+        geometryElementWithData:bufferData
+                  primitiveType:SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(
+                                    primitive.mode)
+                 primitiveCount:primitiveCountFromGLTFMeshPrimitiveMode(
+                                    accessor.count, primitive.mode)
+                  bytesPerIndex:sizeOfComponentType(accessor.componentType)];
+    [elements addObject:element];
   }
-  return [scnScenes copy];
 }
 
-- (nullable SCNScene *)defaultScene {
-  NSArray<SCNScene *> *scnScenes = [self scnScenes];
-  if (self.json.scene) {
-    return scnScenes[self.json.scene.integerValue];
-  } else {
-    return scnScenes.firstObject;
+- (NSData *)convertBufferData:(NSData *)bufferData
+                primitiveMode:(NSInteger)mode
+                indexTypeSize:(NSUInteger)indexTypeSize {
+  switch (mode) {
+  case GLTFMeshPrimitiveModeTriangleFan: {
+    // convert triangles
+    NSUInteger dataSize = bufferData.length;
+    NSUInteger count = dataSize / indexTypeSize;
+    uint16_t *bytes = (uint16_t *)bufferData.bytes;
+    NSMutableData *data = [NSMutableData data];
+    for (NSUInteger i = 1; i < count - 1; i++) {
+      uint16_t v0 = bytes[0];
+      uint16_t v1 = bytes[i];
+      uint16_t v2 = bytes[i + 1];
+      [data appendBytes:&v0 length:sizeof(uint16_t)];
+      [data appendBytes:&v1 length:sizeof(uint16_t)];
+      [data appendBytes:&v2 length:sizeof(uint16_t)];
+    }
+    return [data copy];
   }
+
+  case GLTFMeshPrimitiveModeLineLoop:
+  case GLTFMeshPrimitiveModeLineStrip:
+    abort();
+  default:
+    break;
+  }
+  return bufferData;
 }
 
 @end

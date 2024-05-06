@@ -40,7 +40,3 @@ xcuserdata/
 build/
 .build/
 .vscode/
-
-sample-models/*
-!CMakeLists.txt
-!primitive-modes

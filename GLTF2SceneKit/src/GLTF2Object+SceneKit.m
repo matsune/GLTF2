@@ -70,18 +70,16 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
   case GLTFMeshPrimitiveModePoints:
     return SCNGeometryPrimitiveTypePoint;
   case GLTFMeshPrimitiveModeLines:
+  case GLTFMeshPrimitiveModeLineLoop:
+  case GLTFMeshPrimitiveModeLineStrip:
     return SCNGeometryPrimitiveTypeLine;
   case GLTFMeshPrimitiveModeTriangles:
   case GLTFMeshPrimitiveModeTriangleFan:
     return SCNGeometryPrimitiveTypeTriangles;
   case GLTFMeshPrimitiveModeTriangleStrip:
     return SCNGeometryPrimitiveTypeTriangleStrip;
-
-    // TODO:
-  case GLTFMeshPrimitiveModeLineLoop:
-  case GLTFMeshPrimitiveModeLineStrip:
   default:
-    abort();
+    return SCNGeometryPrimitiveTypeTriangles;
   }
 }
 
@@ -376,10 +374,8 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
         self.json.accessors[primitive.indices.integerValue];
     NSData *bufferData = [self dataByAccessor:accessor];
 
-    bufferData =
-        [self convertBufferData:bufferData
-                  primitiveMode:primitive.mode
-                  indexTypeSize:sizeOfComponentType(accessor.componentType)];
+    bufferData = [self convertBufferData:bufferData
+                           primitiveMode:primitive.mode];
     SCNGeometryElement *element = [SCNGeometryElement
         geometryElementWithData:bufferData
                   primitiveType:SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(
@@ -387,21 +383,26 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
                  primitiveCount:primitiveCountFromGLTFMeshPrimitiveMode(
                                     accessor.count, primitive.mode)
                   bytesPerIndex:sizeOfComponentType(accessor.componentType)];
+    if (primitive.mode == GLTFMeshPrimitiveModePoints) {
+      // TODO: make variable
+      element.pointSize = 4.0;
+      element.minimumPointScreenSpaceRadius = 3;
+      element.maximumPointScreenSpaceRadius = 5;
+    }
     [elements addObject:element];
   }
 }
 
 - (NSData *)convertBufferData:(NSData *)bufferData
-                primitiveMode:(NSInteger)mode
-                indexTypeSize:(NSUInteger)indexTypeSize {
+                primitiveMode:(NSInteger)mode {
   switch (mode) {
   case GLTFMeshPrimitiveModeTriangleFan: {
     // convert triangles
     NSUInteger dataSize = bufferData.length;
-    NSUInteger count = dataSize / indexTypeSize;
+    NSUInteger indicesCount = dataSize / sizeof(uint16_t);
     uint16_t *bytes = (uint16_t *)bufferData.bytes;
     NSMutableData *data = [NSMutableData data];
-    for (NSUInteger i = 1; i < count - 1; i++) {
+    for (NSUInteger i = 1; i < indicesCount - 1; i++) {
       uint16_t v0 = bytes[0];
       uint16_t v1 = bytes[i];
       uint16_t v2 = bytes[i + 1];
@@ -412,9 +413,35 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
     return [data copy];
   }
 
-  case GLTFMeshPrimitiveModeLineLoop:
-  case GLTFMeshPrimitiveModeLineStrip:
-    abort();
+  case GLTFMeshPrimitiveModeLineLoop: {
+    // convert line
+    NSUInteger dataSize = bufferData.length;
+    NSUInteger indicesCount = dataSize / sizeof(uint16_t);
+    uint16_t *bytes = (uint16_t *)bufferData.bytes;
+    NSMutableData *data = [NSMutableData data];
+    for (NSUInteger i = 0; i < indicesCount; i++) {
+      uint16_t v1 = bytes[i];
+      uint16_t v2 = bytes[(i + 1) % indicesCount];
+      [data appendBytes:&v1 length:sizeof(uint16_t)];
+      [data appendBytes:&v2 length:sizeof(uint16_t)];
+    }
+    return [data copy];
+  }
+
+  case GLTFMeshPrimitiveModeLineStrip: {
+    // convert line
+    NSUInteger dataSize = bufferData.length;
+    NSUInteger indicesCount = dataSize / sizeof(uint16_t);
+    uint16_t *bytes = (uint16_t *)bufferData.bytes;
+    NSMutableData *data = [NSMutableData data];
+    for (NSUInteger i = 0; i < indicesCount - 1; i++) {
+      uint16_t v1 = bytes[i];
+      uint16_t v2 = bytes[i + 1];
+      [data appendBytes:&v1 length:sizeof(uint16_t)];
+      [data appendBytes:&v2 length:sizeof(uint16_t)];
+    }
+    return [data copy];
+  }
   default:
     break;
   }

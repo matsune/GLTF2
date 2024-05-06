@@ -14,19 +14,17 @@
 
 - (void)viewDidLoad {
   [super viewDidLoad];
+  self.scnView.autoenablesDefaultLighting = YES;
+  self.scnView.allowsCameraControl = YES;
+}
 
-  NSURL *url = [[NSURL fileURLWithPath:SAMPLE_MODELS_DIR]
-      URLByAppendingPathComponent:
-          @"primitive-modes/simple_rect_trinagle_fan.gltf"];
+- (void)loadModelURL:(NSURL *)url {
   NSError *err;
   GLTFObject *object = [GLTFObject objectWithFile:[url path] error:&err];
   if (err) {
     NSLog(@"%@", err);
     abort();
   }
-
-  self.scnView.autoenablesDefaultLighting = YES;
-  self.scnView.allowsCameraControl = YES;
   self.scnView.scene = object.defaultScene;
 }
 

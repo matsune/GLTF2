@@ -5,4 +5,6 @@
 
 @property(weak) IBOutlet SCNView *scnView;
 
+- (void)loadModelURL:(NSURL *)url;
+
 @end

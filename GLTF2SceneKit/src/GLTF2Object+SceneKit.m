@@ -19,7 +19,7 @@ SCNGeometrySourceSemanticFromGLTFMeshPrimitiveAttributeSemantic(
     return SCNGeometrySourceSemanticColor;
   } else if ([semantic
                  isEqualToString:GLTFMeshPrimitiveAttributeSemanticJoints]) {
-    abort();
+    return SCNGeometrySourceSemanticBoneIndices;
   } else if ([semantic
                  isEqualToString:GLTFMeshPrimitiveAttributeSemanticWeights]) {
     return SCNGeometrySourceSemanticBoneWeights;
@@ -212,12 +212,11 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
   return node;
 }
 
-- (SCNGeometry *)scnGeometryFromGLTFMeshPrimitive:
+#pragma mark MeshPrimitive
+
+- (NSArray<SCNGeometrySource *> *)scnGeometrySourcesFromPrimitive:
     (GLTFMeshPrimitive *)primitive {
   NSMutableArray<SCNGeometrySource *> *sources = [NSMutableArray array];
-  NSMutableArray<SCNGeometryElement *> *elements = [NSMutableArray array];
-
-  // sources
   [self addSCNGeometrySourceToArray:sources
                       fromPrimitive:primitive
                            semantic:GLTFMeshPrimitiveAttributeSemanticPosition];
@@ -235,111 +234,37 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
       addSCNGeometrySourceListToArray:sources
                         fromPrimitive:primitive
                              semantic:GLTFMeshPrimitiveAttributeSemanticColor];
-  //          [self addSCNGeometrySourcesToSources:sources object:object
-  //          fromPrimitive:primitive
-  //          semantic:GLTFMeshPrimitiveAttributeSemanticJoints];
+  [self
+      addSCNGeometrySourceListToArray:sources
+                        fromPrimitive:primitive
+                             semantic:GLTFMeshPrimitiveAttributeSemanticJoints];
   [self addSCNGeometrySourceListToArray:sources
                           fromPrimitive:primitive
                                semantic:
                                    GLTFMeshPrimitiveAttributeSemanticWeights];
+  return [sources copy];
+}
 
-  // elements
-  [self addSCNGeometryElementToArray:elements fromPrimitive:primitive];
-
+- (SCNGeometry *)scnGeometryFromGLTFMeshPrimitive:
+    (GLTFMeshPrimitive *)primitive {
+  NSArray<SCNGeometrySource *> *sources =
+      [self scnGeometrySourcesFromPrimitive:primitive];
+  NSArray<SCNGeometryElement *> *elements =
+      [self scnGeometryElementsFromPrimitive:primitive];
   SCNGeometry *geometry = [SCNGeometry geometryWithSources:sources
                                                   elements:elements];
 
+  // material
   if (primitive.material) {
     GLTFMaterial *material =
         self.json.materials[primitive.material.integerValue];
-    SCNMaterial *scnMaterial = [SCNMaterial material];
-
-    GLTFMaterialPBRMetallicRoughness *pbrMetallicRoughness =
-        material.pbrMetallicRoughness
-            ?: [[GLTFMaterialPBRMetallicRoughness alloc] init];
-    scnMaterial.diffuse.contents = [NSColor
-        colorWithSRGBRed:[pbrMetallicRoughness.baseColorFactor[0] floatValue]
-                   green:[pbrMetallicRoughness.baseColorFactor[1] floatValue]
-                    blue:[pbrMetallicRoughness.baseColorFactor[2] floatValue]
-                   alpha:[pbrMetallicRoughness.baseColorFactor[3] floatValue]];
-    if (pbrMetallicRoughness.baseColorTexture) {
-      GLTFTexture *texture =
-          self.json.textures[pbrMetallicRoughness.baseColorTexture.index];
-      if (texture.source) {
-        NSData *imageData = self.imageDatas[texture.source.integerValue];
-        NSImage *image = [[NSImage alloc] initWithData:imageData];
-        scnMaterial.diffuse.contents = image;
-
-        if (texture.sampler) {
-          GLTFSampler *sampler =
-              self.json.samplers[texture.sampler.integerValue];
-          scnMaterial.diffuse.wrapS =
-              SCNWrapModeFromGLTFSamplerWrapMode(sampler.wrapS);
-          scnMaterial.diffuse.wrapT =
-              SCNWrapModeFromGLTFSamplerWrapMode(sampler.wrapT);
-          scnMaterial.diffuse.mipFilter = SCNFilterModeLinear;
-          if (sampler.magFilter) {
-            switch ([sampler.magFilter integerValue]) {
-            case GLTFSamplerMagFilterLinear:
-              scnMaterial.diffuse.magnificationFilter = SCNFilterModeLinear;
-              break;
-            case GLTFSamplerMagFilterNearest:
-              scnMaterial.diffuse.magnificationFilter = SCNFilterModeNearest;
-              break;
-            default:
-              break;
-            }
-          }
-          if (sampler.minFilter) {
-            switch ([sampler.minFilter integerValue]) {
-            case GLTFSamplerMinFilterLinear:
-            case GLTFSamplerMinFilterLinearMipmapNearest:
-            case GLTFSamplerMinFilterLinearMipmapLinear:
-              scnMaterial.diffuse.minificationFilter = SCNFilterModeLinear;
-              break;
-            case GLTFSamplerMinFilterNearest:
-            case GLTFSamplerMinFilterNearestMipmapNearest:
-            case GLTFSamplerMinFilterNearestMipmapLinear:
-              scnMaterial.diffuse.minificationFilter = SCNFilterModeNearest;
-              break;
-            default:
-              break;
-            }
-          }
-        }
-      }
-    }
-    if (pbrMetallicRoughness.metallicRoughnessTexture) {
-      // TODO
-    }
-    scnMaterial.metalness.intensity = pbrMetallicRoughness.metallicFactor;
-    scnMaterial.roughness.intensity = pbrMetallicRoughness.roughnessFactor;
-
+    SCNMaterial *scnMaterial = [self scnMaterialFromGLTFMaterial:material];
     geometry.materials = @[ scnMaterial ];
   }
 
-  return geometry;
-}
+  // TODO: targets
 
-- (SCNGeometrySource *)scnGeometrySourceFromGLTFAccessor:
-                           (GLTFAccessor *)accessor
-                                            withSemantic:(NSString *)semantic {
-  NSData *data = [self dataByAccessor:accessor];
-  NSInteger componentsPerVector = componentsCountOfAccessorType(accessor.type);
-  NSInteger bytesPerComponent = sizeOfComponentType(accessor.componentType);
-  NSInteger dataStride = componentsPerVector * bytesPerComponent;
-  return [SCNGeometrySource
-      geometrySourceWithData:data
-                    semantic:
-                        SCNGeometrySourceSemanticFromGLTFMeshPrimitiveAttributeSemantic(
-                            semantic)
-                 vectorCount:accessor.count
-             floatComponents:accessor.componentType ==
-                             GLTFAccessorComponentTypeFloat
-         componentsPerVector:componentsPerVector
-           bytesPerComponent:bytesPerComponent
-                  dataOffset:0
-                  dataStride:dataStride];
+  return geometry;
 }
 
 - (void)addSCNGeometrySourceToArray:
@@ -366,9 +291,30 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
   }
 }
 
-- (void)addSCNGeometryElementToArray:
-            (NSMutableArray<SCNGeometryElement *> *)elements
-                       fromPrimitive:(GLTFMeshPrimitive *)primitive {
+- (SCNGeometrySource *)scnGeometrySourceFromGLTFAccessor:
+                           (GLTFAccessor *)accessor
+                                            withSemantic:(NSString *)semantic {
+  NSData *data = [self dataByAccessor:accessor];
+  NSInteger componentsPerVector = componentsCountOfAccessorType(accessor.type);
+  NSInteger bytesPerComponent = sizeOfComponentType(accessor.componentType);
+  NSInteger dataStride = componentsPerVector * bytesPerComponent;
+  return [SCNGeometrySource
+      geometrySourceWithData:data
+                    semantic:
+                        SCNGeometrySourceSemanticFromGLTFMeshPrimitiveAttributeSemantic(
+                            semantic)
+                 vectorCount:accessor.count
+             floatComponents:accessor.componentType ==
+                             GLTFAccessorComponentTypeFloat
+         componentsPerVector:componentsPerVector
+           bytesPerComponent:bytesPerComponent
+                  dataOffset:0
+                  dataStride:dataStride];
+}
+
+- (NSArray<SCNGeometryElement *> *)scnGeometryElementsFromPrimitive:
+    (GLTFMeshPrimitive *)primitive {
+  NSMutableArray<SCNGeometryElement *> *elements = [NSMutableArray array];
   if (primitive.indices) {
     GLTFAccessor *accessor =
         self.json.accessors[primitive.indices.integerValue];
@@ -391,6 +337,7 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
     }
     [elements addObject:element];
   }
+  return [elements copy];
 }
 
 - (NSData *)convertBufferData:(NSData *)bufferData
@@ -446,6 +393,178 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
     break;
   }
   return bufferData;
+}
+
+#pragma mark - Material
+
+- (SCNMaterial *)scnMaterialFromGLTFMaterial:(GLTFMaterial *)material {
+  SCNMaterial *scnMaterial = [SCNMaterial material];
+  scnMaterial.name = material.name;
+
+  GLTFMaterialPBRMetallicRoughness *pbrMetallicRoughness =
+      material.pbrMetallicRoughness
+          ?: [[GLTFMaterialPBRMetallicRoughness alloc] init];
+  [self applyPBRMetallicRoughness:pbrMetallicRoughness toMaterial:scnMaterial];
+
+  if (material.normalTexture) {
+    [self applyNormalTextureInfo:material.normalTexture toMaterial:scnMaterial];
+  }
+
+  if (material.occlusionTexture) {
+    [self applyOcclusionTextureInfo:material.occlusionTexture
+                         toMaterial:scnMaterial];
+  }
+
+  if (material.emissiveTexture) {
+    [self applyTextureInfo:material.emissiveTexture
+                toProperty:scnMaterial.emission];
+  }
+
+  // TODO: emissiveFactor
+
+  if (material.alphaMode) {
+    if ([material.alphaMode isEqualToString:GLTFMaterialAlphaModeOpaque]) {
+      scnMaterial.transparency = 1.0;
+    } else if ([material.alphaMode isEqualToString:GLTFMaterialAlphaModeMask]) {
+      scnMaterial.writesToDepthBuffer = YES;
+      scnMaterial.colorBufferWriteMask = SCNColorMaskNone;
+    } else if ([material.alphaMode isEqualToString:GLTFMaterialAlphaModeMask]) {
+      scnMaterial.blendMode = SCNBlendModeAlpha;
+    }
+  }
+
+  // TODO: alphaCutoff
+
+  scnMaterial.doubleSided = material.doubleSided;
+
+  return scnMaterial;
+}
+
+#pragma mark diffuse
+
+- (void)applyPBRMetallicRoughness:
+            (GLTFMaterialPBRMetallicRoughness *)pbrMetallicRoughness
+                       toMaterial:(SCNMaterial *)scnMaterial {
+
+  // baseColorFactor
+  scnMaterial.diffuse.contents = [NSColor
+      colorWithSRGBRed:[pbrMetallicRoughness.baseColorFactor[0] floatValue]
+                 green:[pbrMetallicRoughness.baseColorFactor[1] floatValue]
+                  blue:[pbrMetallicRoughness.baseColorFactor[2] floatValue]
+                 alpha:[pbrMetallicRoughness.baseColorFactor[3] floatValue]];
+
+  // baseColorTexture
+  if (pbrMetallicRoughness.baseColorTexture) {
+    [self applyTextureInfo:pbrMetallicRoughness.baseColorTexture
+                toProperty:scnMaterial.diffuse];
+  }
+
+  // metallicFactor
+  scnMaterial.metalness.intensity = pbrMetallicRoughness.metallicFactor;
+
+  // roughnessFactor
+  scnMaterial.roughness.intensity = pbrMetallicRoughness.roughnessFactor;
+
+  // metallicRoughnessTexture
+  if (pbrMetallicRoughness.metallicRoughnessTexture) {
+    [self applyTextureInfo:pbrMetallicRoughness.metallicRoughnessTexture
+                toProperty:scnMaterial.roughness];
+  }
+}
+
+#pragma mark normal
+
+- (void)applyNormalTextureInfo:(GLTFMaterialNormalTextureInfo *)textureInfo
+                    toMaterial:(SCNMaterial *)material {
+  // index
+  GLTFTexture *texture = self.json.textures[textureInfo.index];
+  [self applyTexture:texture toProperty:material.normal];
+  // texcoord
+  material.normal.mappingChannel = textureInfo.texCoord;
+  // scale
+  material.normal.contentsTransform =
+      SCNMatrix4MakeScale(textureInfo.scale, textureInfo.scale, 1.0);
+}
+
+#pragma mark occlusion
+
+- (void)applyOcclusionTextureInfo:
+            (GLTFMaterialOcclusionTextureInfo *)textureInfo
+                       toMaterial:(SCNMaterial *)material {
+  // index
+  GLTFTexture *texture = self.json.textures[textureInfo.index];
+  [self applyTexture:texture toProperty:material.ambientOcclusion];
+  // texcoord
+  material.normal.mappingChannel = textureInfo.texCoord;
+  // TODO: strength
+}
+
+#pragma mark texture
+
+- (void)applyTextureInfo:(GLTFTextureInfo *)textureInfo
+              toProperty:(SCNMaterialProperty *)property {
+  // index
+  GLTFTexture *texture = self.json.textures[textureInfo.index];
+  [self applyTexture:texture toProperty:property];
+  // texcoord
+  property.mappingChannel = textureInfo.texCoord;
+}
+
+- (void)applyTexture:(GLTFTexture *)texture
+          toProperty:(SCNMaterialProperty *)property {
+  if (texture.source) {
+    NSData *imageData = self.imageDatas[texture.source.integerValue];
+    NSImage *image = [[NSImage alloc] initWithData:imageData];
+    property.contents = image;
+
+    if (texture.sampler) {
+      GLTFSampler *sampler = self.json.samplers[texture.sampler.integerValue];
+      [self applyTextureSampler:sampler toProperty:property];
+    }
+  }
+}
+
+- (void)applyTextureSampler:(GLTFSampler *)sampler
+                 toProperty:(SCNMaterialProperty *)property {
+  SCNWrapMode wrapS = SCNWrapModeFromGLTFSamplerWrapMode(sampler.wrapS);
+  SCNWrapMode wrapT = SCNWrapModeFromGLTFSamplerWrapMode(sampler.wrapT);
+  SCNFilterMode mipFilter = SCNFilterModeLinear;
+  SCNFilterMode magFilter;
+  SCNFilterMode minFilter;
+  if (sampler.magFilter) {
+    switch ([sampler.magFilter integerValue]) {
+    case GLTFSamplerMagFilterLinear:
+      magFilter = SCNFilterModeLinear;
+      break;
+    case GLTFSamplerMagFilterNearest:
+      magFilter = SCNFilterModeNearest;
+      break;
+    default:
+      break;
+    }
+  }
+  if (sampler.minFilter) {
+    switch ([sampler.minFilter integerValue]) {
+    case GLTFSamplerMinFilterLinear:
+    case GLTFSamplerMinFilterLinearMipmapNearest:
+    case GLTFSamplerMinFilterLinearMipmapLinear:
+      minFilter = SCNFilterModeLinear;
+      break;
+    case GLTFSamplerMinFilterNearest:
+    case GLTFSamplerMinFilterNearestMipmapNearest:
+    case GLTFSamplerMinFilterNearestMipmapLinear:
+      minFilter = SCNFilterModeNearest;
+      break;
+    default:
+      break;
+    }
+  }
+
+  property.wrapS = wrapS;
+  property.wrapT = wrapT;
+  property.mipFilter = mipFilter;
+  property.magnificationFilter = magFilter;
+  property.minificationFilter = minFilter;
 }
 
 @end

@@ -400,6 +400,13 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
 - (SCNMaterial *)scnMaterialFromGLTFMaterial:(GLTFMaterial *)material {
   SCNMaterial *scnMaterial = [SCNMaterial material];
   scnMaterial.name = material.name;
+  scnMaterial.locksAmbientWithDiffuse = YES;
+
+  if (material.pbrMetallicRoughness) {
+    scnMaterial.lightingModelName = SCNLightingModelPhysicallyBased;
+  } else {
+    scnMaterial.lightingModelName = SCNLightingModelBlinn;
+  }
 
   GLTFMaterialPBRMetallicRoughness *pbrMetallicRoughness =
       material.pbrMetallicRoughness
@@ -413,6 +420,7 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
   if (material.occlusionTexture) {
     [self applyOcclusionTextureInfo:material.occlusionTexture
                          toMaterial:scnMaterial];
+    scnMaterial.ambientOcclusion.textureComponents = SCNColorMaskRed;
   }
 
   if (material.emissiveTexture) {
@@ -420,7 +428,15 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
                 toProperty:scnMaterial.emission];
   }
 
-  // TODO: emissiveFactor
+  if (material.emissiveFactor) {
+    CGFloat rgba[] = {material.emissiveFactor[0].floatValue,
+                      material.emissiveFactor[1].floatValue,
+                      material.emissiveFactor[2].floatValue, 1.0};
+    CGColorSpaceRef colorSpaceLinearSRGB =
+        CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB);
+    scnMaterial.emission.contents =
+        (__bridge_transfer id)CGColorCreate(colorSpaceLinearSRGB, &rgba[0]);
+  }
 
   if (material.alphaMode) {
     if ([material.alphaMode isEqualToString:GLTFMaterialAlphaModeOpaque]) {
@@ -459,16 +475,20 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
                 toProperty:scnMaterial.diffuse];
   }
 
-  // metallicFactor
-  scnMaterial.metalness.intensity = pbrMetallicRoughness.metallicFactor;
-
-  // roughnessFactor
-  scnMaterial.roughness.intensity = pbrMetallicRoughness.roughnessFactor;
-
   // metallicRoughnessTexture
   if (pbrMetallicRoughness.metallicRoughnessTexture) {
     [self applyTextureInfo:pbrMetallicRoughness.metallicRoughnessTexture
+                toProperty:scnMaterial.metalness];
+    scnMaterial.metalness.textureComponents = SCNColorMaskGreen;
+    scnMaterial.metalness.intensity = pbrMetallicRoughness.metallicFactor;
+
+    [self applyTextureInfo:pbrMetallicRoughness.metallicRoughnessTexture
                 toProperty:scnMaterial.roughness];
+    scnMaterial.roughness.textureComponents = SCNColorMaskBlue;
+    scnMaterial.roughness.intensity = pbrMetallicRoughness.roughnessFactor;
+  } else {
+    scnMaterial.metalness.contents = @(pbrMetallicRoughness.metallicFactor);
+    scnMaterial.roughness.contents = @(pbrMetallicRoughness.roughnessFactor);
   }
 }
 
@@ -526,19 +546,17 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
 
 - (void)applyTextureSampler:(GLTFSampler *)sampler
                  toProperty:(SCNMaterialProperty *)property {
-  SCNWrapMode wrapS = SCNWrapModeFromGLTFSamplerWrapMode(sampler.wrapS);
-  SCNWrapMode wrapT = SCNWrapModeFromGLTFSamplerWrapMode(sampler.wrapT);
   SCNFilterMode mipFilter = SCNFilterModeLinear;
-  SCNFilterMode magFilter;
-  SCNFilterMode minFilter;
+  SCNFilterMode magFilter = SCNFilterModeLinear;
+  SCNFilterMode minFilter = SCNFilterModeLinear;
   if (sampler.magFilter) {
     switch ([sampler.magFilter integerValue]) {
-    case GLTFSamplerMagFilterLinear:
-      magFilter = SCNFilterModeLinear;
-      break;
     case GLTFSamplerMagFilterNearest:
       magFilter = SCNFilterModeNearest;
       break;
+    case GLTFSamplerMagFilterLinear:
+        magFilter = SCNFilterModeLinear;
+        break;
     default:
       break;
     }
@@ -546,22 +564,33 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
   if (sampler.minFilter) {
     switch ([sampler.minFilter integerValue]) {
     case GLTFSamplerMinFilterLinear:
+        minFilter = SCNFilterModeLinear;
+        break;
     case GLTFSamplerMinFilterLinearMipmapNearest:
+        minFilter = SCNFilterModeLinear;
+        mipFilter = SCNFilterModeNearest;
+        break;
     case GLTFSamplerMinFilterLinearMipmapLinear:
-      minFilter = SCNFilterModeLinear;
+        minFilter = SCNFilterModeLinear;
+        mipFilter = SCNFilterModeLinear;
       break;
     case GLTFSamplerMinFilterNearest:
+        minFilter = SCNFilterModeNearest;
+        break;
     case GLTFSamplerMinFilterNearestMipmapNearest:
+        minFilter = SCNFilterModeNearest;
+        mipFilter = SCNFilterModeNearest;
+        break;
     case GLTFSamplerMinFilterNearestMipmapLinear:
-      minFilter = SCNFilterModeNearest;
-      break;
+        minFilter = SCNFilterModeNearest;
+        mipFilter = SCNFilterModeLinear;
+        break;
     default:
       break;
     }
   }
-
-  property.wrapS = wrapS;
-  property.wrapT = wrapT;
+  property.wrapS = SCNWrapModeFromGLTFSamplerWrapMode(sampler.wrapS);
+  property.wrapT = SCNWrapModeFromGLTFSamplerWrapMode(sampler.wrapT);
   property.mipFilter = mipFilter;
   property.magnificationFilter = magFilter;
   property.minificationFilter = minFilter;

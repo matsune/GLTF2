@@ -1,5 +1,8 @@
 #import "GLTFJson.h"
 
+@implementation GLTFObject
+@end
+
 NSString *const GLTFAccessorTypeScalar = @"SCALAR";
 NSString *const GLTFAccessorTypeVec2 = @"VEC2";
 NSString *const GLTFAccessorTypeVec3 = @"VEC3";

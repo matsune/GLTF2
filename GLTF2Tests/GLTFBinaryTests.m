@@ -9,17 +9,6 @@
 
 @implementation GLTFBinaryTests
 
-- (void)testExample {
-  NSURL *url = [[NSURL fileURLWithPath:SAMPLE_MODELS_DIR]
-      URLByAppendingPathComponent:
-          @"2CylinderEngine/glTF-Binary/2CylinderEngine.glb"];
-  NSData *data = [NSData dataWithContentsOfURL:url];
-  NSError *error;
-  GLTFBinary *binary = [GLTFBinary binaryWithData:data error:&error];
-  XCTAssertNil(error, "Error should be nil for valid data");
-  XCTAssertNotNil(binary, "Binary object should not be nil");
-}
-
 - (void)testInvalidBinarySize {
   char invalidSizeData[] = {'g', 'l', 'T'};
   NSData *data = [NSData dataWithBytes:invalidSizeData

@@ -83,7 +83,7 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
   }
 }
 
-@implementation GLTFObject (SceneKitExtension)
+@implementation GLTFModel (SceneKitExtension)
 
 #pragma mark - Scene
 
@@ -555,8 +555,8 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
       magFilter = SCNFilterModeNearest;
       break;
     case GLTFSamplerMagFilterLinear:
-        magFilter = SCNFilterModeLinear;
-        break;
+      magFilter = SCNFilterModeLinear;
+      break;
     default:
       break;
     }
@@ -564,27 +564,27 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
   if (sampler.minFilter) {
     switch ([sampler.minFilter integerValue]) {
     case GLTFSamplerMinFilterLinear:
-        minFilter = SCNFilterModeLinear;
-        break;
+      minFilter = SCNFilterModeLinear;
+      break;
     case GLTFSamplerMinFilterLinearMipmapNearest:
-        minFilter = SCNFilterModeLinear;
-        mipFilter = SCNFilterModeNearest;
-        break;
+      minFilter = SCNFilterModeLinear;
+      mipFilter = SCNFilterModeNearest;
+      break;
     case GLTFSamplerMinFilterLinearMipmapLinear:
-        minFilter = SCNFilterModeLinear;
-        mipFilter = SCNFilterModeLinear;
+      minFilter = SCNFilterModeLinear;
+      mipFilter = SCNFilterModeLinear;
       break;
     case GLTFSamplerMinFilterNearest:
-        minFilter = SCNFilterModeNearest;
-        break;
+      minFilter = SCNFilterModeNearest;
+      break;
     case GLTFSamplerMinFilterNearestMipmapNearest:
-        minFilter = SCNFilterModeNearest;
-        mipFilter = SCNFilterModeNearest;
-        break;
+      minFilter = SCNFilterModeNearest;
+      mipFilter = SCNFilterModeNearest;
+      break;
     case GLTFSamplerMinFilterNearestMipmapLinear:
-        minFilter = SCNFilterModeNearest;
-        mipFilter = SCNFilterModeLinear;
-        break;
+      minFilter = SCNFilterModeNearest;
+      mipFilter = SCNFilterModeLinear;
+      break;
     default:
       break;
     }

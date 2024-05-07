@@ -1,10 +1,10 @@
-#import "GLTFObject.h"
+#import "GLTFModel.h"
 #import <Foundation/Foundation.h>
 #import <SceneKit/SceneKit.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface GLTFObject (SceneKitExtension)
+@interface GLTFModel (SceneKitExtension)
 
 - (nullable SCNScene *)defaultScene;
 - (NSArray<SCNScene *> *)scnScenes;

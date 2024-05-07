@@ -20,7 +20,7 @@
 
 - (void)loadModelURL:(NSURL *)url {
   NSError *err;
-  GLTFObject *object = [GLTFObject objectWithFile:[url path] error:&err];
+  GLTFModel *object = [GLTFModel objectWithFile:[url path] error:&err];
   if (err) {
     NSLog(@"%@", err);
     abort();

@@ -1,10 +1,10 @@
-#import "GLTFObject.h"
+#import "GLTFModel.h"
 #import "Errors.h"
 #import "GLTFBinary.h"
 #import "GLTFDecoder.h"
 #import "GLTFJson.h"
 
-@implementation GLTFObject
+@implementation GLTFModel
 
 - (instancetype)initWithJson:(GLTFJson *)json path:(nullable NSString *)path {
   self = [super init];
@@ -45,7 +45,7 @@
   if (!binary)
     return nil;
 
-  GLTFObject *object = [[GLTFObject alloc] initWithJson:binary.json path:nil];
+  GLTFModel *object = [[GLTFModel alloc] initWithJson:binary.json path:nil];
   object.bufferDatas = [NSArray arrayWithObject:binary.binary];
   [object prefetchImageDatas];
   return object;
@@ -59,7 +59,7 @@
   if (!json)
     return nil;
 
-  GLTFObject *object = [[GLTFObject alloc] initWithJson:json path:path];
+  GLTFModel *object = [[GLTFModel alloc] initWithJson:json path:path];
   [object prefetchBufferDatas];
   [object prefetchImageDatas];
   return object;

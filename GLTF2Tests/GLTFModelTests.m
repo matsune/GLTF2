@@ -2,11 +2,11 @@
 #import "config.h"
 #import <XCTest/XCTest.h>
 
-@interface GLTFObjectTests : XCTestCase
+@interface GLTFModelTests : XCTestCase
 
 @end
 
-@implementation GLTFObjectTests
+@implementation GLTFModelTests
 
 - (void)testDataByAccessorWithNormalized {
   // R: 255, G: 128, B: 0, A: 255
@@ -50,7 +50,7 @@
                     (unsigned long)colorData.length, base64String];
 
   NSError *error;
-  GLTFObject *object = [GLTFObject
+  GLTFModel *object = [GLTFModel
       objectWithGltfData:[jsonString dataUsingEncoding:NSUTF8StringEncoding]
                     path:nil
                    error:&error];
@@ -127,7 +127,7 @@
                     (unsigned long)sparseColorData.length, base64String];
 
   NSError *error;
-  GLTFObject *object = [GLTFObject
+  GLTFModel *object = [GLTFModel
       objectWithGltfData:[jsonString dataUsingEncoding:NSUTF8StringEncoding]
                     path:nil
                    error:&error];

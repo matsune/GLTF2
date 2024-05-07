@@ -4,7 +4,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-GLTF_EXPORT @interface GLTFObject : NSObject
+GLTF_EXPORT @interface GLTFModel : NSObject
 
 @property(nonatomic, strong, readonly) GLTFJson *json;
 @property(nonatomic, copy, nullable, readonly) NSString *path;

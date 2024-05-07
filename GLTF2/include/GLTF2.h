@@ -2,4 +2,4 @@
 #import "GLTFBinary.h"
 #import "GLTFDecoder.h"
 #import "GLTFJson.h"
-#import "GLTFObject.h"
+#import "GLTFModel.h"

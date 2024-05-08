@@ -188,7 +188,7 @@
       accessor,
       "Accessor should not be nil when all required fields are present");
   XCTAssertEqual(accessor.bufferView, @1);
-  XCTAssertEqual(accessor.byteOffset, 10);
+  XCTAssertEqual(accessor.byteOffsetValue, 10);
   XCTAssertEqual(accessor.componentType, 5123);
   XCTAssertTrue(accessor.normalized);
   XCTAssertEqual(accessor.count, 34);
@@ -327,7 +327,7 @@
 
   XCTAssertNotNil(indices);
   XCTAssertEqual(indices.bufferView, 1);
-  XCTAssertEqual(indices.byteOffset, 0);
+  XCTAssertEqual(indices.byteOffsetValue, 0);
   XCTAssertEqual(indices.componentType, 5123);
   XCTAssertEqualObjects(indices.extensions, @{@"someKey" : @"someValue"});
   XCTAssertEqualObjects(indices.extras, @{@"anotherKey" : @"anotherValue"});
@@ -360,7 +360,7 @@
       [decoder decodeAccessorSparseIndices:jsonDict error:&error];
 
   XCTAssertNotNil(indices);
-  XCTAssertEqual(indices.byteOffset,
+  XCTAssertEqual(indices.byteOffsetValue,
                  0); // Confirm default value is correctly used
   XCTAssertNil(error);
 }
@@ -384,7 +384,7 @@
       values, "Sparse values should not be nil when all fields are provided");
   XCTAssertEqual(values.bufferView, 5,
                  "Buffer view should match the provided JSON value");
-  XCTAssertEqual(values.byteOffset, 10,
+  XCTAssertEqual(values.byteOffsetValue, 10,
                  "Byte offset should match the provided JSON value");
   XCTAssertEqualObjects(values.extensions, @{@"someKey" : @"someValue"},
                         "Extensions should match the provided JSON");
@@ -428,7 +428,7 @@
       "Sparse values should not be nil even if optional fields are missing");
   XCTAssertEqual(values.bufferView, 5,
                  "Buffer view should match the provided JSON value");
-  XCTAssertEqual(values.byteOffset, 0,
+  XCTAssertEqual(values.byteOffsetValue, 0,
                  "Byte offset should default to 0 when not provided");
   XCTAssertNil(values.extensions, "Extensions should be nil when not provided");
   XCTAssertNil(values.extras, "Extras should be nil when not provided");
@@ -689,7 +689,7 @@
   XCTAssertNotNil(
       sampler, "Sampler should not be nil even if 'interpolation' is missing");
   XCTAssertEqualObjects(
-      sampler.interpolation, @"LINEAR",
+      sampler.interpolationValue, @"LINEAR",
       "Interpolation should default to 'LINEAR' when not provided");
   XCTAssertNil(error, "Error should be nil when optional fields are missing");
 }
@@ -871,7 +871,7 @@
                   "BufferView should not be nil when all fields are present");
   XCTAssertEqual(bufferView.buffer, 1);
   XCTAssertEqual(bufferView.byteLength, 1024);
-  XCTAssertEqual(bufferView.byteOffset, 256);
+  XCTAssertEqual(bufferView.byteOffsetValue, 256);
   XCTAssertEqual(bufferView.byteStride.integerValue, 16);
   XCTAssertEqual(bufferView.target.integerValue, 34962);
   XCTAssertEqualObjects(bufferView.name, @"TestBufferView");
@@ -1082,23 +1082,25 @@
   // PBR Metallic Roughness
   XCTAssertNotNil(material.pbrMetallicRoughness,
                   "PBR Metallic Roughness should not be nil");
-  XCTAssertEqualObjects(material.pbrMetallicRoughness.baseColorFactor,
-                        (@[ @0.5, @0.5, @0.5, @1.0 ]));
+  XCTAssertEqual(material.pbrMetallicRoughness.baseColorFactorValue[0], 0.5);
+  XCTAssertEqual(material.pbrMetallicRoughness.baseColorFactorValue[1], 0.5);
+  XCTAssertEqual(material.pbrMetallicRoughness.baseColorFactorValue[2], 0.5);
+  XCTAssertEqual(material.pbrMetallicRoughness.baseColorFactorValue[3], 1.0);
   XCTAssertNotNil(material.pbrMetallicRoughness.baseColorTexture);
-  XCTAssertEqual(material.pbrMetallicRoughness.metallicFactor, 1.0);
-  XCTAssertEqual(material.pbrMetallicRoughness.roughnessFactor, 0.5);
+  XCTAssertEqual(material.pbrMetallicRoughness.metallicFactorValue, 1.0);
+  XCTAssertEqual(material.pbrMetallicRoughness.roughnessFactorValue, 0.5);
   XCTAssertNotNil(material.pbrMetallicRoughness.metallicRoughnessTexture);
 
   // Normal Texture
   XCTAssertNotNil(material.normalTexture, "Normal Texture should not be nil");
   XCTAssertEqual(material.normalTexture.index, 2);
-  XCTAssertEqual(material.normalTexture.scale, 1.0);
+  XCTAssertEqual(material.normalTexture.scaleValue, 1.0);
 
   // Occlusion Texture
   XCTAssertNotNil(material.occlusionTexture,
                   "Occlusion Texture should not be nil");
   XCTAssertEqual(material.occlusionTexture.index, 3);
-  XCTAssertEqual(material.occlusionTexture.strength, 0.5);
+  XCTAssertEqual(material.occlusionTexture.strengthValue, 0.5);
 
   // Emissive Texture
   XCTAssertNotNil(material.emissiveTexture,
@@ -1108,8 +1110,8 @@
   // Other properties
   XCTAssertEqualObjects(material.emissiveFactor, (@[ @1.0, @0.0, @0.0 ]));
   XCTAssertEqualObjects(material.alphaMode, @"BLEND");
-  XCTAssertEqual(material.alphaCutoff, 0.5);
-  XCTAssertTrue(material.doubleSided);
+  XCTAssertEqual(material.alphaCutoffValue, 0.5);
+  XCTAssertTrue(material.isDoubleSided);
   XCTAssertNil(error,
                "Error should be nil when all fields are provided and valid");
 }
@@ -1128,10 +1130,12 @@
   XCTAssertNil(material.normalTexture);
   XCTAssertNil(material.occlusionTexture);
   XCTAssertNil(material.emissiveTexture);
-  XCTAssertEqualObjects(material.emissiveFactor, (@[ @0.0, @0.0, @0.0 ]));
-  XCTAssertEqualObjects(material.alphaMode, @"OPAQUE");
-  XCTAssertEqual(material.alphaCutoff, 0.5);
-  XCTAssertNil(material.doubleSided);
+  XCTAssertEqual(material.emissiveFactorValue[0], 0);
+  XCTAssertEqual(material.emissiveFactorValue[1], 0);
+  XCTAssertEqual(material.emissiveFactorValue[2], 0);
+  XCTAssertEqualObjects(material.alphaModeValue, @"OPAQUE");
+  XCTAssertEqual(material.alphaCutoffValue, 0.5);
+  XCTAssertNil(material.isDoubleSided);
   XCTAssertNil(error, "Error should be nil when optional fields are missing");
 }
 
@@ -1154,8 +1158,8 @@
   XCTAssertNotNil(textureInfo,
                   "TextureInfo should not be nil when all fields are present");
   XCTAssertEqual(textureInfo.index, 1);
-  XCTAssertEqual(textureInfo.texCoord, 2);
-  XCTAssertEqual(textureInfo.scale, 1.5);
+  XCTAssertEqual(textureInfo.texCoordValue, 2);
+  XCTAssertEqual(textureInfo.scaleValue, 1.5);
   XCTAssertNotNil(textureInfo.extensions);
   XCTAssertNotNil(textureInfo.extras);
   XCTAssertNil(error);
@@ -1198,8 +1202,8 @@
   XCTAssertNotNil(textureInfo,
                   "TextureInfo should not be nil when all fields are present");
   XCTAssertEqual(textureInfo.index, 1);
-  XCTAssertEqual(textureInfo.texCoord, 2);
-  XCTAssertEqualWithAccuracy(textureInfo.strength, 0.8, 0.001,
+  XCTAssertEqual(textureInfo.texCoordValue, 2);
+  XCTAssertEqualWithAccuracy(textureInfo.strengthValue, 0.8, 0.001,
                              "Strength should be approximately 0.8");
   XCTAssertNotNil(textureInfo.extensions);
   XCTAssertNotNil(textureInfo.extras);
@@ -1247,8 +1251,8 @@
   XCTAssertEqualObjects(roughness.baseColorFactor,
                         (@[ @1.0, @0.5, @0.5, @1.0 ]));
   XCTAssertNotNil(roughness.baseColorTexture);
-  XCTAssertEqual(roughness.metallicFactor, 0.5);
-  XCTAssertEqual(roughness.roughnessFactor, 0.5);
+  XCTAssertEqual(roughness.metallicFactorValue, 0.5);
+  XCTAssertEqual(roughness.roughnessFactorValue, 0.5);
   XCTAssertNotNil(roughness.metallicRoughnessTexture);
   XCTAssertNotNil(roughness.extensions);
   XCTAssertNotNil(roughness.extras);
@@ -1265,10 +1269,13 @@
 
   XCTAssertNotNil(roughness, "PBRMetallicRoughness should not be nil even if "
                              "optional fields are missing");
-  XCTAssertEqualObjects(roughness.baseColorFactor, (@[ @1, @1, @1, @1 ]));
+  XCTAssertEqual(roughness.baseColorFactorValue[0], 1);
+  XCTAssertEqual(roughness.baseColorFactorValue[1], 1);
+  XCTAssertEqual(roughness.baseColorFactorValue[2], 1);
+  XCTAssertEqual(roughness.baseColorFactorValue[3], 1);
   XCTAssertNil(roughness.baseColorTexture);
-  XCTAssertEqual(roughness.metallicFactor, 1);
-  XCTAssertEqual(roughness.roughnessFactor, 1);
+  XCTAssertEqual(roughness.metallicFactorValue, 1);
+  XCTAssertEqual(roughness.roughnessFactorValue, 1);
   XCTAssertNil(roughness.metallicRoughnessTexture);
   XCTAssertNil(roughness.extensions);
   XCTAssertNil(roughness.extras);
@@ -1346,7 +1353,7 @@
                         "Indices should be correctly decoded");
   XCTAssertEqualObjects(primitive.material, @2,
                         "Material should be correctly decoded");
-  XCTAssertEqual(primitive.mode, 3, "Mode should be correctly decoded");
+  XCTAssertEqual(primitive.modeValue, 3, "Mode should be correctly decoded");
   XCTAssertEqualObjects(primitive.targets, (@[ @4, @5 ]),
                         "Targets should be correctly decoded");
   XCTAssertNotNil(primitive.extensions, "Extensions should be present");
@@ -1395,7 +1402,8 @@
   XCTAssertEqualObjects(node.camera, @1);
   XCTAssertEqualObjects(node.children, (@[ @2, @3 ]));
   XCTAssertEqualObjects(node.skin, @4);
-  XCTAssertTrue(node.matrix.columns[0].x == 0 && node.matrix.columns[1].x == 1,
+  XCTAssertTrue(node.matrixValue.columns[0].x == 0 &&
+                    node.matrixValue.columns[1].x == 1,
                 "Matrix should be set as provided");
   XCTAssertEqualObjects(node.mesh, @5);
   XCTAssertEqualObjects(node.rotation, (@[ @1, @0, @0, @0 ]),
@@ -1420,14 +1428,19 @@
   XCTAssertNil(node.camera);
   XCTAssertNil(node.children);
   XCTAssertNil(node.skin);
-  XCTAssertTrue([self isIdentityMatrix:node.matrix],
+  XCTAssertTrue([self isIdentityMatrix:node.matrixValue],
                 "Matrix should be identity by default");
   XCTAssertNil(node.mesh);
-  XCTAssertEqualObjects(node.rotation,
-                        (@[ @0, @0, @0, @1 ]));         // Default rotation
-  XCTAssertEqualObjects(node.scale, (@[ @1, @1, @1 ])); // Default scale
-  XCTAssertEqualObjects(node.translation,
-                        (@[ @0, @0, @0 ])); // Default translation
+  XCTAssertEqual(node.rotationValue[0], 0);
+  XCTAssertEqual(node.rotationValue[1], 0);
+  XCTAssertEqual(node.rotationValue[2], 0);
+  XCTAssertEqual(node.rotationValue[3], 1);
+  XCTAssertEqual(node.scaleValue[0], 1);
+  XCTAssertEqual(node.scaleValue[1], 1);
+  XCTAssertEqual(node.scaleValue[2], 1);
+  XCTAssertEqual(node.translationValue[0], 0);
+  XCTAssertEqual(node.translationValue[1], 0);
+  XCTAssertEqual(node.translationValue[2], 0);
   XCTAssertNil(node.weights);
   XCTAssertNil(node.name);
   XCTAssertNil(node.extensions);
@@ -1466,8 +1479,10 @@
                         "MagFilter should be correctly decoded");
   XCTAssertEqualObjects(sampler.minFilter, @9986,
                         "MinFilter should be correctly decoded");
-  XCTAssertEqual(sampler.wrapS, 10497, "WrapS should be correctly decoded");
-  XCTAssertEqual(sampler.wrapT, 33071, "WrapT should be correctly decoded");
+  XCTAssertEqual(sampler.wrapSValue, 10497,
+                 "WrapS should be correctly decoded");
+  XCTAssertEqual(sampler.wrapTValue, 33071,
+                 "WrapT should be correctly decoded");
   XCTAssertEqualObjects(sampler.name, @"DefaultSampler",
                         "Name should be correctly decoded");
   XCTAssertNotNil(sampler.extensions, "Extensions should be correctly decoded");
@@ -1483,9 +1498,9 @@
 
   XCTAssertNil(sampler.magFilter, "MagFilter should be nil when not provided");
   XCTAssertNil(sampler.minFilter, "MinFilter should be nil when not provided");
-  XCTAssertEqual(sampler.wrapS, 10497,
+  XCTAssertEqual(sampler.wrapSValue, 10497,
                  "WrapS should default to 10497 when not provided");
-  XCTAssertEqual(sampler.wrapT, 10497,
+  XCTAssertEqual(sampler.wrapTValue, 10497,
                  "WrapT should default to 10497 when not provided");
   XCTAssertNil(sampler.name, "Name should be nil when not provided");
   XCTAssertNil(sampler.extensions,
@@ -1682,7 +1697,7 @@
   XCTAssertNotNil(textureInfo,
                   "TextureInfo should not be nil when all fields are present");
   XCTAssertEqual(textureInfo.index, 2, "Index should be correctly decoded");
-  XCTAssertEqual(textureInfo.texCoord, 1,
+  XCTAssertEqual(textureInfo.texCoordValue, 1,
                  "TexCoord should be correctly decoded");
   XCTAssertNotNil(textureInfo.extensions,
                   "Extensions should be correctly decoded");
@@ -1722,7 +1737,7 @@
       textureInfo,
       "TextureInfo should not be nil even if optional fields are missing");
   XCTAssertEqual(textureInfo.index, 2, "Index should be correctly decoded");
-  XCTAssertEqual(textureInfo.texCoord, 0,
+  XCTAssertEqual(textureInfo.texCoordValue, 0,
                  "TexCoord should default to 0 when not provided");
   XCTAssertNil(textureInfo.extensions,
                "Extensions should be nil when not provided");

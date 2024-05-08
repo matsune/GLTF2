@@ -3,31 +3,26 @@
 @implementation GLTFObject
 @end
 
-NSString *const GLTFAccessorTypeScalar = @"SCALAR";
-NSString *const GLTFAccessorTypeVec2 = @"VEC2";
-NSString *const GLTFAccessorTypeVec3 = @"VEC3";
-NSString *const GLTFAccessorTypeVec4 = @"VEC4";
-NSString *const GLTFAccessorTypeMat2 = @"MAT2";
-NSString *const GLTFAccessorTypeMat3 = @"MAT3";
-NSString *const GLTFAccessorTypeMat4 = @"MAT4";
+#pragma mark - Accessor
 
-NSInteger componentsCountOfAccessorType(NSString *accessorType) {
-  if ([accessorType isEqualToString:GLTFAccessorTypeScalar])
-    return 1;
-  if ([accessorType isEqualToString:GLTFAccessorTypeVec2])
-    return 2;
-  if ([accessorType isEqualToString:GLTFAccessorTypeVec3])
-    return 3;
-  if ([accessorType isEqualToString:GLTFAccessorTypeVec4])
-    return 4;
-  if ([accessorType isEqualToString:GLTFAccessorTypeMat2])
-    return 4; // 2x2 matrix
-  if ([accessorType isEqualToString:GLTFAccessorTypeMat3])
-    return 9; // 3x3 matrix
-  if ([accessorType isEqualToString:GLTFAccessorTypeMat4])
-    return 16; // 4x4 matrix
-  return 0;
+@implementation GLTFAccessorSparseIndices
+
+- (NSInteger)byteOffsetValue {
+  return _byteOffset.integerValue;
 }
+
+@end
+
+@implementation GLTFAccessorSparseValues
+
+- (NSInteger)byteOffsetValue {
+  return _byteOffset.integerValue;
+}
+
+@end
+
+@implementation GLTFAccessorSparse
+@end
 
 NSInteger sizeOfComponentType(GLTFAccessorComponentType componentType) {
   switch (componentType) {
@@ -48,10 +43,53 @@ NSInteger sizeOfComponentType(GLTFAccessorComponentType componentType) {
   }
 }
 
+NSString *const GLTFAccessorTypeScalar = @"SCALAR";
+NSString *const GLTFAccessorTypeVec2 = @"VEC2";
+NSString *const GLTFAccessorTypeVec3 = @"VEC3";
+NSString *const GLTFAccessorTypeVec4 = @"VEC4";
+NSString *const GLTFAccessorTypeMat2 = @"MAT2";
+NSString *const GLTFAccessorTypeMat3 = @"MAT3";
+NSString *const GLTFAccessorTypeMat4 = @"MAT4";
+
+NSInteger componentsCountOfAccessorType(NSString *accessorType) {
+  if ([accessorType isEqualToString:GLTFAccessorTypeScalar])
+    return 1;
+  if ([accessorType isEqualToString:GLTFAccessorTypeVec2])
+    return 2;
+  if ([accessorType isEqualToString:GLTFAccessorTypeVec3])
+    return 3;
+  if ([accessorType isEqualToString:GLTFAccessorTypeVec4])
+    return 4;
+  if ([accessorType isEqualToString:GLTFAccessorTypeMat2])
+    return 4;
+  if ([accessorType isEqualToString:GLTFAccessorTypeMat3])
+    return 9;
+  if ([accessorType isEqualToString:GLTFAccessorTypeMat4])
+    return 16;
+  return 0;
+}
+
+@implementation GLTFAccessor
+
+- (NSInteger)byteOffsetValue {
+  return _byteOffset.integerValue;
+}
+
+- (BOOL)isNormalized {
+  return _normalized.boolValue;
+}
+
+@end
+
+#pragma mark - Animation
+
 NSString *const GLTFAnimationChannelTargetPathTranslation = @"translation";
 NSString *const GLTFAnimationChannelTargetPathRotation = @"rotation";
 NSString *const GLTFAnimationChannelTargetPathScale = @"scale";
 NSString *const GLTFAnimationChannelTargetPathWeights = @"weights";
+
+@implementation GLTFAnimationChannelTarget
+@end
 
 NSString *const GLTFAnimationSamplerInterpolationLinear = @"LINEAR";
 NSString *const GLTFAnimationSamplerInterpolationStep = @"STEP";
@@ -59,12 +97,115 @@ NSString *const GLTFAnimationSamplerInterpolationCubicSpline = @"CUBICSPLINE";
 
 @implementation GLTFAnimationSampler
 
-- (instancetype)init {
-  self = [super init];
-  if (self) {
-    _interpolation = GLTFAnimationSamplerInterpolationLinear;
+- (NSString *)interpolationValue {
+  return _interpolation ?: GLTFAnimationSamplerInterpolationLinear;
+}
+
+@end
+
+@implementation GLTFAnimationChannel
+@end
+
+@implementation GLTFAnimation
+@end
+
+#pragma mark - Asset
+
+@implementation GLTFAsset
+@end
+
+#pragma mark - Buffer
+
+@implementation GLTFBuffer
+@end
+
+@implementation GLTFBufferView
+
+- (NSInteger)byteOffsetValue {
+  return _byteOffset.integerValue;
+}
+
+@end
+
+#pragma mark - Camera
+
+@implementation GLTFCameraOrthographic
+@end
+
+@implementation GLTFCameraPerspective
+@end
+
+NSString *const GLTFCameraTypePerspective = @"perspective";
+NSString *const GLTFCameraTypeOrthographic = @"orthographic";
+
+@implementation GLTFCamera
+@end
+
+#pragma mark - Image
+
+@implementation GLTFImage
+@end
+
+#pragma mark - Texture
+
+@implementation GLTFTexture
+@end
+
+@implementation GLTFTextureInfo
+
+- (NSInteger)texCoordValue {
+  return _texCoord.integerValue;
+}
+
+@end
+
+#pragma mark - Material
+
+@implementation GLTFMaterialNormalTextureInfo
+
+- (NSInteger)texCoordValue {
+  return _texCoord.integerValue;
+}
+
+- (float)scaleValue {
+  if (_scale)
+    return _scale.floatValue;
+  return 1.0;
+}
+
+@end
+
+@implementation GLTFMaterialOcclusionTextureInfo
+
+- (NSInteger)texCoordValue {
+  return _texCoord.integerValue;
+}
+
+- (float)strengthValue {
+  if (_strength)
+    return _strength.floatValue;
+  return 1.0;
+}
+
+@end
+
+@implementation GLTFMaterialPBRMetallicRoughness
+
+- (simd_float4)baseColorFactorValue {
+  if (_baseColorFactor && _baseColorFactor.count == 4) {
+    return simd_make_float4(
+        _baseColorFactor[0].floatValue, _baseColorFactor[1].floatValue,
+        _baseColorFactor[2].floatValue, _baseColorFactor[3].floatValue);
   }
-  return self;
+  return simd_make_float4(1, 1, 1, 1);
+}
+
+- (float)metallicFactorValue {
+  return _metallicFactor.floatValue ?: 1.0;
+}
+
+- (float)roughnessFactorValue {
+  return _roughnessFactor.floatValue ?: 1.0;
 }
 
 @end
@@ -75,54 +216,34 @@ NSString *const GLTFMaterialAlphaModeBlend = @"BLEND";
 
 @implementation GLTFMaterial
 
-- (instancetype)init {
-  self = [super init];
-  if (self) {
-    _emissiveFactor = @[ @0, @0, @0 ];
-    _alphaMode = GLTFMaterialAlphaModeOpaque;
-    _alphaCutoff = 0.5;
+- (simd_float3)emissiveFactorValue {
+  if (_emissiveFactor && _emissiveFactor.count == 3) {
+    return simd_make_float3(_emissiveFactor[0].floatValue,
+                            _emissiveFactor[1].floatValue,
+                            _emissiveFactor[2].floatValue);
   }
-  return self;
+  return simd_make_float3(0, 0, 0);
+}
+
+- (NSString *)alphaModeValue {
+  return _alphaMode ?: GLTFMaterialAlphaModeOpaque;
+}
+
+- (float)alphaCutoffValue {
+  if (_alphaCutoff)
+    return _alphaCutoff.floatValue;
+  return 0.5;
+}
+
+- (BOOL)isDoubleSided {
+  return _doubleSided.boolValue;
 }
 
 @end
 
-@implementation GLTFMaterialNormalTextureInfo
+#pragma mark - Mesh
 
-- (instancetype)init {
-  self = [super init];
-  if (self) {
-    _scale = 1.0;
-  }
-  return self;
-}
-
-@end
-
-@implementation GLTFMaterialOcclusionTextureInfo
-
-- (instancetype)init {
-  self = [super init];
-  if (self) {
-    _strength = 1.0;
-  }
-  return self;
-}
-
-@end
-
-@implementation GLTFMaterialPBRMetallicRoughness
-
-- (instancetype)init {
-  self = [super init];
-  if (self) {
-    _baseColorFactor = @[ @1, @1, @1, @1 ];
-    _metallicFactor = 1.0;
-    _roughnessFactor = 1.0;
-  }
-  return self;
-}
-
+@implementation GLTFMesh
 @end
 
 NSString *const GLTFMeshPrimitiveAttributeSemanticPosition = @"POSITION";
@@ -135,12 +256,10 @@ NSString *const GLTFMeshPrimitiveAttributeSemanticWeights = @"WEIGHTS";
 
 @implementation GLTFMeshPrimitive
 
-- (instancetype)init {
-  self = [super init];
-  if (self) {
-    _mode = GLTFMeshPrimitiveModeTriangles;
-  }
-  return self;
+- (NSInteger)modeValue {
+  if (_mode != nil)
+    return _mode.integerValue;
+  return GLTFMeshPrimitiveModeTriangles;
 }
 
 - (nullable NSNumber *)valueOfSemantic:(NSString *)semantic {
@@ -186,93 +305,81 @@ NSString *const GLTFMeshPrimitiveAttributeSemanticWeights = @"WEIGHTS";
 
 @end
 
+#pragma mark - Node
+
 @implementation GLTFNode
 
-- (instancetype)init {
-  self = [super init];
-  if (self) {
-    _matrix = matrix_identity_float4x4;
-    _rotation = @[ @0, @0, @0, @1 ];
-    _scale = @[ @1, @1, @1 ];
-    _translation = @[ @0, @0, @0 ];
+- (simd_float4x4)matrixValue {
+  if (_matrix && _matrix.count == 16) {
+    return simd_matrix(
+        (vector_float4){_matrix[0].floatValue, _matrix[1].floatValue,
+                        _matrix[2].floatValue, _matrix[3].floatValue},
+        (vector_float4){_matrix[4].floatValue, _matrix[5].floatValue,
+                        _matrix[6].floatValue, _matrix[7].floatValue},
+        (vector_float4){_matrix[8].floatValue, _matrix[9].floatValue,
+                        _matrix[10].floatValue, _matrix[11].floatValue},
+        (vector_float4){_matrix[12].floatValue, _matrix[13].floatValue,
+                        _matrix[14].floatValue, _matrix[15].floatValue});
   }
-  return self;
+  return matrix_identity_float4x4;
+}
+
+- (simd_float4)rotationValue {
+  if (_rotation && _rotation.count == 4) {
+    return simd_make_float4(_rotation[0].floatValue, _rotation[1].floatValue,
+                            _rotation[2].floatValue, _rotation[3].floatValue);
+  }
+  return simd_make_float4(0, 0, 0, 1);
+}
+
+- (simd_float3)scaleValue {
+  if (_scale && _scale.count == 3) {
+    return simd_make_float3(_scale[0].floatValue, _scale[1].floatValue,
+                            _scale[2].floatValue);
+  }
+  return simd_make_float3(1, 1, 1);
+}
+
+- (simd_float3)translationValue {
+  if (_translation && _translation.count == 3) {
+    return simd_make_float3(_translation[0].floatValue,
+                            _translation[1].floatValue,
+                            _translation[2].floatValue);
+  }
+  return simd_make_float3(0, 0, 0);
 }
 
 @end
+
+#pragma mark - Sampler
 
 @implementation GLTFSampler
 
-- (instancetype)init {
-  self = [super init];
-  if (self) {
-    _wrapS = GLTFSamplerWrapModeRepeat;
-    _wrapT = GLTFSamplerWrapModeRepeat;
-  }
-  return self;
+- (NSInteger)wrapSValue {
+  if (_wrapS)
+    return _wrapS.integerValue;
+  return GLTFSamplerWrapModeRepeat;
+}
+
+- (NSInteger)wrapTValue {
+  if (_wrapT)
+    return _wrapT.integerValue;
+  return GLTFSamplerWrapModeRepeat;
 }
 
 @end
 
-@implementation GLTFAccessorSparseIndices
-@end
-
-@implementation GLTFAccessorSparseValues
-@end
-
-@implementation GLTFAccessorSparse
-@end
-
-@implementation GLTFAccessor
-@end
-
-@implementation GLTFAnimationChannelTarget
-@end
-
-@implementation GLTFAnimationChannel
-@end
-
-@implementation GLTFAnimation
-@end
-
-@implementation GLTFAsset
-@end
-
-@implementation GLTFBuffer
-@end
-
-@implementation GLTFBufferView
-@end
-
-@implementation GLTFCameraOrthographic
-@end
-
-@implementation GLTFCameraPerspective
-@end
-
-NSString *const GLTFCameraTypePerspective = @"perspective";
-NSString *const GLTFCameraTypeOrthographic = @"orthographic";
-
-@implementation GLTFCamera
-@end
-
-@implementation GLTFImage
-@end
-
-@implementation GLTFTexture
-@end
-
-@implementation GLTFTextureInfo
-@end
-
-@implementation GLTFMesh
-@end
+#pragma mark - Scene
 
 @implementation GLTFScene
 @end
 
+#pragma mark - Skin
+
 @implementation GLTFSkin
 @end
+
+#pragma mark - Json
 
 @implementation GLTFJson
 @end

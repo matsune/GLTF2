@@ -22,15 +22,19 @@ typedef NS_ENUM(NSInteger, GLTFAccessorSparseIndicesComponentType) {
 GLTF_EXPORT @interface GLTFAccessorSparseIndices : GLTFObject
 
 @property(nonatomic, assign) NSInteger bufferView;
-@property(nonatomic, assign) NSInteger byteOffset;
+@property(nonatomic, strong, nullable) NSNumber *byteOffset;
 @property(nonatomic, assign) NSInteger componentType;
+
+@property(nonatomic, readonly) NSInteger byteOffsetValue;
 
 @end
 
 GLTF_EXPORT @interface GLTFAccessorSparseValues : GLTFObject
 
 @property(nonatomic, assign) NSInteger bufferView;
-@property(nonatomic, assign) NSInteger byteOffset;
+@property(nonatomic, strong, nullable) NSNumber *byteOffset;
+
+@property(nonatomic, readonly) NSInteger byteOffsetValue;
 
 @end
 
@@ -51,6 +55,9 @@ typedef NS_ENUM(NSInteger, GLTFAccessorComponentType) {
   GLTFAccessorComponentTypeFloat = 5126
 };
 
+GLTF_EXPORT NSInteger
+sizeOfComponentType(GLTFAccessorComponentType componentType);
+
 GLTF_EXPORT NSString *const GLTFAccessorTypeScalar;
 GLTF_EXPORT NSString *const GLTFAccessorTypeVec2;
 GLTF_EXPORT NSString *const GLTFAccessorTypeVec3;
@@ -61,21 +68,21 @@ GLTF_EXPORT NSString *const GLTFAccessorTypeMat4;
 
 GLTF_EXPORT NSInteger componentsCountOfAccessorType(NSString *accessorType);
 
-GLTF_EXPORT NSInteger
-sizeOfComponentType(GLTFAccessorComponentType componentType);
-
 GLTF_EXPORT @interface GLTFAccessor : GLTFObject
 
 @property(nonatomic, strong, nullable) NSNumber *bufferView;
-@property(nonatomic, assign) NSInteger byteOffset;
+@property(nonatomic, strong, nullable) NSNumber *byteOffset;
 @property(nonatomic, assign) NSInteger componentType;
-@property(nonatomic, assign) BOOL normalized;
+@property(nonatomic, strong, nullable) NSNumber *normalized;
 @property(nonatomic, assign) NSInteger count;
 @property(nonatomic, assign) NSString *type;
 @property(nonatomic, strong, nullable) NSArray<NSNumber *> *max;
 @property(nonatomic, strong, nullable) NSArray<NSNumber *> *min;
 @property(nonatomic, strong, nullable) GLTFAccessorSparse *sparse;
 @property(nonatomic, copy, nullable) NSString *name;
+
+@property(nonatomic, readonly) NSInteger byteOffsetValue;
+@property(nonatomic, readonly) BOOL isNormalized;
 
 @end
 
@@ -86,12 +93,10 @@ GLTF_EXPORT NSString *const GLTFAnimationChannelTargetPathRotation;
 GLTF_EXPORT NSString *const GLTFAnimationChannelTargetPathScale;
 GLTF_EXPORT NSString *const GLTFAnimationChannelTargetPathWeights;
 
-GLTF_EXPORT @interface GLTFAnimationChannelTarget : NSObject
+GLTF_EXPORT @interface GLTFAnimationChannelTarget : GLTFObject
 
 @property(nonatomic, strong, nullable) NSNumber *node;
 @property(nonatomic, copy) NSString *path;
-@property(nonatomic, strong, nullable) NSDictionary *extensions;
-@property(nonatomic, strong, nullable) NSDictionary *extras;
 
 @end
 
@@ -102,8 +107,10 @@ GLTF_EXPORT NSString *const GLTFAnimationSamplerInterpolationCubicSpline;
 GLTF_EXPORT @interface GLTFAnimationSampler : GLTFObject
 
 @property(nonatomic, assign) NSInteger input;
-@property(nonatomic, copy) NSString *interpolation;
+@property(nonatomic, copy, nullable) NSString *interpolation;
 @property(nonatomic, assign) NSInteger output;
+
+@property(nonatomic, readonly) NSString *interpolationValue;
 
 @end
 
@@ -146,11 +153,13 @@ GLTF_EXPORT @interface GLTFBuffer : GLTFObject
 GLTF_EXPORT @interface GLTFBufferView : GLTFObject
 
 @property(nonatomic, assign) NSInteger buffer;
-@property(nonatomic, assign) NSInteger byteOffset;
+@property(nonatomic, strong, nullable) NSNumber *byteOffset;
 @property(nonatomic, assign) NSInteger byteLength;
 @property(nonatomic, strong, nullable) NSNumber *byteStride;
 @property(nonatomic, strong, nullable) NSNumber *target;
 @property(nonatomic, copy, nullable) NSString *name;
+
+@property(nonatomic, readonly) NSInteger byteOffsetValue;
 
 @end
 
@@ -199,20 +208,20 @@ GLTF_EXPORT @interface GLTFImage : GLTFObject
 
 #pragma mark - Texture
 
-GLTF_EXPORT @interface GLTFTexture : NSObject
+GLTF_EXPORT @interface GLTFTexture : GLTFObject
 
 @property(nonatomic, strong, nullable) NSNumber *sampler;
 @property(nonatomic, strong, nullable) NSNumber *source;
 @property(nonatomic, copy, nullable) NSString *name;
-@property(nonatomic, strong, nullable) NSDictionary *extensions;
-@property(nonatomic, strong, nullable) NSDictionary *extras;
 
 @end
 
 GLTF_EXPORT @interface GLTFTextureInfo : GLTFObject
 
 @property(nonatomic, assign) NSInteger index;
-@property(nonatomic, assign) NSInteger texCoord;
+@property(nonatomic, strong, nullable) NSNumber *texCoord;
+
+@property(nonatomic, readonly) NSInteger texCoordValue;
 
 @end
 
@@ -221,27 +230,37 @@ GLTF_EXPORT @interface GLTFTextureInfo : GLTFObject
 GLTF_EXPORT @interface GLTFMaterialNormalTextureInfo : GLTFObject
 
 @property(nonatomic, assign) NSInteger index;
-@property(nonatomic, assign) NSInteger texCoord;
-@property(nonatomic, assign) float scale;
+@property(nonatomic, strong, nullable) NSNumber *texCoord;
+@property(nonatomic, strong, nullable) NSNumber *scale;
+
+@property(nonatomic, readonly) NSInteger texCoordValue;
+@property(nonatomic, readonly) float scaleValue;
 
 @end
 
 GLTF_EXPORT @interface GLTFMaterialOcclusionTextureInfo : GLTFObject
 
 @property(nonatomic, assign) NSInteger index;
-@property(nonatomic, assign) NSInteger texCoord;
-@property(nonatomic, assign) float strength;
+@property(nonatomic, strong, nullable) NSNumber *texCoord;
+@property(nonatomic, strong, nullable) NSNumber *strength;
+
+@property(nonatomic, readonly) NSInteger texCoordValue;
+@property(nonatomic, readonly) float strengthValue;
 
 @end
 
 GLTF_EXPORT @interface GLTFMaterialPBRMetallicRoughness : GLTFObject
 
-@property(nonatomic, strong) NSArray<NSNumber *> *baseColorFactor;
+@property(nonatomic, strong, nullable) NSArray<NSNumber *> *baseColorFactor;
 @property(nonatomic, strong, nullable) GLTFTextureInfo *baseColorTexture;
-@property(nonatomic, assign) float metallicFactor;
-@property(nonatomic, assign) float roughnessFactor;
+@property(nonatomic, strong, nullable) NSNumber *metallicFactor;
+@property(nonatomic, strong, nullable) NSNumber *roughnessFactor;
 @property(nonatomic, strong, nullable)
     GLTFTextureInfo *metallicRoughnessTexture;
+
+@property(nonatomic, readonly) simd_float4 baseColorFactorValue;
+@property(nonatomic, readonly) float metallicFactorValue;
+@property(nonatomic, readonly) float roughnessFactorValue;
 
 @end
 
@@ -259,10 +278,15 @@ GLTF_EXPORT @interface GLTFMaterial : GLTFObject
 @property(nonatomic, strong, nullable)
     GLTFMaterialOcclusionTextureInfo *occlusionTexture;
 @property(nonatomic, strong, nullable) GLTFTextureInfo *emissiveTexture;
-@property(nonatomic, strong) NSArray<NSNumber *> *emissiveFactor;
-@property(nonatomic, copy) NSString *alphaMode;
-@property(nonatomic, assign) float alphaCutoff;
-@property(nonatomic, assign) BOOL doubleSided;
+@property(nonatomic, strong, nullable) NSArray<NSNumber *> *emissiveFactor;
+@property(nonatomic, copy, nullable) NSString *alphaMode;
+@property(nonatomic, strong, nullable) NSNumber *alphaCutoff;
+@property(nonatomic, strong, nullable) NSNumber *doubleSided;
+
+@property(nonatomic, readonly) simd_float3 emissiveFactorValue;
+@property(nonatomic, readonly) NSString *alphaModeValue;
+@property(nonatomic, readonly) float alphaCutoffValue;
+@property(nonatomic, readonly) BOOL isDoubleSided;
 
 @end
 
@@ -299,8 +323,10 @@ GLTF_EXPORT @interface GLTFMeshPrimitive : GLTFObject
 @property(nonatomic, strong) NSDictionary<NSString *, NSNumber *> *attributes;
 @property(nonatomic, strong, nullable) NSNumber *indices;
 @property(nonatomic, strong, nullable) NSNumber *material;
-@property(nonatomic, assign) NSInteger mode;
+@property(nonatomic, strong, nullable) NSNumber *mode;
 @property(nonatomic, strong, nullable) NSArray<NSNumber *> *targets;
+
+@property(nonatomic, readonly) NSInteger modeValue;
 
 - (nullable NSNumber *)valueOfSemantic:(NSString *)semantic;
 - (NSArray<NSNumber *> *)valuesOfSemantic:(NSString *)semantic;
@@ -314,13 +340,18 @@ GLTF_EXPORT @interface GLTFNode : GLTFObject
 @property(nonatomic, strong, nullable) NSNumber *camera;
 @property(nonatomic, strong, nullable) NSArray<NSNumber *> *children;
 @property(nonatomic, strong, nullable) NSNumber *skin;
-@property(nonatomic, assign) simd_float4x4 matrix;
+@property(nonatomic, strong, nullable) NSArray<NSNumber *> *matrix;
 @property(nonatomic, strong, nullable) NSNumber *mesh;
-@property(nonatomic, strong) NSArray<NSNumber *> *rotation;    // number[4]
-@property(nonatomic, strong) NSArray<NSNumber *> *scale;       // number[3]
-@property(nonatomic, strong) NSArray<NSNumber *> *translation; // number[3]
+@property(nonatomic, strong, nullable) NSArray<NSNumber *> *rotation;
+@property(nonatomic, strong, nullable) NSArray<NSNumber *> *scale;
+@property(nonatomic, strong, nullable) NSArray<NSNumber *> *translation;
 @property(nonatomic, strong, nullable) NSArray<NSNumber *> *weights;
 @property(nonatomic, copy, nullable) NSString *name;
+
+@property(nonatomic, readonly) simd_float4x4 matrixValue;
+@property(nonatomic, readonly) simd_float4 rotationValue;
+@property(nonatomic, readonly) simd_float3 scaleValue;
+@property(nonatomic, readonly) simd_float3 translationValue;
 
 @end
 
@@ -350,9 +381,12 @@ GLTF_EXPORT @interface GLTFSampler : GLTFObject
 
 @property(nonatomic, strong, nullable) NSNumber *magFilter;
 @property(nonatomic, strong, nullable) NSNumber *minFilter;
-@property(nonatomic, assign) NSInteger wrapS;
-@property(nonatomic, assign) NSInteger wrapT;
+@property(nonatomic, strong, nullable) NSNumber *wrapS;
+@property(nonatomic, strong, nullable) NSNumber *wrapT;
 @property(nonatomic, copy, nullable) NSString *name;
+
+@property(nonatomic, readonly) NSInteger wrapSValue;
+@property(nonatomic, readonly) NSInteger wrapTValue;
 
 @end
 

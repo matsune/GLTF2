@@ -1,6 +1,82 @@
 #import "GLTFDecoder.h"
 #import "Errors.h"
 
+@interface NSDictionary (Private)
+
+- (nullable NSNumber *)getNumber:(const NSString *)key;
+
+@end
+
+@implementation NSDictionary (Private)
+
+- (nullable id)getValue:(const NSString *)key ofClass:(Class)class {
+  id value = self[key];
+  return [value isKindOfClass:class] ? value : nil;
+}
+
+- (nullable NSNumber *)getNumber:(const NSString *)key {
+  return [self getValue:key ofClass:[NSNumber class]];
+}
+
+- (NSInteger)getInteger:(const NSString *)key {
+  return [self getNumber:key].integerValue;
+}
+
+- (float)getFloat:(const NSString *)key {
+  return [self getNumber:key].floatValue;
+}
+
+- (nullable NSString *)getString:(const NSString *)key {
+  return [self getValue:key ofClass:[NSString class]];
+}
+
+- (nullable NSDictionary *)getDict:(const NSString *)key {
+  return [self getValue:key ofClass:[NSDictionary class]];
+}
+
+- (nullable NSArray *)getArray:(const NSString *)key {
+  return [self getValue:key ofClass:[NSArray class]];
+}
+
+- (nullable NSArray *)getArray:(const NSString *)key ofClass:(Class)class {
+  NSArray *array = [self getArray:key];
+  if (!array)
+    return nil;
+  NSMutableArray *mutableArray = [NSMutableArray arrayWithCapacity:array.count];
+  for (id item in array) {
+    if ([item isKindOfClass:class]) {
+      [mutableArray addObject:item];
+    }
+  }
+  return [mutableArray copy];
+}
+
+- (nullable NSArray<NSString *> *)getStringArray:(const NSString *)key {
+  return [self getArray:key ofClass:[NSString class]];
+}
+
+- (nullable NSArray<NSNumber *> *)getNumberArray:(const NSString *)key {
+  return [self getArray:key ofClass:[NSNumber class]];
+}
+
+- (nullable NSArray<NSDictionary *> *)getDictArray:(const NSString *)key {
+  return [self getArray:key ofClass:[NSDictionary class]];
+}
+
+- (nullable NSDictionary *)getExtensions {
+  return [self getDict:@"extensions"];
+}
+
+- (nullable NSDictionary *)getExtras {
+  return [self getDict:@"extras"];
+}
+
+- (nullable NSString *)getName {
+  return [self getString:@"name"];
+}
+
+@end
+
 @interface DecodeContext : NSObject
 
 @property(nonatomic, strong, nonnull) NSMutableArray<NSString *> *stacks;
@@ -64,157 +140,80 @@
 - (nullable NSNumber *)getRequiredNumber:(const NSDictionary *)jsonDict
                                      key:(const NSString *)key
                                    error:(NSError *_Nullable *)error {
-  id value = jsonDict[key];
-  if ([value isKindOfClass:[NSNumber class]]) {
-    return value;
-  } else {
+  NSNumber *value = [jsonDict getNumber:key];
+  if (!value)
     *error = [self missingDataErrorWithKey:key];
-    return nil;
-  }
+  return value;
 }
 
 - (NSInteger)getRequiredInteger:(const NSDictionary *)jsonDict
                             key:(const NSString *)key
                           error:(NSError *_Nullable *)error {
-  id value = jsonDict[key];
-  if ([value isKindOfClass:[NSNumber class]]) {
-    return [value integerValue];
-  } else {
+  NSNumber *value = [jsonDict getNumber:key];
+  if (!value)
     *error = [self missingDataErrorWithKey:key];
-    return 0;
-  }
+  return value.integerValue;
 }
 
-- (NSNumber *)getNumber:(const NSDictionary *)jsonDict
-                    key:(const NSString *)key {
-  id value = jsonDict[key];
-  if ([value isKindOfClass:[NSNumber class]]) {
-    return value;
-  }
-  return nil;
-}
-
-- (NSString *)getRequiredString:(const NSDictionary *)jsonDict
-                            key:(const NSString *)key
-                          error:(NSError *_Nullable *)error {
-  id value = jsonDict[key];
-  if ([value isKindOfClass:[NSString class]]) {
-    return value;
-  } else {
+- (nullable NSString *)getRequiredString:(const NSDictionary *)jsonDict
+                                     key:(const NSString *)key
+                                   error:(NSError *_Nullable *)error {
+  NSString *value = [jsonDict getString:key];
+  if (!value)
     *error = [self missingDataErrorWithKey:key];
-    return @"";
-  }
-}
-
-- (nullable NSString *)getString:(const NSDictionary *)jsonDict
-                             key:(const NSString *)key {
-  id value = jsonDict[key];
-  if ([value isKindOfClass:[NSString class]]) {
-    return value;
-  }
-  return nil;
-}
-
-- (nullable NSDictionary *)getDict:(const NSDictionary *)jsonDict
-                               key:(const NSString *)key {
-  id value = jsonDict[key];
-  if ([value isKindOfClass:[NSDictionary class]]) {
-    return value;
-  }
-  return nil;
+  return value;
 }
 
 - (NSDictionary *)getRequiredDict:(const NSDictionary *)jsonDict
                               key:(const NSString *)key
                             error:(NSError *_Nullable *)error {
-  id value = jsonDict[key];
-  if ([value isKindOfClass:[NSDictionary class]]) {
-    return value;
-  } else {
+  NSDictionary *value = [jsonDict getDict:key];
+  if (!value)
     *error = [self missingDataErrorWithKey:key];
-    return nil;
-  }
+  return value;
 }
 
 - (NSArray *)getRequiredArray:(const NSDictionary *)jsonDict
                           key:(const NSString *)key
                         error:(NSError *_Nullable *)error {
-  id value = jsonDict[key];
-  if ([value isKindOfClass:[NSArray class]]) {
-    return value;
-  } else {
+  NSArray *value = [jsonDict getArray:key];
+  if (!value)
     *error = [self missingDataErrorWithKey:key];
-    return nil;
-  }
+  return value;
 }
 
-- (NSArray *)getArray:(const NSDictionary *)jsonDict key:(const NSString *)key {
-  id value = jsonDict[key];
-  if ([value isKindOfClass:[NSArray class]]) {
-    return value;
-  } else {
+- (NSArray *)getRequiredArray:(const NSDictionary *)jsonDict
+                          key:(const NSString *)key
+                      ofClass:(Class)class
+                        error:(NSError *_Nullable *)error {
+  NSArray *value = [self getRequiredArray:jsonDict key:key error:error];
+  if (!value)
     return nil;
+  NSMutableArray *array = [NSMutableArray arrayWithCapacity:value.count];
+  for (id item in value) {
+    if ([item isKindOfClass:class]) {
+      [array addObject:item];
+    }
   }
+  return [array copy];
 }
 
 - (NSArray<NSNumber *> *)getRequiredNumberArray:(NSDictionary *)jsonDict
                                             key:(const NSString *)key
                                           error:(NSError *_Nullable *)error {
-  NSArray *value = [self getArray:jsonDict key:key];
-  if (!value) {
-    *error = [self missingDataErrorWithKey:key];
-    return [NSArray array];
-  }
-
-  NSArray *array = (NSArray *)value;
-  NSMutableArray<NSNumber *> *numberArray =
-      [NSMutableArray arrayWithCapacity:array.count];
-  for (id item in array) {
-    if ([item isKindOfClass:[NSNumber class]]) {
-      [numberArray addObject:item];
-    }
-  }
-  return numberArray;
+  return [self getRequiredArray:jsonDict
+                            key:key
+                        ofClass:[NSNumber class]
+                          error:error];
 }
 
-- (nullable NSArray *)getTArray:(NSDictionary *)jsonDict
-                            key:(const NSString *)key
-                          class:(Class)class {
-  NSArray *array = [self getArray:jsonDict key:key];
-  if (!array) {
-    return nil;
-  }
-
-  NSMutableArray *mutableArray = [NSMutableArray arrayWithCapacity:array.count];
-  for (id item in array) {
-    if ([item isKindOfClass:class]) {
-      [mutableArray addObject:item];
-    }
-  }
-  return mutableArray;
-}
-
-- (nullable NSArray<NSNumber *> *)getNumberArray:(NSDictionary *)jsonDict
-                                             key:(const NSString *)key {
-  return [self getTArray:jsonDict key:key class:[NSNumber class]];
-}
-
-- (nullable NSArray<NSString *> *)getStringArray:(NSDictionary *)jsonDict
-                                             key:(const NSString *)key {
-  return [self getTArray:jsonDict key:key class:[NSString class]];
-}
-
-- (nullable NSArray<NSDictionary *> *)getDictArray:(NSDictionary *)jsonDict
-                                               key:(const NSString *)key {
-  return [self getTArray:jsonDict key:key class:[NSDictionary class]];
-}
-
-- (nullable NSDictionary *)getExtensions:(const NSDictionary *)jsonDict {
-  return [self getDict:jsonDict key:@"extensions"];
-}
-
-- (nullable NSDictionary *)getExtras:(const NSDictionary *)jsonDict {
-  return [self getDict:jsonDict key:@"extras"];
+- (NSArray<NSDictionary *> *)getRequiredDictArray:(NSDictionary *)jsonDict
+                                              key:(const NSString *)key
+                                            error:(NSError *_Nullable *)error {
+  return [self getRequiredArray:jsonDict
+                            key:key
+                        ofClass:[NSDictionary class]
+                          error:error];
 }
 
 #pragma mark - GLTFJson
@@ -253,18 +252,12 @@
   [self.context push:@"root"];
 
   GLTFJson *decodedJson = [[GLTFJson alloc] init];
+  decodedJson.extensionsUsed = [jsonDict getStringArray:@"extensionsUsed"];
+  decodedJson.extensionsRequired =
+      [jsonDict getStringArray:@"extensionsRequired"];
 
-  // Decode 'extensionsUsed'
-  decodedJson.extensionsUsed = [self getStringArray:jsonDict
-                                                key:@"extensionsUsed"];
-
-  // Decode 'extensionsRequired'
-  decodedJson.extensionsRequired = [self getStringArray:jsonDict
-                                                    key:@"extensionsRequired"];
-
-  // Decode 'accessors'
-  NSArray<NSDictionary *> *accessorsArray = [self getDictArray:jsonDict
-                                                           key:@"accessors"];
+  NSArray<NSDictionary *> *accessorsArray =
+      [jsonDict getDictArray:@"accessors"];
   if (accessorsArray) {
     NSMutableArray<GLTFAccessor *> *accessors =
         [NSMutableArray arrayWithCapacity:accessorsArray.count];
@@ -279,9 +272,8 @@
     decodedJson.accessors = [accessors copy];
   }
 
-  // Decode 'animations'
-  NSArray<NSDictionary *> *animationsArray = [self getDictArray:jsonDict
-                                                            key:@"animations"];
+  NSArray<NSDictionary *> *animationsArray =
+      [jsonDict getDictArray:@"animations"];
   if (animationsArray) {
     NSMutableArray<GLTFAnimation *> *animations =
         [NSMutableArray arrayWithCapacity:animationsArray.count];
@@ -312,8 +304,7 @@
   }
 
   // Decode 'buffers'
-  NSArray<NSDictionary *> *buffersArray = [self getDictArray:jsonDict
-                                                         key:@"buffers"];
+  NSArray<NSDictionary *> *buffersArray = [jsonDict getDictArray:@"buffers"];
   if (buffersArray) {
     NSMutableArray<GLTFBuffer *> *buffers =
         [NSMutableArray arrayWithCapacity:buffersArray.count];
@@ -330,7 +321,7 @@
 
   // Decode 'bufferViews'
   NSArray<NSDictionary *> *bufferViewsArray =
-      [self getDictArray:jsonDict key:@"bufferViews"];
+      [jsonDict getDictArray:@"bufferViews"];
   if (bufferViewsArray) {
     NSMutableArray<GLTFBufferView *> *bufferViews =
         [NSMutableArray arrayWithCapacity:bufferViewsArray.count];
@@ -347,8 +338,7 @@
   }
 
   // Decode 'cameras'
-  NSArray<NSDictionary *> *camerasArray = [self getDictArray:jsonDict
-                                                         key:@"cameras"];
+  NSArray<NSDictionary *> *camerasArray = [jsonDict getDictArray:@"cameras"];
   if (camerasArray) {
     NSMutableArray<GLTFCamera *> *cameras =
         [NSMutableArray arrayWithCapacity:camerasArray.count];
@@ -364,8 +354,7 @@
   }
 
   // Decode 'images'
-  NSArray<NSDictionary *> *imagesArray = [self getDictArray:jsonDict
-                                                        key:@"images"];
+  NSArray<NSDictionary *> *imagesArray = [jsonDict getDictArray:@"images"];
   if (imagesArray) {
     NSMutableArray<GLTFImage *> *images =
         [NSMutableArray arrayWithCapacity:imagesArray.count];
@@ -377,8 +366,8 @@
   }
 
   // Decode 'materials'
-  NSArray<NSDictionary *> *materialsArray = [self getDictArray:jsonDict
-                                                           key:@"materials"];
+  NSArray<NSDictionary *> *materialsArray =
+      [jsonDict getDictArray:@"materials"];
   if (materialsArray) {
     NSMutableArray<GLTFMaterial *> *materials =
         [NSMutableArray arrayWithCapacity:materialsArray.count];
@@ -394,8 +383,7 @@
   }
 
   // Decode 'meshes'
-  NSArray<NSDictionary *> *meshesArray = [self getDictArray:jsonDict
-                                                        key:@"meshes"];
+  NSArray<NSDictionary *> *meshesArray = [jsonDict getDictArray:@"meshes"];
   if (meshesArray) {
     NSMutableArray<GLTFMesh *> *meshes =
         [NSMutableArray arrayWithCapacity:meshesArray.count];
@@ -411,8 +399,7 @@
   }
 
   // Decode 'nodes'
-  NSArray<NSDictionary *> *nodesArray = [self getDictArray:jsonDict
-                                                       key:@"nodes"];
+  NSArray<NSDictionary *> *nodesArray = [jsonDict getDictArray:@"nodes"];
   if (nodesArray) {
     NSMutableArray<GLTFNode *> *nodes =
         [NSMutableArray arrayWithCapacity:nodesArray.count];
@@ -424,8 +411,7 @@
   }
 
   // Decode 'samplers'
-  NSArray<NSDictionary *> *samplersArray = [self getDictArray:jsonDict
-                                                          key:@"samplers"];
+  NSArray<NSDictionary *> *samplersArray = [jsonDict getDictArray:@"samplers"];
   if (samplersArray) {
     NSMutableArray<GLTFSampler *> *samplers =
         [NSMutableArray arrayWithCapacity:samplersArray.count];
@@ -437,11 +423,10 @@
   }
 
   // Decode 'scene'
-  decodedJson.scene = [self getNumber:jsonDict key:@"scene"];
+  decodedJson.scene = [jsonDict getNumber:@"scene"];
 
   // Decode 'scenes'
-  NSArray<NSDictionary *> *scenesArray = [self getDictArray:jsonDict
-                                                        key:@"scenes"];
+  NSArray<NSDictionary *> *scenesArray = [jsonDict getDictArray:@"scenes"];
   if (scenesArray) {
     NSMutableArray<GLTFScene *> *scenes =
         [NSMutableArray arrayWithCapacity:scenesArray.count];
@@ -453,8 +438,7 @@
   }
 
   // Decode 'skins'
-  NSArray<NSDictionary *> *skinsArray = [self getDictArray:jsonDict
-                                                       key:@"skins"];
+  NSArray<NSDictionary *> *skinsArray = [jsonDict getDictArray:@"skins"];
   if (skinsArray) {
     NSMutableArray<GLTFSkin *> *skins =
         [NSMutableArray arrayWithCapacity:skinsArray.count];
@@ -470,8 +454,7 @@
   }
 
   // Decode 'textures'
-  NSArray<NSDictionary *> *texturesArray = [self getDictArray:jsonDict
-                                                          key:@"textures"];
+  NSArray<NSDictionary *> *texturesArray = [jsonDict getDictArray:@"textures"];
   if (texturesArray) {
     NSMutableArray<GLTFTexture *> *textures =
         [NSMutableArray arrayWithCapacity:texturesArray.count];
@@ -482,11 +465,8 @@
     decodedJson.textures = [textures copy];
   }
 
-  // Decode 'extensions'
-  decodedJson.extensions = [self getExtensions:jsonDict];
-
-  // Decode 'extras'
-  decodedJson.extras = [self getExtras:jsonDict];
+  decodedJson.extensions = [jsonDict getExtensions];
+  decodedJson.extras = [jsonDict getExtras];
 
   [self.context pop];
   return decodedJson;
@@ -500,12 +480,6 @@
 
   GLTFAccessor *accessor = [[GLTFAccessor alloc] init];
 
-  accessor.bufferView = [self getNumber:jsonDict key:@"bufferView"];
-
-  NSNumber *byteOffset = [self getNumber:jsonDict key:@"byteOffset"];
-  if (byteOffset)
-    accessor.byteOffset = [byteOffset integerValue];
-
   accessor.componentType = [self getRequiredInteger:jsonDict
                                                 key:@"componentType"
                                               error:error];
@@ -513,10 +487,6 @@
     [self.context pop];
     return nil;
   }
-
-  NSNumber *normalized = [self getNumber:jsonDict key:@"normalized"];
-  if (normalized)
-    accessor.normalized = [normalized boolValue];
 
   accessor.count = [self getRequiredInteger:jsonDict key:@"count" error:error];
   if (*error) {
@@ -530,15 +500,7 @@
     return nil;
   }
 
-  NSArray *max = [self getNumberArray:jsonDict key:@"max"];
-  if (max)
-    accessor.max = max;
-
-  NSArray *min = [self getNumberArray:jsonDict key:@"min"];
-  if (min)
-    accessor.min = min;
-
-  NSDictionary *sparseDict = [self getDict:jsonDict key:@"sparse"];
+  NSDictionary *sparseDict = [jsonDict getDict:@"sparse"];
   if (sparseDict) {
     accessor.sparse = [self decodeAccessorSparse:sparseDict error:error];
     if (*error) {
@@ -547,9 +509,14 @@
     }
   }
 
-  accessor.name = [self getString:jsonDict key:@"name"];
-  accessor.extensions = [self getExtensions:jsonDict];
-  accessor.extras = [self getExtras:jsonDict];
+  accessor.bufferView = [jsonDict getNumber:@"bufferView"];
+  accessor.byteOffset = [jsonDict getNumber:@"byteOffset"];
+  accessor.normalized = [jsonDict getNumber:@"normalized"];
+  accessor.max = [jsonDict getNumberArray:@"max"];
+  accessor.min = [jsonDict getNumberArray:@"min"];
+  accessor.name = [jsonDict getName];
+  accessor.extensions = [jsonDict getExtensions];
+  accessor.extras = [jsonDict getExtras];
 
   [self.context pop];
   return accessor;
@@ -596,8 +563,8 @@
     return nil;
   }
 
-  sparse.extensions = [self getExtensions:jsonDict];
-  sparse.extras = [self getExtras:jsonDict];
+  sparse.extensions = [jsonDict getExtensions];
+  sparse.extras = [jsonDict getExtras];
 
   [self.context pop];
   return sparse;
@@ -620,10 +587,6 @@
     return nil;
   }
 
-  NSNumber *byteOffset = [self getNumber:jsonDict key:@"byteOffset"];
-  if (byteOffset)
-    obj.byteOffset = [byteOffset integerValue];
-
   obj.componentType = [[self getRequiredNumber:jsonDict
                                            key:@"componentType"
                                          error:error] integerValue];
@@ -632,8 +595,9 @@
     return nil;
   }
 
-  obj.extensions = [self getExtensions:jsonDict];
-  obj.extras = [self getExtras:jsonDict];
+  obj.byteOffset = [jsonDict getNumber:@"byteOffset"];
+  obj.extensions = [jsonDict getExtensions];
+  obj.extras = [jsonDict getExtras];
 
   [self.context pop];
   return obj;
@@ -656,12 +620,9 @@
     return nil;
   }
 
-  NSNumber *byteOffset = [self getNumber:jsonDict key:@"byteOffset"];
-  if (byteOffset)
-    obj.byteOffset = [byteOffset integerValue];
-
-  obj.extensions = [self getExtensions:jsonDict];
-  obj.extras = [self getExtras:jsonDict];
+  obj.byteOffset = [jsonDict getNumber:@"byteOffset"];
+  obj.extensions = [jsonDict getExtensions];
+  obj.extras = [jsonDict getExtras];
 
   [self.context pop];
   return obj;
@@ -675,54 +636,47 @@
 
   GLTFAnimation *animation = [[GLTFAnimation alloc] init];
 
-  NSArray *channelsArray = [self getRequiredArray:jsonDict
-                                              key:@"channels"
-                                            error:error];
+  NSArray<NSDictionary *> *channelsArray =
+      [self getRequiredDictArray:jsonDict key:@"channels" error:error];
   if (*error) {
     [self.context pop];
     return nil;
   }
   NSMutableArray<GLTFAnimationChannel *> *channels = [NSMutableArray array];
-  for (id channelDict in channelsArray) {
-    if ([channelDict isKindOfClass:[NSDictionary class]]) {
-      GLTFAnimationChannel *channel = [self decodeAnimationChannel:channelDict
-                                                             error:error];
-      if (*error) {
-        [self.context pop];
-        return nil;
-      }
-      [channels addObject:channel];
+  for (NSDictionary *channelDict in channelsArray) {
+    GLTFAnimationChannel *channel = [self decodeAnimationChannel:channelDict
+                                                           error:error];
+    if (*error) {
+      [self.context pop];
+      return nil;
     }
+    [channels addObject:channel];
   }
   animation.channels = channels;
 
-  NSArray *samplersArray = [self getRequiredArray:jsonDict
-                                              key:@"samplers"
-                                            error:error];
+  NSArray<NSDictionary *> *samplersArray =
+      [self getRequiredDictArray:jsonDict key:@"samplers" error:error];
   if (*error) {
     [self.context pop];
     return nil;
   }
   NSMutableArray<GLTFAnimationSampler *> *samplers = [NSMutableArray array];
   for (id samplerDict in samplersArray) {
-    if ([samplerDict isKindOfClass:[NSDictionary class]]) {
-      GLTFAnimationSampler *sampler = [self decodeAnimationSampler:samplerDict
-                                                             error:error];
-      if (*error) {
-        [self.context pop];
-        return nil;
-      }
-      [samplers addObject:sampler];
+    GLTFAnimationSampler *sampler = [self decodeAnimationSampler:samplerDict
+                                                           error:error];
+    if (*error) {
+      [self.context pop];
+      return nil;
     }
+    [samplers addObject:sampler];
   }
   animation.samplers = samplers;
 
-  animation.name = [self getString:jsonDict key:@"name"];
-  animation.extensions = [self getExtensions:jsonDict];
-  animation.extras = [self getExtras:jsonDict];
+  animation.name = [jsonDict getName];
+  animation.extensions = [jsonDict getExtensions];
+  animation.extras = [jsonDict getExtras];
 
   [self.context pop];
-
   return animation;
 }
 
@@ -744,7 +698,6 @@
   }
   channel.sampler = samplerIndex;
 
-  // Decode the 'target' property, which is required.
   NSDictionary *targetDict = [self getRequiredDict:jsonDict
                                                key:@"target"
                                              error:error];
@@ -758,8 +711,8 @@
     return nil;
   }
 
-  channel.extensions = [self getExtensions:jsonDict];
-  channel.extras = [self getExtras:jsonDict];
+  channel.extensions = [jsonDict getExtensions];
+  channel.extras = [jsonDict getExtras];
 
   [self.context pop];
   return channel;
@@ -775,8 +728,6 @@
   GLTFAnimationChannelTarget *target =
       [[GLTFAnimationChannelTarget alloc] init];
 
-  target.node = [self getNumber:jsonDict key:@"node"];
-
   NSString *path = [self getRequiredString:jsonDict key:@"path" error:error];
   if (*error) {
     [self.context pop];
@@ -784,8 +735,9 @@
   }
   target.path = path;
 
-  target.extensions = [self getExtensions:jsonDict];
-  target.extras = [self getExtras:jsonDict];
+  target.node = [jsonDict getNumber:@"node"];
+  target.extensions = [jsonDict getExtensions];
+  target.extras = [jsonDict getExtras];
 
   [self.context pop];
   return target;
@@ -818,12 +770,9 @@
   }
   sampler.output = outputIndex;
 
-  NSString *interpolation = [self getString:jsonDict key:@"interpolation"];
-  if (interpolation)
-    sampler.interpolation = interpolation;
-
-  sampler.extensions = [self getExtensions:jsonDict];
-  sampler.extras = [self getExtras:jsonDict];
+  sampler.interpolation = [jsonDict getString:@"interpolation"];
+  sampler.extensions = [jsonDict getExtensions];
+  sampler.extras = [jsonDict getExtras];
 
   [self.context pop];
   return sampler;
@@ -835,23 +784,19 @@
                               error:(NSError *_Nullable *)error {
   [self.context push:@"GLTFAsset"];
 
-  // Required 'version' property
-  NSString *version = [self getRequiredString:jsonDict
-                                          key:@"version"
-                                        error:error];
+  GLTFAsset *asset = [[GLTFAsset alloc] init];
+
+  asset.version = [self getRequiredString:jsonDict key:@"version" error:error];
   if (*error) {
     [self.context pop];
     return nil;
   }
 
-  GLTFAsset *asset = [[GLTFAsset alloc] init];
-  asset.version = version;
-
-  asset.copyright = [self getString:jsonDict key:@"copyright"];
-  asset.generator = [self getString:jsonDict key:@"generator"];
-  asset.minVersion = [self getString:jsonDict key:@"minVersion"];
-  asset.extensions = [self getExtensions:jsonDict];
-  asset.extras = [self getExtras:jsonDict];
+  asset.copyright = [jsonDict getString:@"copyright"];
+  asset.generator = [jsonDict getString:@"generator"];
+  asset.minVersion = [jsonDict getString:@"minVersion"];
+  asset.extensions = [jsonDict getExtensions];
+  asset.extras = [jsonDict getExtras];
 
   [self.context pop];
   return asset;
@@ -873,10 +818,10 @@
     return nil;
   }
 
-  buffer.uri = [self getString:jsonDict key:@"uri"];
-  buffer.name = [self getString:jsonDict key:@"name"];
-  buffer.extensions = [self getExtensions:jsonDict];
-  buffer.extras = [self getExtras:jsonDict];
+  buffer.uri = [jsonDict getString:@"uri"];
+  buffer.name = [jsonDict getName];
+  buffer.extensions = [jsonDict getExtensions];
+  buffer.extras = [jsonDict getExtras];
 
   [self.context pop];
   return buffer;
@@ -906,15 +851,12 @@
     return nil;
   }
 
-  NSNumber *byteOffset = [self getNumber:jsonDict key:@"byteOffset"];
-  if (byteOffset)
-    bufferView.byteOffset = [byteOffset integerValue];
-
-  bufferView.byteStride = [self getNumber:jsonDict key:@"byteStride"];
-  bufferView.target = [self getNumber:jsonDict key:@"target"];
-  bufferView.name = [self getString:jsonDict key:@"name"];
-  bufferView.extensions = [self getExtensions:jsonDict];
-  bufferView.extras = [self getExtras:jsonDict];
+  bufferView.byteOffset = [jsonDict getNumber:@"byteOffset"];
+  bufferView.byteStride = [jsonDict getNumber:@"byteStride"];
+  bufferView.target = [jsonDict getNumber:@"target"];
+  bufferView.name = [jsonDict getName];
+  bufferView.extensions = [jsonDict getExtensions];
+  bufferView.extras = [jsonDict getExtras];
 
   [self.context pop];
   return bufferView;
@@ -934,7 +876,7 @@
     return nil;
   }
 
-  NSDictionary *orthographicDict = [self getDict:jsonDict key:@"orthographic"];
+  NSDictionary *orthographicDict = [jsonDict getDict:@"orthographic"];
   if (orthographicDict) {
     camera.orthographic = [self decodeCameraOrthographic:orthographicDict
                                                    error:error];
@@ -944,7 +886,7 @@
     }
   }
 
-  NSDictionary *perspectiveDict = [self getDict:jsonDict key:@"perspective"];
+  NSDictionary *perspectiveDict = [jsonDict getDict:@"perspective"];
   if (perspectiveDict) {
     camera.perspective = [self decodeCameraPerspective:perspectiveDict
                                                  error:error];
@@ -954,9 +896,9 @@
     }
   }
 
-  camera.name = [self getString:jsonDict key:@"name"];
-  camera.extensions = [self getExtensions:jsonDict];
-  camera.extras = [self getExtras:jsonDict];
+  camera.name = [jsonDict getName];
+  camera.extensions = [jsonDict getExtensions];
+  camera.extras = [jsonDict getExtras];
 
   [self.context pop];
   return camera;
@@ -999,8 +941,8 @@
   }
   camera.znear = [znear floatValue];
 
-  camera.extensions = [self getExtensions:jsonDict];
-  camera.extras = [self getExtras:jsonDict];
+  camera.extensions = [jsonDict getExtensions];
+  camera.extras = [jsonDict getExtras];
 
   [self.context pop];
   return camera;
@@ -1029,10 +971,10 @@
   }
   camera.znear = [znear floatValue];
 
-  camera.aspectRatio = [self getNumber:jsonDict key:@"aspectRatio"];
-  camera.zfar = [self getNumber:jsonDict key:@"zfar"];
-  camera.extensions = [self getExtensions:jsonDict];
-  camera.extras = [self getExtras:jsonDict];
+  camera.aspectRatio = [jsonDict getNumber:@"aspectRatio"];
+  camera.zfar = [jsonDict getNumber:@"zfar"];
+  camera.extensions = [jsonDict getExtensions];
+  camera.extras = [jsonDict getExtras];
 
   [self.context pop];
   return camera;
@@ -1045,15 +987,56 @@
 
   GLTFImage *image = [[GLTFImage alloc] init];
 
-  image.uri = [self getString:jsonDict key:@"uri"];
-  image.mimeType = [self getString:jsonDict key:@"mimeType"];
-  image.bufferView = [self getNumber:jsonDict key:@"bufferView"];
-  image.name = [self getString:jsonDict key:@"name"];
-  image.extensions = [self getExtensions:jsonDict];
-  image.extras = [self getExtras:jsonDict];
+  image.uri = [jsonDict getString:@"uri"];
+  image.mimeType = [jsonDict getString:@"mimeType"];
+  image.bufferView = [jsonDict getNumber:@"bufferView"];
+  image.name = [jsonDict getName];
+  image.extensions = [jsonDict getExtensions];
+  image.extras = [jsonDict getExtras];
 
   [self.context pop];
   return image;
+}
+
+#pragma mark - GLTFTexture
+
+- (GLTFTexture *)decodeTexture:(NSDictionary *)jsonDict {
+  [self.context push:@"GLTFTexture"];
+
+  GLTFTexture *texture = [[GLTFTexture alloc] init];
+
+  texture.sampler = [jsonDict getNumber:@"sampler"];
+  texture.source = [jsonDict getNumber:@"source"];
+  texture.name = [jsonDict getName];
+  texture.extensions = [jsonDict getExtensions];
+  texture.extras = [jsonDict getExtras];
+
+  [self.context pop];
+  return texture;
+}
+
+#pragma mark - GLTFTextureInfo
+
+- (nullable GLTFTextureInfo *)decodeTextureInfo:(NSDictionary *)jsonDict
+                                          error:(NSError *_Nullable *)error {
+  [self.context push:@"GLTFTextureInfo"];
+
+  GLTFTextureInfo *textureInfo = [[GLTFTextureInfo alloc] init];
+
+  textureInfo.index = [self getRequiredInteger:jsonDict
+                                           key:@"index"
+                                         error:error];
+  if (*error) {
+    [self.context pop];
+    return nil;
+  }
+
+  textureInfo.texCoord = [jsonDict getNumber:@"texCoord"];
+  textureInfo.extensions = [jsonDict getExtensions];
+  textureInfo.extras = [jsonDict getExtras];
+
+  [self.context pop];
+  return textureInfo;
 }
 
 #pragma mark - GLTFMaterial
@@ -1064,12 +1047,8 @@
 
   GLTFMaterial *material = [[GLTFMaterial alloc] init];
 
-  material.name = [self getString:jsonDict key:@"name"];
-  material.extensions = [self getExtensions:jsonDict];
-  material.extras = [self getExtras:jsonDict];
-
   NSDictionary *pbrMetallicRoughnessDict =
-      [self getDict:jsonDict key:@"pbrMetallicRoughness"];
+      [jsonDict getDict:@"pbrMetallicRoughness"];
   if (pbrMetallicRoughnessDict) {
     material.pbrMetallicRoughness =
         [self decodeMaterialPBRMetallicRoughness:pbrMetallicRoughnessDict
@@ -1080,8 +1059,7 @@
     }
   }
 
-  NSDictionary *normalTextureDict = [self getDict:jsonDict
-                                              key:@"normalTexture"];
+  NSDictionary *normalTextureDict = [jsonDict getDict:@"normalTexture"];
   if (normalTextureDict) {
     material.normalTexture =
         [self decodeMaterialNormalTextureInfo:normalTextureDict error:error];
@@ -1091,8 +1069,7 @@
     }
   }
 
-  NSDictionary *occlusionTextureDict = [self getDict:jsonDict
-                                                 key:@"occlusionTexture"];
+  NSDictionary *occlusionTextureDict = [jsonDict getDict:@"occlusionTexture"];
   if (occlusionTextureDict) {
     material.occlusionTexture =
         [self decodeMaterialOcclusionTextureInfo:occlusionTextureDict
@@ -1103,8 +1080,7 @@
     }
   }
 
-  NSDictionary *emissiveTextureDict = [self getDict:jsonDict
-                                                key:@"emissiveTexture"];
+  NSDictionary *emissiveTextureDict = [jsonDict getDict:@"emissiveTexture"];
   if (emissiveTextureDict) {
     material.emissiveTexture = [self decodeTextureInfo:emissiveTextureDict
                                                  error:error];
@@ -1114,23 +1090,13 @@
     }
   }
 
-  NSArray<NSNumber *> *emissiveFactor = [self getNumberArray:jsonDict
-                                                         key:@"emissiveFactor"];
-  if (emissiveFactor && emissiveFactor.count == 3) {
-    material.emissiveFactor = emissiveFactor;
-  }
-
-  NSString *alphaMode = [self getString:jsonDict key:@"alphaMode"];
-  if (alphaMode)
-    material.alphaMode = alphaMode;
-
-  NSNumber *alphaCutoff = [self getNumber:jsonDict key:@"alphaCutoff"];
-  if (alphaCutoff)
-    material.alphaCutoff = [alphaCutoff floatValue];
-
-  NSNumber *doubleSided = [self getNumber:jsonDict key:@"doubleSided"];
-  if (doubleSided)
-    material.doubleSided = [doubleSided boolValue];
+  material.emissiveFactor = [jsonDict getNumberArray:@"emissiveFactor"];
+  material.alphaMode = [jsonDict getString:@"alphaMode"];
+  material.alphaCutoff = [jsonDict getNumber:@"alphaCutoff"];
+  material.doubleSided = [jsonDict getNumber:@"doubleSided"];
+  material.name = [jsonDict getName];
+  material.extensions = [jsonDict getExtensions];
+  material.extras = [jsonDict getExtras];
 
   [self.context pop];
   return material;
@@ -1154,18 +1120,10 @@
     return nil;
   }
 
-  NSNumber *texCoord = [self getNumber:jsonDict key:@"texCoord"];
-  if (texCoord) {
-    textureInfo.texCoord = [texCoord integerValue];
-  }
-
-  NSNumber *scale = [self getNumber:jsonDict key:@"scale"];
-  if (scale) {
-    textureInfo.scale = [scale floatValue];
-  }
-
-  textureInfo.extensions = [self getExtensions:jsonDict];
-  textureInfo.extras = [self getExtras:jsonDict];
+  textureInfo.texCoord = [jsonDict getNumber:@"texCoord"];
+  textureInfo.scale = [jsonDict getNumber:@"scale"];
+  textureInfo.extensions = [jsonDict getExtensions];
+  textureInfo.extras = [jsonDict getExtras];
 
   [self.context pop];
   return textureInfo;
@@ -1189,18 +1147,10 @@
     return nil;
   }
 
-  NSNumber *texCoord = [self getNumber:jsonDict key:@"texCoord"];
-  if (texCoord) {
-    textureInfo.texCoord = [texCoord integerValue];
-  }
-
-  NSNumber *strength = [self getNumber:jsonDict key:@"strength"];
-  if (strength) {
-    textureInfo.strength = [strength floatValue];
-  }
-
-  textureInfo.extensions = [self getExtensions:jsonDict];
-  textureInfo.extras = [self getExtras:jsonDict];
+  textureInfo.texCoord = [jsonDict getNumber:@"texCoord"];
+  textureInfo.strength = [jsonDict getNumber:@"strength"];
+  textureInfo.extensions = [jsonDict getExtensions];
+  textureInfo.extras = [jsonDict getExtras];
 
   [self.context pop];
   return textureInfo;
@@ -1216,14 +1166,7 @@
   GLTFMaterialPBRMetallicRoughness *roughness =
       [[GLTFMaterialPBRMetallicRoughness alloc] init];
 
-  NSArray<NSNumber *> *baseColorFactor =
-      [self getNumberArray:jsonDict key:@"baseColorFactor"];
-  if (baseColorFactor && baseColorFactor.count == 4) {
-    roughness.baseColorFactor = baseColorFactor;
-  }
-
-  NSDictionary *baseColorTextureDict = [self getDict:jsonDict
-                                                 key:@"baseColorTexture"];
+  NSDictionary *baseColorTextureDict = [jsonDict getDict:@"baseColorTexture"];
   if (baseColorTextureDict) {
     roughness.baseColorTexture = [self decodeTextureInfo:baseColorTextureDict
                                                    error:error];
@@ -1233,16 +1176,8 @@
     }
   }
 
-  NSNumber *metallicFactor = [self getNumber:jsonDict key:@"metallicFactor"];
-  if (metallicFactor)
-    roughness.metallicFactor = [metallicFactor floatValue];
-
-  NSNumber *roughnessFactor = [self getNumber:jsonDict key:@"roughnessFactor"];
-  if (roughnessFactor)
-    roughness.roughnessFactor = [roughnessFactor floatValue];
-
   NSDictionary *metallicRoughnessTextureDict =
-      [self getDict:jsonDict key:@"metallicRoughnessTexture"];
+      [jsonDict getDict:@"metallicRoughnessTexture"];
   if (metallicRoughnessTextureDict) {
     roughness.metallicRoughnessTexture =
         [self decodeTextureInfo:metallicRoughnessTextureDict error:error];
@@ -1252,8 +1187,11 @@
     }
   }
 
-  roughness.extensions = [self getExtensions:jsonDict];
-  roughness.extras = [self getExtras:jsonDict];
+  roughness.baseColorFactor = [jsonDict getNumberArray:@"baseColorFactor"];
+  roughness.metallicFactor = [jsonDict getNumber:@"metallicFactor"];
+  roughness.roughnessFactor = [jsonDict getNumber:@"roughnessFactor"];
+  roughness.extensions = [jsonDict getExtensions];
+  roughness.extras = [jsonDict getExtras];
 
   [self.context pop];
   return roughness;
@@ -1265,33 +1203,30 @@
                             error:(NSError *_Nullable *)error {
   [self.context push:@"GLTFMesh"];
 
-  NSArray *primitivesArray = [self getRequiredArray:jsonDict
-                                                key:@"primitives"
-                                              error:error];
+  NSArray<NSDictionary *> *primitivesArray =
+      [self getRequiredDictArray:jsonDict key:@"primitives" error:error];
   if (*error) {
     [self.context pop];
     return nil;
   }
   NSMutableArray<GLTFMeshPrimitive *> *primitives = [NSMutableArray array];
-  for (id primitiveDict in primitivesArray) {
-    if ([primitiveDict isKindOfClass:[NSDictionary class]]) {
-      GLTFMeshPrimitive *primitive = [self decodeMeshPrimitive:primitiveDict
-                                                         error:error];
-      if (*error) {
-        [self.context pop];
-        return nil;
-      }
-      [primitives addObject:primitive];
+  for (NSDictionary *primitiveDict in primitivesArray) {
+    GLTFMeshPrimitive *primitive = [self decodeMeshPrimitive:primitiveDict
+                                                       error:error];
+    if (*error) {
+      [self.context pop];
+      return nil;
     }
+    [primitives addObject:primitive];
   }
 
   GLTFMesh *mesh = [[GLTFMesh alloc] init];
   mesh.primitives = [primitives copy];
 
-  mesh.weights = [self getNumberArray:jsonDict key:@"weights"];
-  mesh.name = [self getString:jsonDict key:@"name"];
-  mesh.extensions = [self getExtensions:jsonDict];
-  mesh.extras = [self getExtras:jsonDict];
+  mesh.weights = [jsonDict getNumberArray:@"weights"];
+  mesh.name = [jsonDict getName];
+  mesh.extensions = [jsonDict getExtensions];
+  mesh.extras = [jsonDict getExtras];
 
   [self.context pop];
   return mesh;
@@ -1324,14 +1259,12 @@
   GLTFMeshPrimitive *meshPrimitive = [[GLTFMeshPrimitive alloc] init];
   meshPrimitive.attributes = [attributesDict copy];
 
-  meshPrimitive.indices = [self getNumber:jsonDict key:@"indices"];
-  meshPrimitive.material = [self getNumber:jsonDict key:@"material"];
-  NSNumber *mode = [self getNumber:jsonDict key:@"mode"];
-  if (mode)
-    meshPrimitive.mode = [mode integerValue];
-  meshPrimitive.targets = [self getNumberArray:jsonDict key:@"targets"];
-  meshPrimitive.extensions = [self getExtensions:jsonDict];
-  meshPrimitive.extras = [self getExtras:jsonDict];
+  meshPrimitive.indices = [jsonDict getNumber:@"indices"];
+  meshPrimitive.material = [jsonDict getNumber:@"material"];
+  meshPrimitive.mode = [jsonDict getNumber:@"mode"];
+  meshPrimitive.targets = [jsonDict getNumberArray:@"targets"];
+  meshPrimitive.extensions = [jsonDict getExtensions];
+  meshPrimitive.extras = [jsonDict getExtras];
 
   [self.context pop];
   return meshPrimitive;
@@ -1344,48 +1277,18 @@
 
   GLTFNode *node = [[GLTFNode alloc] init];
 
-  // Optional properties with default values
-  node.camera = [self getNumber:jsonDict key:@"camera"];
-  node.children = [self getNumberArray:jsonDict key:@"children"];
-  node.skin = [self getNumber:jsonDict key:@"skin"];
-  node.mesh = [self getNumber:jsonDict key:@"mesh"];
-  node.weights = [self getNumberArray:jsonDict key:@"weights"];
-  node.name = [self getString:jsonDict key:@"name"];
-  node.extensions = [self getExtensions:jsonDict];
-  node.extras = [self getExtras:jsonDict];
-
-  // Handle transformation properties with defaults
-  NSArray<NSNumber *> *matrixArray = [self getNumberArray:jsonDict
-                                                      key:@"matrix"];
-  if (matrixArray && matrixArray.count == 16) {
-    node.matrix = simd_matrix(
-        (vector_float4){matrixArray[0].floatValue, matrixArray[1].floatValue,
-                        matrixArray[2].floatValue, matrixArray[3].floatValue},
-        (vector_float4){matrixArray[4].floatValue, matrixArray[5].floatValue,
-                        matrixArray[6].floatValue, matrixArray[7].floatValue},
-        (vector_float4){matrixArray[8].floatValue, matrixArray[9].floatValue,
-                        matrixArray[10].floatValue, matrixArray[11].floatValue},
-        (vector_float4){matrixArray[12].floatValue, matrixArray[13].floatValue,
-                        matrixArray[14].floatValue,
-                        matrixArray[15].floatValue});
-  }
-
-  NSArray<NSNumber *> *rotation = [self getNumberArray:jsonDict
-                                                   key:@"rotation"];
-  if (rotation && rotation.count == 4) {
-    node.rotation = rotation;
-  }
-
-  NSArray<NSNumber *> *scale = [self getNumberArray:jsonDict key:@"scale"];
-  if (scale && scale.count == 3) {
-    node.scale = scale;
-  }
-
-  NSArray<NSNumber *> *translation = [self getNumberArray:jsonDict
-                                                      key:@"translation"];
-  if (translation && translation.count == 3) {
-    node.translation = translation;
-  }
+  node.matrix = [jsonDict getNumberArray:@"matrix"];
+  node.rotation = [jsonDict getNumberArray:@"rotation"];
+  node.scale = [jsonDict getNumberArray:@"scale"];
+  node.translation = [jsonDict getNumberArray:@"translation"];
+  node.camera = [jsonDict getNumber:@"camera"];
+  node.children = [jsonDict getNumberArray:@"children"];
+  node.skin = [jsonDict getNumber:@"skin"];
+  node.mesh = [jsonDict getNumber:@"mesh"];
+  node.weights = [jsonDict getNumberArray:@"weights"];
+  node.name = [jsonDict getName];
+  node.extensions = [jsonDict getExtensions];
+  node.extras = [jsonDict getExtras];
 
   [self.context pop];
   return node;
@@ -1397,21 +1300,13 @@
   [self.context push:@"GLTFSampler"];
 
   GLTFSampler *sampler = [[GLTFSampler alloc] init];
-
-  // Optional properties with default values
-  sampler.magFilter = [self getNumber:jsonDict key:@"magFilter"];
-  sampler.minFilter = [self getNumber:jsonDict key:@"minFilter"];
-  NSNumber *wrapS = [self getNumber:jsonDict key:@"wrapS"];
-  if (wrapS) {
-    sampler.wrapS = [wrapS integerValue];
-  }
-  NSNumber *wrapT = [self getNumber:jsonDict key:@"wrapT"];
-  if (wrapT) {
-    sampler.wrapT = [wrapT integerValue];
-  }
-  sampler.name = [self getString:jsonDict key:@"name"];
-  sampler.extensions = [self getExtensions:jsonDict];
-  sampler.extras = [self getExtras:jsonDict];
+  sampler.magFilter = [jsonDict getNumber:@"magFilter"];
+  sampler.minFilter = [jsonDict getNumber:@"minFilter"];
+  sampler.wrapS = [jsonDict getNumber:@"wrapS"];
+  sampler.wrapT = [jsonDict getNumber:@"wrapT"];
+  sampler.name = [jsonDict getName];
+  sampler.extensions = [jsonDict getExtensions];
+  sampler.extras = [jsonDict getExtras];
 
   [self.context pop];
   return sampler;
@@ -1424,10 +1319,10 @@
 
   GLTFScene *scene = [[GLTFScene alloc] init];
 
-  scene.nodes = [self getNumberArray:jsonDict key:@"nodes"];
-  scene.name = [self getString:jsonDict key:@"name"];
-  scene.extensions = [self getExtensions:jsonDict];
-  scene.extras = [self getExtras:jsonDict];
+  scene.nodes = [jsonDict getNumberArray:@"nodes"];
+  scene.name = [jsonDict getName];
+  scene.extensions = [jsonDict getExtensions];
+  scene.extras = [jsonDict getExtras];
 
   [self.context pop];
   return scene;
@@ -1450,60 +1345,14 @@
   GLTFSkin *skin = [[GLTFSkin alloc] init];
   skin.joints = joints;
 
-  skin.inverseBindMatrices = [self getNumber:jsonDict
-                                         key:@"inverseBindMatrices"];
-  skin.skeleton = [self getNumber:jsonDict key:@"skeleton"];
-  skin.name = [self getString:jsonDict key:@"name"];
-  skin.extensions = [self getExtensions:jsonDict];
-  skin.extras = [self getExtras:jsonDict];
+  skin.inverseBindMatrices = [jsonDict getNumber:@"inverseBindMatrices"];
+  skin.skeleton = [jsonDict getNumber:@"skeleton"];
+  skin.name = [jsonDict getName];
+  skin.extensions = [jsonDict getExtensions];
+  skin.extras = [jsonDict getExtras];
 
   [self.context pop];
   return skin;
-}
-
-#pragma mark - GLTFTexture
-
-- (GLTFTexture *)decodeTexture:(NSDictionary *)jsonDict {
-  [self.context push:@"GLTFTexture"];
-
-  GLTFTexture *texture = [[GLTFTexture alloc] init];
-
-  texture.sampler = [self getNumber:jsonDict key:@"sampler"];
-  texture.source = [self getNumber:jsonDict key:@"source"];
-  texture.name = [self getString:jsonDict key:@"name"];
-  texture.extensions = [self getExtensions:jsonDict];
-  texture.extras = [self getExtras:jsonDict];
-
-  [self.context pop];
-  return texture;
-}
-
-#pragma mark - GLTFTextureInfo
-
-- (nullable GLTFTextureInfo *)decodeTextureInfo:(NSDictionary *)jsonDict
-                                          error:(NSError *_Nullable *)error {
-  [self.context push:@"GLTFTextureInfo"];
-
-  GLTFTextureInfo *textureInfo = [[GLTFTextureInfo alloc] init];
-
-  textureInfo.index = [self getRequiredInteger:jsonDict
-                                           key:@"index"
-                                         error:error];
-  if (*error) {
-    [self.context pop];
-    return nil;
-  }
-
-  NSNumber *texCoord = [self getNumber:jsonDict key:@"texCoord"];
-  if (texCoord) {
-    textureInfo.texCoord = [texCoord integerValue];
-  }
-
-  textureInfo.extensions = [self getExtensions:jsonDict];
-  textureInfo.extras = [self getExtras:jsonDict];
-
-  [self.context pop];
-  return textureInfo;
 }
 
 @end

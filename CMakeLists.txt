@@ -22,7 +22,6 @@ if(NOT ios_cmake_POPULATED)
 endif()
 
 if(BUILD_TESTS OR BUILD_EXAMPLE)
-    add_subdirectory(sample-models)
     set(CONFIG_H ${CMAKE_BINARY_DIR}/config.h)
     configure_file(config.h.in ${CONFIG_H})
 endif()

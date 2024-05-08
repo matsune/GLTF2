@@ -133,7 +133,7 @@
                     byteOffset:(NSInteger)byteOffset {
   NSData *bufferData = self.bufferDatas[bufferView.buffer];
   return [bufferData
-      subdataWithRange:NSMakeRange(bufferView.byteOffset + byteOffset,
+      subdataWithRange:NSMakeRange(bufferView.byteOffsetValue + byteOffset,
                                    bufferView.byteLength - byteOffset)];
 }
 
@@ -177,8 +177,8 @@
         self.json.bufferViews[accessor.bufferView.integerValue];
     NSData *bufferData = self.bufferDatas[bufferView.buffer];
     NSData *subdata =
-        [bufferData subdataWithRange:NSMakeRange(bufferView.byteOffset +
-                                                     accessor.byteOffset,
+        [bufferData subdataWithRange:NSMakeRange(bufferView.byteOffsetValue +
+                                                     accessor.byteOffsetValue,
                                                  data.length)];
     memcpy(data.mutableBytes, subdata.bytes, subdata.length);
   }
@@ -193,7 +193,7 @@
                             count:accessor.sparse.count];
   NSData *valuesData =
       [self dataFromBufferViewIndex:accessor.sparse.values.bufferView
-                         byteOffset:accessor.sparse.values.byteOffset];
+                         byteOffset:accessor.sparse.values.byteOffsetValue];
 
   for (int i = 0; i < accessor.sparse.count; i++) {
     NSUInteger index = indices[i].unsignedIntValue;
@@ -208,7 +208,7 @@
                              (GLTFAccessorSparseIndices *)indices
                                          count:(NSInteger)count {
   NSData *indicesData = [self dataFromBufferViewIndex:indices.bufferView
-                                           byteOffset:indices.byteOffset];
+                                           byteOffset:indices.byteOffsetValue];
   NSMutableArray *array = [NSMutableArray arrayWithCapacity:count];
   for (int i = 0; i < count; i++) {
     switch (indices.componentType) {

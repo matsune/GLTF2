@@ -1,4 +1,4 @@
-#import "GLTF2Object+SceneKit.h"
+#import "GLTFData+SceneKit.h"
 
 static SCNGeometrySourceSemantic
 SCNGeometrySourceSemanticFromGLTFMeshPrimitiveAttributeSemantic(

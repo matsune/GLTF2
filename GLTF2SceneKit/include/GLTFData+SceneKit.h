@@ -8,8 +8,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (nullable SCNScene *)defaultScene;
 - (NSArray<SCNScene *> *)scnScenes;
-- (SCNScene *)scnSceneFromGLTFScene:(GLTFScene *)scene;
-- (SCNNode *)scnNodeFromGLTFNode:(GLTFNode *)node;
 
 @end
 

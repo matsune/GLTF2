@@ -426,9 +426,7 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
   if (material.emissiveTexture) {
     [self applyTextureInfo:material.emissiveTexture
                 toProperty:scnMaterial.emission];
-  }
-
-  if (material.emissiveFactor) {
+  } else if (material.emissiveFactor) {
     CGFloat rgba[] = {material.emissiveFactor[0].floatValue,
                       material.emissiveFactor[1].floatValue,
                       material.emissiveFactor[2].floatValue, 1.0};
@@ -479,12 +477,12 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
   if (pbrMetallicRoughness.metallicRoughnessTexture) {
     [self applyTextureInfo:pbrMetallicRoughness.metallicRoughnessTexture
                 toProperty:scnMaterial.metalness];
-    scnMaterial.metalness.textureComponents = SCNColorMaskGreen;
+    scnMaterial.metalness.textureComponents = SCNColorMaskBlue;
     scnMaterial.metalness.intensity = pbrMetallicRoughness.metallicFactor;
 
     [self applyTextureInfo:pbrMetallicRoughness.metallicRoughnessTexture
                 toProperty:scnMaterial.roughness];
-    scnMaterial.roughness.textureComponents = SCNColorMaskBlue;
+    scnMaterial.roughness.textureComponents = SCNColorMaskGreen;
     scnMaterial.roughness.intensity = pbrMetallicRoughness.roughnessFactor;
   } else {
     scnMaterial.metalness.contents = @(pbrMetallicRoughness.metallicFactor);

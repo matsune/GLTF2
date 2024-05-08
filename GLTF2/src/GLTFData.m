@@ -1,30 +1,33 @@
-#import "GLTFModel.h"
+#import "GLTFData.h"
 #import "Errors.h"
 #import "GLTFBinary.h"
 #import "GLTFDecoder.h"
 #import "GLTFJson.h"
+#import <MetalKit/MetalKit.h>
 
-@implementation GLTFModel
+@implementation GLTFData
 
-- (instancetype)initWithJson:(GLTFJson *)json path:(nullable NSString *)path {
+- (instancetype)initWithJson:(GLTFJson *)json
+                        path:(nullable NSString *)path
+                      binary:(nullable NSData *)binary {
   self = [super init];
   if (self) {
     _json = json;
     _path = path;
-    _bufferDatas = [NSArray array];
-    _imageDatas = [NSArray array];
+    _binary = binary;
+    _device = MTLCreateSystemDefaultDevice();
   }
   return self;
 }
 
-+ (nullable instancetype)objectWithFile:(NSString *)path
-                                  error:(NSError *_Nullable *_Nullable)error {
++ (nullable instancetype)dataWithFile:(NSString *)path
+                                error:(NSError *_Nullable *_Nullable)error {
   NSString *extension = path.pathExtension.lowercaseString;
   NSData *data = [NSData dataWithContentsOfFile:path];
   if ([extension isEqualToString:@"glb"]) {
-    return [self objectWithGlbData:data error:error];
+    return [self dataWithGlbData:data error:error];
   } else if ([extension isEqualToString:@"gltf"]) {
-    return [self objectWithGltfData:data path:path error:error];
+    return [self dataWithGltfData:data path:path error:error];
   } else {
     if (error) {
       *error = [NSError
@@ -38,106 +41,113 @@
   }
 }
 
-+ (nullable instancetype)objectWithGlbData:(NSData *)data
-                                     error:
-                                         (NSError *_Nullable *_Nullable)error {
++ (nullable instancetype)dataWithGlbData:(NSData *)data
+                                   error:(NSError *_Nullable *_Nullable)error {
   GLTFBinary *binary = [GLTFBinary binaryWithData:data error:error];
   if (!binary)
     return nil;
 
-  GLTFModel *object = [[GLTFModel alloc] initWithJson:binary.json path:nil];
-  object.bufferDatas = [NSArray arrayWithObject:binary.binary];
-  [object prefetchImageDatas];
-  return object;
+  return [[GLTFData alloc] initWithJson:binary.json
+                                   path:nil
+                                 binary:binary.binary];
 }
 
-+ (nullable instancetype)objectWithGltfData:(NSData *)data
-                                       path:(nullable NSString *)path
-                                      error:
-                                          (NSError *_Nullable *_Nullable)error {
++ (nullable instancetype)dataWithGltfData:(NSData *)data
+                                     path:(nullable NSString *)path
+                                    error:(NSError *_Nullable *_Nullable)error {
   GLTFJson *json = [GLTFDecoder decodeJsonData:data error:error];
   if (!json)
     return nil;
 
-  GLTFModel *object = [[GLTFModel alloc] initWithJson:json path:path];
-  [object prefetchBufferDatas];
-  [object prefetchImageDatas];
-  return object;
+  return [[GLTFData alloc] initWithJson:json path:path binary:nil];
 }
 
-- (void)prefetchBufferDatas {
-  NSMutableArray<NSData *> *bufferDatas = [NSMutableArray array];
-  for (GLTFBuffer *buffer in self.json.buffers) {
-    [bufferDatas addObject:[self dataForBuffer:buffer]];
+- (nullable NSData *)dataOfUri:(NSString *)uri {
+  NSURL *url = [NSURL URLWithString:uri];
+  if (url && url.scheme) {
+    if ([url.scheme isEqualToString:@"data"]) {
+      // base64
+      NSRange range = [uri rangeOfString:@"base64,"];
+      NSString *encodedString = uri;
+      if (range.location != NSNotFound) {
+        encodedString = [uri substringFromIndex:NSMaxRange(range)];
+      }
+      return [[NSData alloc]
+          initWithBase64EncodedString:encodedString
+                              options:
+                                  NSDataBase64DecodingIgnoreUnknownCharacters];
+    } else {
+      // unsupported scheme
+      return nil;
+    }
+  } else if ([uri hasPrefix:@"/"]) {
+    // absolute path
+    return [NSData dataWithContentsOfFile:uri];
+  } else {
+    // relative path
+    NSURL *relativeURL =
+        [NSURL fileURLWithPath:uri
+                 relativeToURL:[NSURL URLWithString:self.path]];
+    return [NSData dataWithContentsOfFile:[relativeURL path]];
   }
-  self.bufferDatas = [bufferDatas copy];
-}
-
-- (void)prefetchImageDatas {
-  NSMutableArray<NSData *> *imageDatas = [NSMutableArray array];
-  for (GLTFImage *image in self.json.images) {
-    [imageDatas addObject:[self dataForImage:image]];
-  }
-  self.imageDatas = [imageDatas copy];
 }
 
 - (NSData *)dataForBuffer:(GLTFBuffer *)buffer {
-  return [self dataOfUri:buffer.uri];
-}
-
-- (NSData *)dataForImage:(GLTFImage *)image {
-  if (image.bufferView) {
-    // use bufferView
-    GLTFBufferView *bufferView =
-        self.json.bufferViews[image.bufferView.integerValue];
-    return [self.bufferDatas[bufferView.buffer]
-        subdataWithRange:NSMakeRange(bufferView.byteOffset,
-                                     bufferView.byteLength)];
-  } else if (image.uri) {
-    // use uri
-    return [self dataOfUri:image.uri];
-  }
-}
-
-- (NSData *)dataOfUri:(NSString *)uri {
-  if ([[NSURL URLWithString:uri].scheme isEqualToString:@"data"]) {
-    NSRange range = [uri rangeOfString:@"base64,"];
-    NSString *encodedString = uri;
-    if (range.location != NSNotFound) {
-      encodedString = [uri substringFromIndex:NSMaxRange(range)];
-    }
-    return [[NSData alloc]
-        initWithBase64EncodedString:encodedString
-                            options:
-                                NSDataBase64DecodingIgnoreUnknownCharacters];
+  if (buffer.uri) {
+    return [self dataOfUri:buffer.uri];
   } else {
-    if (self.path) {
-      // external file, relative path
-      NSURL *relativeURL =
-          [NSURL fileURLWithPath:uri
-                   relativeToURL:[NSURL URLWithString:self.path]];
-      return [NSData dataWithContentsOfFile:[relativeURL path]];
-    } else {
-      return [NSData dataWithContentsOfFile:uri];
-    }
+    assert(self.binary != nil);
+    return self.binary;
   }
 }
 
-- (NSData *)dataFromBufferViewIndex:(NSInteger)bufferViewIndex
-                         byteOffset:(NSInteger)byteOffset {
-  GLTFBufferView *bufferView = self.json.bufferViews[bufferViewIndex];
-  return [self dataFromBufferView:bufferView byteOffset:byteOffset];
+- (NSData *)dataForBufferIndex:(NSInteger)bufferIndex {
+  return [self dataForBuffer:self.json.buffers[bufferIndex]];
 }
 
-- (NSData *)dataFromBufferView:(GLTFBufferView *)bufferView
-                    byteOffset:(NSInteger)byteOffset {
-  NSData *bufferData = self.bufferDatas[bufferView.buffer];
-  return [bufferData
-      subdataWithRange:NSMakeRange(bufferView.byteOffsetValue + byteOffset,
-                                   bufferView.byteLength - byteOffset)];
+- (NSData *)dataForBufferView:(GLTFBufferView *)bufferView {
+  NSData *data = [self dataForBufferIndex:bufferView.buffer];
+  return [data subdataWithRange:NSMakeRange(bufferView.byteOffsetValue,
+                                            bufferView.byteLength)];
 }
 
-- (NSData *)dataByAccessor:(GLTFAccessor *)accessor {
+- (NSData *)dataForBufferViewIndex:(NSInteger)bufferViewIndex {
+  return [self dataForBufferView:self.json.bufferViews[bufferViewIndex]];
+}
+
+- (CGImageRef)createCGImageFromData:(NSData *)data {
+  CGImageSourceRef source =
+      CGImageSourceCreateWithData((__bridge CFDataRef)data, NULL);
+  CGImageRef imageRef = CGImageSourceCreateImageAtIndex(source, 0, NULL);
+  CFRelease(source);
+  return imageRef;
+}
+
+- (id<MTLTexture>)createMTLTextureFromCGImage:(CGImageRef)image
+                                        error:(NSError *_Nullable *_Nullable)
+                                                  error {
+  MTKTextureLoader *textureLoader =
+      [[MTKTextureLoader alloc] initWithDevice:self.device];
+  return [textureLoader newTextureWithCGImage:image options:nil error:error];
+}
+
+- (id<MTLTexture>)mtlTextureForImage:(GLTFImage *)image {
+  NSData *data;
+  if (image.uri) {
+    data = [self dataOfUri:image.uri];
+  } else {
+    assert(image.bufferView != nil);
+    data = [self dataForBufferViewIndex:image.bufferView.integerValue];
+  }
+  CGImageRef cgImage = [self createCGImageFromData:data];
+  // TODO: error handling
+  id<MTLTexture> texture = [self createMTLTextureFromCGImage:cgImage error:nil];
+  CGImageRelease(cgImage);
+
+  return texture;
+}
+
+- (NSData *)dataForAccessor:(GLTFAccessor *)accessor {
   NSInteger componentTypeSize = sizeOfComponentType(accessor.componentType);
   NSInteger componentsCount = componentsCountOfAccessorType(accessor.type);
   NSInteger length = componentsCount * accessor.count * componentTypeSize;
@@ -175,11 +185,9 @@
   if (accessor.bufferView) {
     GLTFBufferView *bufferView =
         self.json.bufferViews[accessor.bufferView.integerValue];
-    NSData *bufferData = self.bufferDatas[bufferView.buffer];
-    NSData *subdata =
-        [bufferData subdataWithRange:NSMakeRange(bufferView.byteOffsetValue +
-                                                     accessor.byteOffsetValue,
-                                                 data.length)];
+    NSData *bufferData = [self dataForBufferView:bufferView];
+    NSData *subdata = [bufferData
+        subdataWithRange:NSMakeRange(accessor.byteOffsetValue, data.length)];
     memcpy(data.mutableBytes, subdata.bytes, subdata.length);
   }
 }
@@ -191,9 +199,11 @@
   NSArray<NSNumber *> *indices =
       [self accessorSparseIndices:accessor.sparse.indices
                             count:accessor.sparse.count];
-  NSData *valuesData =
-      [self dataFromBufferViewIndex:accessor.sparse.values.bufferView
-                         byteOffset:accessor.sparse.values.byteOffsetValue];
+  NSData *bufferData =
+      [self dataForBufferViewIndex:accessor.sparse.values.bufferView];
+  NSUInteger byteOffset = accessor.sparse.values.byteOffsetValue;
+  NSRange range = NSMakeRange(byteOffset, bufferData.length - byteOffset);
+  NSData *valuesData = [bufferData subdataWithRange:range];
 
   for (int i = 0; i < accessor.sparse.count; i++) {
     NSUInteger index = indices[i].unsignedIntValue;
@@ -207,8 +217,11 @@
 - (NSArray<NSNumber *> *)accessorSparseIndices:
                              (GLTFAccessorSparseIndices *)indices
                                          count:(NSInteger)count {
-  NSData *indicesData = [self dataFromBufferViewIndex:indices.bufferView
-                                           byteOffset:indices.byteOffsetValue];
+  NSData *bufferData = [self dataForBufferViewIndex:indices.bufferView];
+  NSUInteger byteOffset = indices.byteOffsetValue;
+  NSRange range = NSMakeRange(byteOffset, bufferData.length - byteOffset);
+  NSData *indicesData = [bufferData subdataWithRange:range];
+
   NSMutableArray *array = [NSMutableArray arrayWithCapacity:count];
   for (int i = 0; i < count; i++) {
     switch (indices.componentType) {

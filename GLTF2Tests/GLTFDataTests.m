@@ -2,11 +2,11 @@
 #import "config.h"
 #import <XCTest/XCTest.h>
 
-@interface GLTFModelTests : XCTestCase
+@interface GLTFDataTests : XCTestCase
 
 @end
 
-@implementation GLTFModelTests
+@implementation GLTFDataTests
 
 - (void)testDataByAccessorWithNormalized {
   // R: 255, G: 128, B: 0, A: 255
@@ -50,15 +50,15 @@
                     (unsigned long)colorData.length, base64String];
 
   NSError *error;
-  GLTFModel *object = [GLTFModel
-      objectWithGltfData:[jsonString dataUsingEncoding:NSUTF8StringEncoding]
-                    path:nil
-                   error:&error];
+  GLTFData *object = [GLTFData
+      dataWithGltfData:[jsonString dataUsingEncoding:NSUTF8StringEncoding]
+                  path:nil
+                 error:&error];
   XCTAssertNil(error);
   XCTAssertNotNil(object);
 
   GLTFAccessor *accessor = object.json.accessors.firstObject;
-  NSData *normalizedData = [object dataByAccessor:accessor];
+  NSData *normalizedData = [object dataForAccessor:accessor];
   XCTAssertNotNil(normalizedData, "Normalized data should not be nil.");
 
   float expectedValues[4] = {1.0, 128.0 / 255.0, 0.0, 1.0};
@@ -127,15 +127,15 @@
                     (unsigned long)sparseColorData.length, base64String];
 
   NSError *error;
-  GLTFModel *object = [GLTFModel
-      objectWithGltfData:[jsonString dataUsingEncoding:NSUTF8StringEncoding]
-                    path:nil
-                   error:&error];
+  GLTFData *object = [GLTFData
+      dataWithGltfData:[jsonString dataUsingEncoding:NSUTF8StringEncoding]
+                  path:nil
+                 error:&error];
   XCTAssertNil(error);
   XCTAssertNotNil(object);
 
   GLTFAccessor *accessor = object.json.accessors.firstObject;
-  NSData *normalizedData = [object dataByAccessor:accessor];
+  NSData *normalizedData = [object dataForAccessor:accessor];
   XCTAssertNotNil(normalizedData, "Normalized data should not be nil.");
 
   uint8_t expectedValue = 0x20;

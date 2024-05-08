@@ -64,22 +64,72 @@ static NSInteger primitiveCountFromGLTFMeshPrimitiveMode(NSInteger indexCount,
   }
 }
 
-static SCNGeometryPrimitiveType
-SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
+// convert indices data with SceneKit compatible primitive type
+static NSData *
+convertDataToSCNGeometryPrimitiveType(NSData *bufferData, NSInteger mode,
+                                      SCNGeometryPrimitiveType *primitiveType) {
   switch (mode) {
   case GLTFMeshPrimitiveModePoints:
-    return SCNGeometryPrimitiveTypePoint;
+    *primitiveType = SCNGeometryPrimitiveTypePoint;
+    return bufferData;
   case GLTFMeshPrimitiveModeLines:
-  case GLTFMeshPrimitiveModeLineLoop:
-  case GLTFMeshPrimitiveModeLineStrip:
-    return SCNGeometryPrimitiveTypeLine;
+    *primitiveType = SCNGeometryPrimitiveTypeLine;
+    return bufferData;
+  case GLTFMeshPrimitiveModeLineLoop: {
+    *primitiveType = SCNGeometryPrimitiveTypeLine;
+    // convert to line
+    NSUInteger dataSize = bufferData.length;
+    NSUInteger indicesCount = dataSize / sizeof(uint16_t);
+    uint16_t *bytes = (uint16_t *)bufferData.bytes;
+    NSMutableData *data = [NSMutableData data];
+    for (NSUInteger i = 0; i < indicesCount; i++) {
+      uint16_t v1 = bytes[i];
+      uint16_t v2 = bytes[(i + 1) % indicesCount];
+      [data appendBytes:&v1 length:sizeof(uint16_t)];
+      [data appendBytes:&v2 length:sizeof(uint16_t)];
+    }
+    return [data copy];
+  }
+  case GLTFMeshPrimitiveModeLineStrip: {
+    *primitiveType = SCNGeometryPrimitiveTypeLine;
+    // convert to line
+    NSUInteger dataSize = bufferData.length;
+    NSUInteger indicesCount = dataSize / sizeof(uint16_t);
+    uint16_t *bytes = (uint16_t *)bufferData.bytes;
+    NSMutableData *data = [NSMutableData data];
+    for (NSUInteger i = 0; i < indicesCount - 1; i++) {
+      uint16_t v1 = bytes[i];
+      uint16_t v2 = bytes[i + 1];
+      [data appendBytes:&v1 length:sizeof(uint16_t)];
+      [data appendBytes:&v2 length:sizeof(uint16_t)];
+    }
+    return [data copy];
+  }
   case GLTFMeshPrimitiveModeTriangles:
-  case GLTFMeshPrimitiveModeTriangleFan:
-    return SCNGeometryPrimitiveTypeTriangles;
+    *primitiveType = SCNGeometryPrimitiveTypeTriangles;
+    return bufferData;
   case GLTFMeshPrimitiveModeTriangleStrip:
-    return SCNGeometryPrimitiveTypeTriangleStrip;
+    *primitiveType = SCNGeometryPrimitiveTypeTriangleStrip;
+    return bufferData;
+  case GLTFMeshPrimitiveModeTriangleFan: {
+    *primitiveType = SCNGeometryPrimitiveTypeTriangles;
+    // convert to triangles
+    NSUInteger dataSize = bufferData.length;
+    NSUInteger indicesCount = dataSize / sizeof(uint16_t);
+    uint16_t *bytes = (uint16_t *)bufferData.bytes;
+    NSMutableData *data = [NSMutableData data];
+    for (NSUInteger i = 1; i < indicesCount - 1; i++) {
+      uint16_t v0 = bytes[0];
+      uint16_t v1 = bytes[i];
+      uint16_t v2 = bytes[i + 1];
+      [data appendBytes:&v0 length:sizeof(uint16_t)];
+      [data appendBytes:&v1 length:sizeof(uint16_t)];
+      [data appendBytes:&v2 length:sizeof(uint16_t)];
+    }
+    return [data copy];
+  }
   default:
-    return SCNGeometryPrimitiveTypeTriangles;
+    return bufferData;
   }
 }
 
@@ -109,10 +159,12 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
 
 - (SCNScene *)scnSceneFromGLTFScene:(GLTFScene *)scene {
   SCNScene *scnScene = [SCNScene scene];
-  for (NSNumber *nodeIndex in scene.nodes) {
-    GLTFNode *node = self.json.nodes[nodeIndex.integerValue];
-    SCNNode *scnNode = [self scnNodeFromGLTFNode:node];
-    [scnScene.rootNode addChildNode:scnNode];
+  if (scene.nodes) {
+    for (NSNumber *nodeIndex in scene.nodes) {
+      GLTFNode *node = self.json.nodes[nodeIndex.integerValue];
+      SCNNode *scnNode = [self scnNodeFromGLTFNode:node];
+      [scnScene.rootNode addChildNode:scnNode];
+    }
   }
   return scnScene;
 }
@@ -140,15 +192,19 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
     // TODO:
   }
 
-  scnNode.simdTransform = node.matrixValue;
+  if (node.matrix) {
+    scnNode.simdTransform = node.matrixValue;
+  } else {
+    scnNode.simdRotation = node.rotationValue;
+    scnNode.simdScale = node.scaleValue;
+    scnNode.simdPosition = node.translationValue;
+  }
 
   if (node.mesh) {
     GLTFMesh *mesh = self.json.meshes[node.mesh.integerValue];
     SCNNode *meshNode = [self scnNodeFromGLTFMesh:mesh];
     [scnNode addChildNode:meshNode];
   }
-
-  // TODO: rotation, scale, translation
 
   if (node.weights) {
     // TODO:
@@ -318,81 +374,29 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
   if (primitive.indices) {
     GLTFAccessor *accessor =
         self.json.accessors[primitive.indices.integerValue];
-    NSData *bufferData = [self dataForAccessor:accessor];
+    NSData *data = [self dataForAccessor:accessor];
 
-    bufferData = [self convertBufferData:bufferData
-                           primitiveMode:primitive.modeValue];
+    SCNGeometryPrimitiveType primitiveType = SCNGeometryPrimitiveTypeTriangles;
+    data = convertDataToSCNGeometryPrimitiveType(data, primitive.modeValue,
+                                                 &primitiveType);
+
     SCNGeometryElement *element = [SCNGeometryElement
-        geometryElementWithData:bufferData
-                  primitiveType:SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(
-                                    primitive.modeValue)
+        geometryElementWithData:data
+                  primitiveType:primitiveType
                  primitiveCount:primitiveCountFromGLTFMeshPrimitiveMode(
                                     accessor.count, primitive.modeValue)
                   bytesPerIndex:sizeOfComponentType(accessor.componentType)];
+
     if (primitive.modeValue == GLTFMeshPrimitiveModePoints) {
       // TODO: make variable
       element.pointSize = 4.0;
       element.minimumPointScreenSpaceRadius = 3;
       element.maximumPointScreenSpaceRadius = 5;
     }
+
     [elements addObject:element];
   }
   return [elements copy];
-}
-
-- (NSData *)convertBufferData:(NSData *)bufferData
-                primitiveMode:(NSInteger)mode {
-  switch (mode) {
-  case GLTFMeshPrimitiveModeTriangleFan: {
-    // convert triangles
-    NSUInteger dataSize = bufferData.length;
-    NSUInteger indicesCount = dataSize / sizeof(uint16_t);
-    uint16_t *bytes = (uint16_t *)bufferData.bytes;
-    NSMutableData *data = [NSMutableData data];
-    for (NSUInteger i = 1; i < indicesCount - 1; i++) {
-      uint16_t v0 = bytes[0];
-      uint16_t v1 = bytes[i];
-      uint16_t v2 = bytes[i + 1];
-      [data appendBytes:&v0 length:sizeof(uint16_t)];
-      [data appendBytes:&v1 length:sizeof(uint16_t)];
-      [data appendBytes:&v2 length:sizeof(uint16_t)];
-    }
-    return [data copy];
-  }
-
-  case GLTFMeshPrimitiveModeLineLoop: {
-    // convert line
-    NSUInteger dataSize = bufferData.length;
-    NSUInteger indicesCount = dataSize / sizeof(uint16_t);
-    uint16_t *bytes = (uint16_t *)bufferData.bytes;
-    NSMutableData *data = [NSMutableData data];
-    for (NSUInteger i = 0; i < indicesCount; i++) {
-      uint16_t v1 = bytes[i];
-      uint16_t v2 = bytes[(i + 1) % indicesCount];
-      [data appendBytes:&v1 length:sizeof(uint16_t)];
-      [data appendBytes:&v2 length:sizeof(uint16_t)];
-    }
-    return [data copy];
-  }
-
-  case GLTFMeshPrimitiveModeLineStrip: {
-    // convert line
-    NSUInteger dataSize = bufferData.length;
-    NSUInteger indicesCount = dataSize / sizeof(uint16_t);
-    uint16_t *bytes = (uint16_t *)bufferData.bytes;
-    NSMutableData *data = [NSMutableData data];
-    for (NSUInteger i = 0; i < indicesCount - 1; i++) {
-      uint16_t v1 = bytes[i];
-      uint16_t v2 = bytes[i + 1];
-      [data appendBytes:&v1 length:sizeof(uint16_t)];
-      [data appendBytes:&v2 length:sizeof(uint16_t)];
-    }
-    return [data copy];
-  }
-  default:
-    break;
-  }
-  return bufferData;
 }
 
 #pragma mark - Material
@@ -426,28 +430,26 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
   if (material.emissiveTexture) {
     [self applyTextureInfo:material.emissiveTexture
                 toProperty:scnMaterial.emission];
-  } else if (material.emissiveFactor) {
-    CGFloat rgba[] = {material.emissiveFactorValue[0],
-                      material.emissiveFactorValue[1],
-                      material.emissiveFactorValue[2], 1.0};
-    CGColorSpaceRef colorSpaceLinearSRGB =
-        CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB);
-    scnMaterial.emission.contents =
-        (__bridge_transfer id)CGColorCreate(colorSpaceLinearSRGB, &rgba[0]);
+  } else {
+    simd_float3 value = material.emissiveFactorValue;
+    applyColorContentsToProperty(value[0], value[1], value[2], 1.0,
+                                 scnMaterial.emission);
   }
 
-  if (material.alphaModeValue) {
-    if ([material.alphaModeValue isEqualToString:GLTFMaterialAlphaModeOpaque]) {
-      scnMaterial.transparency = 1.0;
-    } else if ([material.alphaModeValue
-                   isEqualToString:GLTFMaterialAlphaModeMask]) {
-      scnMaterial.writesToDepthBuffer = YES;
-      scnMaterial.colorBufferWriteMask = SCNColorMaskNone;
-    } else if ([material.alphaModeValue
-                   isEqualToString:GLTFMaterialAlphaModeMask]) {
-      scnMaterial.blendMode = SCNBlendModeAlpha;
-    }
-  }
+  // TODO: alphaMode
+  //  if (material.alphaModeValue) {
+  //    if ([material.alphaModeValue
+  //    isEqualToString:GLTFMaterialAlphaModeOpaque]) {
+  //      scnMaterial.transparency = 1.0;
+  //    } else if ([material.alphaModeValue
+  //                   isEqualToString:GLTFMaterialAlphaModeMask]) {
+  //      scnMaterial.writesToDepthBuffer = YES;
+  //      scnMaterial.colorBufferWriteMask = SCNColorMaskNone;
+  //    } else if ([material.alphaModeValue
+  //                   isEqualToString:GLTFMaterialAlphaModeMask]) {
+  //      scnMaterial.blendMode = SCNBlendModeAlpha;
+  //    }
+  //  }
 
   // TODO: alphaCutoff
 
@@ -458,21 +460,45 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
 
 #pragma mark diffuse
 
+void applyColorContentsToProperty(float r, float g, float b, float a,
+                                  SCNMaterialProperty *property) {
+  CGColorSpaceRef colorSpace =
+      CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB);
+  CGFloat components[] = {r, g, b, a};
+  CGColorRef color = CGColorCreate(colorSpace, components);
+  property.contents = (__bridge id)(color);
+  CGColorRelease(color);
+  CGColorSpaceRelease(colorSpace);
+}
+
 - (void)applyPBRMetallicRoughness:
             (GLTFMaterialPBRMetallicRoughness *)pbrMetallicRoughness
                        toMaterial:(SCNMaterial *)scnMaterial {
 
-  // baseColorFactor
-  scnMaterial.diffuse.contents =
-      [NSColor colorWithSRGBRed:pbrMetallicRoughness.baseColorFactorValue[0]
-                          green:pbrMetallicRoughness.baseColorFactorValue[1]
-                           blue:pbrMetallicRoughness.baseColorFactorValue[2]
-                          alpha:pbrMetallicRoughness.baseColorFactorValue[3]];
-
-  // baseColorTexture
   if (pbrMetallicRoughness.baseColorTexture) {
+    // set contents to texture
     [self applyTextureInfo:pbrMetallicRoughness.baseColorTexture
                 toProperty:scnMaterial.diffuse];
+
+    if (pbrMetallicRoughness.baseColorFactor) {
+      simd_float4 factor = pbrMetallicRoughness.baseColorFactorValue;
+
+      NSMutableString *surfaceModifier = [NSMutableString stringWithString:@""];
+      if (factor[3] < 1.0f) {
+        surfaceModifier = [NSMutableString
+            stringWithFormat:@"#pragma transparent\n#pragma body\n%@",
+                             surfaceModifier];
+      }
+      [surfaceModifier
+          appendFormat:@"_surface.diffuse *= float4(%ff, %ff, %ff, %ff);\n",
+                       factor[0], factor[1], factor[2], factor[3]];
+      scnMaterial.shaderModifiers =
+          @{SCNShaderModifierEntryPointSurface : surfaceModifier};
+    }
+  } else {
+    simd_float4 value = pbrMetallicRoughness.baseColorFactorValue;
+    applyColorContentsToProperty(value[0], value[1], value[2], value[3],
+                                 scnMaterial.diffuse);
   }
 
   // metallicRoughnessTexture
@@ -498,14 +524,10 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
 
 - (void)applyNormalTextureInfo:(GLTFMaterialNormalTextureInfo *)textureInfo
                     toMaterial:(SCNMaterial *)material {
-  // index
   GLTFTexture *texture = self.json.textures[textureInfo.index];
   [self applyTexture:texture toProperty:material.normal];
-  // texcoord
   material.normal.mappingChannel = textureInfo.texCoordValue;
-  // scale
-  material.normal.contentsTransform =
-      SCNMatrix4MakeScale(textureInfo.scaleValue, textureInfo.scaleValue, 1.0);
+  material.normal.intensity = textureInfo.scaleValue;
 }
 
 #pragma mark occlusion
@@ -513,52 +535,49 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
 - (void)applyOcclusionTextureInfo:
             (GLTFMaterialOcclusionTextureInfo *)textureInfo
                        toMaterial:(SCNMaterial *)material {
-  // index
   GLTFTexture *texture = self.json.textures[textureInfo.index];
   [self applyTexture:texture toProperty:material.ambientOcclusion];
-  // texcoord
-  material.normal.mappingChannel = textureInfo.texCoordValue;
-  // TODO: strength
+  material.ambientOcclusion.mappingChannel = textureInfo.texCoordValue;
+  material.ambientOcclusion.intensity = textureInfo.strengthValue;
 }
 
 #pragma mark texture
 
 - (void)applyTextureInfo:(GLTFTextureInfo *)textureInfo
               toProperty:(SCNMaterialProperty *)property {
-  // index
   GLTFTexture *texture = self.json.textures[textureInfo.index];
   [self applyTexture:texture toProperty:property];
-  // texcoord
   property.mappingChannel = textureInfo.texCoordValue;
 }
 
 - (void)applyTexture:(GLTFTexture *)texture
           toProperty:(SCNMaterialProperty *)property {
+  property.wrapS = SCNWrapModeRepeat;
+  property.wrapT = SCNWrapModeRepeat;
+  property.magnificationFilter = SCNFilterModeNone;
+  property.minificationFilter = SCNFilterModeNone;
+  property.mipFilter = SCNFilterModeNone;
+
   if (texture.source) {
-    //    NSData *imageData = self.imageDatas[texture.source.integerValue];
-    //    NSImage *image = [[NSImage alloc] initWithData:imageData];
     GLTFImage *image = self.json.images[texture.source.integerValue];
     property.contents = [self mtlTextureForImage:image];
+  }
 
-    if (texture.sampler) {
-      GLTFSampler *sampler = self.json.samplers[texture.sampler.integerValue];
-      [self applyTextureSampler:sampler toProperty:property];
-    }
+  if (texture.sampler) {
+    GLTFSampler *sampler = self.json.samplers[texture.sampler.integerValue];
+    [self applyTextureSampler:sampler toProperty:property];
   }
 }
 
 - (void)applyTextureSampler:(GLTFSampler *)sampler
                  toProperty:(SCNMaterialProperty *)property {
-  SCNFilterMode mipFilter = SCNFilterModeLinear;
-  SCNFilterMode magFilter = SCNFilterModeLinear;
-  SCNFilterMode minFilter = SCNFilterModeLinear;
   if (sampler.magFilter) {
     switch ([sampler.magFilter integerValue]) {
     case GLTFSamplerMagFilterNearest:
-      magFilter = SCNFilterModeNearest;
+      property.magnificationFilter = SCNFilterModeNearest;
       break;
     case GLTFSamplerMagFilterLinear:
-      magFilter = SCNFilterModeLinear;
+      property.magnificationFilter = SCNFilterModeLinear;
       break;
     default:
       break;
@@ -567,26 +586,26 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
   if (sampler.minFilter) {
     switch ([sampler.minFilter integerValue]) {
     case GLTFSamplerMinFilterLinear:
-      minFilter = SCNFilterModeLinear;
+      property.minificationFilter = SCNFilterModeLinear;
       break;
     case GLTFSamplerMinFilterLinearMipmapNearest:
-      minFilter = SCNFilterModeLinear;
-      mipFilter = SCNFilterModeNearest;
+      property.minificationFilter = SCNFilterModeLinear;
+      property.mipFilter = SCNFilterModeNearest;
       break;
     case GLTFSamplerMinFilterLinearMipmapLinear:
-      minFilter = SCNFilterModeLinear;
-      mipFilter = SCNFilterModeLinear;
+      property.minificationFilter = SCNFilterModeLinear;
+      property.mipFilter = SCNFilterModeLinear;
       break;
     case GLTFSamplerMinFilterNearest:
-      minFilter = SCNFilterModeNearest;
+      property.minificationFilter = SCNFilterModeNearest;
       break;
     case GLTFSamplerMinFilterNearestMipmapNearest:
-      minFilter = SCNFilterModeNearest;
-      mipFilter = SCNFilterModeNearest;
+      property.minificationFilter = SCNFilterModeNearest;
+      property.mipFilter = SCNFilterModeNearest;
       break;
     case GLTFSamplerMinFilterNearestMipmapLinear:
-      minFilter = SCNFilterModeNearest;
-      mipFilter = SCNFilterModeLinear;
+      property.minificationFilter = SCNFilterModeNearest;
+      property.mipFilter = SCNFilterModeLinear;
       break;
     default:
       break;
@@ -594,9 +613,6 @@ SCNPrimitiveTypeFromGLTFMeshPrimitiveMode(NSInteger mode) {
   }
   property.wrapS = SCNWrapModeFromGLTFSamplerWrapMode(sampler.wrapSValue);
   property.wrapT = SCNWrapModeFromGLTFSamplerWrapMode(sampler.wrapTValue);
-  property.mipFilter = mipFilter;
-  property.magnificationFilter = magFilter;
-  property.minificationFilter = minFilter;
 }
 
 @end

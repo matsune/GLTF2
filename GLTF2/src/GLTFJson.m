@@ -324,12 +324,12 @@ NSString *const GLTFMeshPrimitiveAttributeSemanticWeights = @"WEIGHTS";
   return matrix_identity_float4x4;
 }
 
-- (simd_float4)rotationValue {
+- (simd_quatf)rotationValue {
   if (_rotation && _rotation.count == 4) {
-    return simd_make_float4(_rotation[0].floatValue, _rotation[1].floatValue,
-                            _rotation[2].floatValue, _rotation[3].floatValue);
+    return simd_quaternion(_rotation[0].floatValue, _rotation[1].floatValue,
+                           _rotation[2].floatValue, _rotation[3].floatValue);
   }
-  return simd_make_float4(0, 0, 0, 1);
+  return simd_quaternion(0.0f, 0.0f, 0.0f, 1.0f);
 }
 
 - (simd_float3)scaleValue {
@@ -337,7 +337,7 @@ NSString *const GLTFMeshPrimitiveAttributeSemanticWeights = @"WEIGHTS";
     return simd_make_float3(_scale[0].floatValue, _scale[1].floatValue,
                             _scale[2].floatValue);
   }
-  return simd_make_float3(1, 1, 1);
+  return simd_make_float3(1.0f, 1.0f, 1.0f);
 }
 
 - (simd_float3)translationValue {
@@ -346,7 +346,7 @@ NSString *const GLTFMeshPrimitiveAttributeSemanticWeights = @"WEIGHTS";
                             _translation[1].floatValue,
                             _translation[2].floatValue);
   }
-  return simd_make_float3(0, 0, 0);
+  return simd_make_float3(0.0f, 0.0f, 0.0f);
 }
 
 @end

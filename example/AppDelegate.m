@@ -34,9 +34,6 @@
   [openPanel beginWithCompletionHandler:^(NSInteger result) {
     if (result == NSModalResponseOK) {
       NSURL *fileURL = [[openPanel URLs] firstObject];
-      [[NSDocumentController sharedDocumentController]
-          noteNewRecentDocumentURL:fileURL];
-
       NSWindowController *windowController = [[NSStoryboard mainStoryboard]
           instantiateControllerWithIdentifier:@"MainWindowController"];
       ViewController *vc =

@@ -195,7 +195,7 @@ convertDataToSCNGeometryPrimitiveType(NSData *bufferData, NSInteger mode,
   if (node.matrix) {
     scnNode.simdTransform = node.matrixValue;
   } else {
-    scnNode.simdRotation = node.rotationValue;
+    scnNode.simdRotation = simdRotationFromQuaternion(node.rotationValue);
     scnNode.simdScale = node.scaleValue;
     scnNode.simdPosition = node.translationValue;
   }
@@ -211,6 +211,25 @@ convertDataToSCNGeometryPrimitiveType(NSData *bufferData, NSInteger mode,
   }
 
   return scnNode;
+}
+
+simd_float4 simdRotationFromQuaternion(simd_quatf rotation) {
+  float x = rotation.vector[0];
+  float y = rotation.vector[1];
+  float z = rotation.vector[2];
+  float w = rotation.vector[3];
+
+  float angle;
+  simd_float3 axis;
+
+  if (fabs(w - 1.0) < FLT_EPSILON) {
+    angle = 0.0;
+    axis = simd_make_float3(1, 0, 0);
+  } else {
+    angle = 2.0 * acos(w);
+    axis = simd_normalize(simd_make_float3(x, y, z));
+  }
+  return simd_make_float4(axis.x, axis.y, axis.z, angle);
 }
 
 #pragma mark - Camera
@@ -388,7 +407,6 @@ convertDataToSCNGeometryPrimitiveType(NSData *bufferData, NSInteger mode,
                   bytesPerIndex:sizeOfComponentType(accessor.componentType)];
 
     if (primitive.modeValue == GLTFMeshPrimitiveModePoints) {
-      // TODO: make variable
       element.pointSize = 4.0;
       element.minimumPointScreenSpaceRadius = 3;
       element.maximumPointScreenSpaceRadius = 5;
@@ -412,68 +430,11 @@ convertDataToSCNGeometryPrimitiveType(NSData *bufferData, NSInteger mode,
     scnMaterial.lightingModelName = SCNLightingModelBlinn;
   }
 
+  NSMutableString *surfaceShaderModifier = [NSMutableString string];
+
   GLTFMaterialPBRMetallicRoughness *pbrMetallicRoughness =
       material.pbrMetallicRoughness
           ?: [[GLTFMaterialPBRMetallicRoughness alloc] init];
-  [self applyPBRMetallicRoughness:pbrMetallicRoughness toMaterial:scnMaterial];
-
-  if (material.normalTexture) {
-    [self applyNormalTextureInfo:material.normalTexture toMaterial:scnMaterial];
-  }
-
-  if (material.occlusionTexture) {
-    [self applyOcclusionTextureInfo:material.occlusionTexture
-                         toMaterial:scnMaterial];
-    scnMaterial.ambientOcclusion.textureComponents = SCNColorMaskRed;
-  }
-
-  if (material.emissiveTexture) {
-    [self applyTextureInfo:material.emissiveTexture
-                toProperty:scnMaterial.emission];
-  } else {
-    simd_float3 value = material.emissiveFactorValue;
-    applyColorContentsToProperty(value[0], value[1], value[2], 1.0,
-                                 scnMaterial.emission);
-  }
-
-  // TODO: alphaMode
-  //  if (material.alphaModeValue) {
-  //    if ([material.alphaModeValue
-  //    isEqualToString:GLTFMaterialAlphaModeOpaque]) {
-  //      scnMaterial.transparency = 1.0;
-  //    } else if ([material.alphaModeValue
-  //                   isEqualToString:GLTFMaterialAlphaModeMask]) {
-  //      scnMaterial.writesToDepthBuffer = YES;
-  //      scnMaterial.colorBufferWriteMask = SCNColorMaskNone;
-  //    } else if ([material.alphaModeValue
-  //                   isEqualToString:GLTFMaterialAlphaModeMask]) {
-  //      scnMaterial.blendMode = SCNBlendModeAlpha;
-  //    }
-  //  }
-
-  // TODO: alphaCutoff
-
-  scnMaterial.doubleSided = material.isDoubleSided;
-
-  return scnMaterial;
-}
-
-#pragma mark diffuse
-
-void applyColorContentsToProperty(float r, float g, float b, float a,
-                                  SCNMaterialProperty *property) {
-  CGColorSpaceRef colorSpace =
-      CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB);
-  CGFloat components[] = {r, g, b, a};
-  CGColorRef color = CGColorCreate(colorSpace, components);
-  property.contents = (__bridge id)(color);
-  CGColorRelease(color);
-  CGColorSpaceRelease(colorSpace);
-}
-
-- (void)applyPBRMetallicRoughness:
-            (GLTFMaterialPBRMetallicRoughness *)pbrMetallicRoughness
-                       toMaterial:(SCNMaterial *)scnMaterial {
 
   if (pbrMetallicRoughness.baseColorTexture) {
     // set contents to texture
@@ -483,17 +444,13 @@ void applyColorContentsToProperty(float r, float g, float b, float a,
     if (pbrMetallicRoughness.baseColorFactor) {
       simd_float4 factor = pbrMetallicRoughness.baseColorFactorValue;
 
-      NSMutableString *surfaceModifier = [NSMutableString stringWithString:@""];
       if (factor[3] < 1.0f) {
-        surfaceModifier = [NSMutableString
-            stringWithFormat:@"#pragma transparent\n#pragma body\n%@",
-                             surfaceModifier];
+        [surfaceShaderModifier
+            appendString:@"#pragma transparent\n#pragma body\n"];
       }
-      [surfaceModifier
+      [surfaceShaderModifier
           appendFormat:@"_surface.diffuse *= float4(%ff, %ff, %ff, %ff);\n",
                        factor[0], factor[1], factor[2], factor[3]];
-      scnMaterial.shaderModifiers =
-          @{SCNShaderModifierEntryPointSurface : surfaceModifier};
     }
   } else {
     simd_float4 value = pbrMetallicRoughness.baseColorFactorValue;
@@ -518,6 +475,61 @@ void applyColorContentsToProperty(float r, float g, float b, float a,
     scnMaterial.roughness.contents =
         @(pbrMetallicRoughness.roughnessFactorValue);
   }
+
+  if (material.normalTexture) {
+    [self applyNormalTextureInfo:material.normalTexture toMaterial:scnMaterial];
+  }
+
+  if (material.occlusionTexture) {
+    [self applyOcclusionTextureInfo:material.occlusionTexture
+                         toMaterial:scnMaterial];
+    scnMaterial.ambientOcclusion.textureComponents = SCNColorMaskRed;
+  }
+
+  if (material.emissiveTexture) {
+    [self applyTextureInfo:material.emissiveTexture
+                toProperty:scnMaterial.emission];
+  } else {
+    simd_float3 value = material.emissiveFactorValue;
+    applyColorContentsToProperty(value[0], value[1], value[2], 1.0,
+                                 scnMaterial.emission);
+  }
+
+  if ([material.alphaModeValue isEqualToString:GLTFMaterialAlphaModeOpaque]) {
+    scnMaterial.blendMode = SCNBlendModeReplace;
+    [surfaceShaderModifier appendString:@"_surface.diffuse.a = 1.0;"];
+  } else if ([material.alphaModeValue
+                 isEqualToString:GLTFMaterialAlphaModeMask]) {
+    scnMaterial.blendMode = SCNBlendModeReplace;
+    [surfaceShaderModifier
+        appendFormat:
+            @"_surface.diffuse.a = _surface.diffuse.a < %f ? 0.0 : 1.0;",
+            material.alphaCutoffValue];
+  } else if ([material.alphaModeValue
+                 isEqualToString:GLTFMaterialAlphaModeBlend]) {
+    scnMaterial.blendMode = SCNBlendModeAlpha;
+    scnMaterial.transparencyMode = SCNTransparencyModeDualLayer;
+  }
+
+  scnMaterial.doubleSided = material.isDoubleSided;
+
+  scnMaterial.shaderModifiers = @{
+    SCNShaderModifierEntryPointSurface : surfaceShaderModifier,
+  };
+  return scnMaterial;
+}
+
+#pragma mark diffuse
+
+void applyColorContentsToProperty(float r, float g, float b, float a,
+                                  SCNMaterialProperty *property) {
+  CGColorSpaceRef colorSpace =
+      CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB);
+  CGFloat components[] = {r, g, b, a};
+  CGColorRef color = CGColorCreate(colorSpace, components);
+  property.contents = (__bridge id)(color);
+  CGColorRelease(color);
+  CGColorSpaceRelease(colorSpace);
 }
 
 #pragma mark normal

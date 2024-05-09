@@ -349,7 +349,7 @@ GLTF_EXPORT @interface GLTFNode : GLTFObject
 @property(nonatomic, copy, nullable) NSString *name;
 
 @property(nonatomic, readonly) simd_float4x4 matrixValue;
-@property(nonatomic, readonly) simd_float4 rotationValue;
+@property(nonatomic, readonly) simd_quatf rotationValue;
 @property(nonatomic, readonly) simd_float3 scaleValue;
 @property(nonatomic, readonly) simd_float3 translationValue;
 

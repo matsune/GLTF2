@@ -1,5 +1,6 @@
 #import "AppDelegate.h"
 #import "ViewController.h"
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 @interface AppDelegate ()
 
@@ -25,11 +26,17 @@
   [openPanel setAllowsMultipleSelection:NO];
   [openPanel setCanChooseDirectories:NO];
   [openPanel setCanChooseFiles:YES];
-  [openPanel setAllowedFileTypes:@[ @"gltf", @"glb" ]];
+  [openPanel setAllowedContentTypes:@[
+    [UTType typeWithFilenameExtension:@"gltf"],
+    [UTType typeWithFilenameExtension:@"glb"]
+  ]];
 
   [openPanel beginWithCompletionHandler:^(NSInteger result) {
     if (result == NSModalResponseOK) {
       NSURL *fileURL = [[openPanel URLs] firstObject];
+      [[NSDocumentController sharedDocumentController]
+          noteNewRecentDocumentURL:fileURL];
+
       NSWindowController *windowController = [[NSStoryboard mainStoryboard]
           instantiateControllerWithIdentifier:@"MainWindowController"];
       ViewController *vc =

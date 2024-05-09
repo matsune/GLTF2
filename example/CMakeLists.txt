@@ -7,7 +7,7 @@ set(APP_RESOURCES
     Main.storyboard
 )
 
-file(GLOB_RECURSE SOURCES "*.m" "*.mm")
+file(GLOB_RECURSE SOURCES "*.m")
 file(GLOB_RECURSE HEADERS "*.h")
 add_executable(example MACOSX_BUNDLE
     ${HEADERS}
@@ -21,8 +21,9 @@ find_library(FOUNDATION_LIBRARY Foundation)
 find_library(SCENEKIT_LIBRARY SceneKit)
 find_library(METAL_LIBRARY Metal)
 find_library(METALKIT_LIBRARY MetalKit)
+find_library(UTI_LIBRARY UniformTypeIdentifiers)
 
-target_link_libraries(example GLTF2SceneKit ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY} ${SCENEKIT_LIBRARY} ${METAL_LIBRARY} ${METALKIT_LIBRARY})
+target_link_libraries(example GLTF2SceneKit ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY} ${SCENEKIT_LIBRARY} ${METAL_LIBRARY} ${METALKIT_LIBRARY} ${UTI_LIBRARY})
 
 target_include_directories(example PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}

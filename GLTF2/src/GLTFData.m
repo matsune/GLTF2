@@ -63,14 +63,15 @@
 }
 
 - (nullable NSData *)dataOfUri:(NSString *)uri {
-  NSURL *url = [NSURL URLWithString:uri];
+  NSString *decodedUri = [uri stringByRemovingPercentEncoding];
+  NSURL *url = [NSURL URLWithString:decodedUri];
   if (url && url.scheme) {
     if ([url.scheme isEqualToString:@"data"]) {
       // base64
-      NSRange range = [uri rangeOfString:@"base64,"];
-      NSString *encodedString = uri;
+      NSRange range = [decodedUri rangeOfString:@"base64,"];
+      NSString *encodedString = decodedUri;
       if (range.location != NSNotFound) {
-        encodedString = [uri substringFromIndex:NSMaxRange(range)];
+        encodedString = [decodedUri substringFromIndex:NSMaxRange(range)];
       }
       return [[NSData alloc]
           initWithBase64EncodedString:encodedString
@@ -80,13 +81,13 @@
       // unsupported scheme
       return nil;
     }
-  } else if ([uri hasPrefix:@"/"]) {
+  } else if ([decodedUri hasPrefix:@"/"]) {
     // absolute path
-    return [NSData dataWithContentsOfFile:uri];
+    return [NSData dataWithContentsOfFile:decodedUri];
   } else {
     // relative path
     NSURL *relativeURL =
-        [NSURL fileURLWithPath:uri
+        [NSURL fileURLWithPath:decodedUri
                  relativeToURL:[NSURL URLWithString:self.path]];
     return [NSData dataWithContentsOfFile:[relativeURL path]];
   }

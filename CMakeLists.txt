@@ -8,19 +8,6 @@ include(FetchContent)
 
 option(BUILD_FRAMEWORK "Build as a framework instead of a dynamic library" OFF)
 
-# ios_cmake
-set(IOS_CMAKE_VERSION "4.4.1")
-FetchContent_Declare(
-    ios_cmake
-    URL https://github.com/leetal/ios-cmake/archive/${IOS_CMAKE_VERSION}.zip
-)
-
-FetchContent_GetProperties(ios_cmake)
-
-if(NOT ios_cmake_POPULATED)
-    FetchContent_Populate(ios_cmake)
-endif()
-
 if(BUILD_TESTS OR BUILD_EXAMPLE)
     set(CONFIG_H ${CMAKE_BINARY_DIR}/config.h)
     configure_file(config.h.in ${CONFIG_H})

@@ -1,5 +1,4 @@
 #import "GLTF2.h"
-#import "config.h"
 #import <XCTest/XCTest.h>
 
 @interface GLTFDataTests : XCTestCase

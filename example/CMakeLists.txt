@@ -1,6 +1,3 @@
-set(PLATFORM "MAC_UNIVERSAL")
-include(${ios_cmake_SOURCE_DIR}/ios.toolchain.cmake)
-
 # Info.plist
 set(INFO_PLIST_IN_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in)
 set(INFO_PLIST_PATH ${CMAKE_CURRENT_BINARY_DIR}/Info.plist)

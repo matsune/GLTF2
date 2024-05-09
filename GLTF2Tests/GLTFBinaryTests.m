@@ -1,6 +1,5 @@
 #import "Errors.h"
 #import "GLTFBinary.h"
-#import "config.h"
 #import <XCTest/XCTest.h>
 
 @interface GLTFBinaryTests : XCTestCase

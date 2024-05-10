@@ -292,14 +292,6 @@ GLTF_EXPORT @interface GLTFMaterial : GLTFObject
 
 #pragma mark - Mesh
 
-GLTF_EXPORT @interface GLTFMesh : GLTFObject
-
-@property(nonatomic, strong) NSArray<NSNumber *> *primitives;
-@property(nonatomic, strong, nullable) NSArray<NSNumber *> *weights;
-@property(nonatomic, copy, nullable) NSString *name;
-
-@end
-
 typedef NS_ENUM(NSInteger, GLTFMeshPrimitiveMode) {
   GLTFMeshPrimitiveModePoints = 0,
   GLTFMeshPrimitiveModeLines = 1,
@@ -318,18 +310,35 @@ GLTF_EXPORT NSString *const GLTFMeshPrimitiveAttributeSemanticColor;
 GLTF_EXPORT NSString *const GLTFMeshPrimitiveAttributeSemanticJoints;
 GLTF_EXPORT NSString *const GLTFMeshPrimitiveAttributeSemanticWeights;
 
+GLTF_EXPORT @interface GLTFMeshPrimitiveTarget : GLTFObject
+
+@property(nonatomic, strong, nullable) NSNumber *position;
+@property(nonatomic, strong, nullable) NSNumber *normal;
+@property(nonatomic, strong, nullable) NSNumber *tangent;
+
+@end
+
 GLTF_EXPORT @interface GLTFMeshPrimitive : GLTFObject
 
 @property(nonatomic, strong) NSDictionary<NSString *, NSNumber *> *attributes;
 @property(nonatomic, strong, nullable) NSNumber *indices;
 @property(nonatomic, strong, nullable) NSNumber *material;
 @property(nonatomic, strong, nullable) NSNumber *mode;
-@property(nonatomic, strong, nullable) NSArray<NSNumber *> *targets;
+@property(nonatomic, strong, nullable)
+    NSArray<GLTFMeshPrimitiveTarget *> *targets;
 
 @property(nonatomic, readonly) NSInteger modeValue;
 
-- (nullable NSNumber *)valueOfSemantic:(NSString *)semantic;
-- (NSArray<NSNumber *> *)valuesOfSemantic:(NSString *)semantic;
+- (nullable NSNumber *)valueOfAttributeSemantic:(NSString *)semantic;
+- (NSArray<NSNumber *> *)valuesOfAttributeSemantic:(NSString *)semantic;
+
+@end
+
+GLTF_EXPORT @interface GLTFMesh : GLTFObject
+
+@property(nonatomic, strong) NSArray<GLTFMeshPrimitive *> *primitives;
+@property(nonatomic, strong, nullable) NSArray<NSNumber *> *weights;
+@property(nonatomic, copy, nullable) NSString *name;
 
 @end
 

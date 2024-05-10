@@ -1,135 +1,125 @@
 #import "GLTFData+SceneKit.h"
 
-static SCNGeometrySourceSemantic
-SCNGeometrySourceSemanticFromGLTFMeshPrimitiveAttributeSemantic(
+static SCNGeometrySourceSemantic SCNGeometrySourceSemanticFromGLTFMeshPrimitiveAttributeSemantic(
     NSString *semantic) {
   if ([semantic isEqualToString:GLTFMeshPrimitiveAttributeSemanticPosition]) {
     return SCNGeometrySourceSemanticVertex;
-  } else if ([semantic
-                 isEqualToString:GLTFMeshPrimitiveAttributeSemanticNormal]) {
+  } else if ([semantic isEqualToString:GLTFMeshPrimitiveAttributeSemanticNormal]) {
     return SCNGeometrySourceSemanticNormal;
-  } else if ([semantic
-                 isEqualToString:GLTFMeshPrimitiveAttributeSemanticTangent]) {
+  } else if ([semantic isEqualToString:GLTFMeshPrimitiveAttributeSemanticTangent]) {
     return SCNGeometrySourceSemanticTangent;
-  } else if ([semantic
-                 isEqualToString:GLTFMeshPrimitiveAttributeSemanticTexcoord]) {
+  } else if ([semantic isEqualToString:GLTFMeshPrimitiveAttributeSemanticTexcoord]) {
     return SCNGeometrySourceSemanticTexcoord;
-  } else if ([semantic
-                 isEqualToString:GLTFMeshPrimitiveAttributeSemanticColor]) {
+  } else if ([semantic isEqualToString:GLTFMeshPrimitiveAttributeSemanticColor]) {
     return SCNGeometrySourceSemanticColor;
-  } else if ([semantic
-                 isEqualToString:GLTFMeshPrimitiveAttributeSemanticJoints]) {
+  } else if ([semantic isEqualToString:GLTFMeshPrimitiveAttributeSemanticJoints]) {
     return SCNGeometrySourceSemanticBoneIndices;
-  } else if ([semantic
-                 isEqualToString:GLTFMeshPrimitiveAttributeSemanticWeights]) {
+  } else if ([semantic isEqualToString:GLTFMeshPrimitiveAttributeSemanticWeights]) {
     return SCNGeometrySourceSemanticBoneWeights;
   } else {
     abort();
   }
 }
 
-static SCNWrapMode
-SCNWrapModeFromGLTFSamplerWrapMode(GLTFSamplerWrapMode mode) {
+static SCNWrapMode SCNWrapModeFromGLTFSamplerWrapMode(GLTFSamplerWrapMode mode) {
   switch (mode) {
-  case GLTFSamplerWrapModeClampToEdge:
-    return SCNWrapModeClamp;
-  case GLTFSamplerWrapModeMirroredRepeat:
-    return SCNWrapModeMirror;
-  case GLTFSamplerWrapModeRepeat:
-    return SCNWrapModeRepeat;
-  default:
-    return SCNWrapModeRepeat;
+    case GLTFSamplerWrapModeClampToEdge:
+      return SCNWrapModeClamp;
+    case GLTFSamplerWrapModeMirroredRepeat:
+      return SCNWrapModeMirror;
+    case GLTFSamplerWrapModeRepeat:
+      return SCNWrapModeRepeat;
+    default:
+      return SCNWrapModeRepeat;
   }
 }
 
-static NSInteger primitiveCountFromGLTFMeshPrimitiveMode(NSInteger indexCount,
-                                                         NSInteger mode) {
+static NSInteger primitiveCountFromGLTFMeshPrimitiveMode(NSInteger indexCount, NSInteger mode) {
   switch (mode) {
-  case GLTFMeshPrimitiveModePoints:
-    return indexCount;
-  case GLTFMeshPrimitiveModeLines:
-    return indexCount / 2;
-  case GLTFMeshPrimitiveModeLineLoop:
-    return indexCount;
-  case GLTFMeshPrimitiveModeLineStrip:
-    return indexCount - 1;
-  case GLTFMeshPrimitiveModeTriangles:
-    return indexCount / 3;
-  case GLTFMeshPrimitiveModeTriangleStrip:
-    return indexCount - 2;
-  case GLTFMeshPrimitiveModeTriangleFan:
-    return indexCount - 2;
-  default:
-    return indexCount;
+    case GLTFMeshPrimitiveModePoints:
+      return indexCount;
+    case GLTFMeshPrimitiveModeLines:
+      return indexCount / 2;
+    case GLTFMeshPrimitiveModeLineLoop:
+      return indexCount;
+    case GLTFMeshPrimitiveModeLineStrip:
+      return indexCount - 1;
+    case GLTFMeshPrimitiveModeTriangles:
+      return indexCount / 3;
+    case GLTFMeshPrimitiveModeTriangleStrip:
+      return indexCount - 2;
+    case GLTFMeshPrimitiveModeTriangleFan:
+      return indexCount - 2;
+    default:
+      return indexCount;
   }
 }
 
 // convert indices data with SceneKit compatible primitive type
-static NSData *
-convertDataToSCNGeometryPrimitiveType(NSData *bufferData, NSInteger mode,
-                                      SCNGeometryPrimitiveType *primitiveType) {
+static NSData *convertDataToSCNGeometryPrimitiveType(NSData *bufferData, NSInteger mode,
+                                                     SCNGeometryPrimitiveType *primitiveType) {
   switch (mode) {
-  case GLTFMeshPrimitiveModePoints:
-    *primitiveType = SCNGeometryPrimitiveTypePoint;
-    return bufferData;
-  case GLTFMeshPrimitiveModeLines:
-    *primitiveType = SCNGeometryPrimitiveTypeLine;
-    return bufferData;
-  case GLTFMeshPrimitiveModeLineLoop: {
-    *primitiveType = SCNGeometryPrimitiveTypeLine;
-    // convert to line
-    NSUInteger dataSize = bufferData.length;
-    NSUInteger indicesCount = dataSize / sizeof(uint16_t);
-    uint16_t *bytes = (uint16_t *)bufferData.bytes;
-    NSMutableData *data = [NSMutableData data];
-    for (NSUInteger i = 0; i < indicesCount; i++) {
-      uint16_t v1 = bytes[i];
-      uint16_t v2 = bytes[(i + 1) % indicesCount];
-      [data appendBytes:&v1 length:sizeof(uint16_t)];
-      [data appendBytes:&v2 length:sizeof(uint16_t)];
+    case GLTFMeshPrimitiveModePoints:
+      *primitiveType = SCNGeometryPrimitiveTypePoint;
+      return bufferData;
+    case GLTFMeshPrimitiveModeLines:
+      *primitiveType = SCNGeometryPrimitiveTypeLine;
+      return bufferData;
+    case GLTFMeshPrimitiveModeLineLoop: {
+      *primitiveType = SCNGeometryPrimitiveTypeLine;
+      // convert to line
+      NSUInteger dataSize = bufferData.length;
+      NSUInteger indicesCount = dataSize / sizeof(uint16_t);
+      uint16_t *bytes = (uint16_t *)bufferData.bytes;
+      NSMutableData *data = [NSMutableData data];
+      for (NSUInteger i = 0; i < indicesCount; i++) {
+        uint16_t v1 = bytes[i];
+        uint16_t v2 = bytes[(i + 1) % indicesCount];
+        [data appendBytes:&v1 length:sizeof(uint16_t)];
+        [data appendBytes:&v2 length:sizeof(uint16_t)];
+      }
+      return [data copy];
     }
-    return [data copy];
-  }
-  case GLTFMeshPrimitiveModeLineStrip: {
-    *primitiveType = SCNGeometryPrimitiveTypeLine;
-    // convert to line
-    NSUInteger dataSize = bufferData.length;
-    NSUInteger indicesCount = dataSize / sizeof(uint16_t);
-    uint16_t *bytes = (uint16_t *)bufferData.bytes;
-    NSMutableData *data = [NSMutableData data];
-    for (NSUInteger i = 0; i < indicesCount - 1; i++) {
-      uint16_t v1 = bytes[i];
-      uint16_t v2 = bytes[i + 1];
-      [data appendBytes:&v1 length:sizeof(uint16_t)];
-      [data appendBytes:&v2 length:sizeof(uint16_t)];
+    case GLTFMeshPrimitiveModeLineStrip: {
+      *primitiveType = SCNGeometryPrimitiveTypeLine;
+      // convert to line
+      NSUInteger dataSize = bufferData.length;
+      NSUInteger indicesCount = dataSize / sizeof(uint16_t);
+      uint16_t *bytes = (uint16_t *)bufferData.bytes;
+      NSMutableData *data = [NSMutableData data];
+      for (NSUInteger i = 0; i < indicesCount - 1; i++) {
+        uint16_t v1 = bytes[i];
+        uint16_t v2 = bytes[i + 1];
+        [data appendBytes:&v1 length:sizeof(uint16_t)];
+        [data appendBytes:&v2 length:sizeof(uint16_t)];
+      }
+      return [data copy];
     }
-    return [data copy];
-  }
-  case GLTFMeshPrimitiveModeTriangles:
-    *primitiveType = SCNGeometryPrimitiveTypeTriangles;
-    return bufferData;
-  case GLTFMeshPrimitiveModeTriangleStrip:
-    *primitiveType = SCNGeometryPrimitiveTypeTriangleStrip;
-    return bufferData;
-  case GLTFMeshPrimitiveModeTriangleFan: {
-    *primitiveType = SCNGeometryPrimitiveTypeTriangles;
-    // convert to triangles
-    NSUInteger dataSize = bufferData.length;
-    NSUInteger indicesCount = dataSize / sizeof(uint16_t);
-    uint16_t *bytes = (uint16_t *)bufferData.bytes;
-    NSMutableData *data = [NSMutableData data];
-    for (NSUInteger i = 1; i < indicesCount - 1; i++) {
-      uint16_t v0 = bytes[0];
-      uint16_t v1 = bytes[i];
-      uint16_t v2 = bytes[i + 1];
-      [data appendBytes:&v0 length:sizeof(uint16_t)];
-      [data appendBytes:&v1 length:sizeof(uint16_t)];
-      [data appendBytes:&v2 length:sizeof(uint16_t)];
+    case GLTFMeshPrimitiveModeTriangles:
+      *primitiveType = SCNGeometryPrimitiveTypeTriangles;
+      return bufferData;
+    case GLTFMeshPrimitiveModeTriangleStrip:
+      *primitiveType = SCNGeometryPrimitiveTypeTriangleStrip;
+      return bufferData;
+    case GLTFMeshPrimitiveModeTriangleFan: {
+      *primitiveType = SCNGeometryPrimitiveTypeTriangles;
+      // convert to triangles
+      NSUInteger dataSize = bufferData.length;
+      NSUInteger indicesCount = dataSize / sizeof(uint16_t);
+      uint16_t *bytes = (uint16_t *)bufferData.bytes;
+      NSMutableData *data = [NSMutableData data];
+      for (NSUInteger i = 1; i < indicesCount - 1; i++) {
+        uint16_t v0 = bytes[0];
+        uint16_t v1 = bytes[i];
+        uint16_t v2 = bytes[i + 1];
+        [data appendBytes:&v0 length:sizeof(uint16_t)];
+        [data appendBytes:&v1 length:sizeof(uint16_t)];
+        [data appendBytes:&v2 length:sizeof(uint16_t)];
+      }
+      return [data copy];
     }
-    return [data copy];
-  }
-  default:
-    return bufferData;
+    default:
+      return bufferData;
   }
 }
 
@@ -239,11 +229,9 @@ simd_float4 simdRotationFromQuaternion(simd_quatf rotation) {
            @"orthographic or perspective must be not nil");
   SCNCamera *scnCamera = [SCNCamera camera];
   scnCamera.name = camera.name;
-  scnCamera.usesOrthographicProjection =
-      camera.type == GLTFCameraTypeOrthographic;
+  scnCamera.usesOrthographicProjection = camera.type == GLTFCameraTypeOrthographic;
   if (camera.orthographic) {
-    scnCamera.orthographicScale =
-        MAX(camera.orthographic.xmag, camera.orthographic.ymag);
+    scnCamera.orthographicScale = MAX(camera.orthographic.xmag, camera.orthographic.ymag);
     scnCamera.zFar = camera.orthographic.zfar;
     scnCamera.zNear = camera.orthographic.znear;
   } else if (camera.perspective) {
@@ -251,18 +239,16 @@ simd_float4 simdRotationFromQuaternion(simd_quatf rotation) {
       scnCamera.zFar = camera.perspective.zfar.floatValue;
     }
     scnCamera.zNear = camera.perspective.znear;
-    scnCamera.fieldOfView = camera.perspective.yfov * (180.0 / M_PI); // degree
+    scnCamera.fieldOfView = camera.perspective.yfov * (180.0 / M_PI);  // degree
     if (camera.perspective.aspectRatio) {
       float aspectRatio = camera.perspective.aspectRatio.floatValue;
       float yFovRadians = scnCamera.fieldOfView * (M_PI / 180.0);
       SCNMatrix4 projectionTransform = {
           .m11 = 1.0 / (aspectRatio * tan(yFovRadians * 0.5)),
           .m22 = 1.0 / tan(yFovRadians * 0.5),
-          .m33 = -(scnCamera.zFar + scnCamera.zNear) /
-                 (scnCamera.zFar - scnCamera.zNear),
+          .m33 = -(scnCamera.zFar + scnCamera.zNear) / (scnCamera.zFar - scnCamera.zNear),
           .m34 = -1.0,
-          .m43 = -(2.0 * scnCamera.zFar * scnCamera.zNear) /
-                 (scnCamera.zFar - scnCamera.zNear)};
+          .m43 = -(2.0 * scnCamera.zFar * scnCamera.zNear) / (scnCamera.zFar - scnCamera.zNear)};
       scnCamera.projectionTransform = projectionTransform;
     }
   }
@@ -276,12 +262,38 @@ simd_float4 simdRotationFromQuaternion(simd_quatf rotation) {
   node.name = mesh.name;
 
   for (GLTFMeshPrimitive *primitive in mesh.primitives) {
-    SCNGeometry *geometry = [self scnGeometryFromGLTFMeshPrimitive:primitive];
-    [node addChildNode:[SCNNode nodeWithGeometry:geometry]];
-  }
+    NSArray<SCNGeometryElement *> *elements = [self scnGeometryElementsFromPrimitive:primitive];
+    SCNGeometry *geometry =
+        [SCNGeometry geometryWithSources:[self scnGeometrySourcesFromPrimitive:primitive]
+                                elements:elements];
+    SCNNode *geometryNode = [SCNNode nodeWithGeometry:geometry];
 
-  if (mesh.weights) {
-    // TODO:
+    // material
+    if (primitive.material) {
+      GLTFMaterial *material = self.json.materials[primitive.material.integerValue];
+      SCNMaterial *scnMaterial = [self scnMaterialFromGLTFMaterial:material];
+      geometry.materials = @[ scnMaterial ];
+    }
+
+    if (primitive.targets) {
+      SCNMorpher *morpher = [SCNMorpher new];
+      NSMutableArray<SCNGeometry *> *morphTargets =
+          [NSMutableArray arrayWithCapacity:primitive.targets.count];
+      for (int i = 0; i < primitive.targets.count; i++) {
+        GLTFMeshPrimitiveTarget *target = primitive.targets[i];
+        SCNGeometry *morphTarget =
+            [SCNGeometry geometryWithSources:[self scnGeometrySourcesFromMorphTarget:target]
+                                    elements:elements];
+        [morphTargets addObject:morphTarget];
+      }
+      morpher.targets = [morphTargets copy];
+      morpher.weights = mesh.weights;
+      morpher.unifiesNormals = YES;
+      morpher.calculationMode = SCNMorpherCalculationModeAdditive;
+      geometryNode.morpher = morpher;
+    }
+
+    [node addChildNode:geometryNode];
   }
 
   return node;
@@ -289,8 +301,7 @@ simd_float4 simdRotationFromQuaternion(simd_quatf rotation) {
 
 #pragma mark MeshPrimitive
 
-- (NSArray<SCNGeometrySource *> *)scnGeometrySourcesFromPrimitive:
-    (GLTFMeshPrimitive *)primitive {
+- (NSArray<SCNGeometrySource *> *)scnGeometrySourcesFromPrimitive:(GLTFMeshPrimitive *)primitive {
   NSMutableArray<SCNGeometrySource *> *sources = [NSMutableArray array];
   [self addSCNGeometrySourceToArray:sources
                       fromPrimitive:primitive
@@ -303,71 +314,40 @@ simd_float4 simdRotationFromQuaternion(simd_quatf rotation) {
                            semantic:GLTFMeshPrimitiveAttributeSemanticTangent];
   [self addSCNGeometrySourceListToArray:sources
                           fromPrimitive:primitive
-                               semantic:
-                                   GLTFMeshPrimitiveAttributeSemanticTexcoord];
-  [self
-      addSCNGeometrySourceListToArray:sources
-                        fromPrimitive:primitive
-                             semantic:GLTFMeshPrimitiveAttributeSemanticColor];
-  [self
-      addSCNGeometrySourceListToArray:sources
-                        fromPrimitive:primitive
-                             semantic:GLTFMeshPrimitiveAttributeSemanticJoints];
+                               semantic:GLTFMeshPrimitiveAttributeSemanticTexcoord];
   [self addSCNGeometrySourceListToArray:sources
                           fromPrimitive:primitive
-                               semantic:
-                                   GLTFMeshPrimitiveAttributeSemanticWeights];
+                               semantic:GLTFMeshPrimitiveAttributeSemanticColor];
+  [self addSCNGeometrySourceListToArray:sources
+                          fromPrimitive:primitive
+                               semantic:GLTFMeshPrimitiveAttributeSemanticJoints];
+  [self addSCNGeometrySourceListToArray:sources
+                          fromPrimitive:primitive
+                               semantic:GLTFMeshPrimitiveAttributeSemanticWeights];
   return [sources copy];
 }
 
-- (SCNGeometry *)scnGeometryFromGLTFMeshPrimitive:
-    (GLTFMeshPrimitive *)primitive {
-  NSArray<SCNGeometrySource *> *sources =
-      [self scnGeometrySourcesFromPrimitive:primitive];
-  NSArray<SCNGeometryElement *> *elements =
-      [self scnGeometryElementsFromPrimitive:primitive];
-  SCNGeometry *geometry = [SCNGeometry geometryWithSources:sources
-                                                  elements:elements];
-
-  // material
-  if (primitive.material) {
-    GLTFMaterial *material =
-        self.json.materials[primitive.material.integerValue];
-    SCNMaterial *scnMaterial = [self scnMaterialFromGLTFMaterial:material];
-    geometry.materials = @[ scnMaterial ];
-  }
-
-  // TODO: targets
-
-  return geometry;
-}
-
-- (void)addSCNGeometrySourceToArray:
-            (NSMutableArray<SCNGeometrySource *> *)sources
+- (void)addSCNGeometrySourceToArray:(NSMutableArray<SCNGeometrySource *> *)sources
                       fromPrimitive:(GLTFMeshPrimitive *)primitive
                            semantic:(NSString *)semantic {
-  NSNumber *index = [primitive valueOfSemantic:semantic];
+  NSNumber *index = [primitive valueOfAttributeSemantic:semantic];
   if (index) {
     GLTFAccessor *accessor = self.json.accessors[index.integerValue];
-    [sources addObject:[self scnGeometrySourceFromGLTFAccessor:accessor
-                                                  withSemantic:semantic]];
+    [sources addObject:[self scnGeometrySourceFromGLTFAccessor:accessor withSemantic:semantic]];
   }
 }
 
-- (void)addSCNGeometrySourceListToArray:
-            (NSMutableArray<SCNGeometrySource *> *)sources
+- (void)addSCNGeometrySourceListToArray:(NSMutableArray<SCNGeometrySource *> *)sources
                           fromPrimitive:(GLTFMeshPrimitive *)primitive
                                semantic:(NSString *)semantic {
-  NSArray<NSNumber *> *indices = [primitive valuesOfSemantic:semantic];
+  NSArray<NSNumber *> *indices = [primitive valuesOfAttributeSemantic:semantic];
   for (NSNumber *index in indices) {
     GLTFAccessor *accessor = self.json.accessors[index.integerValue];
-    [sources addObject:[self scnGeometrySourceFromGLTFAccessor:accessor
-                                                  withSemantic:semantic]];
+    [sources addObject:[self scnGeometrySourceFromGLTFAccessor:accessor withSemantic:semantic]];
   }
 }
 
-- (SCNGeometrySource *)scnGeometrySourceFromGLTFAccessor:
-                           (GLTFAccessor *)accessor
+- (SCNGeometrySource *)scnGeometrySourceFromGLTFAccessor:(GLTFAccessor *)accessor
                                             withSemantic:(NSString *)semantic {
   NSData *data = [self dataForAccessor:accessor];
   NSInteger componentsPerVector = componentsCountOfAccessorType(accessor.type);
@@ -375,36 +355,31 @@ simd_float4 simdRotationFromQuaternion(simd_quatf rotation) {
   NSInteger dataStride = componentsPerVector * bytesPerComponent;
   return [SCNGeometrySource
       geometrySourceWithData:data
-                    semantic:
-                        SCNGeometrySourceSemanticFromGLTFMeshPrimitiveAttributeSemantic(
-                            semantic)
+                    semantic:SCNGeometrySourceSemanticFromGLTFMeshPrimitiveAttributeSemantic(
+                                 semantic)
                  vectorCount:accessor.count
-             floatComponents:accessor.componentType ==
-                             GLTFAccessorComponentTypeFloat
+             floatComponents:accessor.componentType == GLTFAccessorComponentTypeFloat
          componentsPerVector:componentsPerVector
            bytesPerComponent:bytesPerComponent
                   dataOffset:0
                   dataStride:dataStride];
 }
 
-- (NSArray<SCNGeometryElement *> *)scnGeometryElementsFromPrimitive:
-    (GLTFMeshPrimitive *)primitive {
+- (NSArray<SCNGeometryElement *> *)scnGeometryElementsFromPrimitive:(GLTFMeshPrimitive *)primitive {
   NSMutableArray<SCNGeometryElement *> *elements = [NSMutableArray array];
   if (primitive.indices) {
-    GLTFAccessor *accessor =
-        self.json.accessors[primitive.indices.integerValue];
+    GLTFAccessor *accessor = self.json.accessors[primitive.indices.integerValue];
     NSData *data = [self dataForAccessor:accessor];
 
     SCNGeometryPrimitiveType primitiveType = SCNGeometryPrimitiveTypeTriangles;
-    data = convertDataToSCNGeometryPrimitiveType(data, primitive.modeValue,
-                                                 &primitiveType);
+    data = convertDataToSCNGeometryPrimitiveType(data, primitive.modeValue, &primitiveType);
 
-    SCNGeometryElement *element = [SCNGeometryElement
-        geometryElementWithData:data
-                  primitiveType:primitiveType
-                 primitiveCount:primitiveCountFromGLTFMeshPrimitiveMode(
-                                    accessor.count, primitive.modeValue)
-                  bytesPerIndex:sizeOfComponentType(accessor.componentType)];
+    SCNGeometryElement *element =
+        [SCNGeometryElement geometryElementWithData:data
+                                      primitiveType:primitiveType
+                                     primitiveCount:primitiveCountFromGLTFMeshPrimitiveMode(
+                                                        accessor.count, primitive.modeValue)
+                                      bytesPerIndex:sizeOfComponentType(accessor.componentType)];
 
     if (primitive.modeValue == GLTFMeshPrimitiveModePoints) {
       element.pointSize = 4.0;
@@ -415,6 +390,32 @@ simd_float4 simdRotationFromQuaternion(simd_quatf rotation) {
     [elements addObject:element];
   }
   return [elements copy];
+}
+
+- (NSArray<SCNGeometrySource *> *)scnGeometrySourcesFromMorphTarget:
+    (GLTFMeshPrimitiveTarget *)primitiveTarget {
+  NSMutableArray<SCNGeometrySource *> *sources = [NSMutableArray array];
+  if (primitiveTarget.position) {
+    GLTFAccessor *accessor = self.json.accessors[primitiveTarget.position.integerValue];
+    [sources addObject:[self scnGeometrySourceFromGLTFAccessor:accessor
+                                                  withSemantic:
+                                                      GLTFMeshPrimitiveAttributeSemanticPosition]];
+  }
+  if (primitiveTarget.normal) {
+    GLTFAccessor *accessor = self.json.accessors[primitiveTarget.normal.integerValue];
+    [sources
+        addObject:[self
+                      scnGeometrySourceFromGLTFAccessor:accessor
+                                           withSemantic:GLTFMeshPrimitiveAttributeSemanticNormal]];
+  }
+  if (primitiveTarget.tangent) {
+    GLTFAccessor *accessor = self.json.accessors[primitiveTarget.tangent.integerValue];
+    [sources
+        addObject:[self
+                      scnGeometrySourceFromGLTFAccessor:accessor
+                                           withSemantic:GLTFMeshPrimitiveAttributeSemanticTangent]];
+  }
+  return [sources copy];
 }
 
 #pragma mark - Material
@@ -433,29 +434,24 @@ simd_float4 simdRotationFromQuaternion(simd_quatf rotation) {
   NSMutableString *surfaceShaderModifier = [NSMutableString string];
 
   GLTFMaterialPBRMetallicRoughness *pbrMetallicRoughness =
-      material.pbrMetallicRoughness
-          ?: [[GLTFMaterialPBRMetallicRoughness alloc] init];
+      material.pbrMetallicRoughness ?: [[GLTFMaterialPBRMetallicRoughness alloc] init];
 
   if (pbrMetallicRoughness.baseColorTexture) {
     // set contents to texture
-    [self applyTextureInfo:pbrMetallicRoughness.baseColorTexture
-                toProperty:scnMaterial.diffuse];
+    [self applyTextureInfo:pbrMetallicRoughness.baseColorTexture toProperty:scnMaterial.diffuse];
 
     if (pbrMetallicRoughness.baseColorFactor) {
       simd_float4 factor = pbrMetallicRoughness.baseColorFactorValue;
 
       if (factor[3] < 1.0f) {
-        [surfaceShaderModifier
-            appendString:@"#pragma transparent\n#pragma body\n"];
+        [surfaceShaderModifier appendString:@"#pragma transparent\n#pragma body\n"];
       }
-      [surfaceShaderModifier
-          appendFormat:@"_surface.diffuse *= float4(%ff, %ff, %ff, %ff);\n",
-                       factor[0], factor[1], factor[2], factor[3]];
+      [surfaceShaderModifier appendFormat:@"_surface.diffuse *= float4(%ff, %ff, %ff, %ff);\n",
+                                          factor[0], factor[1], factor[2], factor[3]];
     }
   } else {
     simd_float4 value = pbrMetallicRoughness.baseColorFactorValue;
-    applyColorContentsToProperty(value[0], value[1], value[2], value[3],
-                                 scnMaterial.diffuse);
+    applyColorContentsToProperty(value[0], value[1], value[2], value[3], scnMaterial.diffuse);
   }
 
   // metallicRoughnessTexture
@@ -470,10 +466,8 @@ simd_float4 simdRotationFromQuaternion(simd_quatf rotation) {
     scnMaterial.roughness.textureComponents = SCNColorMaskGreen;
     scnMaterial.roughness.intensity = pbrMetallicRoughness.roughnessFactorValue;
   } else {
-    scnMaterial.metalness.contents =
-        @(pbrMetallicRoughness.metallicFactorValue);
-    scnMaterial.roughness.contents =
-        @(pbrMetallicRoughness.roughnessFactorValue);
+    scnMaterial.metalness.contents = @(pbrMetallicRoughness.metallicFactorValue);
+    scnMaterial.roughness.contents = @(pbrMetallicRoughness.roughnessFactorValue);
   }
 
   if (material.normalTexture) {
@@ -481,32 +475,26 @@ simd_float4 simdRotationFromQuaternion(simd_quatf rotation) {
   }
 
   if (material.occlusionTexture) {
-    [self applyOcclusionTextureInfo:material.occlusionTexture
-                         toMaterial:scnMaterial];
+    [self applyOcclusionTextureInfo:material.occlusionTexture toMaterial:scnMaterial];
     scnMaterial.ambientOcclusion.textureComponents = SCNColorMaskRed;
   }
 
   if (material.emissiveTexture) {
-    [self applyTextureInfo:material.emissiveTexture
-                toProperty:scnMaterial.emission];
+    [self applyTextureInfo:material.emissiveTexture toProperty:scnMaterial.emission];
   } else {
     simd_float3 value = material.emissiveFactorValue;
-    applyColorContentsToProperty(value[0], value[1], value[2], 1.0,
-                                 scnMaterial.emission);
+    applyColorContentsToProperty(value[0], value[1], value[2], 1.0, scnMaterial.emission);
   }
 
   if ([material.alphaModeValue isEqualToString:GLTFMaterialAlphaModeOpaque]) {
     scnMaterial.blendMode = SCNBlendModeReplace;
     [surfaceShaderModifier appendString:@"_surface.diffuse.a = 1.0;"];
-  } else if ([material.alphaModeValue
-                 isEqualToString:GLTFMaterialAlphaModeMask]) {
+  } else if ([material.alphaModeValue isEqualToString:GLTFMaterialAlphaModeMask]) {
     scnMaterial.blendMode = SCNBlendModeReplace;
     [surfaceShaderModifier
-        appendFormat:
-            @"_surface.diffuse.a = _surface.diffuse.a < %f ? 0.0 : 1.0;",
-            material.alphaCutoffValue];
-  } else if ([material.alphaModeValue
-                 isEqualToString:GLTFMaterialAlphaModeBlend]) {
+        appendFormat:@"_surface.diffuse.a = _surface.diffuse.a < %f ? 0.0 : 1.0;",
+                     material.alphaCutoffValue];
+  } else if ([material.alphaModeValue isEqualToString:GLTFMaterialAlphaModeBlend]) {
     scnMaterial.blendMode = SCNBlendModeAlpha;
     scnMaterial.transparencyMode = SCNTransparencyModeDualLayer;
   }
@@ -523,8 +511,7 @@ simd_float4 simdRotationFromQuaternion(simd_quatf rotation) {
 
 void applyColorContentsToProperty(float r, float g, float b, float a,
                                   SCNMaterialProperty *property) {
-  CGColorSpaceRef colorSpace =
-      CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB);
+  CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB);
   CGFloat components[] = {r, g, b, a};
   CGColorRef color = CGColorCreate(colorSpace, components);
   property.contents = (__bridge id)(color);
@@ -544,8 +531,7 @@ void applyColorContentsToProperty(float r, float g, float b, float a,
 
 #pragma mark occlusion
 
-- (void)applyOcclusionTextureInfo:
-            (GLTFMaterialOcclusionTextureInfo *)textureInfo
+- (void)applyOcclusionTextureInfo:(GLTFMaterialOcclusionTextureInfo *)textureInfo
                        toMaterial:(SCNMaterial *)material {
   GLTFTexture *texture = self.json.textures[textureInfo.index];
   [self applyTexture:texture toProperty:material.ambientOcclusion];
@@ -555,15 +541,13 @@ void applyColorContentsToProperty(float r, float g, float b, float a,
 
 #pragma mark texture
 
-- (void)applyTextureInfo:(GLTFTextureInfo *)textureInfo
-              toProperty:(SCNMaterialProperty *)property {
+- (void)applyTextureInfo:(GLTFTextureInfo *)textureInfo toProperty:(SCNMaterialProperty *)property {
   GLTFTexture *texture = self.json.textures[textureInfo.index];
   [self applyTexture:texture toProperty:property];
   property.mappingChannel = textureInfo.texCoordValue;
 }
 
-- (void)applyTexture:(GLTFTexture *)texture
-          toProperty:(SCNMaterialProperty *)property {
+- (void)applyTexture:(GLTFTexture *)texture toProperty:(SCNMaterialProperty *)property {
   property.wrapS = SCNWrapModeRepeat;
   property.wrapT = SCNWrapModeRepeat;
   property.magnificationFilter = SCNFilterModeNone;
@@ -581,46 +565,45 @@ void applyColorContentsToProperty(float r, float g, float b, float a,
   }
 }
 
-- (void)applyTextureSampler:(GLTFSampler *)sampler
-                 toProperty:(SCNMaterialProperty *)property {
+- (void)applyTextureSampler:(GLTFSampler *)sampler toProperty:(SCNMaterialProperty *)property {
   if (sampler.magFilter) {
     switch ([sampler.magFilter integerValue]) {
-    case GLTFSamplerMagFilterNearest:
-      property.magnificationFilter = SCNFilterModeNearest;
-      break;
-    case GLTFSamplerMagFilterLinear:
-      property.magnificationFilter = SCNFilterModeLinear;
-      break;
-    default:
-      break;
+      case GLTFSamplerMagFilterNearest:
+        property.magnificationFilter = SCNFilterModeNearest;
+        break;
+      case GLTFSamplerMagFilterLinear:
+        property.magnificationFilter = SCNFilterModeLinear;
+        break;
+      default:
+        break;
     }
   }
   if (sampler.minFilter) {
     switch ([sampler.minFilter integerValue]) {
-    case GLTFSamplerMinFilterLinear:
-      property.minificationFilter = SCNFilterModeLinear;
-      break;
-    case GLTFSamplerMinFilterLinearMipmapNearest:
-      property.minificationFilter = SCNFilterModeLinear;
-      property.mipFilter = SCNFilterModeNearest;
-      break;
-    case GLTFSamplerMinFilterLinearMipmapLinear:
-      property.minificationFilter = SCNFilterModeLinear;
-      property.mipFilter = SCNFilterModeLinear;
-      break;
-    case GLTFSamplerMinFilterNearest:
-      property.minificationFilter = SCNFilterModeNearest;
-      break;
-    case GLTFSamplerMinFilterNearestMipmapNearest:
-      property.minificationFilter = SCNFilterModeNearest;
-      property.mipFilter = SCNFilterModeNearest;
-      break;
-    case GLTFSamplerMinFilterNearestMipmapLinear:
-      property.minificationFilter = SCNFilterModeNearest;
-      property.mipFilter = SCNFilterModeLinear;
-      break;
-    default:
-      break;
+      case GLTFSamplerMinFilterLinear:
+        property.minificationFilter = SCNFilterModeLinear;
+        break;
+      case GLTFSamplerMinFilterLinearMipmapNearest:
+        property.minificationFilter = SCNFilterModeLinear;
+        property.mipFilter = SCNFilterModeNearest;
+        break;
+      case GLTFSamplerMinFilterLinearMipmapLinear:
+        property.minificationFilter = SCNFilterModeLinear;
+        property.mipFilter = SCNFilterModeLinear;
+        break;
+      case GLTFSamplerMinFilterNearest:
+        property.minificationFilter = SCNFilterModeNearest;
+        break;
+      case GLTFSamplerMinFilterNearestMipmapNearest:
+        property.minificationFilter = SCNFilterModeNearest;
+        property.mipFilter = SCNFilterModeNearest;
+        break;
+      case GLTFSamplerMinFilterNearestMipmapLinear:
+        property.minificationFilter = SCNFilterModeNearest;
+        property.mipFilter = SCNFilterModeLinear;
+        break;
+      default:
+        break;
     }
   }
   property.wrapS = SCNWrapModeFromGLTFSamplerWrapMode(sampler.wrapSValue);

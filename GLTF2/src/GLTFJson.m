@@ -254,6 +254,9 @@ NSString *const GLTFMeshPrimitiveAttributeSemanticColor = @"COLOR";
 NSString *const GLTFMeshPrimitiveAttributeSemanticJoints = @"JOINTS";
 NSString *const GLTFMeshPrimitiveAttributeSemanticWeights = @"WEIGHTS";
 
+@implementation GLTFMeshPrimitiveTarget
+@end
+
 @implementation GLTFMeshPrimitive
 
 - (NSInteger)modeValue {
@@ -262,7 +265,7 @@ NSString *const GLTFMeshPrimitiveAttributeSemanticWeights = @"WEIGHTS";
   return GLTFMeshPrimitiveModeTriangles;
 }
 
-- (nullable NSNumber *)valueOfSemantic:(NSString *)semantic {
+- (nullable NSNumber *)valueOfAttributeSemantic:(NSString *)semantic {
   return [self.attributes valueForKey:semantic];
 }
 
@@ -290,7 +293,7 @@ NSString *const GLTFMeshPrimitiveAttributeSemanticWeights = @"WEIGHTS";
   return nil;
 }
 
-- (NSArray<NSNumber *> *)valuesOfSemantic:(NSString *)semantic {
+- (NSArray<NSNumber *> *)valuesOfAttributeSemantic:(NSString *)semantic {
   NSMutableArray<NSNumber *> *values = [NSMutableArray array];
   NSArray<NSString *> *keys =
       [self.attributes.allKeys sortedArrayUsingSelector:@selector(compare:)];

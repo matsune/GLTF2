@@ -1232,6 +1232,16 @@
   return mesh;
 }
 
+#pragma mark - GLTFMeshPrimitiveTarget
+- (GLTFMeshPrimitiveTarget *)decodeMeshPrimitiveTarget:
+    (NSDictionary *)jsonDict {
+  GLTFMeshPrimitiveTarget *target = [[GLTFMeshPrimitiveTarget alloc] init];
+  target.position = [jsonDict getNumber:@"POSITION"];
+  target.normal = [jsonDict getNumber:@"NORMAL"];
+  target.tangent = [jsonDict getNumber:@"TANGENT"];
+  return target;
+}
+
 #pragma mark - GLTFMeshPrimitive
 
 - (nullable GLTFMeshPrimitive *)decodeMeshPrimitive:(NSDictionary *)jsonDict
@@ -1256,13 +1266,21 @@
     }
   }
 
+  NSMutableArray<GLTFMeshPrimitiveTarget *> *targets;
+  NSArray<NSDictionary *> *targetsArray = [jsonDict getDictArray:@"targets"];
+  if (targetsArray) {
+    targets = [NSMutableArray arrayWithCapacity:targetsArray.count];
+    for (NSDictionary *targetDict in targetsArray) {
+      [targets addObject:[self decodeMeshPrimitiveTarget:targetDict]];
+    }
+  }
+
   GLTFMeshPrimitive *meshPrimitive = [[GLTFMeshPrimitive alloc] init];
   meshPrimitive.attributes = [attributesDict copy];
-
+  meshPrimitive.targets = [targets copy];
   meshPrimitive.indices = [jsonDict getNumber:@"indices"];
   meshPrimitive.material = [jsonDict getNumber:@"material"];
   meshPrimitive.mode = [jsonDict getNumber:@"mode"];
-  meshPrimitive.targets = [jsonDict getNumberArray:@"targets"];
   meshPrimitive.extensions = [jsonDict getExtensions];
   meshPrimitive.extras = [jsonDict getExtras];
 

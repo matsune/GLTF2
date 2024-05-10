@@ -21,12 +21,14 @@
 
 - (void)loadModelURL:(NSURL *)url {
   NSError *err;
-  GLTFData *object = [GLTFData dataWithFile:[url path] error:&err];
+  GLTFData *data = [GLTFData dataWithFile:[url path] error:&err];
   if (err) {
     NSLog(@"%@", err);
     abort();
   }
-  self.scnView.scene = object.defaultScene;
+  GLTFSCNAsset *asset = [GLTFSCNAsset assetWithGLTFData:data];
+  [asset loadScenes];
+  self.scnView.scene = asset.defaultScene;
 }
 
 @end

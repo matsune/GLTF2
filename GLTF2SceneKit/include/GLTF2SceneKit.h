@@ -1,1 +1,1 @@
-#import "GLTFData+SceneKit.h"
+#import "GLTFSCNAsset.h"

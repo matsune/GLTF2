@@ -15,7 +15,6 @@
     _json = json;
     _path = path;
     _binary = binary;
-    _device = MTLCreateSystemDefaultDevice();
   }
   return self;
 }
@@ -124,15 +123,7 @@
   return imageRef;
 }
 
-- (id<MTLTexture>)createMTLTextureFromCGImage:(CGImageRef)image
-                                        error:(NSError *_Nullable *_Nullable)
-                                                  error {
-  MTKTextureLoader *textureLoader =
-      [[MTKTextureLoader alloc] initWithDevice:self.device];
-  return [textureLoader newTextureWithCGImage:image options:nil error:error];
-}
-
-- (id<MTLTexture>)mtlTextureForImage:(GLTFImage *)image {
+- (CGImageRef)cgImageForImage:(GLTFImage *)image {
   NSData *data;
   if (image.uri) {
     data = [self dataOfUri:image.uri];
@@ -140,12 +131,7 @@
     assert(image.bufferView != nil);
     data = [self dataForBufferViewIndex:image.bufferView.integerValue];
   }
-  CGImageRef cgImage = [self createCGImageFromData:data];
-  // TODO: error handling
-  id<MTLTexture> texture = [self createMTLTextureFromCGImage:cgImage error:nil];
-  CGImageRelease(cgImage);
-
-  return texture;
+  return [self createCGImageFromData:data];
 }
 
 - (NSData *)dataForAccessor:(GLTFAccessor *)accessor {

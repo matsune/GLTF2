@@ -227,24 +227,18 @@ GLTF_EXPORT @interface GLTFTextureInfo : GLTFObject
 
 #pragma mark - Material
 
-GLTF_EXPORT @interface GLTFMaterialNormalTextureInfo : GLTFObject
+GLTF_EXPORT @interface GLTFMaterialNormalTextureInfo : GLTFTextureInfo
 
-@property(nonatomic, assign) NSInteger index;
-@property(nonatomic, strong, nullable) NSNumber *texCoord;
 @property(nonatomic, strong, nullable) NSNumber *scale;
 
-@property(nonatomic, readonly) NSInteger texCoordValue;
 @property(nonatomic, readonly) float scaleValue;
 
 @end
 
-GLTF_EXPORT @interface GLTFMaterialOcclusionTextureInfo : GLTFObject
+GLTF_EXPORT @interface GLTFMaterialOcclusionTextureInfo : GLTFTextureInfo
 
-@property(nonatomic, assign) NSInteger index;
-@property(nonatomic, strong, nullable) NSNumber *texCoord;
 @property(nonatomic, strong, nullable) NSNumber *strength;
 
-@property(nonatomic, readonly) NSInteger texCoordValue;
 @property(nonatomic, readonly) float strengthValue;
 
 @end

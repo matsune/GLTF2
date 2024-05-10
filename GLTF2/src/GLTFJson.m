@@ -163,10 +163,6 @@ NSString *const GLTFCameraTypeOrthographic = @"orthographic";
 
 @implementation GLTFMaterialNormalTextureInfo
 
-- (NSInteger)texCoordValue {
-  return _texCoord.integerValue;
-}
-
 - (float)scaleValue {
   if (_scale)
     return _scale.floatValue;
@@ -176,10 +172,6 @@ NSString *const GLTFCameraTypeOrthographic = @"orthographic";
 @end
 
 @implementation GLTFMaterialOcclusionTextureInfo
-
-- (NSInteger)texCoordValue {
-  return _texCoord.integerValue;
-}
 
 - (float)strengthValue {
   if (_strength)

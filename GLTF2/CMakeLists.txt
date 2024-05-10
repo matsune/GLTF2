@@ -16,10 +16,8 @@ target_include_directories(${LIB_NAME} PUBLIC
 
 find_library(COCOA_LIBRARY Cocoa)
 find_library(FOUNDATION_LIBRARY Foundation)
-find_library(METAL_LIBRARY Metal)
-find_library(METALKIT_LIBRARY MetalKit)
 
-target_link_libraries(${LIB_NAME} ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY} ${METAL_LIBRARY} ${METALKIT_LIBRARY})
+target_link_libraries(${LIB_NAME} ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY})
 
 set_target_properties(${LIB_NAME} PROPERTIES
     VERSION 1.0

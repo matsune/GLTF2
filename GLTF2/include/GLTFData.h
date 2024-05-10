@@ -2,7 +2,6 @@
 #import "GLTFJson.h"
 #import <CoreGraphics/CoreGraphics.h>
 #import <Foundation/Foundation.h>
-#import <Metal/Metal.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -11,7 +10,6 @@ GLTF_EXPORT @interface GLTFData : NSObject
 @property(nonatomic, strong, readonly) GLTFJson *json;
 @property(nonatomic, copy, nullable, readonly) NSString *path;
 @property(nonatomic, strong, nullable) NSData *binary;
-@property(nonatomic, strong) id<MTLDevice> device;
 
 - (instancetype)initWithJson:(GLTFJson *)json
                         path:(nullable NSString *)path
@@ -34,7 +32,7 @@ GLTF_EXPORT @interface GLTFData : NSObject
 - (NSData *)dataForBufferView:(GLTFBufferView *)bufferView;
 - (NSData *)dataForBufferViewIndex:(NSInteger)bufferViewIndex;
 
-- (id<MTLTexture>)mtlTextureForImage:(GLTFImage *)image;
+- (CGImageRef)cgImageForImage:(GLTFImage *)image;
 
 - (NSData *)dataForAccessor:(GLTFAccessor *)accessor;
 

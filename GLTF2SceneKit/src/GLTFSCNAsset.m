@@ -71,15 +71,13 @@
 
       if (node.mesh) {
         SCNNode *meshNode = meshNodes[node.mesh.integerValue];
+        if (node.weights && meshNode.morpher) {
+          meshNode.morpher.weights = node.weights;
+        }
         [scnNode addChildNode:meshNode];
       }
 
-      if (node.weights) {
-        // TODO:
-      }
-
       [scnNodes addObject:scnNode];
-      ;
     }
 
     for (int i = 0; i < self.data.json.nodes.count; i++) {
@@ -138,6 +136,7 @@
     if (pbrMetallicRoughness.baseColorTexture) {
       // set contents to texture
       [self applyTextureInfo:pbrMetallicRoughness.baseColorTexture
+               withIntensity:1.0f
                   toProperty:scnMaterial.diffuse];
 
       if (pbrMetallicRoughness.baseColorFactor) {
@@ -160,16 +159,14 @@
     // metallicRoughnessTexture
     if (pbrMetallicRoughness.metallicRoughnessTexture) {
       [self applyTextureInfo:pbrMetallicRoughness.metallicRoughnessTexture
+               withIntensity:pbrMetallicRoughness.metallicFactorValue
                   toProperty:scnMaterial.metalness];
       scnMaterial.metalness.textureComponents = SCNColorMaskBlue;
-      scnMaterial.metalness.intensity =
-          pbrMetallicRoughness.metallicFactorValue;
 
       [self applyTextureInfo:pbrMetallicRoughness.metallicRoughnessTexture
+               withIntensity:pbrMetallicRoughness.roughnessFactorValue
                   toProperty:scnMaterial.roughness];
       scnMaterial.roughness.textureComponents = SCNColorMaskGreen;
-      scnMaterial.roughness.intensity =
-          pbrMetallicRoughness.roughnessFactorValue;
     } else {
       scnMaterial.metalness.contents =
           @(pbrMetallicRoughness.metallicFactorValue);
@@ -178,18 +175,21 @@
     }
 
     if (material.normalTexture) {
-      [self applyNormalTextureInfo:material.normalTexture
-                        toMaterial:scnMaterial];
+      [self applyTextureInfo:material.normalTexture
+               withIntensity:material.normalTexture.scaleValue
+                  toProperty:scnMaterial.normal];
     }
 
     if (material.occlusionTexture) {
-      [self applyOcclusionTextureInfo:material.occlusionTexture
-                           toMaterial:scnMaterial];
+      [self applyTextureInfo:material.occlusionTexture
+               withIntensity:material.occlusionTexture.strengthValue
+                  toProperty:scnMaterial.ambientOcclusion];
       scnMaterial.ambientOcclusion.textureComponents = SCNColorMaskRed;
     }
 
     if (material.emissiveTexture) {
       [self applyTextureInfo:material.emissiveTexture
+               withIntensity:1.0f
                   toProperty:scnMaterial.emission];
     } else {
       simd_float3 value = material.emissiveFactorValue;
@@ -235,28 +235,13 @@ void applyColorContentsToProperty(float r, float g, float b, float a,
   CGColorSpaceRelease(colorSpace);
 }
 
-- (void)applyNormalTextureInfo:(GLTFMaterialNormalTextureInfo *)textureInfo
-                    toMaterial:(SCNMaterial *)material {
-  GLTFTexture *texture = self.data.json.textures[textureInfo.index];
-  [self applyTexture:texture toProperty:material.normal];
-  material.normal.mappingChannel = textureInfo.texCoordValue;
-  material.normal.intensity = textureInfo.scaleValue;
-}
-
-- (void)applyOcclusionTextureInfo:
-            (GLTFMaterialOcclusionTextureInfo *)textureInfo
-                       toMaterial:(SCNMaterial *)material {
-  GLTFTexture *texture = self.data.json.textures[textureInfo.index];
-  [self applyTexture:texture toProperty:material.ambientOcclusion];
-  material.ambientOcclusion.mappingChannel = textureInfo.texCoordValue;
-  material.ambientOcclusion.intensity = textureInfo.strengthValue;
-}
-
 - (void)applyTextureInfo:(GLTFTextureInfo *)textureInfo
+           withIntensity:(CGFloat)intensity
               toProperty:(SCNMaterialProperty *)property {
   GLTFTexture *texture = self.data.json.textures[textureInfo.index];
   [self applyTexture:texture toProperty:property];
   property.mappingChannel = textureInfo.texCoordValue;
+  property.intensity = intensity;
 }
 
 - (void)applyTexture:(GLTFTexture *)texture
@@ -269,7 +254,7 @@ void applyColorContentsToProperty(float r, float g, float b, float a,
 
   if (texture.source) {
     GLTFImage *image = self.data.json.images[texture.source.integerValue];
-    property.contents = [self.data mtlTextureForImage:image];
+    property.contents = (__bridge id)[self.data cgImageForImage:image];
   }
 
   if (texture.sampler) {
@@ -510,7 +495,8 @@ convertDataToSCNGeometryPrimitiveType(NSData *bufferData, NSInteger mode,
         [morphTargets addObject:morphTarget];
       }
       morpher.targets = [morphTargets copy];
-      morpher.weights = mesh.weights;
+      if (mesh.weights)
+        morpher.weights = mesh.weights;
       morpher.unifiesNormals = YES;
       morpher.calculationMode = SCNMorpherCalculationModeAdditive;
       geometryNode.morpher = morpher;

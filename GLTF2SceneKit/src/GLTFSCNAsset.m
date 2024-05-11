@@ -57,10 +57,6 @@
         scnNode.camera = cameras[node.camera.integerValue];
       }
 
-      if (node.skin) {
-        // TODO:
-      }
-
       if (node.matrix) {
         scnNode.simdTransform = node.matrixValue;
       } else {
@@ -83,11 +79,84 @@
     for (int i = 0; i < self.data.json.nodes.count; i++) {
       GLTFNode *node = self.data.json.nodes[i];
       SCNNode *scnNode = scnNodes[i];
+
       if (node.children) {
         for (NSNumber *childIndex in node.children) {
           SCNNode *childNode = scnNodes[childIndex.integerValue];
           [scnNode addChildNode:childNode];
         }
+      }
+
+      if (node.skin) {
+        GLTFSkin *skin = self.data.json.skins[node.skin.integerValue];
+        SCNGeometry *geometry = meshNodes[node.mesh.integerValue].geometry;
+
+        NSMutableArray<SCNNode *> *bones =
+            [NSMutableArray arrayWithCapacity:skin.joints.count];
+        for (NSNumber *joint in skin.joints) {
+          SCNNode *bone = scnNodes[joint.integerValue];
+          [bones addObject:bone];
+        }
+
+        NSMutableArray<NSValue *> *boneInverseBindTransforms =
+            [NSMutableArray arrayWithCapacity:skin.joints.count];
+        if (skin.inverseBindMatrices) {
+          GLTFAccessor *accessor =
+              self.data.json.accessors[skin.inverseBindMatrices.integerValue];
+          NSData *data = [self.data dataForAccessor:accessor];
+          for (int j = 0; j < skin.joints.count; j++) {
+            float matrixData[16];
+            [data getBytes:&matrixData
+                     range:NSMakeRange(j * sizeof(matrixData),
+                                       sizeof(matrixData))];
+            SCNMatrix4 matrix;
+            matrix.m11 = matrixData[0];
+            matrix.m12 = matrixData[1];
+            matrix.m13 = matrixData[2];
+            matrix.m14 = matrixData[3];
+            matrix.m21 = matrixData[4];
+            matrix.m22 = matrixData[5];
+            matrix.m23 = matrixData[6];
+            matrix.m24 = matrixData[7];
+            matrix.m31 = matrixData[8];
+            matrix.m32 = matrixData[9];
+            matrix.m33 = matrixData[10];
+            matrix.m34 = matrixData[11];
+            matrix.m41 = matrixData[12];
+            matrix.m42 = matrixData[13];
+            matrix.m43 = matrixData[14];
+            matrix.m44 = matrixData[15];
+            [boneInverseBindTransforms
+                addObject:[NSValue valueWithSCNMatrix4:matrix]];
+          }
+        } else {
+          for (int j = 0; j < skin.joints.count; j++) {
+            SCNMatrix4 identity = SCNMatrix4Identity;
+            [boneInverseBindTransforms
+                addObject:[NSValue valueWithSCNMatrix4:identity]];
+          }
+        }
+
+        SCNGeometrySource *boneWeights;
+        SCNGeometrySource *boneIndices;
+        for (SCNGeometrySource *source in geometry.geometrySources) {
+          if ([source.semantic
+                  isEqualToString:SCNGeometrySourceSemanticBoneWeights]) {
+            boneWeights = source;
+          } else if ([source.semantic
+                         isEqualToString:
+                             SCNGeometrySourceSemanticBoneIndices]) {
+            boneIndices = source;
+          }
+        }
+
+        SCNSkinner *skinner =
+            [SCNSkinner skinnerWithBaseGeometry:geometry
+                                          bones:[bones copy]
+                      boneInverseBindTransforms:[boneInverseBindTransforms copy]
+                                    boneWeights:boneWeights
+                                    boneIndices:boneIndices];
+        scnNode.skinner = skinner;
       }
     }
   }

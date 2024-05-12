@@ -8,6 +8,8 @@
 
 @interface ViewController ()
 
+@property(nonatomic) GLTFSCNAsset *asset;
+
 @end
 
 @implementation ViewController
@@ -26,9 +28,15 @@
     NSLog(@"%@", err);
     abort();
   }
-  GLTFSCNAsset *asset = [GLTFSCNAsset assetWithGLTFData:data];
-  [asset loadScenes];
-  self.scnView.scene = asset.defaultScene;
+  self.asset = [GLTFSCNAsset assetWithGLTFData:data];
+  [self.asset loadScenes];
+  self.scnView.scene = self.asset.defaultScene;
+  if (self.asset.animationPlayers.count > 0) {
+    SCNAnimationPlayer *animationPlayer = self.asset.animationPlayers[0];
+    [self.scnView.scene.rootNode addAnimationPlayer:animationPlayer
+                                             forKey:@"Playback"];
+    [animationPlayer play];
+  }
 }
 
 @end

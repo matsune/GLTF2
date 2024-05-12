@@ -8,6 +8,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property(nonatomic, strong, readonly) GLTFData *data;
 @property(nonatomic, strong) NSArray<SCNScene *> *scenes;
+@property(nonatomic, strong) NSArray<SCNAnimationPlayer *> *animationPlayers;
 
 - (instancetype)initWithGLTFData:(GLTFData *)data;
 

@@ -36,6 +36,8 @@ GLTF_EXPORT @interface GLTFData : NSObject
 
 - (NSData *)dataForAccessor:(GLTFAccessor *)accessor;
 
++ (NSArray *)unpackGLTFAccessorDataToArray:(GLTFAccessor *)accessor
+                                      data:(NSData *)data;
 @end
 
 NS_ASSUME_NONNULL_END

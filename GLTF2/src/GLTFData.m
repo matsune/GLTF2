@@ -294,4 +294,388 @@
   }
 }
 
+// scalar : NSArray<NSNumber *> *
+// vec2 : NSArray<NSArray<NSNuber *>> *, inner array size is 2
+// vec3 : NSArray<NSArray<NSNuber *>> *, inner array size is 3
+// vec4 : NSArray<NSArray<NSNuber *>> *, inner array size is 4
+// mat2 : NSArray<NSArray<NSNuber *>> *, inner array size is 4
+// mat3 : NSArray<NSArray<NSNuber *>> *, inner array size is 9
+// mat4 : NSArray<NSArray<NSNuber *>> *, inner array size is 16
++ (NSArray *)unpackGLTFAccessorDataToArray:(GLTFAccessor *)accessor
+                                      data:(NSData *)data {
+  NSMutableArray *array = [NSMutableArray arrayWithCapacity:accessor.count];
+  NSUInteger numComponents = componentsCountOfAccessorType(accessor.type);
+  NSUInteger componentSize = sizeOfComponentType(accessor.componentType);
+  NSUInteger byteOffset = 0;
+
+  for (NSUInteger i = 0; i < accessor.count; i++) {
+    NSRange range = NSMakeRange(byteOffset, numComponents * componentSize);
+    if ([accessor.type isEqualToString:GLTFAccessorTypeScalar]) {
+      switch (accessor.componentType) {
+      case GLTFAccessorComponentTypeByte: {
+        int8_t value;
+        [data getBytes:&value range:range];
+        [array addObject:@(value)];
+        break;
+      }
+      case GLTFAccessorComponentTypeUnsignedByte: {
+        uint8_t value;
+        [data getBytes:&value range:range];
+        [array addObject:@(value)];
+        break;
+      }
+      case GLTFAccessorComponentTypeShort: {
+        int16_t value;
+        [data getBytes:&value range:range];
+        [array addObject:@(value)];
+        break;
+      }
+      case GLTFAccessorComponentTypeUnsignedShort: {
+        uint16_t value;
+        [data getBytes:&value range:range];
+        [array addObject:@(value)];
+        break;
+      }
+      case GLTFAccessorComponentTypeUnsignedInt: {
+        uint32_t value;
+        [data getBytes:&value range:range];
+        [array addObject:@(value)];
+        break;
+      }
+      case GLTFAccessorComponentTypeFloat: {
+        float value;
+        [data getBytes:&value range:range];
+        [array addObject:@(value)];
+        break;
+      }
+      default:
+        break;
+      }
+    } else if ([accessor.type isEqualToString:GLTFAccessorTypeVec2]) {
+      switch (accessor.componentType) {
+      case GLTFAccessorComponentTypeByte: {
+        int8_t values[2];
+        [data getBytes:&values range:range];
+        [array addObject:@[ @(values[0]), @(values[1]) ]];
+        break;
+      }
+      case GLTFAccessorComponentTypeUnsignedByte: {
+        uint8_t values[2];
+        [data getBytes:&values range:range];
+        [array addObject:@[ @(values[0]), @(values[1]) ]];
+        break;
+      }
+      case GLTFAccessorComponentTypeShort: {
+        int16_t values[2];
+        [data getBytes:&values range:range];
+        [array addObject:@[ @(values[0]), @(values[1]) ]];
+        break;
+      }
+      case GLTFAccessorComponentTypeUnsignedShort: {
+        uint16_t values[2];
+        [data getBytes:&values range:range];
+        [array addObject:@[ @(values[0]), @(values[1]) ]];
+        break;
+      }
+      case GLTFAccessorComponentTypeUnsignedInt: {
+        uint32_t values[2];
+        [data getBytes:&values range:range];
+        [array addObject:@[ @(values[0]), @(values[1]) ]];
+        break;
+      }
+      case GLTFAccessorComponentTypeFloat: {
+        float values[2];
+        [data getBytes:&values range:range];
+        [array addObject:@[ @(values[0]), @(values[1]) ]];
+        break;
+      }
+      default:
+        break;
+      }
+    } else if ([accessor.type isEqualToString:GLTFAccessorTypeVec3]) {
+      switch (accessor.componentType) {
+      case GLTFAccessorComponentTypeByte: {
+        int8_t values[3];
+        [data getBytes:&values range:range];
+        [array addObject:@[ @(values[0]), @(values[1]), @(values[2]) ]];
+        break;
+      }
+      case GLTFAccessorComponentTypeUnsignedByte: {
+        uint8_t values[3];
+        [data getBytes:&values range:range];
+        [array addObject:@[ @(values[0]), @(values[1]), @(values[2]) ]];
+        break;
+      }
+      case GLTFAccessorComponentTypeShort: {
+        int16_t values[3];
+        [data getBytes:&values range:range];
+        [array addObject:@[ @(values[0]), @(values[1]), @(values[2]) ]];
+        break;
+      }
+      case GLTFAccessorComponentTypeUnsignedShort: {
+        uint16_t values[3];
+        [data getBytes:&values range:range];
+        [array addObject:@[ @(values[0]), @(values[1]), @(values[2]) ]];
+        break;
+      }
+      case GLTFAccessorComponentTypeUnsignedInt: {
+        uint32_t values[3];
+        [data getBytes:&values range:range];
+        [array addObject:@[ @(values[0]), @(values[1]), @(values[2]) ]];
+        break;
+      }
+      case GLTFAccessorComponentTypeFloat: {
+        float values[3];
+        [data getBytes:&values range:range];
+        [array addObject:@[ @(values[0]), @(values[1]), @(values[2]) ]];
+        break;
+      }
+      default:
+        break;
+      }
+    } else if ([accessor.type isEqualToString:GLTFAccessorTypeVec4]) {
+      switch (accessor.componentType) {
+      case GLTFAccessorComponentTypeByte: {
+        int8_t values[4];
+        [data getBytes:&values range:range];
+        [array addObject:@[
+          @(values[0]), @(values[1]), @(values[2]), @(values[3])
+        ]];
+        break;
+      }
+      case GLTFAccessorComponentTypeUnsignedByte: {
+        uint8_t values[4];
+        [data getBytes:&values range:range];
+        [array addObject:@[
+          @(values[0]), @(values[1]), @(values[2]), @(values[3])
+        ]];
+        break;
+      }
+      case GLTFAccessorComponentTypeShort: {
+        int16_t values[4];
+        [data getBytes:&values range:range];
+        [array addObject:@[
+          @(values[0]), @(values[1]), @(values[2]), @(values[3])
+        ]];
+        break;
+      }
+      case GLTFAccessorComponentTypeUnsignedShort: {
+        uint16_t values[4];
+        [data getBytes:&values range:range];
+        [array addObject:@[
+          @(values[0]), @(values[1]), @(values[2]), @(values[3])
+        ]];
+        break;
+      }
+      case GLTFAccessorComponentTypeUnsignedInt: {
+        uint32_t values[4];
+        [data getBytes:&values range:range];
+        [array addObject:@[
+          @(values[0]), @(values[1]), @(values[2]), @(values[3])
+        ]];
+        break;
+      }
+      case GLTFAccessorComponentTypeFloat: {
+        float values[4];
+        [data getBytes:&values range:range];
+        [array addObject:@[
+          @(values[0]), @(values[1]), @(values[2]), @(values[3])
+        ]];
+        break;
+      }
+      default:
+        break;
+      }
+    } else if ([accessor.type isEqualToString:GLTFAccessorTypeMat2]) {
+      switch (accessor.componentType) {
+      case GLTFAccessorComponentTypeByte: {
+        int8_t values[4];
+        [data getBytes:&values range:range];
+        [array addObject:@[
+          @(values[0]), @(values[1]), @(values[2]), @(values[3])
+        ]];
+        break;
+      }
+      case GLTFAccessorComponentTypeUnsignedByte: {
+        uint8_t values[4];
+        [data getBytes:&values range:range];
+        [array addObject:@[
+          @(values[0]), @(values[1]), @(values[2]), @(values[3])
+        ]];
+        break;
+      }
+      case GLTFAccessorComponentTypeShort: {
+        int16_t values[4];
+        [data getBytes:&values range:range];
+        [array addObject:@[
+          @(values[0]), @(values[1]), @(values[2]), @(values[3])
+        ]];
+        break;
+      }
+      case GLTFAccessorComponentTypeUnsignedShort: {
+        uint16_t values[4];
+        [data getBytes:&values range:range];
+        [array addObject:@[
+          @(values[0]), @(values[1]), @(values[2]), @(values[3])
+        ]];
+        break;
+      }
+      case GLTFAccessorComponentTypeUnsignedInt: {
+        uint32_t values[4];
+        [data getBytes:&values range:range];
+        [array addObject:@[
+          @(values[0]), @(values[1]), @(values[2]), @(values[3])
+        ]];
+        break;
+      }
+      case GLTFAccessorComponentTypeFloat: {
+        float values[4];
+        [data getBytes:&values range:range];
+        [array addObject:@[
+          @(values[0]), @(values[1]), @(values[2]), @(values[3])
+        ]];
+        break;
+      }
+      default:
+        break;
+      }
+    } else if ([accessor.type isEqualToString:GLTFAccessorTypeMat3]) {
+      switch (accessor.componentType) {
+      case GLTFAccessorComponentTypeByte: {
+        int8_t values[9];
+        [data getBytes:&values range:range];
+        [array addObject:@[
+          @(values[0]), @(values[1]), @(values[2]), @(values[3]), @(values[4]),
+          @(values[5]), @(values[6]), @(values[7]), @(values[8])
+        ]];
+        break;
+      }
+      case GLTFAccessorComponentTypeUnsignedByte: {
+        uint8_t values[9];
+        [data getBytes:&values range:range];
+        [array addObject:@[
+          @(values[0]), @(values[1]), @(values[2]), @(values[3]), @(values[4]),
+          @(values[5]), @(values[6]), @(values[7]), @(values[8])
+        ]];
+        break;
+      }
+      case GLTFAccessorComponentTypeShort: {
+        int16_t values[9];
+        [data getBytes:&values range:range];
+        [array addObject:@[
+          @(values[0]), @(values[1]), @(values[2]), @(values[3]), @(values[4]),
+          @(values[5]), @(values[6]), @(values[7]), @(values[8])
+        ]];
+        break;
+      }
+      case GLTFAccessorComponentTypeUnsignedShort: {
+        uint16_t values[9];
+        [data getBytes:&values range:range];
+        [array addObject:@[
+          @(values[0]), @(values[1]), @(values[2]), @(values[3]), @(values[4]),
+          @(values[5]), @(values[6]), @(values[7]), @(values[8])
+        ]];
+        break;
+      }
+      case GLTFAccessorComponentTypeUnsignedInt: {
+        uint32_t values[9];
+        [data getBytes:&values range:range];
+        [array addObject:@[
+          @(values[0]), @(values[1]), @(values[2]), @(values[3]), @(values[4]),
+          @(values[5]), @(values[6]), @(values[7]), @(values[8])
+        ]];
+        break;
+      }
+      case GLTFAccessorComponentTypeFloat: {
+        float values[9];
+        [data getBytes:&values range:range];
+        [array addObject:@[
+          @(values[0]), @(values[1]), @(values[2]), @(values[3]), @(values[4]),
+          @(values[5]), @(values[6]), @(values[7]), @(values[8])
+        ]];
+        break;
+      }
+      default:
+        break;
+      }
+    } else if ([accessor.type isEqualToString:GLTFAccessorTypeMat4]) {
+      switch (accessor.componentType) {
+      case GLTFAccessorComponentTypeByte: {
+        int8_t values[16];
+        [data getBytes:&values range:range];
+        [array addObject:@[
+          @(values[0]), @(values[1]), @(values[2]), @(values[3]), @(values[4]),
+          @(values[5]), @(values[6]), @(values[7]), @(values[8]), @(values[9]),
+          @(values[10]), @(values[11]), @(values[12]), @(values[13]),
+          @(values[14]), @(values[15])
+        ]];
+        break;
+      }
+      case GLTFAccessorComponentTypeUnsignedByte: {
+        uint8_t values[16];
+        [data getBytes:&values range:range];
+        [array addObject:@[
+          @(values[0]), @(values[1]), @(values[2]), @(values[3]), @(values[4]),
+          @(values[5]), @(values[6]), @(values[7]), @(values[8]), @(values[9]),
+          @(values[10]), @(values[11]), @(values[12]), @(values[13]),
+          @(values[14]), @(values[15])
+        ]];
+        break;
+      }
+      case GLTFAccessorComponentTypeShort: {
+        int16_t values[16];
+        [data getBytes:&values range:range];
+        [array addObject:@[
+          @(values[0]), @(values[1]), @(values[2]), @(values[3]), @(values[4]),
+          @(values[5]), @(values[6]), @(values[7]), @(values[8]), @(values[9]),
+          @(values[10]), @(values[11]), @(values[12]), @(values[13]),
+          @(values[14]), @(values[15])
+        ]];
+        break;
+      }
+      case GLTFAccessorComponentTypeUnsignedShort: {
+        uint16_t values[16];
+        [data getBytes:&values range:range];
+        [array addObject:@[
+          @(values[0]), @(values[1]), @(values[2]), @(values[3]), @(values[4]),
+          @(values[5]), @(values[6]), @(values[7]), @(values[8]), @(values[9]),
+          @(values[10]), @(values[11]), @(values[12]), @(values[13]),
+          @(values[14]), @(values[15])
+        ]];
+        break;
+      }
+      case GLTFAccessorComponentTypeUnsignedInt: {
+        uint32_t values[16];
+        [data getBytes:&values range:range];
+        [array addObject:@[
+          @(values[0]), @(values[1]), @(values[2]), @(values[3]), @(values[4]),
+          @(values[5]), @(values[6]), @(values[7]), @(values[8]), @(values[9]),
+          @(values[10]), @(values[11]), @(values[12]), @(values[13]),
+          @(values[14]), @(values[15])
+        ]];
+        break;
+      }
+      case GLTFAccessorComponentTypeFloat: {
+        float values[16];
+        [data getBytes:&values range:range];
+        [array addObject:@[
+          @(values[0]), @(values[1]), @(values[2]), @(values[3]), @(values[4]),
+          @(values[5]), @(values[6]), @(values[7]), @(values[8]), @(values[9]),
+          @(values[10]), @(values[11]), @(values[12]), @(values[13]),
+          @(values[14]), @(values[15])
+        ]];
+        break;
+      }
+      default:
+        break;
+      }
+    } else {
+      NSLog(@"Unsupported type: %@", accessor.type);
+    }
+
+    byteOffset += numComponents * componentSize;
+  }
+  return [array copy];
+}
+
 @end

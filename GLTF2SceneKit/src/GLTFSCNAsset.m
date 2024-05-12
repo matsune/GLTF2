@@ -7,6 +7,7 @@
   if (self) {
     _data = data;
     _scenes = [NSArray array];
+    _animationPlayers = [NSArray array];
   }
   return self;
 }
@@ -89,7 +90,6 @@
 
       if (node.skin) {
         GLTFSkin *skin = self.data.json.skins[node.skin.integerValue];
-        SCNGeometry *geometry = meshNodes[node.mesh.integerValue].geometry;
 
         NSMutableArray<SCNNode *> *bones =
             [NSMutableArray arrayWithCapacity:skin.joints.count];
@@ -98,68 +98,133 @@
           [bones addObject:bone];
         }
 
-        NSMutableArray<NSValue *> *boneInverseBindTransforms =
-            [NSMutableArray arrayWithCapacity:skin.joints.count];
+        NSArray<NSValue *> *boneInverseBindTransforms;
         if (skin.inverseBindMatrices) {
           GLTFAccessor *accessor =
               self.data.json.accessors[skin.inverseBindMatrices.integerValue];
-          NSData *data = [self.data dataForAccessor:accessor];
-          for (int j = 0; j < skin.joints.count; j++) {
-            float matrixData[16];
-            [data getBytes:&matrixData
-                     range:NSMakeRange(j * sizeof(matrixData),
-                                       sizeof(matrixData))];
-            SCNMatrix4 matrix;
-            matrix.m11 = matrixData[0];
-            matrix.m12 = matrixData[1];
-            matrix.m13 = matrixData[2];
-            matrix.m14 = matrixData[3];
-            matrix.m21 = matrixData[4];
-            matrix.m22 = matrixData[5];
-            matrix.m23 = matrixData[6];
-            matrix.m24 = matrixData[7];
-            matrix.m31 = matrixData[8];
-            matrix.m32 = matrixData[9];
-            matrix.m33 = matrixData[10];
-            matrix.m34 = matrixData[11];
-            matrix.m41 = matrixData[12];
-            matrix.m42 = matrixData[13];
-            matrix.m43 = matrixData[14];
-            matrix.m44 = matrixData[15];
-            [boneInverseBindTransforms
-                addObject:[NSValue valueWithSCNMatrix4:matrix]];
-          }
+          NSData *data =
+              accessorDataArray[skin.inverseBindMatrices.integerValue];
+          // inverseBindMatrices must be mat4 type with float
+          assert([accessor.type isEqualToString:GLTFAccessorTypeMat4] &&
+                 accessor.componentType == GLTFAccessorComponentTypeFloat);
+          NSArray<NSArray<NSNumber *> *> *values =
+              [GLTFData unpackGLTFAccessorDataToArray:accessor data:data];
+          assert(skin.joints.count == values.count);
+          boneInverseBindTransforms = SCNMat4ArrayFromNumbers(values);
         } else {
+          NSMutableArray<NSValue *> *arr =
+              [NSMutableArray arrayWithCapacity:skin.joints.count];
           for (int j = 0; j < skin.joints.count; j++) {
             SCNMatrix4 identity = SCNMatrix4Identity;
-            [boneInverseBindTransforms
-                addObject:[NSValue valueWithSCNMatrix4:identity]];
+            [arr addObject:[NSValue valueWithSCNMatrix4:identity]];
           }
+          boneInverseBindTransforms = [arr copy];
         }
 
-        SCNGeometrySource *boneWeights;
-        SCNGeometrySource *boneIndices;
-        for (SCNGeometrySource *source in geometry.geometrySources) {
-          if ([source.semantic
-                  isEqualToString:SCNGeometrySourceSemanticBoneWeights]) {
-            boneWeights = source;
-          } else if ([source.semantic
-                         isEqualToString:
-                             SCNGeometrySourceSemanticBoneIndices]) {
-            boneIndices = source;
+        SCNNode *meshNode = meshNodes[node.mesh.integerValue];
+        for (SCNNode *geometryNode in meshNode.childNodes) {
+          SCNGeometrySource *boneWeights;
+          SCNGeometrySource *boneIndices;
+          for (SCNGeometrySource *source in geometryNode.geometry
+                   .geometrySources) {
+            if ([source.semantic
+                    isEqualToString:SCNGeometrySourceSemanticBoneWeights]) {
+              boneWeights = source;
+            } else if ([source.semantic
+                           isEqualToString:
+                               SCNGeometrySourceSemanticBoneIndices]) {
+              boneIndices = source;
+            }
           }
-        }
 
-        SCNSkinner *skinner =
-            [SCNSkinner skinnerWithBaseGeometry:geometry
-                                          bones:[bones copy]
-                      boneInverseBindTransforms:[boneInverseBindTransforms copy]
-                                    boneWeights:boneWeights
-                                    boneIndices:boneIndices];
-        scnNode.skinner = skinner;
+          SCNSkinner *skinner = [SCNSkinner
+                skinnerWithBaseGeometry:geometryNode.geometry
+                                  bones:[bones copy]
+              boneInverseBindTransforms:[boneInverseBindTransforms copy]
+                            boneWeights:boneWeights
+                            boneIndices:boneIndices];
+          geometryNode.skinner = skinner;
+        }
       }
     }
   }
+
+  NSMutableArray<SCNAnimationPlayer *> *animationPlayers =
+      [NSMutableArray array];
+  if (self.data.json.animations) {
+    for (GLTFAnimation *animation in self.data.json.animations) {
+      NSMutableArray *caChannels = [NSMutableArray array];
+
+      float channelMaxDuration = 0.0f;
+      for (GLTFAnimationChannel *channel in animation.channels) {
+        if (channel.target.node == nil)
+          continue;
+
+        SCNNode *target = scnNodes[channel.target.node.integerValue];
+        GLTFAnimationSampler *sampler = animation.samplers[channel.sampler];
+
+        GLTFAccessor *inputAccessor = self.data.json.accessors[sampler.input];
+        NSData *inputData = accessorDataArray[sampler.input];
+        // input must be scalar type with float
+        assert([inputAccessor.type isEqualToString:GLTFAccessorTypeScalar] &&
+               inputAccessor.componentType == GLTFAccessorComponentTypeFloat);
+        NSArray<NSNumber *> *keyTimes =
+            [GLTFData unpackGLTFAccessorDataToArray:inputAccessor
+                                               data:inputData];
+        assert(inputAccessor.count == keyTimes.count);
+        for (NSNumber *keyTime in keyTimes) {
+          channelMaxDuration = MAX(keyTime.floatValue, channelMaxDuration);
+        }
+
+        GLTFAccessor *outputAccessor = self.data.json.accessors[sampler.output];
+        NSData *outputData = accessorDataArray[sampler.output];
+        NSArray *values = [GLTFData unpackGLTFAccessorDataToArray:outputAccessor
+                                                             data:outputData];
+
+        CAKeyframeAnimation *caAnimation;
+        caAnimation.calculationMode =
+            CAAnimationCalculationModeFromGLTFAnimationSamplerInterpolation(
+                sampler.interpolationValue);
+        caAnimation.keyTimes = keyTimes;
+        caAnimation.duration = keyTimes.lastObject.floatValue;
+
+        if ([channel.target.path
+                isEqualToString:GLTFAnimationChannelTargetPathTranslation]) {
+          // TODO:
+        } else if ([channel.target.path
+                       isEqualToString:
+                           GLTFAnimationChannelTargetPathRotation]) {
+          caAnimation =
+              [CAKeyframeAnimation animationWithKeyPath:@"orientation"];
+          caAnimation.values = SCNVec4ArrayFromNumbers(values);
+          [caChannels addObject:caAnimation];
+        } else if ([channel.target.path
+                       isEqualToString:GLTFAnimationChannelTargetPathScale]) {
+          // TODO:
+        } else if ([channel.target.path
+                       isEqualToString:GLTFAnimationChannelTargetPathWeights]) {
+          //          // TODO:
+          //          caAnimation =
+          //              [CAKeyframeAnimation animationWithKeyPath:[NSString
+          //              stringWithFormat:@"morpher.weights[%d]"]];
+          //          caAnimation.values = SCNVec3ArrayFromNumbers(values);
+          //          [caChannels addObject:caAnimation];
+        }
+      }
+
+      CAAnimationGroup *caGroup = [CAAnimationGroup animation];
+      caGroup.animations = caChannels;
+      caGroup.duration = channelMaxDuration;
+      caGroup.repeatDuration = FLT_MAX;
+
+      SCNAnimation *scnAnimation =
+          [SCNAnimation animationWithCAAnimation:caGroup];
+      SCNAnimationPlayer *scnAnimationPlayer =
+          [SCNAnimationPlayer animationPlayerWithAnimation:scnAnimation];
+      [animationPlayers addObject:scnAnimationPlayer];
+    }
+  }
+  self.animationPlayers = [animationPlayers copy];
 
   NSMutableArray<SCNScene *> *scnScenes = [NSMutableArray array];
   if (self.data.json.scenes) {
@@ -173,6 +238,215 @@
     }
   }
   self.scenes = [scnScenes copy];
+}
+
+NSArray<NSValue *> *SCNVec3ArrayFromNumbers(NSArray<NSNumber *> *array) {
+  NSMutableArray<NSValue *> *arr =
+      [NSMutableArray arrayWithCapacity:array.count];
+  for (NSArray<NSNumber *> *values in array) {
+    [arr addObject:[NSValue valueWithSCNVector3:SCNVector3Make(
+                                                    values[0].floatValue,
+                                                    values[1].floatValue,
+                                                    values[2].floatValue)]];
+  }
+  return [arr copy];
+}
+
+NSArray<NSValue *> *SCNVec4ArrayFromNumbers(NSArray<NSNumber *> *array) {
+  NSMutableArray<NSValue *> *arr =
+      [NSMutableArray arrayWithCapacity:array.count];
+  for (NSArray<NSNumber *> *values in array) {
+    [arr addObject:[NSValue valueWithSCNVector4:SCNVector4Make(
+                                                    values[0].floatValue,
+                                                    values[1].floatValue,
+                                                    values[2].floatValue,
+                                                    values[3].floatValue)]];
+  }
+  return [arr copy];
+}
+
+NSArray<NSValue *> *
+SCNMat4ArrayFromNumbers(NSArray<NSArray<NSNumber *> *> *array) {
+  NSMutableArray<NSValue *> *arr =
+      [NSMutableArray arrayWithCapacity:array.count];
+  for (NSArray<NSNumber *> *values in array) {
+    SCNMatrix4 matrix;
+    matrix.m11 = values[0].floatValue;
+    matrix.m12 = values[1].floatValue;
+    matrix.m13 = values[2].floatValue;
+    matrix.m14 = values[3].floatValue;
+    matrix.m21 = values[4].floatValue;
+    matrix.m22 = values[5].floatValue;
+    matrix.m23 = values[6].floatValue;
+    matrix.m24 = values[7].floatValue;
+    matrix.m31 = values[8].floatValue;
+    matrix.m32 = values[9].floatValue;
+    matrix.m33 = values[10].floatValue;
+    matrix.m34 = values[11].floatValue;
+    matrix.m41 = values[12].floatValue;
+    matrix.m42 = values[13].floatValue;
+    matrix.m43 = values[14].floatValue;
+    matrix.m44 = values[15].floatValue;
+    [arr addObject:[NSValue valueWithSCNMatrix4:matrix]];
+  }
+  return [arr copy];
+}
+
+NSArray *convertNSDataToSceneKitTypes(GLTFAccessor *accessor, NSData *data) {
+  NSMutableArray *resultArray =
+      [NSMutableArray arrayWithCapacity:accessor.count];
+  NSUInteger numComponents = componentsCountOfAccessorType(accessor.type);
+  NSUInteger componentSize = sizeOfComponentType(accessor.componentType);
+  NSUInteger byteOffset = 0;
+
+  for (NSUInteger i = 0; i < accessor.count; i++) {
+    NSValue *value;
+
+    if ([accessor.type isEqualToString:GLTFAccessorTypeScalar]) {
+      switch (accessor.componentType) {
+      case GLTFAccessorComponentTypeByte: {
+        int8_t v;
+        [data getBytes:&v
+                 range:NSMakeRange(byteOffset, numComponents * componentSize)];
+        value = @(v);
+        break;
+      }
+      case GLTFAccessorComponentTypeUnsignedByte: {
+        uint8_t v;
+        [data getBytes:&v
+                 range:NSMakeRange(byteOffset, numComponents * componentSize)];
+        value = @(v);
+        break;
+      }
+      case GLTFAccessorComponentTypeShort: {
+        int16_t v;
+        [data getBytes:&v
+                 range:NSMakeRange(byteOffset, numComponents * componentSize)];
+        value = @(v);
+        break;
+      }
+      case GLTFAccessorComponentTypeUnsignedShort: {
+        uint16_t v;
+        [data getBytes:&v
+                 range:NSMakeRange(byteOffset, numComponents * componentSize)];
+        value = @(v);
+        break;
+      }
+      case GLTFAccessorComponentTypeUnsignedInt: {
+        uint32_t v;
+        [data getBytes:&v
+                 range:NSMakeRange(byteOffset, numComponents * componentSize)];
+        value = @(v);
+        break;
+      }
+      case GLTFAccessorComponentTypeFloat: {
+        float v;
+        [data getBytes:&v
+                 range:NSMakeRange(byteOffset, numComponents * componentSize)];
+        value = @(v);
+        break;
+      }
+      default:
+        break;
+      }
+
+    } else if ([accessor.type isEqualToString:GLTFAccessorTypeVec2]) {
+      float components[2];
+      [data getBytes:&components
+               range:NSMakeRange(byteOffset, numComponents * componentSize)];
+      value = [NSValue
+          valueWithSCNVector3:SCNVector3Make(components[0], components[1], 0)];
+    } else if ([accessor.type isEqualToString:GLTFAccessorTypeVec3]) {
+      float components[3];
+      [data getBytes:&components
+               range:NSMakeRange(byteOffset, numComponents * componentSize)];
+      value = [NSValue
+          valueWithSCNVector3:SCNVector3Make(components[0], components[1],
+                                             components[2])];
+    } else if ([accessor.type isEqualToString:GLTFAccessorTypeVec4]) {
+      float components[4];
+      [data getBytes:&components
+               range:NSMakeRange(byteOffset, numComponents * componentSize)];
+      value = [NSValue
+          valueWithSCNVector4:SCNVector4Make(components[0], components[1],
+                                             components[2], components[3])];
+    } else if ([accessor.type isEqualToString:GLTFAccessorTypeMat2]) {
+      float components[4];
+      [data getBytes:&components
+               range:NSMakeRange(byteOffset, numComponents * componentSize)];
+      SCNMatrix4 matrix = {components[0],
+                           components[1],
+                           0,
+                           0,
+                           components[2],
+                           components[3],
+                           0,
+                           0,
+                           0,
+                           0,
+                           1,
+                           0,
+                           0,
+                           0,
+                           0,
+                           1};
+      value = [NSValue valueWithSCNMatrix4:matrix];
+    } else if ([accessor.type isEqualToString:GLTFAccessorTypeMat3]) {
+      float components[9];
+      [data getBytes:&components
+               range:NSMakeRange(byteOffset, numComponents * componentSize)];
+      SCNMatrix4 matrix = {components[0],
+                           components[1],
+                           components[2],
+                           0,
+                           components[3],
+                           components[4],
+                           components[5],
+                           0,
+                           components[6],
+                           components[7],
+                           components[8],
+                           0,
+                           0,
+                           0,
+                           0,
+                           1};
+      value = [NSValue valueWithSCNMatrix4:matrix];
+    } else if ([accessor.type isEqualToString:GLTFAccessorTypeMat4]) {
+      float components[16];
+      [data getBytes:&components
+               range:NSMakeRange(byteOffset, numComponents * componentSize)];
+      SCNMatrix4 matrix = {
+          components[0],  components[1],  components[2],  components[3],
+          components[4],  components[5],  components[6],  components[7],
+          components[8],  components[9],  components[10], components[11],
+          components[12], components[13], components[14], components[15]};
+      value = [NSValue valueWithSCNMatrix4:matrix];
+    } else {
+      NSLog(@"Unsupported type: %@", accessor.type);
+    }
+
+    byteOffset += numComponents * componentSize;
+    [resultArray addObject:value];
+  }
+
+  return [resultArray copy];
+}
+
+CAAnimationCalculationMode
+CAAnimationCalculationModeFromGLTFAnimationSamplerInterpolation(
+    NSString *interpolation) {
+  if ([interpolation isEqualToString:GLTFAnimationSamplerInterpolationLinear]) {
+    return kCAAnimationLinear;
+  } else if ([interpolation
+                 isEqualToString:GLTFAnimationSamplerInterpolationStep]) {
+    return kCAAnimationDiscrete;
+  } else if ([interpolation isEqualToString:
+                                GLTFAnimationSamplerInterpolationCubicSpline]) {
+    // TODO:
+    return kCAAnimationPaced;
+  }
+  return kCAAnimationLinear;
 }
 
 - (NSArray<NSData *> *)loadAccessorDatas {
@@ -527,53 +801,61 @@ convertDataToSCNGeometryPrimitiveType(NSData *bufferData, NSInteger mode,
   return [meshNodes copy];
 }
 
+- (SCNNode *)primitiveNode:(GLTFMeshPrimitive *)primitive
+                      mesh:(GLTFMesh *)mesh
+         accessorDataArray:(NSArray<NSData *> *)accessorDataArray
+                 materials:(NSArray<SCNMaterial *> *)materials {
+  NSArray<SCNGeometrySource *> *sources =
+      [self scnGeometrySourcesFromPrimitive:primitive
+                          accessorDataArray:accessorDataArray];
+  NSArray<SCNGeometryElement *> *elements =
+      [self scnGeometryElementsFromPrimitive:primitive
+                           accessorDataArray:accessorDataArray];
+  SCNGeometry *geometry = [SCNGeometry geometryWithSources:sources
+                                                  elements:elements];
+  SCNNode *geometryNode = [SCNNode nodeWithGeometry:geometry];
+
+  // material
+  if (primitive.material) {
+    SCNMaterial *scnMaterial = materials[primitive.material.integerValue];
+    geometry.materials = @[ scnMaterial ];
+  }
+
+  if (primitive.targets) {
+    SCNMorpher *morpher = [SCNMorpher new];
+    NSMutableArray<SCNGeometry *> *morphTargets =
+        [NSMutableArray arrayWithCapacity:primitive.targets.count];
+    for (int i = 0; i < primitive.targets.count; i++) {
+      GLTFMeshPrimitiveTarget *target = primitive.targets[i];
+      NSArray<SCNGeometrySource *> *sources =
+          [self scnGeometrySourcesFromMorphTarget:target
+                                accessorDataArray:accessorDataArray];
+      SCNGeometry *morphTarget = [SCNGeometry geometryWithSources:sources
+                                                         elements:elements];
+      [morphTargets addObject:morphTarget];
+    }
+    morpher.targets = [morphTargets copy];
+    if (mesh.weights)
+      morpher.weights = mesh.weights;
+    morpher.unifiesNormals = YES;
+    morpher.calculationMode = SCNMorpherCalculationModeAdditive;
+    geometryNode.morpher = morpher;
+  }
+  return geometryNode;
+}
+
 - (SCNNode *)scnNodeFromMesh:(GLTFMesh *)mesh
            accessorDataArray:(NSArray<NSData *> *)accessorDataArray
                    materials:(NSArray<SCNMaterial *> *)materials {
   SCNNode *node = [SCNNode node];
   node.name = mesh.name;
-
   for (GLTFMeshPrimitive *primitive in mesh.primitives) {
-    NSArray<SCNGeometrySource *> *sources =
-        [self scnGeometrySourcesFromPrimitive:primitive
-                            accessorDataArray:accessorDataArray];
-    NSArray<SCNGeometryElement *> *elements =
-        [self scnGeometryElementsFromPrimitive:primitive
-                             accessorDataArray:accessorDataArray];
-    SCNGeometry *geometry = [SCNGeometry geometryWithSources:sources
-                                                    elements:elements];
-    SCNNode *geometryNode = [SCNNode nodeWithGeometry:geometry];
-
-    // material
-    if (primitive.material) {
-      SCNMaterial *scnMaterial = materials[primitive.material.integerValue];
-      geometry.materials = @[ scnMaterial ];
-    }
-
-    if (primitive.targets) {
-      SCNMorpher *morpher = [SCNMorpher new];
-      NSMutableArray<SCNGeometry *> *morphTargets =
-          [NSMutableArray arrayWithCapacity:primitive.targets.count];
-      for (int i = 0; i < primitive.targets.count; i++) {
-        GLTFMeshPrimitiveTarget *target = primitive.targets[i];
-        NSArray<SCNGeometrySource *> *sources =
-            [self scnGeometrySourcesFromMorphTarget:target
-                                  accessorDataArray:accessorDataArray];
-        SCNGeometry *morphTarget = [SCNGeometry geometryWithSources:sources
-                                                           elements:elements];
-        [morphTargets addObject:morphTarget];
-      }
-      morpher.targets = [morphTargets copy];
-      if (mesh.weights)
-        morpher.weights = mesh.weights;
-      morpher.unifiesNormals = YES;
-      morpher.calculationMode = SCNMorpherCalculationModeAdditive;
-      geometryNode.morpher = morpher;
-    }
-
+    SCNNode *geometryNode = [self primitiveNode:primitive
+                                           mesh:mesh
+                              accessorDataArray:accessorDataArray
+                                      materials:materials];
     [node addChildNode:geometryNode];
   }
-
   return node;
 }
 

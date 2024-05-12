@@ -17,8 +17,9 @@ target_include_directories(${LIB_NAME} PUBLIC
 find_library(COCOA_LIBRARY Cocoa)
 find_library(FOUNDATION_LIBRARY Foundation)
 find_library(SCENEKIT_LIBRARY SceneKit)
+find_library(QUARTZCORE_LIBRARY QuartzCore)
 
-target_link_libraries(${LIB_NAME} GLTF2 ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY} ${SCENEKIT_LIBRARY})
+target_link_libraries(${LIB_NAME} GLTF2 ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY} ${SCENEKIT_LIBRARY} ${QUARTZCORE_LIBRARY})
 
 set_target_properties(${LIB_NAME} PROPERTIES
     VERSION 1.0

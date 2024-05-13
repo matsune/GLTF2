@@ -34,10 +34,9 @@ GLTF_EXPORT @interface GLTFData : NSObject
 
 - (CGImageRef)cgImageForImage:(GLTFImage *)image;
 
-- (NSData *)dataForAccessor:(GLTFAccessor *)accessor;
+- (NSData *)dataForAccessor:(GLTFAccessor *)accessor
+                 normalized:(nullable BOOL *)normalized;
 
-+ (NSArray *)unpackGLTFAccessorDataToArray:(GLTFAccessor *)accessor
-                                      data:(NSData *)data;
 @end
 
 NS_ASSUME_NONNULL_END

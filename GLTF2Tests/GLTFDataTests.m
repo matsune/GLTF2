@@ -57,12 +57,15 @@
   XCTAssertNotNil(object);
 
   GLTFAccessor *accessor = object.json.accessors.firstObject;
-  NSData *normalizedData = [object dataForAccessor:accessor];
-  XCTAssertNotNil(normalizedData, "Normalized data should not be nil.");
+  BOOL normalized;
+  NSData *data = [object dataForAccessor:accessor normalized:&normalized];
+  XCTAssertNotNil(data, "Normalized data should not be nil.");
+
+  XCTAssert(normalized);
 
   float expectedValues[4] = {1.0, 128.0 / 255.0, 0.0, 1.0};
-  float *normalizedValues = (float *)normalizedData.bytes;
-  NSUInteger numComponents = normalizedData.length / sizeof(float);
+  float *normalizedValues = (float *)data.bytes;
+  NSUInteger numComponents = data.length / sizeof(float);
 
   XCTAssertEqual(
       numComponents, 4,
@@ -126,7 +129,7 @@
   XCTAssertNotNil(object);
 
   GLTFAccessor *accessor = object.json.accessors.firstObject;
-  NSData *data = [object dataForAccessor:accessor];
+  NSData *data = [object dataForAccessor:accessor normalized:nil];
   XCTAssertNotNil(data);
   XCTAssertEqual(data.length, 120);
 
@@ -198,14 +201,14 @@
   XCTAssertNotNil(object);
 
   GLTFAccessor *accessor = object.json.accessors.firstObject;
-  NSData *normalizedData = [object dataForAccessor:accessor];
-  XCTAssertNotNil(normalizedData, "Normalized data should not be nil.");
+  NSData *data = [object dataForAccessor:accessor normalized:nil];
+  XCTAssertNotNil(data, "data should not be nil.");
 
   uint8_t expectedValue = 0x20;
-  uint8_t normalizedValue = *((uint8_t *)normalizedData.bytes);
+  uint8_t value = *((uint8_t *)data.bytes);
 
-  XCTAssertEqualWithAccuracy(normalizedValue, expectedValue, 0.0001,
-                             @"Normalized value is incorrect");
+  XCTAssertEqualWithAccuracy(value, expectedValue, 0.0001,
+                             @"value is incorrect");
 }
 
 @end

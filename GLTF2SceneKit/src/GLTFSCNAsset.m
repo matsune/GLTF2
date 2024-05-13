@@ -16,6 +16,8 @@
   return [[GLTFSCNAsset alloc] initWithGLTFData:data];
 }
 
+#pragma mark SCNScene
+
 - (nullable SCNScene *)defaultScene {
   if (self.data.json.scene) {
     return self.scenes[self.data.json.scene.integerValue];
@@ -26,159 +28,10 @@
 
 - (void)loadScenes {
   // load materials
-  NSMutableArray<SCNMaterial *> *scnMaterials;
-
-  if (self.data.json.materials) {
-    scnMaterials =
-        [NSMutableArray arrayWithCapacity:self.data.json.materials.count];
-
-    for (GLTFMaterial *material in self.data.json.materials) {
-      SCNMaterial *scnMaterial = [SCNMaterial material];
-      scnMaterial.name = material.name;
-      scnMaterial.locksAmbientWithDiffuse = YES;
-      scnMaterial.lightingModelName = material.pbrMetallicRoughness != nil
-                                          ? SCNLightingModelPhysicallyBased
-                                          : SCNLightingModelBlinn;
-
-      NSMutableString *surfaceShaderModifier = [NSMutableString string];
-
-      GLTFMaterialPBRMetallicRoughness *pbrMetallicRoughness =
-          material.pbrMetallicRoughness
-              ?: [[GLTFMaterialPBRMetallicRoughness alloc] init];
-
-      if (pbrMetallicRoughness.baseColorTexture) {
-        // set contents to texture
-        [self applyTextureInfo:pbrMetallicRoughness.baseColorTexture
-                 withIntensity:1.0f
-                    toProperty:scnMaterial.diffuse];
-
-        if (pbrMetallicRoughness.baseColorFactor) {
-          simd_float4 factor = pbrMetallicRoughness.baseColorFactorValue;
-
-          if (factor[3] < 1.0f) {
-            [surfaceShaderModifier
-                appendString:@"#pragma transparent\n#pragma body\n"];
-          }
-          [surfaceShaderModifier
-              appendFormat:@"_surface.diffuse *= float4(%ff, %ff, %ff, %ff);\n",
-                           factor[0], factor[1], factor[2], factor[3]];
-        }
-      } else {
-        simd_float4 value = pbrMetallicRoughness.baseColorFactorValue;
-        applyColorContentsToProperty(value[0], value[1], value[2], value[3],
-                                     scnMaterial.diffuse);
-      }
-
-      // metallicRoughnessTexture
-      if (pbrMetallicRoughness.metallicRoughnessTexture) {
-        [self applyTextureInfo:pbrMetallicRoughness.metallicRoughnessTexture
-                 withIntensity:pbrMetallicRoughness.metallicFactorValue
-                    toProperty:scnMaterial.metalness];
-        scnMaterial.metalness.textureComponents = SCNColorMaskBlue;
-
-        [self applyTextureInfo:pbrMetallicRoughness.metallicRoughnessTexture
-                 withIntensity:pbrMetallicRoughness.roughnessFactorValue
-                    toProperty:scnMaterial.roughness];
-        scnMaterial.roughness.textureComponents = SCNColorMaskGreen;
-      } else {
-        scnMaterial.metalness.contents =
-            @(pbrMetallicRoughness.metallicFactorValue);
-        scnMaterial.roughness.contents =
-            @(pbrMetallicRoughness.roughnessFactorValue);
-      }
-
-      if (material.normalTexture) {
-        [self applyTextureInfo:material.normalTexture
-                 withIntensity:material.normalTexture.scaleValue
-                    toProperty:scnMaterial.normal];
-      }
-
-      if (material.occlusionTexture) {
-        [self applyTextureInfo:material.occlusionTexture
-                 withIntensity:material.occlusionTexture.strengthValue
-                    toProperty:scnMaterial.ambientOcclusion];
-        scnMaterial.ambientOcclusion.textureComponents = SCNColorMaskRed;
-      }
-
-      if (material.emissiveTexture) {
-        [self applyTextureInfo:material.emissiveTexture
-                 withIntensity:1.0f
-                    toProperty:scnMaterial.emission];
-      } else {
-        simd_float3 value = material.emissiveFactorValue;
-        applyColorContentsToProperty(value[0], value[1], value[2], 1.0,
-                                     scnMaterial.emission);
-      }
-
-      if ([material.alphaModeValue
-              isEqualToString:GLTFMaterialAlphaModeOpaque]) {
-        scnMaterial.blendMode = SCNBlendModeReplace;
-        [surfaceShaderModifier appendString:@"_surface.diffuse.a = 1.0;"];
-      } else if ([material.alphaModeValue
-                     isEqualToString:GLTFMaterialAlphaModeMask]) {
-        scnMaterial.blendMode = SCNBlendModeReplace;
-        [surfaceShaderModifier
-            appendFormat:
-                @"_surface.diffuse.a = _surface.diffuse.a < %f ? 0.0 : 1.0;",
-                material.alphaCutoffValue];
-      } else if ([material.alphaModeValue
-                     isEqualToString:GLTFMaterialAlphaModeBlend]) {
-        scnMaterial.blendMode = SCNBlendModeAlpha;
-        scnMaterial.transparencyMode = SCNTransparencyModeDualLayer;
-      }
-
-      scnMaterial.doubleSided = material.isDoubleSided;
-
-      scnMaterial.shaderModifiers = @{
-        SCNShaderModifierEntryPointSurface : surfaceShaderModifier,
-      };
-
-      [scnMaterials addObject:scnMaterial];
-    }
-  }
+  NSArray<SCNMaterial *> *scnMaterials = [self loadSCNMaterials];
 
   // load cameras
-  NSMutableArray<SCNCamera *> *scnCameras;
-
-  if (self.data.json.cameras) {
-    scnCameras =
-        [NSMutableArray arrayWithCapacity:self.data.json.cameras.count];
-    for (GLTFCamera *camera in self.data.json.cameras) {
-      NSAssert(camera.orthographic != nil || camera.perspective != nil,
-               @"orthographic or perspective must be not nil");
-      SCNCamera *scnCamera = [SCNCamera camera];
-      scnCamera.name = camera.name;
-      scnCamera.usesOrthographicProjection =
-          camera.type == GLTFCameraTypeOrthographic;
-      if (camera.orthographic) {
-        scnCamera.orthographicScale =
-            MAX(camera.orthographic.xmag, camera.orthographic.ymag);
-        scnCamera.zFar = camera.orthographic.zfar;
-        scnCamera.zNear = camera.orthographic.znear;
-      } else if (camera.perspective) {
-        if (camera.perspective.zfar) {
-          scnCamera.zFar = camera.perspective.zfar.floatValue;
-        }
-        scnCamera.zNear = camera.perspective.znear;
-        scnCamera.fieldOfView =
-            camera.perspective.yfov * (180.0 / M_PI); // degree
-        if (camera.perspective.aspectRatio) {
-          float aspectRatio = camera.perspective.aspectRatio.floatValue;
-          float yFovRadians = scnCamera.fieldOfView * (M_PI / 180.0);
-          SCNMatrix4 projectionTransform = {
-              .m11 = 1.0 / (aspectRatio * tan(yFovRadians * 0.5)),
-              .m22 = 1.0 / tan(yFovRadians * 0.5),
-              .m33 = -(scnCamera.zFar + scnCamera.zNear) /
-                     (scnCamera.zFar - scnCamera.zNear),
-              .m34 = -1.0,
-              .m43 = -(2.0 * scnCamera.zFar * scnCamera.zNear) /
-                     (scnCamera.zFar - scnCamera.zNear)};
-          scnCamera.projectionTransform = projectionTransform;
-        }
-      }
-      [scnCameras addObject:scnCamera];
-    }
-  }
+  NSArray<SCNCamera *> *scnCameras = [self loadSCNCameras];
 
   // load meshes
   NSMutableArray<SCNNode *> *meshNodes;
@@ -188,49 +41,13 @@
 
     for (GLTFMesh *mesh in self.data.json.meshes) {
       SCNNode *meshNode = [SCNNode node];
-      //      meshNode.name = mesh.name;
       meshNode.name = [[NSUUID UUID] UUIDString];
 
       for (GLTFMeshPrimitive *primitive in mesh.primitives) {
-        NSMutableArray<SCNGeometrySource *> *sources = [NSMutableArray array];
-        NSNumber *position =
-            [primitive valueOfAttributeSemantic:
-                           GLTFMeshPrimitiveAttributeSemanticPosition];
-        if (position) {
-          GLTFAccessor *accessor =
-              self.data.json.accessors[position.integerValue];
-          SCNGeometrySource *source = [self
-              scnGeometrySourceFromGLTFAccessor:accessor
-                                   withSemantic:
-                                       GLTFMeshPrimitiveAttributeSemanticPosition];
-          [sources addObject:source];
-        }
-        NSNumber *normal = [primitive
-            valueOfAttributeSemantic:GLTFMeshPrimitiveAttributeSemanticNormal];
-        if (normal) {
-          GLTFAccessor *accessor =
-              self.data.json.accessors[normal.integerValue];
-          SCNGeometrySource *source = [self
-              scnGeometrySourceFromGLTFAccessor:accessor
-                                   withSemantic:
-                                       GLTFMeshPrimitiveAttributeSemanticNormal];
-          [sources addObject:source];
-        }
-        NSNumber *tangent = [primitive
-            valueOfAttributeSemantic:GLTFMeshPrimitiveAttributeSemanticTangent];
-        if (tangent) {
-          GLTFAccessor *accessor =
-              self.data.json.accessors[tangent.integerValue];
-          SCNGeometrySource *source = [self
-              scnGeometrySourceFromGLTFAccessor:accessor
-                                   withSemantic:
-                                       GLTFMeshPrimitiveAttributeSemanticTangent];
-          [sources addObject:source];
-        }
-
+        NSArray<SCNGeometrySource *> *sources =
+            [self scnGeometrySourcesFromMeshPrimitive:primitive];
         NSArray<SCNGeometryElement *> *elements =
             [self scnGeometryElementsFromPrimitive:primitive];
-
         SCNGeometry *geometry = [SCNGeometry geometryWithSources:sources
                                                         elements:elements];
         SCNNode *geometryNode = [SCNNode nodeWithGeometry:geometry];
@@ -242,25 +59,10 @@
           geometry.materials = @[ scnMaterial ];
         }
 
-        if (primitive.targets) {
-          SCNMorpher *morpher = [SCNMorpher new];
-          NSMutableArray<SCNGeometry *> *morphTargets =
-              [NSMutableArray arrayWithCapacity:primitive.targets.count];
-          for (int i = 0; i < primitive.targets.count; i++) {
-            GLTFMeshPrimitiveTarget *target = primitive.targets[i];
-            NSArray<SCNGeometrySource *> *sources =
-                [self scnGeometrySourcesFromMorphTarget:target];
-            SCNGeometry *morphTarget =
-                [SCNGeometry geometryWithSources:sources elements:elements];
-            [morphTargets addObject:morphTarget];
-          }
-          morpher.targets = [morphTargets copy];
-          if (mesh.weights)
-            morpher.weights = mesh.weights;
-          morpher.unifiesNormals = YES;
-          morpher.calculationMode = SCNMorpherCalculationModeAdditive;
-          geometryNode.morpher = morpher;
-        }
+        SCNMorpher *morpher = [self scnMorpherFromMeshPrimitive:primitive
+                                                   withElements:elements
+                                                        weights:mesh.weights];
+        geometryNode.morpher = morpher;
 
         [meshNode addChildNode:geometryNode];
       }
@@ -277,7 +79,6 @@
 
     for (GLTFNode *node in self.data.json.nodes) {
       SCNNode *scnNode = [SCNNode node];
-      //      scnNode.name = node.name;
       scnNode.name = [[NSUUID UUID] UUIDString];
 
       if (node.camera) {
@@ -332,21 +133,16 @@
         if (skin.inverseBindMatrices) {
           GLTFAccessor *accessor =
               self.data.json.accessors[skin.inverseBindMatrices.integerValue];
-          NSData *data = [self.data dataForAccessor:accessor];
+          NSData *data = [self.data dataForAccessor:accessor normalized:nil];
           // inverseBindMatrices must be mat4 type with float
           assert([accessor.type isEqualToString:GLTFAccessorTypeMat4] &&
                  accessor.componentType == GLTFAccessorComponentTypeFloat);
-          // float[16][skin.joints.count]
-          NSArray<NSArray<NSNumber *> *> *values =
-              [GLTFData unpackGLTFAccessorDataToArray:accessor data:data];
-          assert(skin.joints.count == values.count);
-          boneInverseBindTransforms = SCNMat4ArrayFromNumbers(values);
+          boneInverseBindTransforms = SCNMat4ArrayFromPackedFloatData(data);
         } else {
           NSMutableArray<NSValue *> *arr =
               [NSMutableArray arrayWithCapacity:skin.joints.count];
           for (int j = 0; j < skin.joints.count; j++) {
-            SCNMatrix4 identity = SCNMatrix4Identity;
-            [arr addObject:[NSValue valueWithSCNMatrix4:identity]];
+            [arr addObject:[NSValue valueWithSCNMatrix4:SCNMatrix4Identity]];
           }
           boneInverseBindTransforms = [arr copy];
         }
@@ -361,22 +157,25 @@
           NSArray<NSNumber *> *weights =
               [primitive valuesOfAttributeSemantic:
                              GLTFMeshPrimitiveAttributeSemanticWeights];
-          GLTFAccessor *weightsAccessor =
-              self.data.json.accessors[weights[0].integerValue];
-          SCNGeometrySource *boneWeights = [self
-              scnGeometrySourceFromGLTFAccessor:weightsAccessor
-                                   withSemantic:
-                                       GLTFMeshPrimitiveAttributeSemanticWeights];
-
           NSArray<NSNumber *> *joints =
               [primitive valuesOfAttributeSemantic:
                              GLTFMeshPrimitiveAttributeSemanticJoints];
+          if (weights.count == 0 || joints.count == 0)
+            continue;
+
+          GLTFAccessor *weightsAccessor =
+              self.data.json.accessors[weights[0].integerValue];
+          SCNGeometrySource *boneWeights = [self
+              scnGeometrySourceFromAccessor:weightsAccessor
+                               withSemantic:
+                                   GLTFMeshPrimitiveAttributeSemanticWeights];
+
           GLTFAccessor *jointsAccessor =
               self.data.json.accessors[joints[0].integerValue];
           SCNGeometrySource *boneIndices = [self
-              scnGeometrySourceFromGLTFAccessor:jointsAccessor
-                                   withSemantic:
-                                       GLTFMeshPrimitiveAttributeSemanticJoints];
+              scnGeometrySourceFromAccessor:jointsAccessor
+                               withSemantic:
+                                   GLTFMeshPrimitiveAttributeSemanticJoints];
 
           SCNSkinner *skinner =
               [SCNSkinner skinnerWithBaseGeometry:geometry
@@ -386,6 +185,8 @@
                                       boneIndices:boneIndices];
           primitiveNode.skinner = skinner;
         }
+
+        // TODO: skin.skeleton
       }
     }
   }
@@ -396,33 +197,28 @@
 
   if (self.data.json.animations) {
     for (GLTFAnimation *animation in self.data.json.animations) {
-      NSMutableArray *caChannels = [NSMutableArray array];
+      NSMutableArray *channelAnimations = [NSMutableArray array];
+      float maxDuration = 0.0f;
 
-      float channelMaxDuration = 0.0f;
       for (GLTFAnimationChannel *channel in animation.channels) {
         if (channel.target.node == nil)
           continue;
 
-        SCNNode *target = scnNodes[channel.target.node.integerValue];
+        GLTFNode *node = self.data.json.nodes[channel.target.node.integerValue];
+        SCNNode *scnNode = scnNodes[channel.target.node.integerValue];
 
         GLTFAnimationSampler *sampler = animation.samplers[channel.sampler];
 
-        GLTFAccessor *inputAccessor = self.data.json.accessors[sampler.input];
-        NSData *inputData = [self.data dataForAccessor:inputAccessor];
-        // input must be scalar type with float
-        assert([inputAccessor.type isEqualToString:GLTFAccessorTypeScalar] &&
-               inputAccessor.componentType == GLTFAccessorComponentTypeFloat);
         NSArray<NSNumber *> *keyTimes =
-            [GLTFData unpackGLTFAccessorDataToArray:inputAccessor
-                                               data:inputData];
-        assert(inputAccessor.count == keyTimes.count);
-
+            [self keyTimesFromAnimationSampler:sampler];
         for (NSNumber *keyTime in keyTimes) {
-          channelMaxDuration = MAX(keyTime.floatValue, channelMaxDuration);
+          maxDuration = MAX(keyTime.floatValue, maxDuration);
         }
 
         GLTFAccessor *outputAccessor = self.data.json.accessors[sampler.output];
-        NSData *outputData = [self.data dataForAccessor:outputAccessor];
+        BOOL normalized;
+        NSData *outputData = [self.data dataForAccessor:outputAccessor
+                                             normalized:&normalized];
 
         if ([channel.target.path
                 isEqualToString:GLTFAnimationChannelTargetPathTranslation]) {
@@ -430,81 +226,104 @@
         } else if ([channel.target.path
                        isEqualToString:
                            GLTFAnimationChannelTargetPathRotation]) {
-          NSArray *values =
-              [GLTFData unpackGLTFAccessorDataToArray:outputAccessor
-                                                 data:outputData];
+          if (outputAccessor.count != keyTimes.count)
+            continue;
+          if (outputAccessor.componentType != GLTFAccessorComponentTypeFloat &&
+              !normalized)
+            continue;
+          if ([outputAccessor.type isNotEqualTo:GLTFAccessorTypeVec2] &&
+              [outputAccessor.type isNotEqualTo:GLTFAccessorTypeVec3] &&
+              [outputAccessor.type isNotEqualTo:GLTFAccessorTypeVec4])
+            continue;
 
-          CAKeyframeAnimation *caAnimation = [CAKeyframeAnimation animation];
-          NSString *keyPath =
-              [NSString stringWithFormat:@"/%@.orientation", target.name];
-          caAnimation.keyPath = keyPath;
-          caAnimation.values = SCNVec4ArrayFromNumbers(values);
-          caAnimation.calculationMode =
+          NSMutableArray<NSValue *> *values =
+              [NSMutableArray arrayWithCapacity:outputAccessor.count];
+          float *bytes = (float *)outputData.bytes;
+          for (int i = 0; i < outputAccessor.count; i++) {
+            SCNVector4 vec = SCNVector4Make(1, 0, 0, 0);
+            if ([outputAccessor.type isEqualTo:GLTFAccessorTypeVec2]) {
+              vec.x = bytes[0];
+              vec.y = bytes[1];
+              bytes += 2;
+            } else if ([outputAccessor.type isEqualTo:GLTFAccessorTypeVec3]) {
+              vec.x = bytes[0];
+              vec.y = bytes[1];
+              vec.z = bytes[2];
+              bytes += 3;
+            } else if ([outputAccessor.type isEqualTo:GLTFAccessorTypeVec4]) {
+              vec.x = bytes[0];
+              vec.y = bytes[1];
+              vec.z = bytes[2];
+              vec.w = bytes[3];
+              bytes += 4;
+            }
+            [values addObject:[NSValue valueWithSCNVector4:vec]];
+          }
+
+          CAKeyframeAnimation *animation = [CAKeyframeAnimation animation];
+          animation.keyPath =
+              [NSString stringWithFormat:@"/%@.orientation", scnNode.name];
+          animation.values = values;
+          animation.calculationMode =
               CAAnimationCalculationModeFromGLTFAnimationSamplerInterpolation(
                   sampler.interpolationValue);
-          caAnimation.keyTimes = keyTimes;
-          caAnimation.duration = keyTimes.lastObject.floatValue;
+          animation.keyTimes = keyTimes;
+          animation.duration = keyTimes.lastObject.floatValue;
+          animation.repeatDuration = FLT_MAX;
 
-          [caChannels addObject:caAnimation];
+          [channelAnimations addObject:animation];
         } else if ([channel.target.path
                        isEqualToString:GLTFAnimationChannelTargetPathScale]) {
           // TODO:
         } else if ([channel.target.path
                        isEqualToString:GLTFAnimationChannelTargetPathWeights]) {
-          NSArray<NSNumber *> *numbers = dataToFloatArray(outputData);
+          NSArray<NSNumber *> *numbers = NSArrayFromPackedFloatData(outputData);
 
-          GLTFMesh *mesh =
-              self.data.json
-                  .meshes[self.data.json.nodes[channel.target.node.integerValue]
-                              .mesh.integerValue];
-          SCNNode *meshNode = target.childNodes.firstObject;
-          for (int i = 0; i < mesh.primitives.count; i++) {
+          GLTFMesh *mesh = self.data.json.meshes[node.mesh.integerValue];
+          SCNNode *meshNode = meshNodes[node.mesh.integerValue];
+
+          for (NSInteger i = 0; i < mesh.primitives.count; i++) {
             GLTFMeshPrimitive *primitive = mesh.primitives[i];
             SCNNode *primitiveNode = meshNode.childNodes[i];
-            if (primitive.targets && primitiveNode.morpher) {
-              NSInteger targetsCount = primitive.targets.count;
-              NSMutableArray<NSMutableArray<NSNumber *> *> *values =
-                  [NSMutableArray arrayWithCapacity:targetsCount];
-              for (int t = 0; t < targetsCount; t++) {
-                NSMutableArray<NSNumber *> *targetValues =
-                    [NSMutableArray arrayWithCapacity:keyTimes.count];
-                [values addObject:targetValues];
-              }
-              for (int j = 0; j < targetsCount * keyTimes.count; j++) {
-                int keyframe = j / targetsCount;
-                int target = j % targetsCount;
-                NSNumber *value = numbers[j];
-                [values[target] addObject:value];
+            if (primitive.targets == nil || primitiveNode.morpher == nil)
+              continue;
+
+            NSInteger targetsCount = primitive.targets.count;
+            NSInteger keyTimesCount = keyTimes.count;
+
+            NSMutableArray<CAKeyframeAnimation *> *weightAnimations =
+                [NSMutableArray arrayWithCapacity:targetsCount];
+            for (NSInteger t = 0; t < targetsCount; t++) {
+              NSMutableArray<NSNumber *> *values =
+                  [NSMutableArray arrayWithCapacity:keyTimesCount];
+              for (NSInteger k = 0; k < keyTimesCount; k++) {
+                [values addObject:numbers[k * targetsCount + t]];
               }
 
-              NSMutableArray<CAKeyframeAnimation *> *weightAnimations =
-                  [NSMutableArray arrayWithCapacity:targetsCount];
-              for (int t = 0; t < targetsCount; t++) {
-                CAKeyframeAnimation *animation =
-                    [CAKeyframeAnimation animation];
-                NSString *keyPath =
-                    [NSString stringWithFormat:@"/%@.morpher.weights[%d]",
-                                               primitiveNode.name, t];
-                animation.keyPath = keyPath;
-                animation.keyTimes = keyTimes;
-                animation.values = values[t];
-                animation.repeatDuration = FLT_MAX;
-                animation.calculationMode = kCAAnimationLinear;
-                animation.duration = keyTimes.lastObject.floatValue;
-                [weightAnimations addObject:animation];
-              }
-              CAAnimationGroup *group = [CAAnimationGroup animation];
-              group.animations = weightAnimations;
-              group.duration = keyTimes.lastObject.floatValue;
-              [caChannels addObject:group];
+              CAKeyframeAnimation *weightAnimation =
+                  [CAKeyframeAnimation animation];
+              weightAnimation.keyPath =
+                  [NSString stringWithFormat:@"/%@.morpher.weights[%ld]",
+                                             primitiveNode.name, t];
+              weightAnimation.keyTimes = keyTimes;
+              weightAnimation.values = values;
+              weightAnimation.repeatDuration = FLT_MAX;
+              weightAnimation.calculationMode = kCAAnimationLinear;
+              weightAnimation.duration = keyTimes.lastObject.floatValue;
+              [weightAnimations addObject:weightAnimation];
             }
+
+            CAAnimationGroup *group = [CAAnimationGroup animation];
+            group.animations = weightAnimations;
+            group.duration = keyTimes.lastObject.floatValue;
+            [channelAnimations addObject:group];
           }
         }
       }
 
       CAAnimationGroup *caGroup = [CAAnimationGroup animation];
-      caGroup.animations = caChannels;
-      caGroup.duration = channelMaxDuration;
+      caGroup.animations = channelAnimations;
+      caGroup.duration = maxDuration;
       caGroup.repeatDuration = FLT_MAX;
 
       SCNAnimationPlayer *scnAnimationPlayer = [SCNAnimationPlayer
@@ -529,76 +348,118 @@
   self.scenes = [scnScenes copy];
 }
 
-NSArray<NSNumber *> *dataToFloatArray(NSData *data) {
-  if (data == nil || (data.length % sizeof(float)) != 0) {
-    NSLog(@"Invalid data: Data is nil or not a multiple of sizeof(float).");
+#pragma mark SCNMaterial
+
+- (nullable NSArray<SCNMaterial *> *)loadSCNMaterials {
+  if (!self.data.json.materials)
     return nil;
+  NSMutableArray<SCNMaterial *> *scnMaterials =
+      [NSMutableArray arrayWithCapacity:self.data.json.materials.count];
+
+  for (GLTFMaterial *material in self.data.json.materials) {
+    SCNMaterial *scnMaterial = [SCNMaterial material];
+    scnMaterial.name = material.name;
+    scnMaterial.locksAmbientWithDiffuse = YES;
+    scnMaterial.lightingModelName = material.pbrMetallicRoughness != nil
+                                        ? SCNLightingModelPhysicallyBased
+                                        : SCNLightingModelBlinn;
+
+    NSMutableString *surfaceShaderModifier = [NSMutableString string];
+
+    GLTFMaterialPBRMetallicRoughness *pbrMetallicRoughness =
+        material.pbrMetallicRoughness
+            ?: [[GLTFMaterialPBRMetallicRoughness alloc] init];
+
+    if (pbrMetallicRoughness.baseColorTexture) {
+      // set contents to texture
+      [self applyTextureInfo:pbrMetallicRoughness.baseColorTexture
+               withIntensity:1.0f
+                  toProperty:scnMaterial.diffuse];
+
+      if (pbrMetallicRoughness.baseColorFactor) {
+        simd_float4 factor = pbrMetallicRoughness.baseColorFactorValue;
+
+        if (factor[3] < 1.0f) {
+          [surfaceShaderModifier
+              appendString:@"#pragma transparent\n#pragma body\n"];
+        }
+        [surfaceShaderModifier
+            appendFormat:@"_surface.diffuse *= float4(%ff, %ff, %ff, %ff);\n",
+                         factor[0], factor[1], factor[2], factor[3]];
+      }
+    } else {
+      simd_float4 value = pbrMetallicRoughness.baseColorFactorValue;
+      applyColorContentsToProperty(value[0], value[1], value[2], value[3],
+                                   scnMaterial.diffuse);
+    }
+
+    // metallicRoughnessTexture
+    if (pbrMetallicRoughness.metallicRoughnessTexture) {
+      [self applyTextureInfo:pbrMetallicRoughness.metallicRoughnessTexture
+               withIntensity:pbrMetallicRoughness.metallicFactorValue
+                  toProperty:scnMaterial.metalness];
+      scnMaterial.metalness.textureComponents = SCNColorMaskBlue;
+
+      [self applyTextureInfo:pbrMetallicRoughness.metallicRoughnessTexture
+               withIntensity:pbrMetallicRoughness.roughnessFactorValue
+                  toProperty:scnMaterial.roughness];
+      scnMaterial.roughness.textureComponents = SCNColorMaskGreen;
+    } else {
+      scnMaterial.metalness.contents =
+          @(pbrMetallicRoughness.metallicFactorValue);
+      scnMaterial.roughness.contents =
+          @(pbrMetallicRoughness.roughnessFactorValue);
+    }
+
+    if (material.normalTexture) {
+      [self applyTextureInfo:material.normalTexture
+               withIntensity:material.normalTexture.scaleValue
+                  toProperty:scnMaterial.normal];
+    }
+
+    if (material.occlusionTexture) {
+      [self applyTextureInfo:material.occlusionTexture
+               withIntensity:material.occlusionTexture.strengthValue
+                  toProperty:scnMaterial.ambientOcclusion];
+      scnMaterial.ambientOcclusion.textureComponents = SCNColorMaskRed;
+    }
+
+    if (material.emissiveTexture) {
+      [self applyTextureInfo:material.emissiveTexture
+               withIntensity:1.0f
+                  toProperty:scnMaterial.emission];
+    } else {
+      simd_float3 value = material.emissiveFactorValue;
+      applyColorContentsToProperty(value[0], value[1], value[2], 1.0,
+                                   scnMaterial.emission);
+    }
+
+    if ([material.alphaModeValue isEqualToString:GLTFMaterialAlphaModeOpaque]) {
+      scnMaterial.blendMode = SCNBlendModeReplace;
+      [surfaceShaderModifier appendString:@"_surface.diffuse.a = 1.0;"];
+    } else if ([material.alphaModeValue
+                   isEqualToString:GLTFMaterialAlphaModeMask]) {
+      scnMaterial.blendMode = SCNBlendModeReplace;
+      [surfaceShaderModifier
+          appendFormat:
+              @"_surface.diffuse.a = _surface.diffuse.a < %f ? 0.0 : 1.0;",
+              material.alphaCutoffValue];
+    } else if ([material.alphaModeValue
+                   isEqualToString:GLTFMaterialAlphaModeBlend]) {
+      scnMaterial.blendMode = SCNBlendModeAlpha;
+      scnMaterial.transparencyMode = SCNTransparencyModeDualLayer;
+    }
+
+    scnMaterial.doubleSided = material.isDoubleSided;
+
+    scnMaterial.shaderModifiers = @{
+      SCNShaderModifierEntryPointSurface : surfaceShaderModifier,
+    };
+
+    [scnMaterials addObject:scnMaterial];
   }
 
-  NSUInteger numFloats = data.length / sizeof(float);
-  NSMutableArray<NSNumber *> *floatArray =
-      [NSMutableArray arrayWithCapacity:numFloats];
-  const float *floats = (const float *)data.bytes;
-  for (NSUInteger i = 0; i < numFloats; i++) {
-    [floatArray addObject:@(floats[i])];
-  }
-  return [floatArray copy];
-}
-
-NSArray<NSValue *> *SCNVec4ArrayFromNumbers(NSArray<NSNumber *> *array) {
-  NSMutableArray<NSValue *> *arr =
-      [NSMutableArray arrayWithCapacity:array.count];
-  for (NSArray<NSNumber *> *values in array) {
-    [arr addObject:[NSValue valueWithSCNVector4:SCNVector4Make(
-                                                    values[0].floatValue,
-                                                    values[1].floatValue,
-                                                    values[2].floatValue,
-                                                    values[3].floatValue)]];
-  }
-  return [arr copy];
-}
-
-NSArray<NSValue *> *
-SCNMat4ArrayFromNumbers(NSArray<NSArray<NSNumber *> *> *array) {
-  NSMutableArray<NSValue *> *arr =
-      [NSMutableArray arrayWithCapacity:array.count];
-  for (NSArray<NSNumber *> *values in array) {
-    SCNMatrix4 matrix;
-    matrix.m11 = values[0].floatValue;
-    matrix.m12 = values[1].floatValue;
-    matrix.m13 = values[2].floatValue;
-    matrix.m14 = values[3].floatValue;
-    matrix.m21 = values[4].floatValue;
-    matrix.m22 = values[5].floatValue;
-    matrix.m23 = values[6].floatValue;
-    matrix.m24 = values[7].floatValue;
-    matrix.m31 = values[8].floatValue;
-    matrix.m32 = values[9].floatValue;
-    matrix.m33 = values[10].floatValue;
-    matrix.m34 = values[11].floatValue;
-    matrix.m41 = values[12].floatValue;
-    matrix.m42 = values[13].floatValue;
-    matrix.m43 = values[14].floatValue;
-    matrix.m44 = values[15].floatValue;
-    [arr addObject:[NSValue valueWithSCNMatrix4:matrix]];
-  }
-  return [arr copy];
-}
-
-CAAnimationCalculationMode
-CAAnimationCalculationModeFromGLTFAnimationSamplerInterpolation(
-    NSString *interpolation) {
-  if ([interpolation isEqualToString:GLTFAnimationSamplerInterpolationLinear]) {
-    return kCAAnimationLinear;
-  } else if ([interpolation
-                 isEqualToString:GLTFAnimationSamplerInterpolationStep]) {
-    return kCAAnimationDiscrete;
-  } else if ([interpolation isEqualToString:
-                                GLTFAnimationSamplerInterpolationCubicSpline]) {
-    // TODO:
-    return kCAAnimationPaced;
-  }
-  return kCAAnimationLinear;
+  return [scnMaterials copy];
 }
 
 void applyColorContentsToProperty(float r, float g, float b, float a,
@@ -687,34 +548,6 @@ void applyColorContentsToProperty(float r, float g, float b, float a,
   property.wrapT = SCNWrapModeFromGLTFSamplerWrapMode(sampler.wrapTValue);
 }
 
-static SCNGeometrySourceSemantic
-SCNGeometrySourceSemanticFromGLTFMeshPrimitiveAttributeSemantic(
-    NSString *semantic) {
-  if ([semantic isEqualToString:GLTFMeshPrimitiveAttributeSemanticPosition]) {
-    return SCNGeometrySourceSemanticVertex;
-  } else if ([semantic
-                 isEqualToString:GLTFMeshPrimitiveAttributeSemanticNormal]) {
-    return SCNGeometrySourceSemanticNormal;
-  } else if ([semantic
-                 isEqualToString:GLTFMeshPrimitiveAttributeSemanticTangent]) {
-    return SCNGeometrySourceSemanticTangent;
-  } else if ([semantic
-                 isEqualToString:GLTFMeshPrimitiveAttributeSemanticTexcoord]) {
-    return SCNGeometrySourceSemanticTexcoord;
-  } else if ([semantic
-                 isEqualToString:GLTFMeshPrimitiveAttributeSemanticColor]) {
-    return SCNGeometrySourceSemanticColor;
-  } else if ([semantic
-                 isEqualToString:GLTFMeshPrimitiveAttributeSemanticJoints]) {
-    return SCNGeometrySourceSemanticBoneIndices;
-  } else if ([semantic
-                 isEqualToString:GLTFMeshPrimitiveAttributeSemanticWeights]) {
-    return SCNGeometrySourceSemanticBoneWeights;
-  } else {
-    abort();
-  }
-}
-
 static SCNWrapMode
 SCNWrapModeFromGLTFSamplerWrapMode(GLTFSamplerWrapMode mode) {
   switch (mode) {
@@ -729,26 +562,177 @@ SCNWrapModeFromGLTFSamplerWrapMode(GLTFSamplerWrapMode mode) {
   }
 }
 
-static NSInteger primitiveCountFromGLTFMeshPrimitiveMode(NSInteger indexCount,
-                                                         NSInteger mode) {
-  switch (mode) {
-  case GLTFMeshPrimitiveModePoints:
-    return indexCount;
-  case GLTFMeshPrimitiveModeLines:
-    return indexCount / 2;
-  case GLTFMeshPrimitiveModeLineLoop:
-    return indexCount;
-  case GLTFMeshPrimitiveModeLineStrip:
-    return indexCount - 1;
-  case GLTFMeshPrimitiveModeTriangles:
-    return indexCount / 3;
-  case GLTFMeshPrimitiveModeTriangleStrip:
-    return indexCount - 2;
-  case GLTFMeshPrimitiveModeTriangleFan:
-    return indexCount - 2;
-  default:
-    return indexCount;
+#pragma mark SCNCamera
+
+- (nullable NSArray<SCNCamera *> *)loadSCNCameras {
+  if (!self.data.json.cameras)
+    return nil;
+
+  NSMutableArray<SCNCamera *> *scnCameras =
+      [NSMutableArray arrayWithCapacity:self.data.json.cameras.count];
+  for (GLTFCamera *camera in self.data.json.cameras) {
+    SCNCamera *scnCamera = [SCNCamera camera];
+    scnCamera.name = camera.name;
+
+    if (camera.orthographic) {
+      [self applyOrthographicCamera:camera.orthographic toSCNCamera:scnCamera];
+    } else if (camera.perspective) {
+      [self applyPerspectiveCamera:camera.perspective toSCNCamera:scnCamera];
+    }
+    [scnCameras addObject:scnCamera];
   }
+  return [scnCameras copy];
+}
+
+- (void)applyOrthographicCamera:(GLTFCameraOrthographic *)orthographic
+                    toSCNCamera:(SCNCamera *)scnCamera {
+  scnCamera.usesOrthographicProjection = YES;
+  scnCamera.orthographicScale = MAX(orthographic.xmag, orthographic.ymag);
+  scnCamera.zFar = orthographic.zfar;
+  scnCamera.zNear = orthographic.znear;
+}
+
+- (void)applyPerspectiveCamera:(GLTFCameraPerspective *)perspective
+                   toSCNCamera:(SCNCamera *)scnCamera {
+  scnCamera.usesOrthographicProjection = NO;
+  if (perspective.zfar) {
+    scnCamera.zFar = perspective.zfar.floatValue;
+  }
+  scnCamera.zNear = perspective.znear;
+  scnCamera.fieldOfView = perspective.yfov * (180.0 / M_PI); // radian to degree
+  if (perspective.aspectRatio) {
+    // w / h
+    float aspectRatio = perspective.aspectRatio.floatValue;
+    float yFovRadians = scnCamera.fieldOfView * (M_PI / 180.0);
+
+    SCNMatrix4 projectionTransform = {
+        // m11: Scale along the X-axis. Calculated using the aspect ratio and
+        // the field of view.
+        //      A higher aspect ratio leads to more stretch along the X-axis.
+        .m11 = 1.0 / (aspectRatio * tan(yFovRadians * 0.5)),
+
+        // m22: Scale along the Y-axis. Directly dependent on the field of view.
+        //      Adjusts the Y-axis to maintain proper image proportions.
+        .m22 = 1.0 / tan(yFovRadians * 0.5),
+
+        // m33: Configures the depth (Z-axis) scaling. Affects how depth is
+        // perceived,
+        //      ensuring objects farther away appear smaller and provide a depth
+        //      cue.
+        .m33 = -(scnCamera.zFar + scnCamera.zNear) /
+               (scnCamera.zFar - scnCamera.zNear),
+
+        // m34: Enables perspective division, a key component for creating a
+        // perspective effect.
+        .m34 = -1.0,
+
+        // m43: Adjusts the translation along the Z-axis based on the near and
+        // far clipping planes.
+        //      This term helps manage how different depths are rendered within
+        //      the view frustum.
+        .m43 = -(2.0 * scnCamera.zFar * scnCamera.zNear) /
+               (scnCamera.zFar - scnCamera.zNear)};
+    scnCamera.projectionTransform = projectionTransform;
+  }
+}
+
+#pragma mark SCNGeometry
+
+- (void)addGeometrySourceByAccessorIndex:(nullable NSNumber *)accessorIndex
+                                semantic:(SCNGeometrySourceSemantic)semantic
+                                 toArray:(NSMutableArray<SCNGeometrySource *> *)
+                                             array {
+  if (accessorIndex) {
+    GLTFAccessor *accessor =
+        self.data.json.accessors[accessorIndex.integerValue];
+    SCNGeometrySource *source = [self scnGeometrySourceFromAccessor:accessor
+                                                       withSemantic:semantic];
+    [array addObject:source];
+  }
+}
+
+- (NSArray<SCNGeometrySource *> *)scnGeometrySourcesFromMeshPrimitive:
+    (GLTFMeshPrimitive *)primitive {
+  NSMutableArray<SCNGeometrySource *> *sources = [NSMutableArray array];
+  [self addGeometrySourceByAccessorIndex:
+            [primitive valueOfAttributeSemantic:
+                           GLTFMeshPrimitiveAttributeSemanticPosition]
+                                semantic:SCNGeometrySourceSemanticVertex
+                                 toArray:sources];
+  [self
+      addGeometrySourceByAccessorIndex:
+          [primitive
+              valueOfAttributeSemantic:GLTFMeshPrimitiveAttributeSemanticNormal]
+                              semantic:SCNGeometrySourceSemanticNormal
+                               toArray:sources];
+  [self addGeometrySourceByAccessorIndex:
+            [primitive valueOfAttributeSemantic:
+                           GLTFMeshPrimitiveAttributeSemanticTangent]
+                                semantic:SCNGeometrySourceSemanticTangent
+                                 toArray:sources];
+
+  NSArray<NSNumber *> *texcoords = [primitive
+      valuesOfAttributeSemantic:GLTFMeshPrimitiveAttributeSemanticTexcoord];
+  for (NSNumber *texcoord in texcoords) {
+    [self addGeometrySourceByAccessorIndex:texcoord
+                                  semantic:SCNGeometrySourceSemanticTexcoord
+                                   toArray:sources];
+  }
+  NSArray<NSNumber *> *colors = [primitive
+      valuesOfAttributeSemantic:GLTFMeshPrimitiveAttributeSemanticColor];
+  for (NSNumber *color in colors) {
+    [self addGeometrySourceByAccessorIndex:color
+                                  semantic:SCNGeometrySourceSemanticColor
+                                   toArray:sources];
+  }
+  return [sources copy];
+}
+
+- (SCNGeometrySource *)scnGeometrySourceFromAccessor:(GLTFAccessor *)accessor
+                                        withSemantic:(SCNGeometrySourceSemantic)
+                                                         semantic {
+  NSInteger componentsPerVector = componentsCountOfAccessorType(accessor.type);
+  BOOL normalized;
+  NSData *data = [self.data dataForAccessor:accessor normalized:&normalized];
+  BOOL isFloat =
+      accessor.componentType == GLTFAccessorComponentTypeFloat || normalized;
+  NSInteger bytesPerComponent =
+      isFloat ? sizeof(float) : sizeOfComponentType(accessor.componentType);
+  NSInteger dataStride = componentsPerVector * bytesPerComponent;
+  return [SCNGeometrySource geometrySourceWithData:data
+                                          semantic:semantic
+                                       vectorCount:accessor.count
+                                   floatComponents:isFloat
+                               componentsPerVector:componentsPerVector
+                                 bytesPerComponent:bytesPerComponent
+                                        dataOffset:0
+                                        dataStride:dataStride];
+}
+
+- (nullable NSArray<SCNGeometryElement *> *)scnGeometryElementsFromPrimitive:
+    (GLTFMeshPrimitive *)primitive {
+  if (!primitive.indices)
+    return nil;
+
+  GLTFAccessor *accessor =
+      self.data.json.accessors[primitive.indices.integerValue];
+  NSData *data = [self.data dataForAccessor:accessor normalized:nil];
+
+  SCNGeometryPrimitiveType primitiveType = SCNGeometryPrimitiveTypeTriangles;
+  data = convertDataToSCNGeometryPrimitiveType(data, primitive.modeValue,
+                                               &primitiveType);
+
+  SCNGeometryElement *element = [SCNGeometryElement
+      geometryElementWithData:data
+                primitiveType:primitiveType
+               primitiveCount:primitiveCountFromGLTFMeshPrimitiveMode(
+                                  accessor.count, primitive.modeValue)
+                bytesPerIndex:sizeOfComponentType(accessor.componentType)];
+  if (primitive.modeValue == GLTFMeshPrimitiveModePoints) {
+    element.minimumPointScreenSpaceRadius = 1.0;
+    element.maximumPointScreenSpaceRadius = 1.0;
+  }
+  return @[ element ];
 }
 
 // convert indices data with SceneKit compatible primitive type
@@ -820,88 +804,137 @@ convertDataToSCNGeometryPrimitiveType(NSData *bufferData, NSInteger mode,
   }
 }
 
-- (SCNGeometrySource *)scnGeometrySourceFromGLTFAccessor:
-                           (GLTFAccessor *)accessor
-                                            withSemantic:(NSString *)semantic {
-  NSInteger componentsPerVector = componentsCountOfAccessorType(accessor.type);
-  NSInteger bytesPerComponent = sizeOfComponentType(accessor.componentType);
-  NSInteger dataStride = componentsPerVector * bytesPerComponent;
-  NSData *data = [self.data dataForAccessor:accessor];
-  SCNGeometrySourceSemantic sourceSemantic =
-      SCNGeometrySourceSemanticFromGLTFMeshPrimitiveAttributeSemantic(semantic);
-  return
-      [SCNGeometrySource geometrySourceWithData:data
-                                       semantic:sourceSemantic
-                                    vectorCount:accessor.count
-                                floatComponents:accessor.componentType ==
-                                                GLTFAccessorComponentTypeFloat
-                            componentsPerVector:componentsPerVector
-                              bytesPerComponent:bytesPerComponent
-                                     dataOffset:0
-                                     dataStride:dataStride];
-}
-
-- (NSArray<SCNGeometryElement *> *)scnGeometryElementsFromPrimitive:
-    (GLTFMeshPrimitive *)primitive {
-  NSMutableArray<SCNGeometryElement *> *elements = [NSMutableArray array];
-  if (primitive.indices) {
-    GLTFAccessor *accessor =
-        self.data.json.accessors[primitive.indices.integerValue];
-    NSData *data = [self.data dataForAccessor:accessor];
-
-    SCNGeometryPrimitiveType primitiveType = SCNGeometryPrimitiveTypeTriangles;
-    data = convertDataToSCNGeometryPrimitiveType(data, primitive.modeValue,
-                                                 &primitiveType);
-
-    SCNGeometryElement *element = [SCNGeometryElement
-        geometryElementWithData:data
-                  primitiveType:primitiveType
-                 primitiveCount:primitiveCountFromGLTFMeshPrimitiveMode(
-                                    accessor.count, primitive.modeValue)
-                  bytesPerIndex:sizeOfComponentType(accessor.componentType)];
-
-    if (primitive.modeValue == GLTFMeshPrimitiveModePoints) {
-      element.pointSize = 4.0;
-      element.minimumPointScreenSpaceRadius = 3;
-      element.maximumPointScreenSpaceRadius = 5;
-    }
-
-    [elements addObject:element];
+static NSInteger primitiveCountFromGLTFMeshPrimitiveMode(NSInteger indexCount,
+                                                         NSInteger mode) {
+  switch (mode) {
+  case GLTFMeshPrimitiveModePoints:
+    return indexCount;
+  case GLTFMeshPrimitiveModeLines:
+    return indexCount / 2;
+  case GLTFMeshPrimitiveModeLineLoop:
+    return indexCount;
+  case GLTFMeshPrimitiveModeLineStrip:
+    return indexCount - 1;
+  case GLTFMeshPrimitiveModeTriangles:
+    return indexCount / 3;
+  case GLTFMeshPrimitiveModeTriangleStrip:
+    return indexCount - 2;
+  case GLTFMeshPrimitiveModeTriangleFan:
+    return indexCount - 2;
+  default:
+    return indexCount;
   }
-  return [elements copy];
 }
 
-- (NSArray<SCNGeometrySource *> *)scnGeometrySourcesFromMorphTarget:
+- (nullable SCNMorpher *)
+    scnMorpherFromMeshPrimitive:(GLTFMeshPrimitive *)primitive
+                   withElements:(NSArray<SCNGeometryElement *> *)elements
+                        weights:(nullable NSArray<NSNumber *> *)weights {
+  if (!primitive.targets)
+    return nil;
+
+  SCNMorpher *morpher = [SCNMorpher new];
+
+  NSMutableArray<SCNGeometry *> *morphTargets =
+      [NSMutableArray arrayWithCapacity:primitive.targets.count];
+  for (int i = 0; i < primitive.targets.count; i++) {
+    GLTFMeshPrimitiveTarget *target = primitive.targets[i];
+    NSArray<SCNGeometrySource *> *sources =
+        [self scnGeometrySourcesFromMeshPrimitiveTarget:target];
+    SCNGeometry *morphTarget = [SCNGeometry geometryWithSources:sources
+                                                       elements:elements];
+    [morphTargets addObject:morphTarget];
+  }
+
+  morpher.targets = [morphTargets copy];
+  morpher.unifiesNormals = YES;
+  morpher.calculationMode = SCNMorpherCalculationModeAdditive;
+  if (weights)
+    morpher.weights = weights;
+  return morpher;
+}
+
+- (NSArray<SCNGeometrySource *> *)scnGeometrySourcesFromMeshPrimitiveTarget:
     (GLTFMeshPrimitiveTarget *)primitiveTarget {
   NSMutableArray<SCNGeometrySource *> *sources = [NSMutableArray array];
-  if (primitiveTarget.position) {
-    GLTFAccessor *accessor =
-        self.data.json.accessors[primitiveTarget.position.integerValue];
-    SCNGeometrySource *source = [self
-        scnGeometrySourceFromGLTFAccessor:accessor
-                             withSemantic:
-                                 GLTFMeshPrimitiveAttributeSemanticPosition];
-    [sources addObject:source];
-  }
-  if (primitiveTarget.normal) {
-    GLTFAccessor *accessor =
-        self.data.json.accessors[primitiveTarget.normal.integerValue];
-    SCNGeometrySource *source = [self
-        scnGeometrySourceFromGLTFAccessor:accessor
-                             withSemantic:
-                                 GLTFMeshPrimitiveAttributeSemanticNormal];
-    [sources addObject:source];
-  }
-  if (primitiveTarget.tangent) {
-    GLTFAccessor *accessor =
-        self.data.json.accessors[primitiveTarget.tangent.integerValue];
-    SCNGeometrySource *source = [self
-        scnGeometrySourceFromGLTFAccessor:accessor
-                             withSemantic:
-                                 GLTFMeshPrimitiveAttributeSemanticTangent];
-    [sources addObject:source];
-  }
+  [self addGeometrySourceByAccessorIndex:primitiveTarget.position
+                                semantic:SCNGeometrySourceSemanticVertex
+                                 toArray:sources];
+  [self addGeometrySourceByAccessorIndex:primitiveTarget.normal
+                                semantic:SCNGeometrySourceSemanticNormal
+                                 toArray:sources];
+  [self addGeometrySourceByAccessorIndex:primitiveTarget.tangent
+                                semantic:SCNGeometrySourceSemanticTangent
+                                 toArray:sources];
   return [sources copy];
+}
+
+#pragma mark animation
+
+CAAnimationCalculationMode
+CAAnimationCalculationModeFromGLTFAnimationSamplerInterpolation(
+    NSString *interpolation) {
+  if ([interpolation isEqualToString:GLTFAnimationSamplerInterpolationLinear]) {
+    return kCAAnimationLinear;
+  } else if ([interpolation
+                 isEqualToString:GLTFAnimationSamplerInterpolationStep]) {
+    return kCAAnimationDiscrete;
+  } else if ([interpolation isEqualToString:
+                                GLTFAnimationSamplerInterpolationCubicSpline]) {
+    // TODO:
+    return kCAAnimationPaced;
+  }
+  return kCAAnimationLinear;
+}
+
+- (NSArray<NSNumber *> *)keyTimesFromAnimationSampler:
+    (GLTFAnimationSampler *)sampler {
+  GLTFAccessor *inputAccessor = self.data.json.accessors[sampler.input];
+  // input must be scalar type with float
+  assert([inputAccessor.type isEqualToString:GLTFAccessorTypeScalar] &&
+         inputAccessor.componentType == GLTFAccessorComponentTypeFloat);
+  NSData *inputData = [self.data dataForAccessor:inputAccessor normalized:nil];
+  return NSArrayFromPackedFloatData(inputData);
+}
+
+#pragma mark -
+
+NSArray<NSNumber *> *NSArrayFromPackedFloatData(NSData *data) {
+  NSUInteger count = data.length / sizeof(float);
+  NSMutableArray<NSNumber *> *array = [NSMutableArray arrayWithCapacity:count];
+  const float *bytes = (const float *)data.bytes;
+  for (NSUInteger i = 0; i < count; i++) {
+    [array addObject:@(bytes[i])];
+  }
+  return [array copy];
+}
+
+NSArray<NSValue *> *SCNMat4ArrayFromPackedFloatData(NSData *data) {
+  NSUInteger count = data.length / sizeof(float) / 16;
+  NSMutableArray<NSValue *> *arr = [NSMutableArray arrayWithCapacity:count];
+  const float *base = (float *)data.bytes;
+  for (NSUInteger i = 0; i < count; i++) {
+    const float *bytes = base + i * 16;
+    SCNMatrix4 matrix;
+    matrix.m11 = bytes[0];
+    matrix.m12 = bytes[1];
+    matrix.m13 = bytes[2];
+    matrix.m14 = bytes[3];
+    matrix.m21 = bytes[4];
+    matrix.m22 = bytes[5];
+    matrix.m23 = bytes[6];
+    matrix.m24 = bytes[7];
+    matrix.m31 = bytes[8];
+    matrix.m32 = bytes[9];
+    matrix.m33 = bytes[10];
+    matrix.m34 = bytes[11];
+    matrix.m41 = bytes[12];
+    matrix.m42 = bytes[13];
+    matrix.m43 = bytes[14];
+    matrix.m44 = bytes[15];
+    [arr addObject:[NSValue valueWithSCNMatrix4:matrix]];
+  }
+  return [arr copy];
 }
 
 simd_float4 simdRotationFromQuaternion(simd_quatf rotation) {

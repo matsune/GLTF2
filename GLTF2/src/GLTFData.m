@@ -173,9 +173,19 @@
     GLTFBufferView *bufferView =
         self.json.bufferViews[accessor.bufferView.integerValue];
     NSData *bufferData = [self dataForBufferView:bufferView];
-    NSData *subdata = [bufferData
-        subdataWithRange:NSMakeRange(accessor.byteOffsetValue, data.length)];
-    memcpy(data.mutableBytes, subdata.bytes, subdata.length);
+
+    if (bufferView.byteStride && bufferView.byteStride.integerValue !=
+                                     componentTypeSize * componentsCount) {
+      for (int i = 0; i < accessor.count; i++) {
+        memcpy(data.mutableBytes + i * componentTypeSize * componentsCount,
+               bufferData.bytes + accessor.byteOffsetValue +
+                   i * bufferView.byteStride.integerValue,
+               componentTypeSize * componentsCount);
+      }
+    } else {
+      memcpy(data.mutableBytes, bufferData.bytes + accessor.byteOffsetValue,
+             componentTypeSize * componentsCount * accessor.count);
+    }
   }
 }
 

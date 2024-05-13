@@ -1331,7 +1331,7 @@
     @"indices" : @1,
     @"material" : @2,
     @"mode" : @3,
-    @"targets" : @[ @4, @5 ],
+    @"targets" : @[ @{@"POSITION" : @4} ],
     @"extensions" : @{@"extensionData" : @{}},
     @"extras" : @{@"extraData" : @"data"}
   };
@@ -1346,16 +1346,18 @@
       @{@"POSITION" : @0, @"TEXCOORD_0" : @1, @"TEXCOORD_1" : @2};
   XCTAssertEqualObjects(primitive.attributes, attributes,
                         "Attributes should be correctly decoded");
-  XCTAssertEqual([primitive valueOfSemantic:@"POSITION"], @0);
+  XCTAssertEqual([primitive valueOfAttributeSemantic:@"POSITION"], @0);
   NSArray *texcoords = @[ @1, @2 ];
-  XCTAssertEqualObjects([primitive valuesOfSemantic:@"TEXCOORD"], texcoords);
+  XCTAssertEqualObjects([primitive valuesOfAttributeSemantic:@"TEXCOORD"],
+                        texcoords);
   XCTAssertEqualObjects(primitive.indices, @1,
                         "Indices should be correctly decoded");
   XCTAssertEqualObjects(primitive.material, @2,
                         "Material should be correctly decoded");
   XCTAssertEqual(primitive.modeValue, 3, "Mode should be correctly decoded");
-  XCTAssertEqualObjects(primitive.targets, (@[ @4, @5 ]),
-                        "Targets should be correctly decoded");
+  XCTAssertNotNil(primitive.targets);
+  XCTAssertEqual(primitive.targets.count, 1);
+  XCTAssertEqual(primitive.targets[0].position, @4);
   XCTAssertNotNil(primitive.extensions, "Extensions should be present");
   XCTAssertNotNil(primitive.extras, "Extras should be present");
   XCTAssertNil(
@@ -1431,10 +1433,10 @@
   XCTAssertTrue([self isIdentityMatrix:node.matrixValue],
                 "Matrix should be identity by default");
   XCTAssertNil(node.mesh);
-  XCTAssertEqual(node.rotationValue[0], 0);
-  XCTAssertEqual(node.rotationValue[1], 0);
-  XCTAssertEqual(node.rotationValue[2], 0);
-  XCTAssertEqual(node.rotationValue[3], 1);
+  XCTAssertEqual(node.rotationValue.vector[0], 0);
+  XCTAssertEqual(node.rotationValue.vector[1], 0);
+  XCTAssertEqual(node.rotationValue.vector[2], 0);
+  XCTAssertEqual(node.rotationValue.vector[3], 1);
   XCTAssertEqual(node.scaleValue[0], 1);
   XCTAssertEqual(node.scaleValue[1], 1);
   XCTAssertEqual(node.scaleValue[2], 1);

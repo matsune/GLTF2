@@ -33,46 +33,10 @@
   // load cameras
   NSArray<SCNCamera *> *scnCameras = [self loadSCNCameras];
 
-  // load meshes
-  NSMutableArray<SCNNode *> *meshNodes;
-
-  if (self.data.json.meshes) {
-    meshNodes = [NSMutableArray arrayWithCapacity:self.data.json.meshes.count];
-
-    for (GLTFMesh *mesh in self.data.json.meshes) {
-      SCNNode *meshNode = [SCNNode node];
-      meshNode.name = [[NSUUID UUID] UUIDString];
-
-      for (GLTFMeshPrimitive *primitive in mesh.primitives) {
-        NSArray<SCNGeometrySource *> *sources =
-            [self scnGeometrySourcesFromMeshPrimitive:primitive];
-        NSArray<SCNGeometryElement *> *elements =
-            [self scnGeometryElementsFromPrimitive:primitive];
-        SCNGeometry *geometry = [SCNGeometry geometryWithSources:sources
-                                                        elements:elements];
-        SCNNode *geometryNode = [SCNNode nodeWithGeometry:geometry];
-        geometryNode.name = [[NSUUID UUID] UUIDString];
-
-        if (primitive.material) {
-          SCNMaterial *scnMaterial =
-              scnMaterials[primitive.material.integerValue];
-          geometry.materials = @[ scnMaterial ];
-        }
-
-        SCNMorpher *morpher = [self scnMorpherFromMeshPrimitive:primitive
-                                                   withElements:elements
-                                                        weights:mesh.weights];
-        geometryNode.morpher = morpher;
-
-        [meshNode addChildNode:geometryNode];
-      }
-
-      [meshNodes addObject:meshNode];
-    }
-  }
-
   // load nodes
   NSMutableArray<SCNNode *> *scnNodes;
+  NSMutableDictionary<SCNNode *, SCNNode *> *nodeMeshDict =
+      [NSMutableDictionary dictionary];
 
   if (self.data.json.nodes) {
     scnNodes = [NSMutableArray arrayWithCapacity:self.data.json.nodes.count];
@@ -94,7 +58,9 @@
       }
 
       if (node.mesh) {
-        SCNNode *meshNode = meshNodes[node.mesh.integerValue];
+        GLTFMesh *mesh = self.data.json.meshes[node.mesh.integerValue];
+        SCNNode *meshNode = [self scnNodeForMesh:mesh
+                                    scnMaterials:scnMaterials];
         if (node.weights) {
           for (SCNNode *childNode in meshNode.childNodes) {
             if (childNode.morpher) {
@@ -103,6 +69,7 @@
           }
         }
         [scnNode addChildNode:meshNode];
+        nodeMeshDict[scnNode] = meshNode;
       }
 
       [scnNodes addObject:scnNode];
@@ -148,7 +115,7 @@
         }
 
         GLTFMesh *mesh = self.data.json.meshes[node.mesh.integerValue];
-        SCNNode *meshNode = meshNodes[node.mesh.integerValue];
+        SCNNode *meshNode = nodeMeshDict[scnNode];
         for (int j = 0; j < mesh.primitives.count; j++) {
           GLTFMeshPrimitive *primitive = mesh.primitives[j];
           SCNNode *primitiveNode = meshNode.childNodes[j];
@@ -225,7 +192,7 @@
           NSArray<NSNumber *> *numbers = NSArrayFromPackedFloatData(outputData);
 
           GLTFMesh *mesh = self.data.json.meshes[node.mesh.integerValue];
-          SCNNode *meshNode = meshNodes[node.mesh.integerValue];
+          SCNNode *meshNode = nodeMeshDict[scnNode];
 
           for (NSInteger i = 0; i < mesh.primitives.count; i++) {
             GLTFMeshPrimitive *primitive = mesh.primitives[i];
@@ -266,9 +233,6 @@
         } else {
           // Translation, Rotation, Scale
 
-          // values count must match with keyTimes count
-          if (outputAccessor.count != keyTimes.count)
-            continue;
           // component type should be float
           if (outputAccessor.componentType != GLTFAccessorComponentTypeFloat &&
               !normalized)
@@ -279,29 +243,32 @@
               [outputAccessor.type isNotEqualTo:GLTFAccessorTypeVec4])
             continue;
 
+          CAAnimationCalculationMode calculationMode =
+              CAAnimationCalculationModeFromGLTFAnimationSamplerInterpolation(
+                  sampler.interpolationValue);
+          BOOL isCubisSpline = calculationMode == kCAAnimationCubic;
+
           NSArray<NSValue *> *values;
           NSString *keyPath;
           if (channel.target.isPathTranslation) {
             values = SCNVec3ArrayFromPackedFloatDataWithAccessor(
-                outputData, outputAccessor);
+                outputData, outputAccessor, isCubisSpline);
             keyPath = [NSString stringWithFormat:@"/%@.position", scnNode.name];
           } else if (channel.target.isPathRotation) {
             values = SCNVec4ArrayFromPackedFloatDataWithAccessor(
-                outputData, outputAccessor);
+                outputData, outputAccessor, isCubisSpline);
             keyPath =
                 [NSString stringWithFormat:@"/%@.orientation", scnNode.name];
           } else if (channel.target.isPathScale) {
             values = SCNVec3ArrayFromPackedFloatDataWithAccessor(
-                outputData, outputAccessor);
+                outputData, outputAccessor, isCubisSpline);
             keyPath = [NSString stringWithFormat:@"/%@.scale", scnNode.name];
           }
 
           CAKeyframeAnimation *animation = [CAKeyframeAnimation animation];
           animation.values = values;
           animation.keyPath = keyPath;
-          animation.calculationMode =
-              CAAnimationCalculationModeFromGLTFAnimationSamplerInterpolation(
-                  sampler.interpolationValue);
+          animation.calculationMode = calculationMode;
           animation.keyTimes = keyTimes;
           animation.duration = maxKeyTime;
           animation.repeatDuration = FLT_MAX;
@@ -335,6 +302,38 @@
     }
   }
   self.scenes = [scnScenes copy];
+}
+
+#pragma mark mesh
+
+- (SCNNode *)scnNodeForMesh:(GLTFMesh *)mesh
+               scnMaterials:(NSArray<SCNMaterial *> *)scnMaterials {
+  SCNNode *meshNode = [SCNNode node];
+  meshNode.name = [[NSUUID UUID] UUIDString];
+
+  for (GLTFMeshPrimitive *primitive in mesh.primitives) {
+    NSArray<SCNGeometrySource *> *sources =
+        [self scnGeometrySourcesFromMeshPrimitive:primitive];
+    NSArray<SCNGeometryElement *> *elements =
+        [self scnGeometryElementsFromPrimitive:primitive];
+    SCNGeometry *geometry = [SCNGeometry geometryWithSources:sources
+                                                    elements:elements];
+    SCNNode *geometryNode = [SCNNode nodeWithGeometry:geometry];
+    geometryNode.name = [[NSUUID UUID] UUIDString];
+
+    if (primitive.material) {
+      SCNMaterial *scnMaterial = scnMaterials[primitive.material.integerValue];
+      geometry.materials = @[ scnMaterial ];
+    }
+
+    SCNMorpher *morpher = [self scnMorpherFromMeshPrimitive:primitive
+                                               withElements:elements
+                                                    weights:mesh.weights];
+    geometryNode.morpher = morpher;
+
+    [meshNode addChildNode:geometryNode];
+  }
+  return meshNode;
 }
 
 #pragma mark SCNMaterial
@@ -868,8 +867,8 @@ CAAnimationCalculationModeFromGLTFAnimationSamplerInterpolation(
     return kCAAnimationDiscrete;
   } else if ([interpolation isEqualToString:
                                 GLTFAnimationSamplerInterpolationCubicSpline]) {
-    // TODO:
-    return kCAAnimationPaced;
+    // TODO: tangent
+    return kCAAnimationCubic;
   }
   return kCAAnimationLinear;
 }
@@ -936,57 +935,79 @@ NSArray<NSValue *> *SCNMat4ArrayFromPackedFloatData(NSData *data) {
   return [arr copy];
 }
 
-NSArray<NSValue *> *
-SCNVec4ArrayFromPackedFloatDataWithAccessor(NSData *data,
-                                            GLTFAccessor *accessor) {
-  NSMutableArray<NSValue *> *values =
-      [NSMutableArray arrayWithCapacity:accessor.count];
+NSArray<NSValue *> *SCNVec4ArrayFromPackedFloatDataWithAccessor(
+    NSData *data, GLTFAccessor *accessor, BOOL isCubisSpline) {
+  NSInteger count = isCubisSpline ? accessor.count / 3 : accessor.count;
+  NSMutableArray<NSValue *> *values = [NSMutableArray arrayWithCapacity:count];
   float *bytes = (float *)data.bytes;
-  for (int i = 0; i < accessor.count; i++) {
+  for (int i = 0; i < count; i++) {
     SCNVector4 vec = SCNVector4Zero;
     if ([accessor.type isEqualTo:GLTFAccessorTypeVec2]) {
+      if (isCubisSpline)
+        bytes += 2; // skip in-tangent
       vec.x = bytes[0];
       vec.y = bytes[1];
       bytes += 2;
+      if (isCubisSpline)
+        bytes += 2; // skip out-tangent
     } else if ([accessor.type isEqualTo:GLTFAccessorTypeVec3]) {
+      if (isCubisSpline)
+        bytes += 3; // skip in-tangent
       vec.x = bytes[0];
       vec.y = bytes[1];
       vec.z = bytes[2];
       bytes += 3;
+      if (isCubisSpline)
+        bytes += 3; // skip out-tangent
     } else if ([accessor.type isEqualTo:GLTFAccessorTypeVec4]) {
+      if (isCubisSpline)
+        bytes += 4; // skip in-tangent
       vec.x = bytes[0];
       vec.y = bytes[1];
       vec.z = bytes[2];
       vec.w = bytes[3];
       bytes += 4;
+      if (isCubisSpline)
+        bytes += 4; // skip out-tangent
     }
     [values addObject:[NSValue valueWithSCNVector4:vec]];
   }
   return [values copy];
 }
 
-NSArray<NSValue *> *
-SCNVec3ArrayFromPackedFloatDataWithAccessor(NSData *data,
-                                            GLTFAccessor *accessor) {
-  NSMutableArray<NSValue *> *values =
-      [NSMutableArray arrayWithCapacity:accessor.count];
+NSArray<NSValue *> *SCNVec3ArrayFromPackedFloatDataWithAccessor(
+    NSData *data, GLTFAccessor *accessor, BOOL isCubisSpline) {
+  NSInteger count = isCubisSpline ? accessor.count / 3 : accessor.count;
+  NSMutableArray<NSValue *> *values = [NSMutableArray arrayWithCapacity:count];
   float *bytes = (float *)data.bytes;
-  for (int i = 0; i < accessor.count; i++) {
+  for (int i = 0; i < count; i++) {
     SCNVector3 vec = SCNVector3Zero;
     if ([accessor.type isEqualTo:GLTFAccessorTypeVec2]) {
+      if (isCubisSpline)
+        bytes += 2; // skip in-tangent
       vec.x = bytes[0];
       vec.y = bytes[1];
       bytes += 2;
+      if (isCubisSpline)
+        bytes += 2; // skip out-tangent
     } else if ([accessor.type isEqualTo:GLTFAccessorTypeVec3]) {
+      if (isCubisSpline)
+        bytes += 3; // skip in-tangent
       vec.x = bytes[0];
       vec.y = bytes[1];
       vec.z = bytes[2];
       bytes += 3;
+      if (isCubisSpline)
+        bytes += 3; // skip out-tangent
     } else if ([accessor.type isEqualTo:GLTFAccessorTypeVec4]) {
+      if (isCubisSpline)
+        bytes += 4; // skip in-tangent
       vec.x = bytes[0];
       vec.y = bytes[1];
       vec.z = bytes[2];
       bytes += 4;
+      if (isCubisSpline)
+        bytes += 4; // skip out-tangent
     }
     [values addObject:[NSValue valueWithSCNVector3:vec]];
   }

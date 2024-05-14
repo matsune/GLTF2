@@ -711,17 +711,52 @@
                         <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <sceneView translatesAutoresizingMaskIntoConstraints="NO" id="Hoi-sh-TYX">
-                                <rect key="frame" x="0.0" y="0.0" width="720" height="480"/>
+                                <rect key="frame" x="0.0" y="40" width="720" height="440"/>
                             </sceneView>
+                            <visualEffectView blendingMode="behindWindow" material="appearanceBased" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="hIx-X8-ssd">
+                                <rect key="frame" x="0.0" y="0.0" width="720" height="40"/>
+                                <subviews>
+                                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="4pZ-WC-0j2">
+                                        <rect key="frame" x="18" y="12" width="69" height="16"/>
+                                        <textFieldCell key="cell" lineBreakMode="clipping" title="Animation:" id="R7O-3K-WZN">
+                                            <font key="font" metaFont="system"/>
+                                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                        </textFieldCell>
+                                    </textField>
+                                    <popUpButton wantsLayer="YES" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="7G7-an-i50">
+                                        <rect key="frame" x="90" y="6" width="39" height="25"/>
+                                        <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="gAL-yg-I7D">
+                                            <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                            <font key="font" metaFont="menu"/>
+                                            <menu key="menu" id="HA6-5w-wa4"/>
+                                        </popUpButtonCell>
+                                        <connections>
+                                            <action selector="animationsPopUpButtonAction:" target="XfG-lQ-9wD" id="MZh-Bc-4ai"/>
+                                        </connections>
+                                    </popUpButton>
+                                </subviews>
+                                <constraints>
+                                    <constraint firstItem="4pZ-WC-0j2" firstAttribute="leading" secondItem="hIx-X8-ssd" secondAttribute="leading" constant="20" symbolic="YES" id="5Uc-Ox-p2P"/>
+                                    <constraint firstAttribute="height" constant="40" id="BC4-k2-uUz"/>
+                                    <constraint firstItem="7G7-an-i50" firstAttribute="leading" secondItem="4pZ-WC-0j2" secondAttribute="trailing" constant="8" symbolic="YES" id="QeH-Ny-rPm"/>
+                                    <constraint firstItem="4pZ-WC-0j2" firstAttribute="centerY" secondItem="hIx-X8-ssd" secondAttribute="centerY" id="W4V-EV-wtx"/>
+                                    <constraint firstItem="7G7-an-i50" firstAttribute="centerY" secondItem="hIx-X8-ssd" secondAttribute="centerY" id="kLN-N8-4qe"/>
+                                </constraints>
+                            </visualEffectView>
                         </subviews>
                         <constraints>
+                            <constraint firstItem="hIx-X8-ssd" firstAttribute="leading" secondItem="m2S-Jp-Qdl" secondAttribute="leading" id="BAH-L1-9Uu"/>
                             <constraint firstItem="Hoi-sh-TYX" firstAttribute="top" secondItem="m2S-Jp-Qdl" secondAttribute="top" id="IrT-kh-4lQ"/>
                             <constraint firstItem="Hoi-sh-TYX" firstAttribute="leading" secondItem="m2S-Jp-Qdl" secondAttribute="leading" id="NBd-43-y1s"/>
                             <constraint firstAttribute="trailing" secondItem="Hoi-sh-TYX" secondAttribute="trailing" id="Nqb-fy-MIc"/>
-                            <constraint firstAttribute="bottom" secondItem="Hoi-sh-TYX" secondAttribute="bottom" id="b3Z-eA-oXz"/>
+                            <constraint firstItem="hIx-X8-ssd" firstAttribute="top" secondItem="Hoi-sh-TYX" secondAttribute="bottom" id="T9D-Fg-i5W"/>
+                            <constraint firstAttribute="trailing" secondItem="hIx-X8-ssd" secondAttribute="trailing" id="f7a-dM-9jM"/>
+                            <constraint firstAttribute="bottom" secondItem="hIx-X8-ssd" secondAttribute="bottom" id="vxg-bt-gjH"/>
                         </constraints>
                     </view>
                     <connections>
+                        <outlet property="animationsPopUpButton" destination="7G7-an-i50" id="SWj-1k-R5S"/>
                         <outlet property="scnView" destination="Hoi-sh-TYX" id="TFs-ZF-5DF"/>
                     </connections>
                 </viewController>

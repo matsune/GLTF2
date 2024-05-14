@@ -1,5 +1,6 @@
 #import "AppDelegate.h"
-#import "ViewController.h"
+#import "SCNViewController.h"
+#import "SidebarViewController.h"
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 @interface AppDelegate ()
@@ -9,7 +10,6 @@
 @implementation AppDelegate
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
-  // Insert code here to initialize your application
   [self openDocument:nil];
 }
 
@@ -36,9 +36,14 @@
       NSURL *fileURL = [[openPanel URLs] firstObject];
       NSWindowController *windowController = [[NSStoryboard mainStoryboard]
           instantiateControllerWithIdentifier:@"MainWindowController"];
-      ViewController *vc =
-          (ViewController *)windowController.contentViewController;
-      [vc loadModelURL:fileURL];
+      NSSplitViewController *splitVC =
+          (NSSplitViewController *)windowController.contentViewController;
+      SidebarViewController *sidebarViewController =
+          (SidebarViewController *)splitVC.splitViewItems[0].viewController;
+      SCNViewController *scnViewController =
+          (SCNViewController *)splitVC.splitViewItems[1].viewController;
+      scnViewController.delegate = sidebarViewController;
+      [scnViewController loadModelURL:fileURL];
       [windowController showWindow:nil];
     }
   }];

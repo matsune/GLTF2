@@ -686,7 +686,7 @@
         <!--Window Controller-->
         <scene sceneID="cgM-Ln-Iby">
             <objects>
-                <windowController storyboardIdentifier="MainWindowController" id="FS0-Iw-Jqv" sceneMemberID="viewController">
+                <windowController storyboardIdentifier="MainWindowController" id="FS0-Iw-Jqv" customClass="WindowController" sceneMemberID="viewController">
                     <window key="window" title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" titlebarAppearsTransparent="YES" titleVisibility="hidden" id="2r9-Sa-ciq">
                         <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" fullSizeContentView="YES"/>
                         <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
@@ -748,10 +748,10 @@
                         <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <stackView distribution="fill" orientation="vertical" alignment="leading" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="yle-ea-tIS">
-                                <rect key="frame" x="20" y="142" width="132" height="102"/>
+                                <rect key="frame" x="20" y="139" width="132" height="105"/>
                                 <subviews>
                                     <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="4pZ-WC-0j2">
-                                        <rect key="frame" x="-2" y="86" width="70" height="16"/>
+                                        <rect key="frame" x="-2" y="89" width="70" height="16"/>
                                         <textFieldCell key="cell" lineBreakMode="clipping" title="Animation" id="R7O-3K-WZN">
                                             <font key="font" textStyle="headline" name=".SFNS-Bold"/>
                                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -759,7 +759,7 @@
                                         </textFieldCell>
                                     </textField>
                                     <stackView distribution="fill" orientation="horizontal" alignment="top" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="XhN-U0-rWH">
-                                        <rect key="frame" x="0.0" y="58" width="132" height="20"/>
+                                        <rect key="frame" x="0.0" y="61" width="132" height="20"/>
                                         <subviews>
                                             <popUpButton wantsLayer="YES" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="7G7-an-i50">
                                                 <rect key="frame" x="-3" y="-4" width="99" height="25"/>
@@ -798,22 +798,59 @@
                                             <real value="3.4028234663852886e+38"/>
                                         </customSpacing>
                                     </stackView>
-                                    <stackView distribution="fill" orientation="horizontal" alignment="top" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5NO-n3-Psd">
-                                        <rect key="frame" x="0.0" y="0.0" width="132" height="50"/>
+                                    <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="xIK-ro-EqR">
+                                        <rect key="frame" x="0.0" y="50" width="132" height="5"/>
+                                    </box>
+                                    <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Xug-To-5jQ">
+                                        <rect key="frame" x="-2" y="28" width="54" height="16"/>
+                                        <textFieldCell key="cell" lineBreakMode="clipping" title="Camera" id="857-YP-a0k">
+                                            <font key="font" textStyle="headline" name=".SFNS-Bold"/>
+                                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                        </textFieldCell>
+                                    </textField>
+                                    <stackView distribution="fill" orientation="horizontal" alignment="top" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="m3g-PX-am7">
+                                        <rect key="frame" x="0.0" y="0.0" width="59" height="20"/>
+                                        <subviews>
+                                            <popUpButton wantsLayer="YES" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="a9N-Xe-lt5">
+                                                <rect key="frame" x="-3" y="-4" width="66" height="25"/>
+                                                <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="rVC-Dk-C5b">
+                                                    <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                                    <font key="font" metaFont="menu"/>
+                                                    <menu key="menu" id="TZx-TN-uzD"/>
+                                                </popUpButtonCell>
+                                                <constraints>
+                                                    <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="59" id="3kb-pu-06T"/>
+                                                </constraints>
+                                                <connections>
+                                                    <action selector="camerasPopUpButtonAction:" target="CQq-M7-SsL" id="Gwa-oT-a6I"/>
+                                                </connections>
+                                            </popUpButton>
+                                        </subviews>
+                                        <visibilityPriorities>
+                                            <integer value="1000"/>
+                                        </visibilityPriorities>
+                                        <customSpacing>
+                                            <real value="3.4028234663852886e+38"/>
+                                        </customSpacing>
                                     </stackView>
                                 </subviews>
                                 <constraints>
-                                    <constraint firstItem="5NO-n3-Psd" firstAttribute="leading" secondItem="yle-ea-tIS" secondAttribute="leading" id="30h-Jq-cQF"/>
+                                    <constraint firstItem="xIK-ro-EqR" firstAttribute="leading" secondItem="yle-ea-tIS" secondAttribute="leading" id="6X7-Uz-6Wb"/>
                                     <constraint firstAttribute="trailing" secondItem="XhN-U0-rWH" secondAttribute="trailing" id="QUk-i6-0Ja"/>
-                                    <constraint firstAttribute="trailing" secondItem="5NO-n3-Psd" secondAttribute="trailing" id="Qqn-W6-qQ0"/>
                                     <constraint firstItem="XhN-U0-rWH" firstAttribute="leading" secondItem="yle-ea-tIS" secondAttribute="leading" id="cI9-UN-2VM"/>
+                                    <constraint firstAttribute="trailing" secondItem="xIK-ro-EqR" secondAttribute="trailing" id="dkF-XL-5FE"/>
                                 </constraints>
                                 <visibilityPriorities>
                                     <integer value="1000"/>
                                     <integer value="1000"/>
                                     <integer value="1000"/>
+                                    <integer value="1000"/>
+                                    <integer value="1000"/>
                                 </visibilityPriorities>
                                 <customSpacing>
+                                    <real value="3.4028234663852886e+38"/>
+                                    <real value="3.4028234663852886e+38"/>
                                     <real value="3.4028234663852886e+38"/>
                                     <real value="3.4028234663852886e+38"/>
                                     <real value="3.4028234663852886e+38"/>
@@ -830,6 +867,7 @@
                     </view>
                     <connections>
                         <outlet property="animationsPopUpButton" destination="7G7-an-i50" id="BQE-Zs-MFh"/>
+                        <outlet property="camerasPopUpButton" destination="a9N-Xe-lt5" id="VmA-tu-xDb"/>
                         <outlet property="playButton" destination="BI2-bc-ReJ" id="GyT-Iv-r12"/>
                     </connections>
                 </viewController>

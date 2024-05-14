@@ -37,6 +37,7 @@
   NSMutableArray<SCNNode *> *scnNodes;
   NSMutableDictionary<SCNNode *, SCNNode *> *nodeMeshDict =
       [NSMutableDictionary dictionary];
+  NSMutableArray<SCNNode *> *cameraNodes = [NSMutableArray array];
 
   if (self.data.json.nodes) {
     scnNodes = [NSMutableArray arrayWithCapacity:self.data.json.nodes.count];
@@ -47,6 +48,7 @@
 
       if (node.camera) {
         scnNode.camera = scnCameras[node.camera.integerValue];
+        [cameraNodes addObject:scnNode];
       }
 
       if (node.matrix) {
@@ -158,6 +160,7 @@
       }
     }
   }
+  _cameraNodes = [cameraNodes copy];
 
   // animations
   NSMutableArray<SCNAnimationPlayer *> *animationPlayers =

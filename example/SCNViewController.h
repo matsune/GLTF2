@@ -15,7 +15,7 @@
 
 @property(weak) IBOutlet SCNView *scnView;
 @property(nonatomic) GLTFSCNAsset *asset;
-@property(nonatomic) id<SCNViewControllerDelegate> delegate;
+@property(nonatomic, weak) id<SCNViewControllerDelegate> delegate;
 
 - (void)loadModelURL:(NSURL *)url;
 

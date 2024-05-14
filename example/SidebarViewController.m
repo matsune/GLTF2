@@ -13,6 +13,7 @@
   [super viewDidLoad];
   self.animationsPopUpButton.enabled = NO;
   self.playButton.enabled = NO;
+  self.camerasPopUpButton.enabled = NO;
 }
 
 - (IBAction)animationsPopUpButtonAction:(NSPopUpButton *)sender {
@@ -32,8 +33,7 @@
   }
 }
 
-- (void)scnViewController:(SCNViewController *)scnViewController
-             didLoadAsset:(GLTFSCNAsset *)asset {
+- (void)setupAsset:(GLTFSCNAsset *)asset {
   self.animationPlayers = asset.animationPlayers;
 
   BOOL hasAnimations = self.animationPlayers.count > 0;
@@ -48,6 +48,20 @@
   }
 
   self.currentAnimationPlayer = self.animationPlayers.firstObject;
+
+  for (int i = 0; i < asset.cameraNodes.count; i++) {
+    [self.camerasPopUpButton
+        addItemWithTitle:[NSString stringWithFormat:@"Camera %d", i]];
+  }
+  self.camerasPopUpButton.enabled = asset.cameraNodes.count > 0;
+}
+
+- (IBAction)camerasPopUpButtonAction:(NSPopUpButton *)sender {
+  if ([self.delegate respondsToSelector:@selector(sidebarViewController:
+                                                 didSelectCameraAtIndex:)]) {
+    [self.delegate sidebarViewController:self
+                  didSelectCameraAtIndex:sender.indexOfSelectedItem];
+  }
 }
 
 @end

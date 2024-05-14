@@ -199,7 +199,7 @@
   if (self.data.json.animations) {
     for (GLTFAnimation *animation in self.data.json.animations) {
       NSMutableArray *channelAnimations = [NSMutableArray array];
-      float maxDuration = 0.0f;
+      float maxDuration = 1.0f;
 
       for (GLTFAnimationChannel *channel in animation.channels) {
         if (channel.target.node == nil)
@@ -210,11 +210,10 @@
 
         GLTFAnimationSampler *sampler = animation.samplers[channel.sampler];
 
+        float maxKeyTime = 1.0f;
         NSArray<NSNumber *> *keyTimes =
-            [self keyTimesFromAnimationSampler:sampler];
-        for (NSNumber *keyTime in keyTimes) {
-          maxDuration = MAX(keyTime.floatValue, maxDuration);
-        }
+            [self keyTimesFromAnimationSampler:sampler maxKeyTime:&maxKeyTime];
+        maxDuration = MAX(maxDuration, maxKeyTime);
 
         GLTFAccessor *outputAccessor = self.data.json.accessors[sampler.output];
         BOOL normalized;
@@ -255,13 +254,13 @@
               weightAnimation.values = values;
               weightAnimation.repeatDuration = FLT_MAX;
               weightAnimation.calculationMode = kCAAnimationLinear;
-              weightAnimation.duration = keyTimes.lastObject.floatValue;
+              weightAnimation.duration = maxKeyTime;
               [weightAnimations addObject:weightAnimation];
             }
 
             CAAnimationGroup *group = [CAAnimationGroup animation];
             group.animations = weightAnimations;
-            group.duration = keyTimes.lastObject.floatValue;
+            group.duration = maxKeyTime;
             [channelAnimations addObject:group];
           }
         } else {
@@ -304,7 +303,7 @@
               CAAnimationCalculationModeFromGLTFAnimationSamplerInterpolation(
                   sampler.interpolationValue);
           animation.keyTimes = keyTimes;
-          animation.duration = keyTimes.lastObject.floatValue;
+          animation.duration = maxKeyTime;
           animation.repeatDuration = FLT_MAX;
 
           [channelAnimations addObject:animation];
@@ -876,13 +875,25 @@ CAAnimationCalculationModeFromGLTFAnimationSamplerInterpolation(
 }
 
 - (NSArray<NSNumber *> *)keyTimesFromAnimationSampler:
-    (GLTFAnimationSampler *)sampler {
+                             (GLTFAnimationSampler *)sampler
+                                           maxKeyTime:(float *)maxKeyTime {
   GLTFAccessor *inputAccessor = self.data.json.accessors[sampler.input];
   // input must be scalar type with float
   assert([inputAccessor.type isEqualToString:GLTFAccessorTypeScalar] &&
          inputAccessor.componentType == GLTFAccessorComponentTypeFloat);
   NSData *inputData = [self.data dataForAccessor:inputAccessor normalized:nil];
-  return NSArrayFromPackedFloatData(inputData);
+  NSArray<NSNumber *> *array = NSArrayFromPackedFloatData(inputData);
+  float max = inputAccessor.max != nil
+                  ? inputAccessor.max.firstObject.floatValue
+                  : array.lastObject.floatValue;
+  // normalize [0,1]
+  NSMutableArray<NSNumber *> *normalized =
+      [NSMutableArray arrayWithCapacity:array.count];
+  for (NSNumber *value in array) {
+    [normalized addObject:@(value.floatValue / max)];
+  }
+  *maxKeyTime = max;
+  return [normalized copy];
 }
 
 #pragma mark -

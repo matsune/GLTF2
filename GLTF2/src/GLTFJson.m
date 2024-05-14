@@ -89,6 +89,23 @@ NSString *const GLTFAnimationChannelTargetPathScale = @"scale";
 NSString *const GLTFAnimationChannelTargetPathWeights = @"weights";
 
 @implementation GLTFAnimationChannelTarget
+
+- (BOOL)isPathTranslation {
+  return [self.path isEqualToString:GLTFAnimationChannelTargetPathTranslation];
+}
+
+- (BOOL)isPathRotation {
+  return [self.path isEqualToString:GLTFAnimationChannelTargetPathRotation];
+}
+
+- (BOOL)isPathScale {
+  return [self.path isEqualToString:GLTFAnimationChannelTargetPathScale];
+}
+
+- (BOOL)isPathWeights {
+  return [self.path isEqualToString:GLTFAnimationChannelTargetPathWeights];
+}
+
 @end
 
 NSString *const GLTFAnimationSamplerInterpolationLinear = @"LINEAR";
@@ -219,6 +236,18 @@ NSString *const GLTFMaterialAlphaModeBlend = @"BLEND";
 
 - (NSString *)alphaModeValue {
   return _alphaMode ?: GLTFMaterialAlphaModeOpaque;
+}
+
+- (BOOL)isAlphaModeOpaque {
+  return [self.alphaModeValue isEqualToString:GLTFMaterialAlphaModeOpaque];
+}
+
+- (BOOL)isAlphaModeMask {
+  return [self.alphaModeValue isEqualToString:GLTFMaterialAlphaModeMask];
+}
+
+- (BOOL)isAlphaModeBlend {
+  return [self.alphaModeValue isEqualToString:GLTFMaterialAlphaModeBlend];
 }
 
 - (float)alphaCutoffValue {

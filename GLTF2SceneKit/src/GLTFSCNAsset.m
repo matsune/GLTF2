@@ -183,10 +183,11 @@
                         boneInverseBindTransforms:boneInverseBindTransforms
                                       boneWeights:boneWeights
                                       boneIndices:boneIndices];
+          if (skin.skeleton) {
+            skinner.skeleton = scnNodes[skin.skeleton.integerValue];
+          }
           primitiveNode.skinner = skinner;
         }
-
-        // TODO: skin.skeleton
       }
     }
   }
@@ -220,63 +221,8 @@
         NSData *outputData = [self.data dataForAccessor:outputAccessor
                                              normalized:&normalized];
 
-        if ([channel.target.path
-                isEqualToString:GLTFAnimationChannelTargetPathTranslation]) {
-          // TODO:
-        } else if ([channel.target.path
-                       isEqualToString:
-                           GLTFAnimationChannelTargetPathRotation]) {
-          if (outputAccessor.count != keyTimes.count)
-            continue;
-          if (outputAccessor.componentType != GLTFAccessorComponentTypeFloat &&
-              !normalized)
-            continue;
-          if ([outputAccessor.type isNotEqualTo:GLTFAccessorTypeVec2] &&
-              [outputAccessor.type isNotEqualTo:GLTFAccessorTypeVec3] &&
-              [outputAccessor.type isNotEqualTo:GLTFAccessorTypeVec4])
-            continue;
-
-          NSMutableArray<NSValue *> *values =
-              [NSMutableArray arrayWithCapacity:outputAccessor.count];
-          float *bytes = (float *)outputData.bytes;
-          for (int i = 0; i < outputAccessor.count; i++) {
-            SCNVector4 vec = SCNVector4Make(1, 0, 0, 0);
-            if ([outputAccessor.type isEqualTo:GLTFAccessorTypeVec2]) {
-              vec.x = bytes[0];
-              vec.y = bytes[1];
-              bytes += 2;
-            } else if ([outputAccessor.type isEqualTo:GLTFAccessorTypeVec3]) {
-              vec.x = bytes[0];
-              vec.y = bytes[1];
-              vec.z = bytes[2];
-              bytes += 3;
-            } else if ([outputAccessor.type isEqualTo:GLTFAccessorTypeVec4]) {
-              vec.x = bytes[0];
-              vec.y = bytes[1];
-              vec.z = bytes[2];
-              vec.w = bytes[3];
-              bytes += 4;
-            }
-            [values addObject:[NSValue valueWithSCNVector4:vec]];
-          }
-
-          CAKeyframeAnimation *animation = [CAKeyframeAnimation animation];
-          animation.keyPath =
-              [NSString stringWithFormat:@"/%@.orientation", scnNode.name];
-          animation.values = values;
-          animation.calculationMode =
-              CAAnimationCalculationModeFromGLTFAnimationSamplerInterpolation(
-                  sampler.interpolationValue);
-          animation.keyTimes = keyTimes;
-          animation.duration = keyTimes.lastObject.floatValue;
-          animation.repeatDuration = FLT_MAX;
-
-          [channelAnimations addObject:animation];
-        } else if ([channel.target.path
-                       isEqualToString:GLTFAnimationChannelTargetPathScale]) {
-          // TODO:
-        } else if ([channel.target.path
-                       isEqualToString:GLTFAnimationChannelTargetPathWeights]) {
+        if (channel.target.isPathWeights) {
+          // Weights animation
           NSArray<NSNumber *> *numbers = NSArrayFromPackedFloatData(outputData);
 
           GLTFMesh *mesh = self.data.json.meshes[node.mesh.integerValue];
@@ -318,6 +264,50 @@
             group.duration = keyTimes.lastObject.floatValue;
             [channelAnimations addObject:group];
           }
+        } else {
+          // Translation, Rotation, Scale
+
+          // values count must match with keyTimes count
+          if (outputAccessor.count != keyTimes.count)
+            continue;
+          // component type should be float
+          if (outputAccessor.componentType != GLTFAccessorComponentTypeFloat &&
+              !normalized)
+            continue;
+          // only supports vec types
+          if ([outputAccessor.type isNotEqualTo:GLTFAccessorTypeVec2] &&
+              [outputAccessor.type isNotEqualTo:GLTFAccessorTypeVec3] &&
+              [outputAccessor.type isNotEqualTo:GLTFAccessorTypeVec4])
+            continue;
+
+          NSArray<NSValue *> *values;
+          NSString *keyPath;
+          if (channel.target.isPathTranslation) {
+            values = SCNVec3ArrayFromPackedFloatDataWithAccessor(
+                outputData, outputAccessor);
+            keyPath = [NSString stringWithFormat:@"/%@.position", scnNode.name];
+          } else if (channel.target.isPathRotation) {
+            values = SCNVec4ArrayFromPackedFloatDataWithAccessor(
+                outputData, outputAccessor);
+            keyPath =
+                [NSString stringWithFormat:@"/%@.orientation", scnNode.name];
+          } else if (channel.target.isPathScale) {
+            values = SCNVec3ArrayFromPackedFloatDataWithAccessor(
+                outputData, outputAccessor);
+            keyPath = [NSString stringWithFormat:@"/%@.scale", scnNode.name];
+          }
+
+          CAKeyframeAnimation *animation = [CAKeyframeAnimation animation];
+          animation.values = values;
+          animation.keyPath = keyPath;
+          animation.calculationMode =
+              CAAnimationCalculationModeFromGLTFAnimationSamplerInterpolation(
+                  sampler.interpolationValue);
+          animation.keyTimes = keyTimes;
+          animation.duration = keyTimes.lastObject.floatValue;
+          animation.repeatDuration = FLT_MAX;
+
+          [channelAnimations addObject:animation];
         }
       }
 
@@ -434,18 +424,16 @@
                                    scnMaterial.emission);
     }
 
-    if ([material.alphaModeValue isEqualToString:GLTFMaterialAlphaModeOpaque]) {
+    if (material.isAlphaModeOpaque) {
       scnMaterial.blendMode = SCNBlendModeReplace;
       [surfaceShaderModifier appendString:@"_surface.diffuse.a = 1.0;"];
-    } else if ([material.alphaModeValue
-                   isEqualToString:GLTFMaterialAlphaModeMask]) {
+    } else if (material.isAlphaModeMask) {
       scnMaterial.blendMode = SCNBlendModeReplace;
       [surfaceShaderModifier
           appendFormat:
               @"_surface.diffuse.a = _surface.diffuse.a < %f ? 0.0 : 1.0;",
               material.alphaCutoffValue];
-    } else if ([material.alphaModeValue
-                   isEqualToString:GLTFMaterialAlphaModeBlend]) {
+    } else if (material.isAlphaModeBlend) {
       scnMaterial.blendMode = SCNBlendModeAlpha;
       scnMaterial.transparencyMode = SCNTransparencyModeDualLayer;
     }
@@ -935,6 +923,63 @@ NSArray<NSValue *> *SCNMat4ArrayFromPackedFloatData(NSData *data) {
     [arr addObject:[NSValue valueWithSCNMatrix4:matrix]];
   }
   return [arr copy];
+}
+
+NSArray<NSValue *> *
+SCNVec4ArrayFromPackedFloatDataWithAccessor(NSData *data,
+                                            GLTFAccessor *accessor) {
+  NSMutableArray<NSValue *> *values =
+      [NSMutableArray arrayWithCapacity:accessor.count];
+  float *bytes = (float *)data.bytes;
+  for (int i = 0; i < accessor.count; i++) {
+    SCNVector4 vec = SCNVector4Zero;
+    if ([accessor.type isEqualTo:GLTFAccessorTypeVec2]) {
+      vec.x = bytes[0];
+      vec.y = bytes[1];
+      bytes += 2;
+    } else if ([accessor.type isEqualTo:GLTFAccessorTypeVec3]) {
+      vec.x = bytes[0];
+      vec.y = bytes[1];
+      vec.z = bytes[2];
+      bytes += 3;
+    } else if ([accessor.type isEqualTo:GLTFAccessorTypeVec4]) {
+      vec.x = bytes[0];
+      vec.y = bytes[1];
+      vec.z = bytes[2];
+      vec.w = bytes[3];
+      bytes += 4;
+    }
+    [values addObject:[NSValue valueWithSCNVector4:vec]];
+  }
+  return [values copy];
+}
+
+NSArray<NSValue *> *
+SCNVec3ArrayFromPackedFloatDataWithAccessor(NSData *data,
+                                            GLTFAccessor *accessor) {
+  NSMutableArray<NSValue *> *values =
+      [NSMutableArray arrayWithCapacity:accessor.count];
+  float *bytes = (float *)data.bytes;
+  for (int i = 0; i < accessor.count; i++) {
+    SCNVector3 vec = SCNVector3Zero;
+    if ([accessor.type isEqualTo:GLTFAccessorTypeVec2]) {
+      vec.x = bytes[0];
+      vec.y = bytes[1];
+      bytes += 2;
+    } else if ([accessor.type isEqualTo:GLTFAccessorTypeVec3]) {
+      vec.x = bytes[0];
+      vec.y = bytes[1];
+      vec.z = bytes[2];
+      bytes += 3;
+    } else if ([accessor.type isEqualTo:GLTFAccessorTypeVec4]) {
+      vec.x = bytes[0];
+      vec.y = bytes[1];
+      vec.z = bytes[2];
+      bytes += 4;
+    }
+    [values addObject:[NSValue valueWithSCNVector3:vec]];
+  }
+  return [values copy];
 }
 
 simd_float4 simdRotationFromQuaternion(simd_quatf rotation) {

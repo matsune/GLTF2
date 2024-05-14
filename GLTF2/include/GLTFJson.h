@@ -98,6 +98,11 @@ GLTF_EXPORT @interface GLTFAnimationChannelTarget : GLTFObject
 @property(nonatomic, strong, nullable) NSNumber *node;
 @property(nonatomic, copy) NSString *path;
 
+@property(nonatomic, readonly) BOOL isPathTranslation;
+@property(nonatomic, readonly) BOOL isPathRotation;
+@property(nonatomic, readonly) BOOL isPathScale;
+@property(nonatomic, readonly) BOOL isPathWeights;
+
 @end
 
 GLTF_EXPORT NSString *const GLTFAnimationSamplerInterpolationLinear;
@@ -281,6 +286,9 @@ GLTF_EXPORT @interface GLTFMaterial : GLTFObject
 @property(nonatomic, readonly) NSString *alphaModeValue;
 @property(nonatomic, readonly) float alphaCutoffValue;
 @property(nonatomic, readonly) BOOL isDoubleSided;
+@property(nonatomic, readonly) BOOL isAlphaModeOpaque;
+@property(nonatomic, readonly) BOOL isAlphaModeMask;
+@property(nonatomic, readonly) BOOL isAlphaModeBlend;
 
 @end
 

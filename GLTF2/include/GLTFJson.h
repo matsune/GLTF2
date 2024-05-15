@@ -364,6 +364,8 @@ GLTF_EXPORT @interface GLTFNode : GLTFObject
 @property(nonatomic, readonly) simd_float3 scaleValue;
 @property(nonatomic, readonly) simd_float3 translationValue;
 
+@property(nonatomic, readonly) simd_float4x4 simdTransform;
+
 @end
 
 #pragma mark - Sampler

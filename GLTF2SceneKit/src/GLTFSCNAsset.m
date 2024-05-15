@@ -51,13 +51,7 @@
         [cameraNodes addObject:scnNode];
       }
 
-      if (node.matrix) {
-        scnNode.simdTransform = node.matrixValue;
-      } else {
-        scnNode.simdRotation = simdRotationFromQuaternion(node.rotationValue);
-        scnNode.simdScale = node.scaleValue;
-        scnNode.simdPosition = node.translationValue;
-      }
+      scnNode.simdTransform = node.simdTransform;
 
       if (node.mesh) {
         GLTFMesh *mesh = self.data.json.meshes[node.mesh.integerValue];
@@ -1015,25 +1009,6 @@ NSArray<NSValue *> *SCNVec3ArrayFromPackedFloatDataWithAccessor(
     [values addObject:[NSValue valueWithSCNVector3:vec]];
   }
   return [values copy];
-}
-
-simd_float4 simdRotationFromQuaternion(simd_quatf rotation) {
-  float x = rotation.vector[0];
-  float y = rotation.vector[1];
-  float z = rotation.vector[2];
-  float w = rotation.vector[3];
-
-  float angle;
-  simd_float3 axis;
-
-  if (fabs(w - 1.0) < FLT_EPSILON) {
-    angle = 0.0;
-    axis = simd_make_float3(1, 0, 0);
-  } else {
-    angle = 2.0 * acos(w);
-    axis = simd_normalize(simd_make_float3(x, y, z));
-  }
-  return simd_make_float4(axis.x, axis.y, axis.z, angle);
 }
 
 @end

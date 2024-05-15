@@ -210,11 +210,11 @@ NSString *const GLTFCameraTypeOrthographic = @"orthographic";
 }
 
 - (float)metallicFactorValue {
-  return _metallicFactor.floatValue ?: 1.0;
+  return _metallicFactor != nil ? _metallicFactor.floatValue : 1.0;
 }
 
 - (float)roughnessFactorValue {
-  return _roughnessFactor.floatValue ?: 1.0;
+  return _roughnessFactor != nil ? _roughnessFactor.floatValue : 1.0;
 }
 
 @end
@@ -332,9 +332,8 @@ NSString *const GLTFMeshPrimitiveAttributeSemanticWeights = @"WEIGHTS";
 #pragma mark - Node
 
 @implementation GLTFNode
-
 - (simd_float4x4)matrixValue {
-  if (_matrix && _matrix.count == 16) {
+  if (_matrix) {
     return simd_matrix(
         (vector_float4){_matrix[0].floatValue, _matrix[1].floatValue,
                         _matrix[2].floatValue, _matrix[3].floatValue},
@@ -371,6 +370,29 @@ NSString *const GLTFMeshPrimitiveAttributeSemanticWeights = @"WEIGHTS";
                             _translation[2].floatValue);
   }
   return simd_make_float3(0.0f, 0.0f, 0.0f);
+}
+
+- (simd_float4x4)simdTransform {
+  if (_matrix) {
+    return self.matrixValue;
+  } else {
+    simd_quatf q = self.rotationValue;
+    simd_float3 t = self.translationValue;
+    simd_float3 s = self.scaleValue;
+
+    simd_float4x4 rMat = simd_matrix4x4(q);
+    simd_float4x4 tMat = matrix_identity_float4x4;
+    tMat.columns[3].x = t[0];
+    tMat.columns[3].y = t[1];
+    tMat.columns[3].z = t[2];
+    simd_float4x4 sMat = matrix_identity_float4x4;
+    sMat.columns[0].x = s[0];
+    sMat.columns[1].y = s[1];
+    sMat.columns[2].z = s[2];
+
+    return simd_mul(tMat, simd_mul(rMat, sMat));
+  }
+  return matrix_identity_float4x4;
 }
 
 @end

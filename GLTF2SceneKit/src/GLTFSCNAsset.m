@@ -35,8 +35,6 @@
 
   // load nodes
   NSMutableArray<SCNNode *> *scnNodes;
-  NSMutableDictionary<SCNNode *, SCNNode *> *nodeMeshDict =
-      [NSMutableDictionary dictionary];
   NSMutableArray<SCNNode *> *cameraNodes = [NSMutableArray array];
 
   if (self.data.json.nodes) {
@@ -45,27 +43,44 @@
     for (GLTFNode *node in self.data.json.nodes) {
       SCNNode *scnNode = [SCNNode node];
       scnNode.name = [[NSUUID UUID] UUIDString];
+      scnNode.simdTransform = node.simdTransform;
 
       if (node.camera) {
         scnNode.camera = scnCameras[node.camera.integerValue];
         [cameraNodes addObject:scnNode];
       }
 
-      scnNode.simdTransform = node.simdTransform;
-
       if (node.mesh) {
         GLTFMesh *mesh = self.data.json.meshes[node.mesh.integerValue];
-        SCNNode *meshNode = [self scnNodeForMesh:mesh
-                                    scnMaterials:scnMaterials];
-        if (node.weights) {
-          for (SCNNode *childNode in meshNode.childNodes) {
-            if (childNode.morpher) {
-              childNode.morpher.weights = node.weights;
-            }
+
+        for (GLTFMeshPrimitive *primitive in mesh.primitives) {
+          NSArray<SCNGeometrySource *> *sources =
+              [self scnGeometrySourcesFromMeshPrimitive:primitive];
+          NSArray<SCNGeometryElement *> *elements =
+              [self scnGeometryElementsFromPrimitive:primitive];
+          SCNGeometry *geometry = [SCNGeometry geometryWithSources:sources
+                                                          elements:elements];
+
+          if (primitive.material) {
+            SCNMaterial *scnMaterial =
+                scnMaterials[primitive.material.integerValue];
+            geometry.materials = @[ scnMaterial ];
+          }
+
+          SCNMorpher *morpher = [self scnMorpherFromMeshPrimitive:primitive
+                                                     withElements:elements
+                                                          weights:mesh.weights];
+
+          if (mesh.primitives.count > 1) {
+            SCNNode *geometryNode = [SCNNode nodeWithGeometry:geometry];
+            geometryNode.name = [[NSUUID UUID] UUIDString];
+            geometryNode.morpher = morpher;
+            [scnNode addChildNode:geometryNode];
+          } else {
+            scnNode.geometry = geometry;
+            scnNode.morpher = morpher;
           }
         }
-        [scnNode addChildNode:meshNode];
-        nodeMeshDict[scnNode] = meshNode;
       }
 
       [scnNodes addObject:scnNode];
@@ -111,11 +126,15 @@
         }
 
         GLTFMesh *mesh = self.data.json.meshes[node.mesh.integerValue];
-        SCNNode *meshNode = nodeMeshDict[scnNode];
         for (int j = 0; j < mesh.primitives.count; j++) {
           GLTFMeshPrimitive *primitive = mesh.primitives[j];
-          SCNNode *primitiveNode = meshNode.childNodes[j];
-          SCNGeometry *geometry = primitiveNode.geometry;
+          SCNNode *geometryNode;
+          if (mesh.primitives.count > 1) {
+            geometryNode = scnNode.childNodes[j];
+          } else {
+            geometryNode = scnNode;
+          }
+          SCNGeometry *geometry = geometryNode.geometry;
 
           NSArray<NSNumber *> *weights =
               [primitive valuesOfAttributeSemantic:
@@ -149,7 +168,7 @@
           if (skin.skeleton) {
             skinner.skeleton = scnNodes[skin.skeleton.integerValue];
           }
-          primitiveNode.skinner = skinner;
+          geometryNode.skinner = skinner;
         }
       }
     }
@@ -189,12 +208,18 @@
           NSArray<NSNumber *> *numbers = NSArrayFromPackedFloatData(outputData);
 
           GLTFMesh *mesh = self.data.json.meshes[node.mesh.integerValue];
-          SCNNode *meshNode = nodeMeshDict[scnNode];
 
           for (NSInteger i = 0; i < mesh.primitives.count; i++) {
             GLTFMeshPrimitive *primitive = mesh.primitives[i];
-            SCNNode *primitiveNode = meshNode.childNodes[i];
-            if (primitive.targets == nil || primitiveNode.morpher == nil)
+
+            SCNNode *geometryNode;
+            if (mesh.primitives.count > 1) {
+              geometryNode = scnNode.childNodes[i];
+            } else {
+              geometryNode = scnNode;
+            }
+
+            if (primitive.targets == nil || geometryNode.morpher == nil)
               continue;
 
             NSInteger targetsCount = primitive.targets.count;
@@ -213,7 +238,7 @@
                   [CAKeyframeAnimation animation];
               weightAnimation.keyPath =
                   [NSString stringWithFormat:@"/%@.morpher.weights[%ld]",
-                                             primitiveNode.name, t];
+                                             geometryNode.name, t];
               weightAnimation.keyTimes = keyTimes;
               weightAnimation.values = values;
               weightAnimation.repeatDuration = FLT_MAX;
@@ -287,6 +312,7 @@
   }
   self.animationPlayers = [animationPlayers copy];
 
+  // scenes
   NSMutableArray<SCNScene *> *scnScenes = [NSMutableArray array];
   if (self.data.json.scenes) {
     for (GLTFScene *scene in self.data.json.scenes) {

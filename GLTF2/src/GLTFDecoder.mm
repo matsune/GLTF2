@@ -9,9 +9,9 @@
 
 @implementation NSDictionary (Private)
 
-- (nullable id)getValue:(const NSString *)key ofClass:(Class)class {
+- (nullable id)getValue:(const NSString *)key ofClass:(Class)aClass {
   id value = self[key];
-  return [value isKindOfClass:class] ? value : nil;
+  return [value isKindOfClass:aClass] ? value : nil;
 }
 
 - (nullable NSNumber *)getNumber:(const NSString *)key {
@@ -38,13 +38,13 @@
   return [self getValue:key ofClass:[NSArray class]];
 }
 
-- (nullable NSArray *)getArray:(const NSString *)key ofClass:(Class)class {
+- (nullable NSArray *)getArray:(const NSString *)key ofClass:(Class)aClass {
   NSArray *array = [self getArray:key];
   if (!array)
     return nil;
   NSMutableArray *mutableArray = [NSMutableArray arrayWithCapacity:array.count];
   for (id item in array) {
-    if ([item isKindOfClass:class]) {
+    if ([item isKindOfClass:aClass]) {
       [mutableArray addObject:item];
     }
   }
@@ -184,14 +184,14 @@
 
 - (NSArray *)getRequiredArray:(const NSDictionary *)jsonDict
                           key:(const NSString *)key
-                      ofClass:(Class)class
+                      ofClass:(Class)aClass
                         error:(NSError *_Nullable *)error {
   NSArray *value = [self getRequiredArray:jsonDict key:key error:error];
   if (!value)
     return nil;
   NSMutableArray *array = [NSMutableArray arrayWithCapacity:value.count];
   for (id item in value) {
-    if ([item isKindOfClass:class]) {
+    if ([item isKindOfClass:aClass]) {
       [array addObject:item];
     }
   }

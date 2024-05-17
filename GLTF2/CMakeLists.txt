@@ -1,5 +1,6 @@
 set(LIB_NAME GLTF2)
 add_library(${LIB_NAME} SHARED)
+
 if(BUILD_FRAMEWORK)
     set_target_properties(${LIB_NAME} PROPERTIES
         FRAMEWORK TRUE
@@ -7,17 +8,26 @@ if(BUILD_FRAMEWORK)
 endif()
 
 file(GLOB HEADERS "include/*.h")
-file(GLOB SOURCES "src/*.m")
+file(GLOB SOURCES "src/*.m" "src/*.mm")
 target_sources(${LIB_NAME} PRIVATE ${HEADERS} ${SOURCES})
-target_include_directories(${LIB_NAME} PUBLIC  
+target_include_directories(${LIB_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include/${LIB_NAME}>
 )
+
+if(draco_FOUND)
+    target_compile_definitions(${LIB_NAME} PUBLIC DRACO_SUPPORT)
+    target_include_directories(${LIB_NAME} PRIVATE "${draco_DIR}" "${draco_DIR}/../src")
+endif()
 
 find_library(COCOA_LIBRARY Cocoa)
 find_library(FOUNDATION_LIBRARY Foundation)
 
 target_link_libraries(${LIB_NAME} ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY})
+
+if(draco_FOUND)
+    target_link_libraries(${LIB_NAME} draco::draco)
+endif()
 
 set_target_properties(${LIB_NAME} PROPERTIES
     VERSION 1.0

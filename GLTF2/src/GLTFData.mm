@@ -4,6 +4,7 @@
 #import "GLTFDecoder.h"
 #import "GLTFJson.h"
 #import <MetalKit/MetalKit.h>
+#include <cstring>
 
 @implementation GLTFData
 
@@ -143,7 +144,8 @@
 
 - (NSData *)dataForAccessor:(GLTFAccessor *)accessor
                  normalized:(nullable BOOL *)normalized {
-  NSInteger componentTypeSize = sizeOfComponentType(accessor.componentType);
+  NSInteger componentTypeSize =
+      sizeOfComponentType((GLTFAccessorComponentType)accessor.componentType);
   NSInteger componentsCount = componentsCountOfAccessorType(accessor.type);
   NSInteger packedSize = componentTypeSize * componentsCount;
   NSInteger length = packedSize * accessor.count;
@@ -154,18 +156,19 @@
     GLTFBufferView *bufferView =
         self.json.bufferViews[accessor.bufferView.integerValue];
     NSData *bufferData = [self dataForBufferView:bufferView];
-    void *dstBaseAddress = data.mutableBytes;
-    const void *srcBaseAddress = bufferData.bytes + accessor.byteOffsetValue;
+    const char *dstBaseAddress = (const char *)data.mutableBytes;
+    const char *srcBaseAddress =
+        (const char *)bufferData.bytes + accessor.byteOffsetValue;
     if (bufferView.byteStride &&
         bufferView.byteStride.integerValue != packedSize) {
       for (int i = 0; i < accessor.count; i++) {
-        void *dst = dstBaseAddress + i * packedSize;
+        const char *dst = dstBaseAddress + i * packedSize;
         const void *src =
             srcBaseAddress + i * bufferView.byteStride.integerValue;
-        memcpy(dst, src, packedSize);
+        std::memcpy((void *)dst, (void *)src, packedSize);
       }
     } else {
-      memcpy(dstBaseAddress, srcBaseAddress, length);
+      std::memcpy((void *)dstBaseAddress, (void *)srcBaseAddress, length);
     }
   }
 
@@ -178,13 +181,13 @@
         [self dataForBufferViewIndex:accessor.sparse.values.bufferView
                       withByteOffset:accessor.sparse.values.byteOffsetValue];
 
-    void *dstBaseAddress = data.mutableBytes;
-    const void *srcBaseAddress = valuesData.bytes;
+    const char *dstBaseAddress = (const char *)data.mutableBytes;
+    const char *srcBaseAddress = (const char *)valuesData.bytes;
     for (int i = 0; i < accessor.sparse.count; i++) {
       NSUInteger index = indices[i].unsignedIntegerValue;
-      void *dst = dstBaseAddress + packedSize * index;
-      const void *src = srcBaseAddress + packedSize * i;
-      memcpy(dst, src, packedSize);
+      const char *dst = dstBaseAddress + packedSize * index;
+      const char *src = srcBaseAddress + packedSize * i;
+      std::memcpy((void *)dst, (void *)src, packedSize);
     }
   }
 
@@ -243,7 +246,8 @@
       float normalizedValue =
           [self normalizedValueFromBytes:data.bytes
                                 atOffset:componentOffset
-                       withComponentType:accessor.componentType];
+                       withComponentType:(GLTFAccessorComponentType)
+                                             accessor.componentType];
       normalizedValues[componentOffset] = normalizedValue;
     }
   }

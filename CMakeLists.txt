@@ -7,6 +7,17 @@ option(BUILD_EXAMPLE "Build example" OFF)
 include(FetchContent)
 
 option(BUILD_FRAMEWORK "Build as a framework instead of a dynamic library" OFF)
+option(DRACO_DIR "Path to the Draco library" "")
+
+if(NOT DRACO_DIR AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/draco/build")
+    set(DRACO_DIR "${CMAKE_CURRENT_SOURCE_DIR}/draco/build")
+endif()
+
+find_package(draco QUIET PATHS ${DRACO_DIR})
+
+if(NOT draco_FOUND)
+    message(STATUS "draco not found.")
+endif()
 
 if(BUILD_TESTS OR BUILD_EXAMPLE)
     set(CONFIG_H ${CMAKE_BINARY_DIR}/config.h)

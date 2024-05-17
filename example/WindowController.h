@@ -1,10 +1,11 @@
-#import <Cocoa/Cocoa.h>
-#import "SidebarViewController.h"
 #import "SCNViewController.h"
+#import "SidebarViewController.h"
+#import <Cocoa/Cocoa.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface WindowController : NSWindowController <SidebarViewControllerDelegate, SCNViewControllerDelegate>
+@interface WindowController : NSWindowController <SidebarViewControllerDelegate,
+                                                  SCNViewControllerDelegate>
 
 @end
 

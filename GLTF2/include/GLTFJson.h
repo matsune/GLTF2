@@ -9,6 +9,8 @@ GLTF_EXPORT @interface GLTFObject : NSObject
 @property(nonatomic, strong, nullable) NSDictionary *extensions;
 @property(nonatomic, strong, nullable) NSDictionary *extras;
 
+- (nullable id)valueForExtensionKey:(NSString *)key aClass:(Class)aClass;
+
 @end
 
 #pragma mark - Accessor

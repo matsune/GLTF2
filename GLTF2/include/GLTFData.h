@@ -5,6 +5,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+extern NSString *const GLTFExtensionKHRDracoMeshCompression;
+
 GLTF_EXPORT @interface GLTFData : NSObject
 
 @property(nonatomic, strong, readonly) GLTFJson *json;
@@ -25,6 +27,8 @@ GLTF_EXPORT @interface GLTFData : NSObject
                                      path:(nullable NSString *)path
                                     error:(NSError *_Nullable *_Nullable)error;
 
++ (NSArray<NSString *> *)supportedExtensions;
+- (BOOL)isAvailableExtension:(NSString *)extension;
 - (nullable NSData *)dataOfUri:(NSString *)uri;
 
 - (NSData *)dataForBuffer:(GLTFBuffer *)buffer;

@@ -1,6 +1,17 @@
 #import "GLTFJson.h"
 
 @implementation GLTFObject
+
+- (nullable id)valueForExtensionKey:(NSString *)key aClass:(Class)aClass {
+  if (self.extensions) {
+    id value = [self.extensions valueForKey:key];
+    if ([value isKindOfClass:aClass]) {
+      return value;
+    }
+  }
+  return nil;
+}
+
 @end
 
 #pragma mark - Accessor

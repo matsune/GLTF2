@@ -3,8 +3,15 @@
 #import "GLTFBinary.h"
 #import "GLTFDecoder.h"
 #import "GLTFJson.h"
+#if DRACO_SUPPORT
+#include "draco/compression/decode.h"
+#include "draco/core/decoder_buffer.h"
+#endif
 #import <MetalKit/MetalKit.h>
 #include <cstring>
+
+NSString *const GLTFExtensionKHRDracoMeshCompression =
+    @"KHR_draco_mesh_compression";
 
 @implementation GLTFData
 
@@ -61,6 +68,22 @@
 
   return [[GLTFData alloc] initWithJson:json path:path binary:nil];
 }
+
++ (NSArray<NSString *> *)supportedExtensions {
+  NSMutableArray<NSString *> *list = [NSMutableArray array];
+#if DRACO_SUPPORT
+  [list addObject:GLTFExtensionKHRDracoMeshCompression];
+#endif
+  return [list copy];
+}
+
+- (BOOL)isAvailableExtension:(NSString *)extension {
+  return [[GLTFData supportedExtensions] containsObject:extension] &&
+         self.json.extensionsRequired &&
+         [self.json.extensionsRequired containsObject:extension];
+}
+
+#endif
 
 - (nullable NSData *)dataOfUri:(NSString *)uri {
   NSString *decodedUri = [uri stringByRemovingPercentEncoding];

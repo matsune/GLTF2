@@ -1344,12 +1344,11 @@
       primitive, "MeshPrimitive should not be nil when all fields are present");
   NSDictionary *attributes =
       @{@"POSITION" : @0, @"TEXCOORD_0" : @1, @"TEXCOORD_1" : @2};
-  XCTAssertEqualObjects(primitive.attributes, attributes,
-                        "Attributes should be correctly decoded");
-  XCTAssertEqual([primitive valueOfAttributeSemantic:@"POSITION"], @0);
-  NSArray *texcoords = @[ @1, @2 ];
-  XCTAssertEqualObjects([primitive valuesOfAttributeSemantic:@"TEXCOORD"],
-                        texcoords);
+  XCTAssertNotNil(primitive.attributes.position);
+  XCTAssertEqual(primitive.attributes.position.integerValue, 0);
+  XCTAssertNotNil(primitive.attributes.texcoord);
+  XCTAssertEqual(primitive.attributes.texcoord[0], @1);
+  XCTAssertEqual(primitive.attributes.texcoord[1], @2);
   XCTAssertEqualObjects(primitive.indices, @1,
                         "Indices should be correctly decoded");
   XCTAssertEqualObjects(primitive.material, @2,

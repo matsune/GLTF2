@@ -1,11 +1,10 @@
 #import "GLTF2Availability.h"
 #import "GLTFJson.h"
+#import "MeshPrimitive.h"
 #import <CoreGraphics/CoreGraphics.h>
 #import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN
-
-extern NSString *const GLTFExtensionKHRDracoMeshCompression;
 
 GLTF_EXPORT @interface GLTFData : NSObject
 
@@ -40,6 +39,19 @@ GLTF_EXPORT @interface GLTFData : NSObject
 
 - (NSData *)dataForAccessor:(GLTFAccessor *)accessor
                  normalized:(nullable BOOL *)normalized;
+
+- (MeshPrimitive *)meshPrimitive:(GLTFMeshPrimitive *)primitive;
+- (MeshPrimitiveSource *)meshPrimitiveSourceFromAccessor:
+    (GLTFAccessor *)accessor;
+- (MeshPrimitiveSources *)meshPrimitiveSourcesFromTarget:
+    (GLTFMeshPrimitiveTarget *)target;
+
+#if DRACO_SUPPORT
+
+- (NSDictionary *)dracoExtension:
+    (GLTFMeshPrimitiveDracoExtension *)dracoExtension;
+
+#endif
 
 @end
 

@@ -9,7 +9,7 @@ GLTF_EXPORT @interface GLTFObject : NSObject
 @property(nonatomic, strong, nullable) NSDictionary *extensions;
 @property(nonatomic, strong, nullable) NSDictionary *extras;
 
-- (nullable id)valueForExtensionKey:(NSString *)key aClass:(Class)aClass;
+- (nullable NSDictionary *)valueForExtensionKey:(NSString *)key;
 
 @end
 
@@ -306,14 +306,6 @@ typedef NS_ENUM(NSInteger, GLTFMeshPrimitiveMode) {
   GLTFMeshPrimitiveModeTriangleFan = 6
 };
 
-GLTF_EXPORT NSString *const GLTFMeshPrimitiveAttributeSemanticPosition;
-GLTF_EXPORT NSString *const GLTFMeshPrimitiveAttributeSemanticNormal;
-GLTF_EXPORT NSString *const GLTFMeshPrimitiveAttributeSemanticTangent;
-GLTF_EXPORT NSString *const GLTFMeshPrimitiveAttributeSemanticTexcoord;
-GLTF_EXPORT NSString *const GLTFMeshPrimitiveAttributeSemanticColor;
-GLTF_EXPORT NSString *const GLTFMeshPrimitiveAttributeSemanticJoints;
-GLTF_EXPORT NSString *const GLTFMeshPrimitiveAttributeSemanticWeights;
-
 GLTF_EXPORT @interface GLTFMeshPrimitiveTarget : GLTFObject
 
 @property(nonatomic, strong, nullable) NSNumber *position;
@@ -322,19 +314,34 @@ GLTF_EXPORT @interface GLTFMeshPrimitiveTarget : GLTFObject
 
 @end
 
+GLTF_EXPORT @interface GLTFMeshPrimitiveAttributes : GLTFMeshPrimitiveTarget
+
+@property(nonatomic, strong, nullable) NSArray<NSNumber *> *texcoord;
+@property(nonatomic, strong, nullable) NSArray<NSNumber *> *color;
+@property(nonatomic, strong, nullable) NSArray<NSNumber *> *joints;
+@property(nonatomic, strong, nullable) NSArray<NSNumber *> *weights;
+
+@end
+
+GLTF_EXPORT @interface GLTFMeshPrimitiveDracoExtension : GLTFObject
+
+@property(nonatomic, assign) NSInteger bufferView;
+@property(nonatomic, strong) GLTFMeshPrimitiveAttributes *attributes;
+
+@end
+
 GLTF_EXPORT @interface GLTFMeshPrimitive : GLTFObject
 
-@property(nonatomic, strong) NSDictionary<NSString *, NSNumber *> *attributes;
+@property(nonatomic, strong) GLTFMeshPrimitiveAttributes *attributes;
 @property(nonatomic, strong, nullable) NSNumber *indices;
 @property(nonatomic, strong, nullable) NSNumber *material;
 @property(nonatomic, strong, nullable) NSNumber *mode;
 @property(nonatomic, strong, nullable)
     NSArray<GLTFMeshPrimitiveTarget *> *targets;
+@property(nonatomic, strong, nullable)
+    GLTFMeshPrimitiveDracoExtension *dracoExtension;
 
 @property(nonatomic, readonly) NSInteger modeValue;
-
-- (nullable NSNumber *)valueOfAttributeSemantic:(NSString *)semantic;
-- (NSArray<NSNumber *> *)valuesOfAttributeSemantic:(NSString *)semantic;
 
 @end
 

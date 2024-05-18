@@ -7,7 +7,7 @@ if(BUILD_FRAMEWORK)
 endif()
 
 file(GLOB HEADERS "include/*.h")
-file(GLOB SOURCES "src/*.m")
+file(GLOB SOURCES "src/*.m" "src/*.mm")
 target_sources(${LIB_NAME} PRIVATE ${HEADERS} ${SOURCES})
 target_include_directories(${LIB_NAME} PUBLIC  
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

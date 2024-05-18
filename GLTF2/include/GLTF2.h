@@ -3,3 +3,4 @@
 #import "GLTFData.h"
 #import "GLTFDecoder.h"
 #import "GLTFJson.h"
+#import "MeshPrimitive.h"

@@ -7,11 +7,9 @@
 #include "draco/compression/decode.h"
 #include "draco/core/decoder_buffer.h"
 #endif
+#import "GLTFConstants.h"
 #import <MetalKit/MetalKit.h>
 #include <cstring>
-
-NSString *const GLTFExtensionKHRDracoMeshCompression =
-    @"KHR_draco_mesh_compression";
 
 @implementation GLTFData
 
@@ -82,8 +80,6 @@ NSString *const GLTFExtensionKHRDracoMeshCompression =
          self.json.extensionsRequired &&
          [self.json.extensionsRequired containsObject:extension];
 }
-
-#endif
 
 - (nullable NSData *)dataOfUri:(NSString *)uri {
   NSString *decodedUri = [uri stringByRemovingPercentEncoding];
@@ -312,6 +308,134 @@ NSString *const GLTFExtensionKHRDracoMeshCompression =
   default:
     return 0.0f;
   }
+}
+
+- (MeshPrimitive *)meshPrimitive:(GLTFMeshPrimitive *)primitive {
+  MeshPrimitive *meshPrimitive = [[MeshPrimitive alloc] init];
+  if (primitive.dracoExtension &&
+      [self isAvailableExtension:GLTFExtensionKHRDracoMeshCompression]) {
+    // TODO: draco
+  }
+
+  MeshPrimitiveSources *sources = [[MeshPrimitiveSources alloc] init];
+  if (primitive.attributes.position) {
+    GLTFAccessor *accessor =
+        self.json.accessors[primitive.attributes.position.integerValue];
+    MeshPrimitiveSource *source =
+        [self meshPrimitiveSourceFromAccessor:accessor];
+    sources.position = source;
+  }
+  if (primitive.attributes.normal) {
+    GLTFAccessor *accessor =
+        self.json.accessors[primitive.attributes.normal.integerValue];
+    MeshPrimitiveSource *source =
+        [self meshPrimitiveSourceFromAccessor:accessor];
+    sources.normal = source;
+  }
+  if (primitive.attributes.tangent) {
+    GLTFAccessor *accessor =
+        self.json.accessors[primitive.attributes.tangent.integerValue];
+    MeshPrimitiveSource *source =
+        [self meshPrimitiveSourceFromAccessor:accessor];
+    sources.tangent = source;
+  }
+  if (primitive.attributes.texcoord) {
+    NSMutableArray<MeshPrimitiveSource *> *texcoords = [NSMutableArray array];
+    for (NSNumber *texcoord in primitive.attributes.texcoord) {
+      GLTFAccessor *accessor = self.json.accessors[texcoord.integerValue];
+      MeshPrimitiveSource *source =
+          [self meshPrimitiveSourceFromAccessor:accessor];
+      [texcoords addObject:source];
+    }
+    sources.texcoords = texcoords;
+  }
+  if (primitive.attributes.color) {
+    NSMutableArray<MeshPrimitiveSource *> *colors = [NSMutableArray array];
+    for (NSNumber *color in primitive.attributes.color) {
+      GLTFAccessor *accessor = self.json.accessors[color.integerValue];
+      MeshPrimitiveSource *source =
+          [self meshPrimitiveSourceFromAccessor:accessor];
+      [colors addObject:source];
+    }
+    sources.colors = colors;
+  }
+  if (primitive.attributes.joints) {
+    NSMutableArray<MeshPrimitiveSource *> *joints = [NSMutableArray array];
+    for (NSNumber *joint in primitive.attributes.joints) {
+      GLTFAccessor *accessor = self.json.accessors[joint.integerValue];
+      MeshPrimitiveSource *source =
+          [self meshPrimitiveSourceFromAccessor:accessor];
+      [joints addObject:source];
+    }
+    sources.joints = joints;
+  }
+  if (primitive.attributes.weights) {
+    NSMutableArray<MeshPrimitiveSource *> *weights = [NSMutableArray array];
+    for (NSNumber *weight in primitive.attributes.weights) {
+      GLTFAccessor *accessor = self.json.accessors[weight.integerValue];
+      MeshPrimitiveSource *source =
+          [self meshPrimitiveSourceFromAccessor:accessor];
+      [weights addObject:source];
+    }
+    sources.weights = weights;
+  }
+  meshPrimitive.sources = sources;
+
+  if (primitive.indices) {
+    GLTFAccessor *accessor =
+        self.json.accessors[primitive.indices.integerValue];
+    NSData *data = [self dataForAccessor:accessor normalized:nil];
+    NSInteger primitiveCount = accessor.count;
+    GLTFMeshPrimitiveMode primitiveMode =
+        (GLTFMeshPrimitiveMode)primitive.modeValue;
+    meshPrimitive.element = [MeshPrimitiveElement
+        elementWithData:data
+          primitiveMode:primitiveMode
+         primitiveCount:primitiveCount
+          componentType:(GLTFAccessorComponentType)accessor.componentType];
+  }
+
+  return meshPrimitive;
+}
+
+- (MeshPrimitiveSource *)meshPrimitiveSourceFromAccessor:
+    (GLTFAccessor *)accessor {
+  BOOL normalized;
+  NSData *data = [self dataForAccessor:accessor normalized:&normalized];
+  BOOL isFloat =
+      accessor.componentType == GLTFAccessorComponentTypeFloat || normalized;
+  GLTFAccessorComponentType componentType =
+      isFloat ? GLTFAccessorComponentTypeFloat
+              : (GLTFAccessorComponentType)accessor.componentType;
+  return [MeshPrimitiveSource
+           sourceWithData:data
+              vectorCount:accessor.count
+      componentsPerVector:componentsCountOfAccessorType(accessor.type)
+            componentType:componentType];
+}
+
+- (MeshPrimitiveSources *)meshPrimitiveSourcesFromTarget:
+    (GLTFMeshPrimitiveTarget *)target {
+  MeshPrimitiveSources *sources = [[MeshPrimitiveSources alloc] init];
+  if (target.position) {
+    GLTFAccessor *accessor = self.json.accessors[target.position.integerValue];
+    MeshPrimitiveSource *source =
+        [self meshPrimitiveSourceFromAccessor:accessor];
+    sources.position = source;
+  }
+  if (target.normal) {
+    GLTFAccessor *accessor = self.json.accessors[target.normal.integerValue];
+    MeshPrimitiveSource *source =
+        [self meshPrimitiveSourceFromAccessor:accessor];
+    sources.normal = source;
+  }
+  if (target.tangent) {
+    GLTFAccessor *accessor = self.json.accessors[target.tangent.integerValue];
+    MeshPrimitiveSource *source =
+        [self meshPrimitiveSourceFromAccessor:accessor];
+    sources.tangent = source;
+  }
+  return sources;
 }
 
 @end

@@ -1,5 +1,6 @@
 #import "GLTFDecoder.h"
 #import "Errors.h"
+#import "GLTFConstants.h"
 
 @interface NSDictionary (Private)
 
@@ -1233,6 +1234,7 @@
 }
 
 #pragma mark - GLTFMeshPrimitiveTarget
+
 - (GLTFMeshPrimitiveTarget *)decodeMeshPrimitiveTarget:
     (NSDictionary *)jsonDict {
   GLTFMeshPrimitiveTarget *target = [[GLTFMeshPrimitiveTarget alloc] init];
@@ -1242,12 +1244,93 @@
   return target;
 }
 
-#pragma mark - GLTFMeshPrimitive
+#pragma mark - GLTFMeshPrimitiveAttributes
 
-- (nullable GLTFMeshPrimitive *)decodeMeshPrimitive:(NSDictionary *)jsonDict
-                                              error:
-                                                  (NSError *_Nullable *)error {
-  [self.context push:@"GLTFMeshPrimitive"];
+NSArray<NSString *> *filterAndSortKeysWithPrefix(NSDictionary *dict,
+                                                 NSString *prefix) {
+  NSPredicate *predicate = [NSPredicate
+      predicateWithFormat:@"SELF BEGINSWITH %@",
+                          [NSString stringWithFormat:@"%@_", prefix]];
+  NSArray *filteredKeys =
+      [[dict allKeys] filteredArrayUsingPredicate:predicate];
+
+  NSComparator comparator = ^NSComparisonResult(NSString *key1,
+                                                NSString *key2) {
+    NSRegularExpression *regex =
+        [NSRegularExpression regularExpressionWithPattern:@"\\d+"
+                                                  options:0
+                                                    error:nil];
+
+    NSTextCheckingResult *match1 =
+        [regex firstMatchInString:key1
+                          options:0
+                            range:NSMakeRange(0, [key1 length])];
+    NSInteger num1 = [[key1 substringWithRange:[match1 range]] integerValue];
+
+    NSTextCheckingResult *match2 =
+        [regex firstMatchInString:key2
+                          options:0
+                            range:NSMakeRange(0, [key2 length])];
+    NSInteger num2 = [[key2 substringWithRange:[match2 range]] integerValue];
+
+    if (num1 < num2) {
+      return NSOrderedAscending;
+    } else if (num1 > num2) {
+      return NSOrderedDescending;
+    } else {
+      return NSOrderedSame;
+    }
+  };
+
+  NSArray *sortedKeys = [filteredKeys sortedArrayUsingComparator:comparator];
+  return sortedKeys;
+}
+
+NSArray<NSNumber *> *decodeArrayAttribute(NSDictionary *jsonDict,
+                                          NSString *prefix) {
+  NSArray<NSString *> *keys = filterAndSortKeysWithPrefix(jsonDict, prefix);
+  if (keys.count == 0)
+    return nil;
+  NSMutableArray *values = [NSMutableArray array];
+  for (NSString *key in keys) {
+    id value = jsonDict[key];
+    if ([value isKindOfClass:[NSNumber class]]) {
+      [values addObject:value];
+    } else {
+      break;
+    }
+  }
+  return [values copy];
+}
+
+- (GLTFMeshPrimitiveAttributes *)decodeMeshPrimitiveAttributes:
+    (NSDictionary *)jsonDict {
+  GLTFMeshPrimitiveAttributes *attributes =
+      [[GLTFMeshPrimitiveAttributes alloc] init];
+  attributes.position = [jsonDict getNumber:@"POSITION"];
+  attributes.normal = [jsonDict getNumber:@"NORMAL"];
+  attributes.tangent = [jsonDict getNumber:@"TANGENT"];
+  attributes.texcoord = decodeArrayAttribute(jsonDict, @"TEXCOORD");
+  attributes.color = decodeArrayAttribute(jsonDict, @"COLOR");
+  attributes.joints = decodeArrayAttribute(jsonDict, @"JOINTS");
+  attributes.weights = decodeArrayAttribute(jsonDict, @"WEIGHTS");
+  return attributes;
+}
+
+#pragma mark - GLTFMeshPrimitiveDracoExtension
+
+- (GLTFMeshPrimitiveDracoExtension *)
+    decodeMeshPrimitiveDracoExtension:(NSDictionary *)jsonDict
+                                error:(NSError *_Nullable *)error {
+  [self.context push:@"GLTFMeshPrimitiveDracoExtension"];
+
+  NSInteger bufferView = [self getRequiredInteger:jsonDict
+                                              key:@"bufferView"
+                                            error:error];
+  if (*error) {
+    [self.context pop];
+    return nil;
+  }
 
   NSDictionary *attributesDict = [self getRequiredDict:jsonDict
                                                    key:@"attributes"
@@ -1266,6 +1349,34 @@
     }
   }
 
+  GLTFMeshPrimitiveDracoExtension *ext =
+      [[GLTFMeshPrimitiveDracoExtension alloc] init];
+  ext.bufferView = bufferView;
+  ext.attributes = [attributesDict copy];
+  ext.extensions = [jsonDict getExtensions];
+  ext.extras = [jsonDict getExtras];
+
+  [self.context pop];
+  return ext;
+}
+
+#pragma mark - GLTFMeshPrimitive
+
+- (nullable GLTFMeshPrimitive *)decodeMeshPrimitive:(NSDictionary *)jsonDict
+                                              error:
+                                                  (NSError *_Nullable *)error {
+  [self.context push:@"GLTFMeshPrimitive"];
+
+  NSDictionary *attributesDict = [self getRequiredDict:jsonDict
+                                                   key:@"attributes"
+                                                 error:error];
+  if (*error) {
+    [self.context pop];
+    return nil;
+  }
+  GLTFMeshPrimitiveAttributes *attributes =
+      [self decodeMeshPrimitiveAttributes:attributesDict];
+
   NSMutableArray<GLTFMeshPrimitiveTarget *> *targets;
   NSArray<NSDictionary *> *targetsArray = [jsonDict getDictArray:@"targets"];
   if (targetsArray) {
@@ -1275,13 +1386,29 @@
     }
   }
 
+  GLTFMeshPrimitiveDracoExtension *dracoExtension;
+  NSDictionary *extensions = [jsonDict getExtensions];
+  if (extensions) {
+    NSDictionary *dictValue =
+        [extensions getDict:GLTFExtensionKHRDracoMeshCompression];
+    if (dictValue) {
+      dracoExtension = [self decodeMeshPrimitiveDracoExtension:dictValue
+                                                         error:error];
+      if (*error) {
+        [self.context pop];
+        return nil;
+      }
+    }
+  }
+
   GLTFMeshPrimitive *meshPrimitive = [[GLTFMeshPrimitive alloc] init];
-  meshPrimitive.attributes = [attributesDict copy];
+  meshPrimitive.attributes = attributes;
   meshPrimitive.targets = [targets copy];
   meshPrimitive.indices = [jsonDict getNumber:@"indices"];
   meshPrimitive.material = [jsonDict getNumber:@"material"];
   meshPrimitive.mode = [jsonDict getNumber:@"mode"];
-  meshPrimitive.extensions = [jsonDict getExtensions];
+  meshPrimitive.dracoExtension = dracoExtension;
+  meshPrimitive.extensions = extensions;
   meshPrimitive.extras = [jsonDict getExtras];
 
   [self.context pop];

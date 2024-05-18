@@ -37,6 +37,9 @@
   NSMutableArray<SCNNode *> *scnNodes;
   NSMutableArray<SCNNode *> *cameraNodes = [NSMutableArray array];
 
+  NSMutableDictionary<NSNumber *, NSArray<MeshPrimitive *> *>
+      *meshPrimitiveCache = [NSMutableDictionary dictionary];
+
   if (self.data.json.nodes) {
     scnNodes = [NSMutableArray arrayWithCapacity:self.data.json.nodes.count];
 
@@ -53,13 +56,21 @@
       if (node.mesh) {
         GLTFMesh *mesh = self.data.json.meshes[node.mesh.integerValue];
 
+        NSMutableArray<MeshPrimitive *> *meshPrimitives =
+            [NSMutableArray array];
         for (GLTFMeshPrimitive *primitive in mesh.primitives) {
-          NSArray<SCNGeometrySource *> *sources =
-              [self scnGeometrySourcesFromMeshPrimitive:primitive];
-          NSArray<SCNGeometryElement *> *elements =
-              [self scnGeometryElementsFromPrimitive:primitive];
-          SCNGeometry *geometry = [SCNGeometry geometryWithSources:sources
-                                                          elements:elements];
+          MeshPrimitive *meshPrimitive = [self.data meshPrimitive:primitive];
+          [meshPrimitives addObject:meshPrimitive];
+
+          SCNGeometry *geometry =
+              [self scnGeometryFromMeshPrimitive:meshPrimitive];
+          if (primitive.modeValue == GLTFMeshPrimitiveModePoints &&
+              geometry.geometryElementCount > 0) {
+            geometry.geometryElements.firstObject
+                .minimumPointScreenSpaceRadius = 1.0;
+            geometry.geometryElements.firstObject
+                .maximumPointScreenSpaceRadius = 1.0;
+          }
 
           if (primitive.material) {
             SCNMaterial *scnMaterial =
@@ -67,9 +78,10 @@
             geometry.materials = @[ scnMaterial ];
           }
 
-          SCNMorpher *morpher = [self scnMorpherFromMeshPrimitive:primitive
-                                                     withElements:elements
-                                                          weights:mesh.weights];
+          SCNMorpher *morpher =
+              [self scnMorpherFromMeshPrimitive:primitive
+                                   withElements:geometry.geometryElements
+                                        weights:mesh.weights];
 
           if (mesh.primitives.count > 1) {
             SCNNode *geometryNode = [SCNNode nodeWithGeometry:geometry];
@@ -81,6 +93,7 @@
             scnNode.morpher = morpher;
           }
         }
+        meshPrimitiveCache[node.mesh] = [meshPrimitives copy];
       }
 
       [scnNodes addObject:scnNode];
@@ -126,8 +139,12 @@
         }
 
         GLTFMesh *mesh = self.data.json.meshes[node.mesh.integerValue];
+        NSArray<MeshPrimitive *> *meshPrimitives =
+            meshPrimitiveCache[node.mesh];
         for (int j = 0; j < mesh.primitives.count; j++) {
           GLTFMeshPrimitive *primitive = mesh.primitives[j];
+          MeshPrimitive *meshPrimitive = meshPrimitives[j];
+
           SCNNode *geometryNode;
           if (mesh.primitives.count > 1) {
             geometryNode = scnNode.childNodes[j];
@@ -136,28 +153,27 @@
           }
           SCNGeometry *geometry = geometryNode.geometry;
 
-          NSArray<NSNumber *> *weights =
-              [primitive valuesOfAttributeSemantic:
-                             GLTFMeshPrimitiveAttributeSemanticWeights];
-          NSArray<NSNumber *> *joints =
-              [primitive valuesOfAttributeSemantic:
-                             GLTFMeshPrimitiveAttributeSemanticJoints];
-          if (weights.count == 0 || joints.count == 0)
+          SCNGeometrySource *boneWeights;
+          if (meshPrimitive.sources.weights &&
+              meshPrimitive.sources.weights.count > 0) {
+            boneWeights = [self
+                scnGeometrySourceFromMeshPrimitiveSource:meshPrimitive.sources
+                                                             .weights
+                                                             .firstObject
+                                                semantic:
+                                                    SCNGeometrySourceSemanticBoneWeights];
+          }
+          SCNGeometrySource *boneIndices;
+          if (meshPrimitive.sources.joints &&
+              meshPrimitive.sources.joints.count > 0) {
+            boneIndices = [self
+                scnGeometrySourceFromMeshPrimitiveSource:meshPrimitive.sources
+                                                             .joints.firstObject
+                                                semantic:
+                                                    SCNGeometrySourceSemanticBoneIndices];
+          }
+          if (!boneWeights || !boneIndices)
             continue;
-
-          GLTFAccessor *weightsAccessor =
-              self.data.json.accessors[weights[0].integerValue];
-          SCNGeometrySource *boneWeights = [self
-              scnGeometrySourceFromAccessor:weightsAccessor
-                               withSemantic:
-                                   GLTFMeshPrimitiveAttributeSemanticWeights];
-
-          GLTFAccessor *jointsAccessor =
-              self.data.json.accessors[joints[0].integerValue];
-          SCNGeometrySource *boneIndices = [self
-              scnGeometrySourceFromAccessor:jointsAccessor
-                               withSemantic:
-                                   GLTFMeshPrimitiveAttributeSemanticJoints];
 
           SCNSkinner *skinner =
               [SCNSkinner skinnerWithBaseGeometry:geometry
@@ -325,38 +341,6 @@
     }
   }
   self.scenes = [scnScenes copy];
-}
-
-#pragma mark mesh
-
-- (SCNNode *)scnNodeForMesh:(GLTFMesh *)mesh
-               scnMaterials:(NSArray<SCNMaterial *> *)scnMaterials {
-  SCNNode *meshNode = [SCNNode node];
-  meshNode.name = [[NSUUID UUID] UUIDString];
-
-  for (GLTFMeshPrimitive *primitive in mesh.primitives) {
-    NSArray<SCNGeometrySource *> *sources =
-        [self scnGeometrySourcesFromMeshPrimitive:primitive];
-    NSArray<SCNGeometryElement *> *elements =
-        [self scnGeometryElementsFromPrimitive:primitive];
-    SCNGeometry *geometry = [SCNGeometry geometryWithSources:sources
-                                                    elements:elements];
-    SCNNode *geometryNode = [SCNNode nodeWithGeometry:geometry];
-    geometryNode.name = [[NSUUID UUID] UUIDString];
-
-    if (primitive.material) {
-      SCNMaterial *scnMaterial = scnMaterials[primitive.material.integerValue];
-      geometry.materials = @[ scnMaterial ];
-    }
-
-    SCNMorpher *morpher = [self scnMorpherFromMeshPrimitive:primitive
-                                               withElements:elements
-                                                    weights:mesh.weights];
-    geometryNode.morpher = morpher;
-
-    [meshNode addChildNode:geometryNode];
-  }
-  return meshNode;
 }
 
 #pragma mark SCNMaterial
@@ -553,8 +537,10 @@ void applyColorContentsToProperty(float r, float g, float b, float a,
       break;
     }
   }
-  property.wrapS = SCNWrapModeFromGLTFSamplerWrapMode(sampler.wrapSValue);
-  property.wrapT = SCNWrapModeFromGLTFSamplerWrapMode(sampler.wrapTValue);
+  property.wrapS = SCNWrapModeFromGLTFSamplerWrapMode(
+      (GLTFSamplerWrapMode)sampler.wrapSValue);
+  property.wrapT = SCNWrapModeFromGLTFSamplerWrapMode(
+      (GLTFSamplerWrapMode)sampler.wrapTValue);
 }
 
 static SCNWrapMode
@@ -647,101 +633,98 @@ SCNWrapModeFromGLTFSamplerWrapMode(GLTFSamplerWrapMode mode) {
 
 #pragma mark SCNGeometry
 
-- (void)addGeometrySourceByAccessorIndex:(nullable NSNumber *)accessorIndex
-                                semantic:(SCNGeometrySourceSemantic)semantic
-                                 toArray:(NSMutableArray<SCNGeometrySource *> *)
-                                             array {
-  if (accessorIndex) {
-    GLTFAccessor *accessor =
-        self.data.json.accessors[accessorIndex.integerValue];
-    SCNGeometrySource *source = [self scnGeometrySourceFromAccessor:accessor
-                                                       withSemantic:semantic];
-    [array addObject:source];
+- (NSArray<SCNGeometrySource *> *)scnGeometrySourcesFromMeshPrimitiveSources:
+    (MeshPrimitiveSources *)sources {
+  NSMutableArray<SCNGeometrySource *> *geometrySources = [NSMutableArray array];
+  if (sources.position) {
+    [geometrySources
+        addObject:
+            [self
+                scnGeometrySourceFromMeshPrimitiveSource:sources.position
+                                                semantic:
+                                                    SCNGeometrySourceSemanticVertex]];
   }
+  if (sources.normal) {
+    [geometrySources
+        addObject:
+            [self
+                scnGeometrySourceFromMeshPrimitiveSource:sources.normal
+                                                semantic:
+                                                    SCNGeometrySourceSemanticNormal]];
+  }
+  if (sources.tangent) {
+    [geometrySources
+        addObject:
+            [self
+                scnGeometrySourceFromMeshPrimitiveSource:sources.tangent
+                                                semantic:
+                                                    SCNGeometrySourceSemanticTangent]];
+  }
+  if (sources.texcoords) {
+    for (MeshPrimitiveSource *source in sources.texcoords) {
+      [geometrySources
+          addObject:
+              [self
+                  scnGeometrySourceFromMeshPrimitiveSource:source
+                                                  semantic:
+                                                      SCNGeometrySourceSemanticTexcoord]];
+    }
+  }
+  if (sources.colors) {
+    for (MeshPrimitiveSource *source in sources.colors) {
+      [geometrySources
+          addObject:
+              [self
+                  scnGeometrySourceFromMeshPrimitiveSource:source
+                                                  semantic:
+                                                      SCNGeometrySourceSemanticColor]];
+    }
+  }
+  return [geometrySources copy];
 }
 
-- (NSArray<SCNGeometrySource *> *)scnGeometrySourcesFromMeshPrimitive:
-    (GLTFMeshPrimitive *)primitive {
-  NSMutableArray<SCNGeometrySource *> *sources = [NSMutableArray array];
-  [self addGeometrySourceByAccessorIndex:
-            [primitive valueOfAttributeSemantic:
-                           GLTFMeshPrimitiveAttributeSemanticPosition]
-                                semantic:SCNGeometrySourceSemanticVertex
-                                 toArray:sources];
-  [self
-      addGeometrySourceByAccessorIndex:
-          [primitive
-              valueOfAttributeSemantic:GLTFMeshPrimitiveAttributeSemanticNormal]
-                              semantic:SCNGeometrySourceSemanticNormal
-                               toArray:sources];
-  [self addGeometrySourceByAccessorIndex:
-            [primitive valueOfAttributeSemantic:
-                           GLTFMeshPrimitiveAttributeSemanticTangent]
-                                semantic:SCNGeometrySourceSemanticTangent
-                                 toArray:sources];
+- (SCNGeometry *)scnGeometryFromMeshPrimitive:(MeshPrimitive *)meshPrimitive {
+  NSArray<SCNGeometrySource *> *geometrySources =
+      [self scnGeometrySourcesFromMeshPrimitiveSources:meshPrimitive.sources];
+  NSArray<SCNGeometryElement *> *geometryElements;
+  if (meshPrimitive.element) {
+    geometryElements = @[ [self
+        scnGeometryElementFromMeshPrimitiveElement:meshPrimitive.element] ];
+  }
 
-  NSArray<NSNumber *> *texcoords = [primitive
-      valuesOfAttributeSemantic:GLTFMeshPrimitiveAttributeSemanticTexcoord];
-  for (NSNumber *texcoord in texcoords) {
-    [self addGeometrySourceByAccessorIndex:texcoord
-                                  semantic:SCNGeometrySourceSemanticTexcoord
-                                   toArray:sources];
-  }
-  NSArray<NSNumber *> *colors = [primitive
-      valuesOfAttributeSemantic:GLTFMeshPrimitiveAttributeSemanticColor];
-  for (NSNumber *color in colors) {
-    [self addGeometrySourceByAccessorIndex:color
-                                  semantic:SCNGeometrySourceSemanticColor
-                                   toArray:sources];
-  }
-  return [sources copy];
+  return [SCNGeometry geometryWithSources:[geometrySources copy]
+                                 elements:geometryElements];
 }
 
-- (SCNGeometrySource *)scnGeometrySourceFromAccessor:(GLTFAccessor *)accessor
-                                        withSemantic:(SCNGeometrySourceSemantic)
-                                                         semantic {
-  NSInteger componentsPerVector = componentsCountOfAccessorType(accessor.type);
-  BOOL normalized;
-  NSData *data = [self.data dataForAccessor:accessor normalized:&normalized];
-  BOOL isFloat =
-      accessor.componentType == GLTFAccessorComponentTypeFloat || normalized;
-  NSInteger bytesPerComponent =
-      isFloat ? sizeof(float) : sizeOfComponentType(accessor.componentType);
-  NSInteger dataStride = componentsPerVector * bytesPerComponent;
-  return [SCNGeometrySource geometrySourceWithData:data
-                                          semantic:semantic
-                                       vectorCount:accessor.count
-                                   floatComponents:isFloat
-                               componentsPerVector:componentsPerVector
-                                 bytesPerComponent:bytesPerComponent
-                                        dataOffset:0
-                                        dataStride:dataStride];
+- (SCNGeometrySource *)
+    scnGeometrySourceFromMeshPrimitiveSource:(MeshPrimitiveSource *)source
+                                    semantic:
+                                        (SCNGeometrySourceSemantic)semantic {
+  NSInteger bytesPerComponent = sizeOfComponentType(source.componentType);
+  return [SCNGeometrySource
+      geometrySourceWithData:source.data
+                    semantic:semantic
+                 vectorCount:source.vectorCount
+             floatComponents:source.componentType ==
+                             GLTFAccessorComponentTypeFloat
+         componentsPerVector:source.componentsPerVector
+           bytesPerComponent:bytesPerComponent
+                  dataOffset:0
+                  dataStride:bytesPerComponent * source.componentsPerVector];
 }
 
-- (nullable NSArray<SCNGeometryElement *> *)scnGeometryElementsFromPrimitive:
-    (GLTFMeshPrimitive *)primitive {
-  if (!primitive.indices)
-    return nil;
-
-  GLTFAccessor *accessor =
-      self.data.json.accessors[primitive.indices.integerValue];
-  NSData *data = [self.data dataForAccessor:accessor normalized:nil];
-
+- (SCNGeometryElement *)scnGeometryElementFromMeshPrimitiveElement:
+    (MeshPrimitiveElement *)element {
   SCNGeometryPrimitiveType primitiveType = SCNGeometryPrimitiveTypeTriangles;
-  data = convertDataToSCNGeometryPrimitiveType(data, primitive.modeValue,
-                                               &primitiveType);
-
-  SCNGeometryElement *element = [SCNGeometryElement
+  NSData *data = convertDataToSCNGeometryPrimitiveType(
+      element.data, element.primitiveMode, &primitiveType);
+  NSInteger primitiveCount = primitiveCountFromGLTFMeshPrimitiveMode(
+      element.primitiveCount, element.primitiveMode);
+  return [SCNGeometryElement
       geometryElementWithData:data
                 primitiveType:primitiveType
-               primitiveCount:primitiveCountFromGLTFMeshPrimitiveMode(
-                                  accessor.count, primitive.modeValue)
-                bytesPerIndex:sizeOfComponentType(accessor.componentType)];
-  if (primitive.modeValue == GLTFMeshPrimitiveModePoints) {
-    element.minimumPointScreenSpaceRadius = 1.0;
-    element.maximumPointScreenSpaceRadius = 1.0;
-  }
-  return @[ element ];
+               primitiveCount:primitiveCount
+                bytesPerIndex:sizeOfComponentType(element.componentType)];
 }
 
 // convert indices data with SceneKit compatible primitive type
@@ -848,8 +831,10 @@ static NSInteger primitiveCountFromGLTFMeshPrimitiveMode(NSInteger indexCount,
       [NSMutableArray arrayWithCapacity:primitive.targets.count];
   for (int i = 0; i < primitive.targets.count; i++) {
     GLTFMeshPrimitiveTarget *target = primitive.targets[i];
+
     NSArray<SCNGeometrySource *> *sources =
-        [self scnGeometrySourcesFromMeshPrimitiveTarget:target];
+        [self scnGeometrySourcesFromMeshPrimitiveSources:
+                  [self.data meshPrimitiveSourcesFromTarget:target]];
     SCNGeometry *morphTarget = [SCNGeometry geometryWithSources:sources
                                                        elements:elements];
     [morphTargets addObject:morphTarget];
@@ -861,21 +846,6 @@ static NSInteger primitiveCountFromGLTFMeshPrimitiveMode(NSInteger indexCount,
   if (weights)
     morpher.weights = weights;
   return morpher;
-}
-
-- (NSArray<SCNGeometrySource *> *)scnGeometrySourcesFromMeshPrimitiveTarget:
-    (GLTFMeshPrimitiveTarget *)primitiveTarget {
-  NSMutableArray<SCNGeometrySource *> *sources = [NSMutableArray array];
-  [self addGeometrySourceByAccessorIndex:primitiveTarget.position
-                                semantic:SCNGeometrySourceSemanticVertex
-                                 toArray:sources];
-  [self addGeometrySourceByAccessorIndex:primitiveTarget.normal
-                                semantic:SCNGeometrySourceSemanticNormal
-                                 toArray:sources];
-  [self addGeometrySourceByAccessorIndex:primitiveTarget.tangent
-                                semantic:SCNGeometrySourceSemanticTangent
-                                 toArray:sources];
-  return [sources copy];
 }
 
 #pragma mark animation

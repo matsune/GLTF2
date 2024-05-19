@@ -27,7 +27,7 @@ GLTF_EXPORT @interface GLTFData : NSObject
                                     error:(NSError *_Nullable *_Nullable)error;
 
 + (NSArray<NSString *> *)supportedExtensions;
-- (BOOL)isAvailableExtension:(NSString *)extension;
++ (BOOL)isSupportedExtension:(NSString *)extension;
 - (nullable NSData *)dataOfUri:(NSString *)uri;
 
 - (NSData *)dataForBuffer:(GLTFBuffer *)buffer;

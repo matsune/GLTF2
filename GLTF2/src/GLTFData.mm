@@ -51,6 +51,12 @@
   GLTFBinary *binary = [GLTFBinary binaryWithData:data error:error];
   if (!binary)
     return nil;
+  
+  NSError *extensionErr = [self checkRequiredExtensions:binary.json];
+  if (extensionErr) {
+    if (error) *error = extensionErr;
+    return nil;
+  }
 
   return [[GLTFData alloc] initWithJson:binary.json
                                    path:nil
@@ -63,8 +69,31 @@
   GLTFJson *json = [GLTFDecoder decodeJsonData:data error:error];
   if (!json)
     return nil;
+  
+  NSError *extensionErr = [self checkRequiredExtensions:json];
+  if (extensionErr) {
+    if (error) *error = extensionErr;
+    return nil;
+  }
 
   return [[GLTFData alloc] initWithJson:json path:path binary:nil];
+}
+
++ (nullable NSError *)checkRequiredExtensions:(GLTFJson *)json {
+  NSMutableArray<NSString *> *unsupportedExtensions = [NSMutableArray array];
+  if (json.extensionsRequired) {
+    for (NSString *extension in json.extensionsRequired) {
+      if (![GLTFData isSupportedExtension:extension]) {
+        [unsupportedExtensions addObject:extension];
+      }
+    }
+  }
+  if (unsupportedExtensions.count > 0) {
+    return [NSError errorWithDomain:GLTF2DataErrorDomain code:GLTF2DataErrorUnsupportedExtensionRequired userInfo:@{
+      NSLocalizedDescriptionKey : [NSString stringWithFormat:@"Unsupported extensions: %@", [unsupportedExtensions componentsJoinedByString:@", "]]
+    }];
+  }
+  return nil;
 }
 
 + (NSArray<NSString *> *)supportedExtensions {
@@ -75,10 +104,8 @@
   return [list copy];
 }
 
-- (BOOL)isAvailableExtension:(NSString *)extension {
-  return [[GLTFData supportedExtensions] containsObject:extension] &&
-         self.json.extensionsRequired &&
-         [self.json.extensionsRequired containsObject:extension];
++ (BOOL)isSupportedExtension:(NSString *)extension {
+  return [[GLTFData supportedExtensions] containsObject:extension];
 }
 
 - (nullable NSData *)dataOfUri:(NSString *)uri {
@@ -312,8 +339,7 @@
 
 - (MeshPrimitive *)meshPrimitive:(GLTFMeshPrimitive *)primitive {
 #if DRACO_SUPPORT
-  if (primitive.dracoExtension &&
-      [self isAvailableExtension:GLTFExtensionKHRDracoMeshCompression]) {
+  if (primitive.dracoExtension) {
     return [self meshPrimitiveFromDracoExtension:primitive.dracoExtension];
   }
 #endif

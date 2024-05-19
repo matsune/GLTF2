@@ -18,8 +18,8 @@
   NSError *err;
   GLTFData *data = [GLTFData dataWithFile:[url path] error:&err];
   if (err) {
-    NSLog(@"%@", err);
-    abort();
+    [[NSAlert alertWithError:err] runModal];
+    return;
   }
   self.asset = [GLTFSCNAsset assetWithGLTFData:data];
   [self.asset loadScenes];

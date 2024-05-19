@@ -51,10 +51,11 @@
   GLTFBinary *binary = [GLTFBinary binaryWithData:data error:error];
   if (!binary)
     return nil;
-  
+
   NSError *extensionErr = [self checkRequiredExtensions:binary.json];
   if (extensionErr) {
-    if (error) *error = extensionErr;
+    if (error)
+      *error = extensionErr;
     return nil;
   }
 
@@ -69,10 +70,11 @@
   GLTFJson *json = [GLTFDecoder decodeJsonData:data error:error];
   if (!json)
     return nil;
-  
+
   NSError *extensionErr = [self checkRequiredExtensions:json];
   if (extensionErr) {
-    if (error) *error = extensionErr;
+    if (error)
+      *error = extensionErr;
     return nil;
   }
 
@@ -89,9 +91,15 @@
     }
   }
   if (unsupportedExtensions.count > 0) {
-    return [NSError errorWithDomain:GLTF2DataErrorDomain code:GLTF2DataErrorUnsupportedExtensionRequired userInfo:@{
-      NSLocalizedDescriptionKey : [NSString stringWithFormat:@"Unsupported extensions: %@", [unsupportedExtensions componentsJoinedByString:@", "]]
-    }];
+    return [NSError
+        errorWithDomain:GLTF2DataErrorDomain
+                   code:GLTF2DataErrorUnsupportedExtensionRequired
+               userInfo:@{
+                 NSLocalizedDescriptionKey : [NSString
+                     stringWithFormat:@"Unsupported extensions: %@",
+                                      [unsupportedExtensions
+                                          componentsJoinedByString:@", "]]
+               }];
   }
   return nil;
 }

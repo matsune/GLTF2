@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.18)
 project(GLTF2 VERSION 1.0)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 option(BUILD_TESTS "Build tests" OFF)
 option(BUILD_EXAMPLE "Build example" OFF)
 
@@ -24,6 +27,7 @@ if(BUILD_TESTS OR BUILD_EXAMPLE)
     configure_file(config.h.in ${CONFIG_H})
 endif()
 
+add_subdirectory(GLTF2Core)
 add_subdirectory(GLTF2)
 add_subdirectory(GLTF2SceneKit)
 
@@ -38,7 +42,7 @@ endif()
 find_program(CLANG_FORMAT "clang-format")
 
 if(CLANG_FORMAT)
-    set(DIRECTORIES "GLTF2" "GLTF2SceneKit")
+    set(DIRECTORIES "GLTF2Core" "GLTF2" "GLTF2SceneKit")
 
     if(BUILD_TESTS)
         list(APPEND DIRECTORIES "GLTF2Tests")
@@ -48,7 +52,7 @@ if(CLANG_FORMAT)
         list(APPEND DIRECTORIES "example")
     endif()
 
-    set(EXTENSIONS "*.m" "*.mm" "*.h")
+    set(EXTENSIONS "*.m" "*.mm" "*.h" "*.cpp")
 
     foreach(DIR IN LISTS DIRECTORIES)
         foreach(EXT IN LISTS EXTENSIONS)

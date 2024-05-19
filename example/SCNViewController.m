@@ -11,7 +11,7 @@
   [super viewDidLoad];
   self.scnView.autoenablesDefaultLighting = YES;
   self.scnView.allowsCameraControl = YES;
-  self.scnView.backgroundColor = [NSColor windowBackgroundColor];
+  self.scnView.backgroundColor = [NSColor blackColor];
 }
 
 - (void)loadModelURL:(NSURL *)url {

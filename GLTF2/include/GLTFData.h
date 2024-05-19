@@ -46,13 +46,6 @@ GLTF_EXPORT @interface GLTFData : NSObject
 - (MeshPrimitiveSources *)meshPrimitiveSourcesFromTarget:
     (GLTFMeshPrimitiveTarget *)target;
 
-#if DRACO_SUPPORT
-
-- (NSDictionary *)dracoExtension:
-    (GLTFMeshPrimitiveDracoExtension *)dracoExtension;
-
-#endif
-
 @end
 
 NS_ASSUME_NONNULL_END

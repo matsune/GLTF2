@@ -49,6 +49,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, strong) MeshPrimitiveSources *sources;
 @property(nonatomic, strong, nullable) MeshPrimitiveElement *element;
 
+- (instancetype)initWithSources:(MeshPrimitiveSources *)sources;
+- (instancetype)initWithSources:(MeshPrimitiveSources *)sources
+                        element:(MeshPrimitiveElement *)element;
+
 @end
 
 NS_ASSUME_NONNULL_END

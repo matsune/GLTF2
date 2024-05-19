@@ -42,4 +42,22 @@
 
 @implementation MeshPrimitive
 
+- (instancetype)initWithSources:(MeshPrimitiveSources *)sources {
+  self = [super init];
+  if (self) {
+    self.sources = sources;
+  }
+  return self;
+}
+
+- (instancetype)initWithSources:(MeshPrimitiveSources *)sources
+                        element:(MeshPrimitiveElement *)element {
+  self = [super init];
+  if (self) {
+    self.sources = sources;
+    self.element = element;
+  }
+  return self;
+}
+
 @end

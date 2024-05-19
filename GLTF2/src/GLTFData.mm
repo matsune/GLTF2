@@ -311,11 +311,12 @@
 }
 
 - (MeshPrimitive *)meshPrimitive:(GLTFMeshPrimitive *)primitive {
-  MeshPrimitive *meshPrimitive = [[MeshPrimitive alloc] init];
+#if DRACO_SUPPORT
   if (primitive.dracoExtension &&
       [self isAvailableExtension:GLTFExtensionKHRDracoMeshCompression]) {
-    // TODO: draco
+    return [self meshPrimitiveFromDracoExtension:primitive.dracoExtension];
   }
+#endif
 
   MeshPrimitiveSources *sources = [[MeshPrimitiveSources alloc] init];
   if (primitive.attributes.position) {
@@ -379,8 +380,8 @@
     }
     sources.weights = weights;
   }
-  meshPrimitive.sources = sources;
 
+  MeshPrimitiveElement *element;
   if (primitive.indices) {
     GLTFAccessor *accessor =
         self.json.accessors[primitive.indices.integerValue];
@@ -388,14 +389,14 @@
     NSInteger primitiveCount = accessor.count;
     GLTFMeshPrimitiveMode primitiveMode =
         (GLTFMeshPrimitiveMode)primitive.modeValue;
-    meshPrimitive.element = [MeshPrimitiveElement
+    element = [MeshPrimitiveElement
         elementWithData:data
           primitiveMode:primitiveMode
          primitiveCount:primitiveCount
           componentType:(GLTFAccessorComponentType)accessor.componentType];
   }
 
-  return meshPrimitive;
+  return [[MeshPrimitive alloc] initWithSources:sources element:element];
 }
 
 - (MeshPrimitiveSource *)meshPrimitiveSourceFromAccessor:
@@ -437,5 +438,124 @@
   }
   return sources;
 }
+
+#if DRACO_SUPPORT
+std::unique_ptr<draco::Mesh> DecodeDracoMesh(NSData *data) {
+  draco::DecoderBuffer buffer;
+  buffer.Init(reinterpret_cast<const char *>(data.bytes), data.length);
+
+  draco::Decoder decoder;
+  auto status_or_mesh = decoder.DecodeMeshFromBuffer(&buffer);
+  if (!status_or_mesh.ok()) {
+    std::cerr << "Failed to decode Draco mesh: "
+              << status_or_mesh.status().error_msg() << std::endl;
+    return nullptr;
+  }
+
+  return std::move(status_or_mesh).value();
+}
+
+- (NSData *)dataWithDracoMesh:(std::unique_ptr<draco::Mesh> &)mesh
+                    attribute:(draco::GeometryAttribute::Type)attribute {
+  const draco::PointAttribute *attr = mesh->GetNamedAttribute(attribute);
+  return [NSData dataWithBytes:attr->buffer()->data()
+                        length:attr->buffer()->data_size()];
+}
+
+GLTFAccessorComponentType
+convertDracoDataTypeToGLTFComponentType(draco::DataType dracoType) {
+  switch (dracoType) {
+  case draco::DT_INT8:
+    return GLTFAccessorComponentTypeByte;
+  case draco::DT_UINT8:
+    return GLTFAccessorComponentTypeUnsignedByte;
+  case draco::DT_INT16:
+    return GLTFAccessorComponentTypeShort;
+  case draco::DT_UINT16:
+    return GLTFAccessorComponentTypeUnsignedShort;
+  case draco::DT_INT32:
+    return GLTFAccessorComponentTypeUnsignedInt;
+  case draco::DT_FLOAT32:
+    return GLTFAccessorComponentTypeFloat;
+  default:
+    throw std::runtime_error("Unsupported Draco data type");
+  }
+}
+
+MeshPrimitiveSource *
+processDracoMeshPrimitiveSource(const std::unique_ptr<draco::Mesh> &dracoMesh,
+                                draco::GeometryAttribute::Type type) {
+  const draco::PointAttribute *attr = dracoMesh->GetNamedAttribute(type);
+  int vectorCount = dracoMesh->num_points();
+  int componentsPerVector = attr->num_components();
+  int bytesPerComponent = draco::DataTypeLength(attr->data_type());
+  int length = vectorCount * componentsPerVector * bytesPerComponent;
+
+  NSMutableData *data = [NSMutableData dataWithLength:length];
+  for (draco::PointIndex i(0); i < dracoMesh->num_points(); ++i) {
+    uint8_t *bytes = (uint8_t *)data.mutableBytes +
+                     i.value() * componentsPerVector * bytesPerComponent;
+    attr->GetMappedValue(i, bytes);
+  }
+
+  return [MeshPrimitiveSource
+           sourceWithData:[data copy]
+              vectorCount:vectorCount
+      componentsPerVector:componentsPerVector
+            componentType:convertDracoDataTypeToGLTFComponentType(
+                              attr->data_type())];
+}
+
+- (MeshPrimitive *)meshPrimitiveFromDracoExtension:
+    (GLTFMeshPrimitiveDracoExtension *)dracoExtension {
+  NSData *compressedData =
+      [self dataForBufferViewIndex:dracoExtension.bufferView];
+  auto dracoMesh = DecodeDracoMesh(compressedData);
+
+  NSInteger primitiveCount = dracoMesh->num_faces() * 3;
+  NSMutableData *indicesData =
+      [NSMutableData dataWithLength:sizeof(uint32_t) * primitiveCount];
+  for (draco::FaceIndex i(0); i < dracoMesh->num_faces(); i++) {
+    const auto &face = dracoMesh->face(i);
+    uint32_t indices[3] = {face[0].value(), face[1].value(), face[2].value()};
+    NSInteger offset = sizeof(uint32_t) * 3 * i.value();
+    std::memcpy((uint8_t *)indicesData.mutableBytes + offset, indices,
+                sizeof(uint32_t) * 3);
+  }
+
+  MeshPrimitiveElement *element = [MeshPrimitiveElement
+      elementWithData:[indicesData copy]
+        primitiveMode:GLTFMeshPrimitiveModeTriangles
+       primitiveCount:primitiveCount
+        componentType:GLTFAccessorComponentTypeUnsignedInt];
+
+  MeshPrimitiveSources *sources = [[MeshPrimitiveSources alloc] init];
+  NSMutableArray<MeshPrimitiveSource *> *colors;
+  NSMutableArray<MeshPrimitiveSource *> *texcoords;
+  for (int32_t i = 0; i < dracoMesh->num_attributes(); ++i) {
+    const auto *attr = dracoMesh->attribute(i);
+
+    MeshPrimitiveSource *source =
+        processDracoMeshPrimitiveSource(dracoMesh, attr->attribute_type());
+    if (attr->attribute_type() == draco::GeometryAttribute::POSITION) {
+      sources.position = source;
+    } else if (attr->attribute_type() == draco::GeometryAttribute::NORMAL) {
+      sources.normal = source;
+    } else if (attr->attribute_type() == draco::GeometryAttribute::COLOR) {
+      if (!colors)
+        colors = [NSMutableArray array];
+      [colors addObject:source];
+    } else if (attr->attribute_type() == draco::GeometryAttribute::TEX_COORD) {
+      if (!texcoords)
+        texcoords = [NSMutableArray array];
+      [texcoords addObject:source];
+    }
+  }
+  sources.colors = colors;
+  sources.texcoords = texcoords;
+
+  return [[MeshPrimitive alloc] initWithSources:sources element:element];
+}
+#endif
 
 @end

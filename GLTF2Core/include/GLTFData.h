@@ -6,16 +6,6 @@
 
 namespace gltf2 {
 
-class InputException : public std::exception {
-private:
-  std::string message;
-
-public:
-  InputException(const char *msg) : message(msg) {}
-
-  const char *what() const noexcept override { return message.c_str(); }
-};
-
 class GLTFData {
 public:
   static GLTFData parse(const std::string &raw);

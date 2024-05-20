@@ -1,4 +1,5 @@
 #include "GLTFData.h"
+#include "GLTFException.h"
 #include "GLTFJsonDecoder.h"
 #include <fstream>
 #include <iostream>
@@ -11,8 +12,7 @@ GLTFData GLTFData::parse(const std::string &raw) {
   GLTFJson json;
   try {
     auto data = nlohmann::json::parse(raw);
-    std::cout << data << std::endl;
-    decoder.decodeJson(data, json);
+    auto json = decoder.decodeJson(data);
     return GLTFData(json);
   } catch (nlohmann::json::exception e) {
     throw InputException(e.what());

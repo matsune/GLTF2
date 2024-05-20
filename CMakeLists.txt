@@ -22,35 +22,30 @@ if(NOT draco_FOUND)
     message(STATUS "draco not found.")
 endif()
 
-add_subdirectory(GLTF2Core)
-add_subdirectory(core_test)
-add_subdirectory(GLTF2)
-add_subdirectory(GLTF2SceneKit)
+set(TARGET_DIRS GLTF2Core GLTF2 GLTF2SceneKit)
+
+if(BUILD_TESTS)
+    list(APPEND TARGET_DIRS core_test)
+endif()
 
 if(BUILD_FRAMEWORK AND BUILD_TESTS)
-    add_subdirectory(GLTF2Tests)
+    list(APPEND TARGET_DIRS GLTF2Tests)
 endif()
 
 if(BUILD_EXAMPLE)
-    add_subdirectory(example)
+    list(APPEND TARGET_DIRS example)
 endif()
+
+foreach(DIR IN LISTS TARGET_DIRS)
+    add_subdirectory(${DIR})
+endforeach()
 
 find_program(CLANG_FORMAT "clang-format")
 
 if(CLANG_FORMAT)
-    set(DIRECTORIES "GLTF2Core" "core_test" "GLTF2" "GLTF2SceneKit")
-
-    if(BUILD_TESTS)
-        list(APPEND DIRECTORIES "GLTF2Tests")
-    endif()
-
-    if(BUILD_EXAMPLE)
-        list(APPEND DIRECTORIES "example")
-    endif()
-
     set(EXTENSIONS "*.m" "*.mm" "*.h" "*.cpp")
 
-    foreach(DIR IN LISTS DIRECTORIES)
+    foreach(DIR IN LISTS TARGET_DIRS)
         foreach(EXT IN LISTS EXTENSIONS)
             file(GLOB_RECURSE FOUND_FILES "${DIR}/${EXT}")
             list(APPEND ALL_SOURCES ${FOUND_FILES})

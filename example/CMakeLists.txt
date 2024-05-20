@@ -13,7 +13,6 @@ add_executable(example MACOSX_BUNDLE
     ${HEADERS}
     ${SOURCES}
     ${APP_RESOURCES}
-    ${CONFIG_H}
 )
 
 find_library(COCOA_LIBRARY Cocoa)

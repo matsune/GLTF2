@@ -1,21 +1,16 @@
 #ifndef GLTFJson_h
 #define GLTFJson_h
 
-#include <nlohmann/json.hpp>
+#include <optional>
+#include <stdint.h>
+#include <string>
+#include <vector>
 
 namespace gltf2 {
 
-// Base object
-
-class GLTFObject {
-public:
-  std::optional<nlohmann::json> extensions;
-  std::optional<nlohmann::json> extras;
-};
-
 // Accessor
 
-class GLTFAccessorSparseIndices : public GLTFObject {
+class GLTFAccessorSparseIndices {
 public:
   enum class ComponentType {
     UNSIGNED_BYTE = 5121,
@@ -28,20 +23,20 @@ public:
   uint32_t componentType;
 };
 
-class GLTFAccessorSparseValues : public GLTFObject {
+class GLTFAccessorSparseValues {
 public:
   uint32_t bufferView;
   std::optional<uint32_t> byteOffset;
 };
 
-class GLTFAccessorSparse : public GLTFObject {
+class GLTFAccessorSparse {
 public:
   uint32_t count;
   GLTFAccessorSparseIndices indices;
   GLTFAccessorSparseValues values;
 };
 
-class GLTFAccessor : public GLTFObject {
+class GLTFAccessor {
 public:
   enum class ComponentType {
     BYTE = 5120,
@@ -68,19 +63,19 @@ public:
 
 // Animation
 
-class GLTFAnimationChannelTarget : public GLTFObject {
+class GLTFAnimationChannelTarget {
 public:
   std::optional<uint32_t> node;
   std::string path;
 };
 
-class GLTFAnimationChannel : public GLTFObject {
+class GLTFAnimationChannel {
 public:
   uint32_t sampler;
   GLTFAnimationChannelTarget target;
 };
 
-class GLTFAnimationSampler : public GLTFObject {
+class GLTFAnimationSampler {
 public:
   enum class Interpolation { LINEAR, STEP, CUBICSPLINE };
 
@@ -89,7 +84,7 @@ public:
   uint32_t output;
 };
 
-class GLTFAnimation : public GLTFObject {
+class GLTFAnimation {
 public:
   std::vector<GLTFAnimationChannel> channels;
   std::vector<GLTFAnimationSampler> samplers;
@@ -98,7 +93,7 @@ public:
 
 // Asset
 
-class GLTFAsset : public GLTFObject {
+class GLTFAsset {
 public:
   std::optional<std::string> copyright;
   std::optional<std::string> generator;
@@ -108,14 +103,14 @@ public:
 
 // Buffer
 
-class GLTFBuffer : public GLTFObject {
+class GLTFBuffer {
 public:
   std::optional<std::string> uri;
   uint32_t byteLength;
   std::optional<std::string> name;
 };
 
-class GLTFBufferView : public GLTFObject {
+class GLTFBufferView {
 public:
   uint32_t buffer;
   std::optional<uint32_t> byteOffset;
@@ -127,7 +122,7 @@ public:
 
 // Camera
 
-class GLTFCameraOrthographic : public GLTFObject {
+class GLTFCameraOrthographic {
 public:
   float xmag;
   float ymag;
@@ -135,7 +130,7 @@ public:
   float znear;
 };
 
-class GLTFCameraPerspective : public GLTFObject {
+class GLTFCameraPerspective {
 public:
   std::optional<float> aspectRatio;
   float yfov;
@@ -143,7 +138,7 @@ public:
   float znear;
 };
 
-class GLTFCamera : public GLTFObject {
+class GLTFCamera {
 public:
   enum class Type { PERSPECTIVE, ORTHOGRAPHIC };
 
@@ -155,7 +150,7 @@ public:
 
 // Image
 
-class GLTFImage : public GLTFObject {
+class GLTFImage {
 public:
   enum class MimeType { JPEG, PNG };
 
@@ -167,14 +162,14 @@ public:
 
 // Texture
 
-class GLTFTexture : public GLTFObject {
+class GLTFTexture {
 public:
   std::optional<uint32_t> sampler;
   std::optional<uint32_t> source;
   std::optional<std::string> name;
 };
 
-class GLTFTextureInfo : public GLTFObject {
+class GLTFTextureInfo {
 public:
   uint32_t index;
   std::optional<uint32_t> texCoord;
@@ -182,7 +177,7 @@ public:
 
 // Material
 
-class GLTFMaterialPBRMetallicRoughness : public GLTFObject {
+class GLTFMaterialPBRMetallicRoughness {
 public:
   std::optional<std::array<float, 4>> baseColorFactor;
   std::optional<GLTFTextureInfo> baseColorTexture;
@@ -191,21 +186,21 @@ public:
   std::optional<GLTFTextureInfo> metallicRoughnessTexture;
 };
 
-class GLTFMaterialNormalTextureInfo : public GLTFObject {
+class GLTFMaterialNormalTextureInfo {
 public:
   uint32_t index;
   std::optional<uint32_t> texCoord;
   std::optional<float> scale;
 };
 
-class GLTFMaterialOcclusionTextureInfo : public GLTFObject {
+class GLTFMaterialOcclusionTextureInfo {
 public:
   uint32_t index;
   std::optional<uint32_t> texCoord;
   std::optional<float> strength;
 };
 
-class GLTFMaterial : public GLTFObject {
+class GLTFMaterial {
 public:
   enum class AlphaMode { OPAQUE, MASK, BLEND };
 
@@ -237,7 +232,7 @@ public:
   std::optional<std::vector<uint32_t>> weights;
 };
 
-class GLTFMeshPrimitive : public GLTFObject {
+class GLTFMeshPrimitive {
 public:
   enum class Mode {
     POINTS = 0,
@@ -257,7 +252,7 @@ public:
   std::optional<std::vector<GLTFMeshPrimitiveTarget>> targets;
 };
 
-class GLTFMesh : public GLTFObject {
+class GLTFMesh {
 public:
   std::vector<GLTFMeshPrimitive> primitives;
   std::optional<std::vector<float>> weights;
@@ -266,7 +261,7 @@ public:
 
 // Node
 
-class GLTFNode : public GLTFObject {
+class GLTFNode {
 public:
   std::optional<uint32_t> camera;
   std::optional<std::vector<uint32_t>> children;
@@ -282,7 +277,7 @@ public:
 
 // Sampler
 
-class GLTFSampler : public GLTFObject {
+class GLTFSampler {
 public:
   enum class MagFilter { NEAREST = 9728, LINEAR = 9729 };
 
@@ -310,7 +305,7 @@ public:
 
 // Scene
 
-class GLTFScene : public GLTFObject {
+class GLTFScene {
 public:
   std::optional<std::vector<uint32_t>> nodes;
   std::optional<std::string> name;
@@ -318,7 +313,7 @@ public:
 
 // Skin
 
-class GLTFSkin : public GLTFObject {
+class GLTFSkin {
 public:
   std::optional<uint32_t> inverseBindMatrices;
   std::optional<uint32_t> skeleton;
@@ -328,7 +323,7 @@ public:
 
 // Json
 
-class GLTFJson : public GLTFObject {
+class GLTFJson {
 public:
   std::optional<std::vector<std::string>> extensionsUsed;
   std::optional<std::vector<std::string>> extensionsRequired;

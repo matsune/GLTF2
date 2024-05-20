@@ -1,3 +1,6 @@
+FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
+FetchContent_MakeAvailable(json)
+
 set(LIB_NAME GLTF2Core)
 add_library(${LIB_NAME} SHARED)
 
@@ -8,29 +11,24 @@ target_include_directories(${LIB_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include/${LIB_NAME}>
 )
+target_include_directories(${LIB_NAME} PRIVATE ${json_SOURCE_DIR}/include)
 
 if(draco_FOUND)
     target_compile_definitions(${LIB_NAME} PUBLIC DRACO_SUPPORT)
     target_include_directories(${LIB_NAME} PRIVATE "${draco_DIR}" "${draco_DIR}/../src")
 endif()
 
-FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
-FetchContent_MakeAvailable(json)
-
 target_link_libraries(${LIB_NAME} PUBLIC ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY})
+
 if(draco_FOUND)
     target_link_libraries(${LIB_NAME} PRIVATE draco::draco)
 endif()
 
-target_link_libraries(${LIB_NAME} PRIVATE nlohmann_json::nlohmann_json)
-
-# set_target_properties(${LIB_NAME} PROPERTIES
-#     VERSION 1.0
-#     PUBLIC_HEADER "${HEADERS}"
-#     XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC "YES"
-#     XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH "NO"
-#     XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET 11.0
-# )
+set(PUBLIC_HEADER include/GLTF2Core.h include/GLTFJson.h include/GLTFData.h)
+set_target_properties(${LIB_NAME} PROPERTIES
+    VERSION 1.0
+    PUBLIC_HEADER "${PUBLIC_HEADER}"
+)
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES
     ${HEADERS}

@@ -22,12 +22,8 @@ if(NOT draco_FOUND)
     message(STATUS "draco not found.")
 endif()
 
-if(BUILD_TESTS OR BUILD_EXAMPLE)
-    set(CONFIG_H ${CMAKE_BINARY_DIR}/config.h)
-    configure_file(config.h.in ${CONFIG_H})
-endif()
-
 add_subdirectory(GLTF2Core)
+add_subdirectory(core_test)
 add_subdirectory(GLTF2)
 add_subdirectory(GLTF2SceneKit)
 
@@ -42,7 +38,7 @@ endif()
 find_program(CLANG_FORMAT "clang-format")
 
 if(CLANG_FORMAT)
-    set(DIRECTORIES "GLTF2Core" "GLTF2" "GLTF2SceneKit")
+    set(DIRECTORIES "GLTF2Core" "core_test" "GLTF2" "GLTF2SceneKit")
 
     if(BUILD_TESTS)
         list(APPEND DIRECTORIES "GLTF2Tests")

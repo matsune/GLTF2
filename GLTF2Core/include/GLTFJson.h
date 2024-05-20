@@ -18,9 +18,22 @@ public:
     UNSIGNED_INT = 5125
   };
 
+  static std::optional<ComponentType> ComponentTypeFromInt(uint32_t value) {
+    switch (value) {
+    case 5121:
+      return ComponentType::UNSIGNED_BYTE;
+    case 5123:
+      return ComponentType::UNSIGNED_SHORT;
+    case 5125:
+      return ComponentType::UNSIGNED_INT;
+    default:
+      return std::nullopt;
+    }
+  }
+
   uint32_t bufferView;
-  uint32_t byteOffset = 0;
-  uint32_t componentType;
+  std::optional<uint32_t> byteOffset;
+  ComponentType componentType;
 };
 
 class GLTFAccessorSparseValues {
@@ -48,6 +61,44 @@ public:
   };
 
   enum class Type { SCALAR, VEC2, VEC3, VEC4, MAT2, MAT3, MAT4 };
+
+  static std::optional<ComponentType> ComponentTypeFromInt(uint32_t value) {
+    switch (value) {
+    case 5120:
+      return ComponentType::BYTE;
+    case 5121:
+      return ComponentType::UNSIGNED_BYTE;
+    case 5122:
+      return ComponentType::SHORT;
+    case 5123:
+      return ComponentType::UNSIGNED_SHORT;
+    case 5125:
+      return ComponentType::UNSIGNED_INT;
+    case 5126:
+      return ComponentType::FLOAT;
+    default:
+      return std::nullopt;
+    }
+  }
+
+  static std::optional<Type> TypeFromString(const std::string &value) {
+    if (value == "SCALAR")
+      return Type::SCALAR;
+    else if (value == "VEC2")
+      return Type::VEC2;
+    else if (value == "VEC3")
+      return Type::VEC3;
+    else if (value == "VEC4")
+      return Type::VEC4;
+    else if (value == "MAT2")
+      return Type::MAT2;
+    else if (value == "MAT3")
+      return Type::MAT3;
+    else if (value == "MAT4")
+      return Type::MAT4;
+    else
+      return std::nullopt;
+  }
 
   std::optional<uint32_t> bufferView;
   std::optional<uint32_t> byteOffset;
@@ -78,6 +129,18 @@ public:
 class GLTFAnimationSampler {
 public:
   enum class Interpolation { LINEAR, STEP, CUBICSPLINE };
+
+  static std::optional<Interpolation>
+  InterpolationFromString(const std::string &value) {
+    if (value == "LINEAR")
+      return Interpolation::LINEAR;
+    else if (value == "STEP")
+      return Interpolation::STEP;
+    else if (value == "CUBICSPLINE")
+      return Interpolation::CUBICSPLINE;
+    else
+      return std::nullopt;
+  }
 
   uint32_t input;
   Interpolation interpolation;
@@ -142,9 +205,18 @@ class GLTFCamera {
 public:
   enum class Type { PERSPECTIVE, ORTHOGRAPHIC };
 
+  static std::optional<Type> TypeFromString(const std::string &value) {
+    if (value == "PERSPECTIVE")
+      return Type::PERSPECTIVE;
+    else if (value == "ORTHOGRAPHIC")
+      return Type::ORTHOGRAPHIC;
+    else
+      return std::nullopt;
+  }
+
   std::optional<GLTFCameraOrthographic> orthographic;
   std::optional<GLTFCameraPerspective> perspective;
-  std::string type;
+  Type type;
   std::optional<std::string> name;
 };
 
@@ -153,6 +225,15 @@ public:
 class GLTFImage {
 public:
   enum class MimeType { JPEG, PNG };
+
+  static std::optional<MimeType> MimeTypeFromString(const std::string &value) {
+    if (value == "image/jpeg")
+      return MimeType::JPEG;
+    else if (value == "image/png")
+      return MimeType::PNG;
+    else
+      return std::nullopt;
+  }
 
   std::optional<std::string> uri;
   std::optional<MimeType> mimeType;
@@ -204,6 +285,18 @@ class GLTFMaterial {
 public:
   enum class AlphaMode { OPAQUE, MASK, BLEND };
 
+  static std::optional<AlphaMode>
+  AlphaModeFromString(const std::string &value) {
+    if (value == "OPAQUE")
+      return AlphaMode::OPAQUE;
+    else if (value == "MASK")
+      return AlphaMode::MASK;
+    else if (value == "BLEND")
+      return AlphaMode::BLEND;
+    else
+      return std::nullopt;
+  }
+
   std::optional<std::string> name;
   std::optional<GLTFMaterialPBRMetallicRoughness> pbrMetallicRoughness;
   std::optional<GLTFMaterialNormalTextureInfo> normalTexture;
@@ -244,6 +337,27 @@ public:
 
     TRIANGLE_FAN = 6
   };
+
+  static std::optional<Mode> ModeFromInt(uint32_t value) {
+    switch (value) {
+    case 0:
+      return Mode::POINTS;
+    case 1:
+      return Mode::LINES;
+    case 2:
+      return Mode::LINE_LOOP;
+    case 3:
+      return Mode::LINE_STRIP;
+    case 4:
+      return Mode::TRIANGLES;
+    case 5:
+      return Mode::TRIANGLE_STRIP;
+    case 6:
+      return Mode::TRIANGLE_FAN;
+    default:
+      return std::nullopt;
+    }
+  }
 
   GLTFMeshPrimitiveAttributes attributes;
   std::optional<uint32_t> indices;
@@ -295,6 +409,49 @@ public:
     MIRRORED_REPEAT = 33648,
     REPEAT = 10497
   };
+
+  static std::optional<MagFilter> MagFilterFromInt(uint32_t value) {
+    switch (value) {
+    case 9728:
+      return MagFilter::NEAREST;
+    case 9729:
+      return MagFilter::LINEAR;
+    default:
+      return std::nullopt;
+    }
+  }
+
+  static std::optional<MinFilter> MinFilterFromInt(uint32_t value) {
+    switch (value) {
+    case 9728:
+      return MinFilter::NEAREST;
+    case 9729:
+      return MinFilter::LINEAR;
+    case 9984:
+      return MinFilter::NEAREST_MIPMAP_NEAREST;
+    case 9985:
+      return MinFilter::LINEAR_MIPMAP_NEAREST;
+    case 9986:
+      return MinFilter::NEAREST_MIPMAP_LINEAR;
+    case 9987:
+      return MinFilter::LINEAR_MIPMAP_LINEAR;
+    default:
+      return std::nullopt;
+    }
+  }
+
+  static std::optional<WrapMode> WrapModeFromInt(uint32_t value) {
+    switch (value) {
+    case 33071:
+      return WrapMode::CLAMP_TO_EDGE;
+    case 33648:
+      return WrapMode::MIRRORED_REPEAT;
+    case 10497:
+      return WrapMode::REPEAT;
+    default:
+      return std::nullopt;
+    }
+  }
 
   std::optional<MagFilter> magFilter;
   std::optional<MinFilter> minFilter;

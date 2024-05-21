@@ -6,6 +6,10 @@
 using namespace gltf2;
 
 int main(int argc, const char **argv) {
+  if (argc > 1) {
+    auto data = gltf2::GLTFData::parseFile(argv[1]);
+    return 0;
+  }
   try {
     auto rawJson = R"(
       {

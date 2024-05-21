@@ -31,11 +31,10 @@ template <> bool isValueType<bool>(const nlohmann::json &j) {
 namespace gltf2 {
 
 class GLTFJsonDecoder {
-public:
-  GLTFJson decodeJson(const nlohmann::json &j);
-
 private:
   std::stack<std::string> stack;
+
+  GLTFJsonDecoder(){};
 
   void pushStack(const std::string ctx);
   void pushStackIndex(const std::string ctx, int index);
@@ -247,6 +246,15 @@ private:
   GLTFSampler decodeSampler(const nlohmann::json &j);
   GLTFScene decodeScene(const nlohmann::json &j);
   GLTFSkin decodeSkin(const nlohmann::json &j);
+  GLTFJson decodeJson(const nlohmann::json &j);
+
+public:
+  static GLTFJson decode(const nlohmann::json &j) {
+    return GLTFJsonDecoder().decodeJson(j);
+  }
+
+  GLTFJsonDecoder(const GLTFJsonDecoder &) = delete;
+  GLTFJsonDecoder &operator=(const GLTFJsonDecoder &) = delete;
 };
 
 } // namespace gltf2

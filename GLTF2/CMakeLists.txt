@@ -23,7 +23,7 @@ endif()
 find_library(COCOA_LIBRARY Cocoa)
 find_library(FOUNDATION_LIBRARY Foundation)
 
-target_link_libraries(${LIB_NAME} ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY})
+target_link_libraries(${LIB_NAME} GLTF2Core ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY})
 
 if(draco_FOUND)
     target_link_libraries(${LIB_NAME} draco::draco)

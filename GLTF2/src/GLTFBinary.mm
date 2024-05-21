@@ -86,9 +86,11 @@ static uint32_t const GLTF2BinaryChunkTypeBIN = 0x004E4942;
 }
 
 - (NSError *)invalidBinaryErrorWithDescription:(NSString *)description {
-  return [NSError errorWithDomain:GLTF2BinaryErrorDomain
-                             code:GLTF2BinaryErrorInvalidFormat
-                         userInfo:@{NSLocalizedDescriptionKey : description}];
+  return nil;
+  //  return [NSError errorWithDomain:GLTF2BinaryErrorDomain
+  //                             code:GLTF2BinaryErrorInvalidFormat
+  //                         userInfo:@{NSLocalizedDescriptionKey :
+  //                         description}];
 }
 
 - (BOOL)loadWithData:(NSData *)data error:(NSError *_Nullable *)error {

@@ -129,13 +129,14 @@
 }
 
 - (NSError *)missingDataErrorWithKey:(const NSString *)key {
-  return [NSError errorWithDomain:GLTF2DecodeErrorDomain
-                             code:GLTF2DecodeErrorMissingData
-                         userInfo:@{
-                           NSLocalizedDescriptionKey : [NSString
-                               stringWithFormat:@"Key '%@' not found in %@",
-                                                key, self.context]
-                         }];
+  return nil;
+  //  return [NSError errorWithDomain:GLTF2DecodeErrorDomain
+  //                             code:GLTF2DecodeErrorMissingData
+  //                         userInfo:@{
+  //                           NSLocalizedDescriptionKey : [NSString
+  //                               stringWithFormat:@"Key '%@' not found in %@",
+  //                                                key, self.context]
+  //                         }];
 }
 
 - (nullable NSNumber *)getRequiredNumber:(const NSDictionary *)jsonDict

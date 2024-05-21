@@ -42,68 +42,75 @@
 //  return self;
 //}
 //
-+ (nullable instancetype)dataWithFile:(NSString *)path
-                                error:(NSError *_Nullable *_Nullable)error {
-  auto _data = std::make_unique<gltf2::GLTFData>(
-      std::move(gltf2::GLTFData::parseFile([path UTF8String])));
-  return [[GLTFData alloc] initWithData:std::move(_data)];
-  //  NSString *extension = path.pathExtension.lowercaseString;
-  //  NSData *data = [NSData dataWithContentsOfFile:path];
-  //  if ([extension isEqualToString:@"glb"]) {
-  //    return [self dataWithGlbData:data error:error];
-  //  } else if ([extension isEqualToString:@"gltf"]) {
-  //    return [self dataWithGltfData:data path:path error:error];
-  //  } else {
-  //    if (error) {
-  //      *error = [NSError
-  //          errorWithDomain:GLTF2BinaryErrorDomain
-  //                     code:GLTF2BinaryErrorUnsupportedFile
-  //                 userInfo:@{
-  //                   NSLocalizedDescriptionKey : @"Unsupported file format"
-  //                 }];
-  //    }
-  //    return nil;
-  //  }
+
+NSError *NSErrorFromInputException(gltf2::InputException e) {
+  return [NSError errorWithDomain:GLTFErrorDomainInput
+                             code:GLTFInputError
+                         userInfo:@{
+                           NSLocalizedDescriptionKey : [NSString
+                               stringWithCString:e.what()
+                                        encoding:NSUTF8StringEncoding],
+                         }];
 }
 
-//+ (nullable instancetype)dataWithData:(NSData *)data
-//                                   error:(NSError *_Nullable *_Nullable)error
-//                                   {
-//  GLTFBinary *binary = [GLTFBinary binaryWithData:data error:error];
-//  if (!binary)
-//    return nil;
-//
-//  NSError *extensionErr = [self checkRequiredExtensions:binary.json];
-//  if (extensionErr) {
-//    if (error)
-//      *error = extensionErr;
-//    return nil;
-//  }
-//
-//  return [[GLTFData alloc] initWithJson:binary.json
-//                                   path:nil
-//                                 binary:binary.binary];
-//}
+NSError *NSErrorFromKeyNotFoundException(gltf2::KeyNotFoundException e) {
+  return [NSError errorWithDomain:GLTFErrorDomainKeyNotFound
+                             code:GLTFKeyNotFoundError
+                         userInfo:@{
+                           NSLocalizedDescriptionKey : [NSString
+                               stringWithCString:e.what()
+                                        encoding:NSUTF8StringEncoding],
+                         }];
+}
+
+NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
+  return [NSError errorWithDomain:GLTFErrorDomainInvalidFormat
+                             code:GLTFInvalidFormatError
+                         userInfo:@{
+                           NSLocalizedDescriptionKey : [NSString
+                               stringWithCString:e.what()
+                                        encoding:NSUTF8StringEncoding],
+                         }];
+}
+
++ (nullable instancetype)dataWithFile:(NSString *)path
+                                error:(NSError *_Nullable *_Nullable)error {
+  try {
+    auto _data = std::make_unique<gltf2::GLTFData>(
+        std::move(gltf2::GLTFData::parseFile([path UTF8String])));
+    return [[GLTFData alloc] initWithData:std::move(_data)];
+  } catch (gltf2::InputException e) {
+    if (error)
+      *error = NSErrorFromInputException(e);
+  } catch (gltf2::KeyNotFoundException e) {
+    if (error)
+      *error = NSErrorFromKeyNotFoundException(e);
+  } catch (gltf2::InvalidFormatException e) {
+    if (error)
+      *error = NSErrorFromInvalidFormatException(e);
+  }
+  return nil;
+}
 
 + (nullable instancetype)dataWithData:(NSData *)data
-                                     path:(nullable NSString *)path
-                                    error:(NSError *_Nullable *_Nullable)error {
-  auto _data =
-      std::make_unique<gltf2::GLTFData>(std::move(gltf2::GLTFData::parseData(
-          (const char *)data.bytes, data.length, [path UTF8String])));
-  return [[GLTFData alloc] initWithData:std::move(_data)];
-  //  GLTFJson *json = [GLTFDecoder decodeJsonData:data error:error];
-  //  if (!json)
-  //    return nil;
-  //
-  //  NSError *extensionErr = [self checkRequiredExtensions:json];
-  //  if (extensionErr) {
-  //    if (error)
-  //      *error = extensionErr;
-  //    return nil;
-  //  }
-
-  //  return [[GLTFData alloc] initWithJson:json path:path binary:nil];
+                                 path:(nullable NSString *)path
+                                error:(NSError *_Nullable *_Nullable)error {
+  try {
+    auto _data =
+        std::make_unique<gltf2::GLTFData>(std::move(gltf2::GLTFData::parseData(
+            (const char *)data.bytes, data.length, [path UTF8String])));
+    return [[GLTFData alloc] initWithData:std::move(_data)];
+  } catch (gltf2::InputException e) {
+    if (error)
+      *error = NSErrorFromInputException(e);
+  } catch (gltf2::KeyNotFoundException e) {
+    if (error)
+      *error = NSErrorFromKeyNotFoundException(e);
+  } catch (gltf2::InvalidFormatException e) {
+    if (error)
+      *error = NSErrorFromInvalidFormatException(e);
+  }
+  return nil;
 }
 //
 //+ (nullable NSError *)checkRequiredExtensions:(GLTFJson *)json {

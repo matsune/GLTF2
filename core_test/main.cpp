@@ -6,11 +6,12 @@
 using namespace gltf2;
 
 int main(int argc, const char **argv) {
-  if (argc > 1) {
-    auto data = gltf2::GLTFData::parseFile(argv[1]);
-    return 0;
-  }
   try {
+    if (argc > 1) {
+      auto data = gltf2::GLTFData::parseFile(argv[1]);
+      return 0;
+    }
+
     auto rawJson = R"(
       {
         "extensionsUsed": ["ext1", "ext2"],
@@ -227,7 +228,7 @@ int main(int argc, const char **argv) {
         ]
       }
     )";
-    auto data = gltf2::GLTFData::parse(rawJson);
+    auto data = gltf2::GLTFData::parseJson(rawJson);
 
     assert(data.json.extensionsUsed->size() == 2);
     assert(data.json.extensionsUsed.value()[0] == "ext1");

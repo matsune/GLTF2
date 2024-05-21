@@ -11,8 +11,15 @@ namespace gltf2 {
 
 class GLTFData {
 public:
-  static GLTFData parse(const std::string &raw);
+  static GLTFData
+  parseJson(const std::string &raw,
+            std::optional<std::filesystem::path> path = std::nullopt);
+  static GLTFData
+  parseData(const char *bytes, uint64_t length,
+            std::optional<std::filesystem::path> path = std::nullopt);
   static GLTFData parseFile(const std::filesystem::path &path);
+  static GLTFData parseStream(std::istream &fs,
+                              std::optional<std::filesystem::path> path);
 
   GLTFData() = delete;
   GLTFData(GLTFJson json,

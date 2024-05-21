@@ -4,6 +4,8 @@
 #include <fstream>
 #include <iostream>
 #include <nlohmann/json.hpp>
+#include <sstream>
+#include <string>
 
 namespace gltf2 {
 
@@ -22,14 +24,21 @@ struct GLBChunkHead {
   uint32_t type = 0;
 };
 
-GLTFData GLTFData::parse(const std::string &raw) {
+GLTFData GLTFData::parseJson(const std::string &raw,
+                             std::optional<std::filesystem::path> path) {
   try {
     auto data = nlohmann::json::parse(raw);
     auto json = GLTFJsonDecoder::decode(data);
-    return GLTFData(json);
+    return GLTFData(json, path);
   } catch (nlohmann::json::exception e) {
     throw InputException(e.what());
   }
+}
+
+GLTFData GLTFData::parseData(const char *bytes, uint64_t length,
+                             std::optional<std::filesystem::path> path) {
+  std::istringstream fs(std::string(bytes, length), std::ios::binary);
+  return parseStream(fs, path);
 }
 
 GLTFData GLTFData::parseFile(const std::filesystem::path &path) {
@@ -38,6 +47,11 @@ GLTFData GLTFData::parseFile(const std::filesystem::path &path) {
   if (!fs)
     throw InputException("Failed to open file");
 
+  return parseStream(fs, path);
+}
+
+GLTFData GLTFData::parseStream(std::istream &fs,
+                               std::optional<std::filesystem::path> path) {
   uint32_t magic;
   if (!fs.read(reinterpret_cast<char *>(&magic), sizeof(uint32_t))) {
     throw InputException("Failed to read file");

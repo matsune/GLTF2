@@ -9,6 +9,9 @@ option(BUILD_EXAMPLE "Build example" OFF)
 
 include(FetchContent)
 
+set(CONFIG_H ${CMAKE_BINARY_DIR}/config.h)
+configure_file(config.h.in ${CONFIG_H})
+
 option(BUILD_FRAMEWORK "Build as a framework instead of a dynamic library" OFF)
 option(DRACO_DIR "Path to the Draco library" "")
 

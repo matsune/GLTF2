@@ -1,8 +1,25 @@
 #include "GLTF2Core.h"
+#include "config.h"
 #include <gtest/gtest.h>
 #include <iostream>
 
 using namespace gltf2;
+
+TEST(TestGLTFData, parseGLTF) {
+  std::filesystem::path root(PROJECT_SOURCE_DIR);
+  auto path = root / "sample-models/a/a.gltf";
+  auto data = gltf2::GLTFData::parseFile(path);
+  auto buf = data.dataForBufferView(data.json.bufferViews->at(0));
+  EXPECT_EQ(buf, std::vector<uint8_t>({0, 1, 2, 3}));
+
+  buf = data.dataForBufferView(data.json.bufferViews->at(1));
+  EXPECT_EQ(buf, std::vector<uint8_t>({4, 5, 6, 7, 8, 9}));
+  
+  // absolute path
+  data.json.buffers->at(0).uri = root / "sample-models/a/a.bin";
+  buf = data.dataForBufferView(data.json.bufferViews->at(0));
+  EXPECT_EQ(buf, std::vector<uint8_t>({0, 1, 2, 3}));
+}
 
 TEST(TestGLTFData, parseJson) {
   auto rawJson = R"(

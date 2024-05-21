@@ -1,6 +1,8 @@
 #include "GLTFData.h"
 #include "GLTFException.h"
 #include "GLTFJsonDecoder.h"
+#include <boost/beast/core/detail/base64.hpp>
+#include <boost/url.hpp>
 #include <fstream>
 #include <iostream>
 #include <nlohmann/json.hpp>
@@ -114,6 +116,55 @@ GLTFData GLTFData::parseStream(std::istream &fs,
       throw InputException(e.what());
     }
   }
+}
+
+std::vector<uint8_t> GLTFData::dataOfUri(const std::string &uri) const {
+  // decode percent-encoding
+  auto url = boost::url(uri);
+  if (url.has_scheme()) {
+    if (url.scheme() == "data") {
+      // base64
+      std::string urlStr(url.c_str());
+      auto encoded = urlStr.substr(urlStr.find(',') + 1);
+      auto size = boost::beast::detail::base64::decoded_size(encoded.size());
+      std::vector<uint8_t> buf(size);
+      auto res = boost::beast::detail::base64::decode(buf.data(),
+                                                      encoded.c_str(), size);
+      buf.resize(res.first);
+    } else {
+      // unsupported scheme
+    }
+  } else if (url.is_path_absolute()) {
+    // absolute path
+    std::ifstream file(uri, std::ios::binary);
+    return {std::istreambuf_iterator<char>(file),
+            std::istreambuf_iterator<char>()};
+
+  } else {
+    // relative path
+    std::filesystem::path basePathUrl(path.value());
+    std::filesystem::path fullUrl = basePathUrl.parent_path() / url.c_str();
+    std::ifstream file(fullUrl.string(), std::ios::binary);
+    return {std::istreambuf_iterator<char>(file),
+            std::istreambuf_iterator<char>()};
+  }
+  return {};
+}
+
+std::vector<uint8_t> GLTFData::dataForBuffer(const GLTFBuffer &buffer) const {
+  if (buffer.uri) {
+    return dataOfUri(*buffer.uri);
+  } else {
+    return bin.value();
+  }
+}
+
+std::vector<uint8_t>
+GLTFData::dataForBufferView(const GLTFBufferView &bufferView,
+                            uint32_t offset) const {
+  auto data = dataForBuffer(json.buffers->at(bufferView.buffer));
+  auto loc = data.begin() + bufferView.byteOffset.value_or(0) + offset;
+  return std::vector<uint8_t>(loc, loc + bufferView.byteLength);
 }
 
 } // namespace gltf2

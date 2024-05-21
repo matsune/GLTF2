@@ -1,0 +1,24 @@
+{
+    "asset": {
+        "version": "1.0"
+    },
+    "bufferViews": [
+        {
+            "buffer": 0,
+            "byteOffset": 0,
+            "byteLength": 4
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 4,
+            "byteLength": 6,
+            "byteStride": 2
+        }
+    ],
+    "buffers": [
+        {
+            "byteLength": 10,
+            "uri": "a.bin"
+        }
+    ]
+}

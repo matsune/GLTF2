@@ -1,5 +1,15 @@
-FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
+FetchContent_Declare(
+    json
+    URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
+)
 FetchContent_MakeAvailable(json)
+
+set(BOOST_INCLUDE_LIBRARIES beast url)
+FetchContent_Declare(
+    Boost
+    URL https://github.com/boostorg/boost/releases/download/boost-1.85.0/boost-1.85.0-cmake.tar.xz
+)
+FetchContent_MakeAvailable(Boost)
 
 set(LIB_NAME GLTF2Core)
 add_library(${LIB_NAME} SHARED)
@@ -18,7 +28,7 @@ if(draco_FOUND)
     target_include_directories(${LIB_NAME} PRIVATE "${draco_DIR}" "${draco_DIR}/../src")
 endif()
 
-target_link_libraries(${LIB_NAME} PUBLIC ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY})
+target_link_libraries(${LIB_NAME} PUBLIC ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY} PRIVATE Boost::url Boost::beast)
 
 if(draco_FOUND)
     target_link_libraries(${LIB_NAME} PRIVATE draco::draco)

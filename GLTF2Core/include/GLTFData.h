@@ -30,6 +30,11 @@ public:
   GLTFJson json;
   std::optional<std::filesystem::path> path;
   std::optional<std::vector<uint8_t>> bin;
+
+  std::vector<uint8_t> dataForBufferView(const GLTFBufferView &bufferView,
+                                         uint32_t offset = 0) const;
+  std::vector<uint8_t> dataForBuffer(const GLTFBuffer &buffer) const;
+  std::vector<uint8_t> dataOfUri(const std::string &uri) const;
 };
 
 } // namespace gltf2

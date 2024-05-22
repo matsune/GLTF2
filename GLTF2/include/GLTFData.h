@@ -1,56 +1,100 @@
-#import "GLTF2Availability.h"
-#include "GLTF2Core.h"
-#import "GLTFJson.h"
-#import "MeshPrimitive.h"
-#import <CoreGraphics/CoreGraphics.h>
-#import <Foundation/Foundation.h>
+#ifndef GLTFData_h
+#define GLTFData_h
+
+#include "GLTFJson.h"
+#include <filesystem>
+#include <fstream>
 #include <memory>
+#include <string>
 
-NS_ASSUME_NONNULL_BEGIN
+namespace gltf2 {
 
-GLTF_EXPORT @interface GLTFData : NSObject {
-  std::unique_ptr<gltf2::GLTFData> _data;
-}
+using Data = std::vector<uint8_t>;
 
-//@property(nonatomic, strong, readonly) GLTFJson *json;
-//@property(nonatomic, copy, nullable, readonly) NSString *path;
-//@property(nonatomic, strong, nullable) NSData *binary;
-//
-- (instancetype)initWithData:(std::unique_ptr<gltf2::GLTFData>)data;
-//- (instancetype)initWithJson:(GLTFJson *)json
-//                        path:(nullable NSString *)path
-//                      binary:(nullable NSData *)binary;
-//
-+ (nullable instancetype)dataWithFile:(NSString *)path
-                                error:(NSError *_Nullable *_Nullable)error;
+class MeshPrimitiveSource {
+public:
+  Data data;
+  uint vectorCount;
+  uint componentsPerVector;
+  GLTFAccessor::ComponentType componentType;
+};
 
-//+ (nullable instancetype)dataWithGlbData:(NSData *)data
-//                                   error:(NSError *_Nullable *_Nullable)error;
-//
-+ (nullable instancetype)dataWithData:(NSData *)data
-                                 path:(nullable NSString *)path
-                                error:(NSError *_Nullable *_Nullable)error;
+class MeshPrimitiveElement {
+public:
+  Data data;
+  GLTFMeshPrimitive::Mode primitiveMode;
+  uint primitiveCount;
+  GLTFAccessor::ComponentType componentType;
+};
 
-//+ (NSArray<NSString *> *)supportedExtensions;
-//+ (BOOL)isSupportedExtension:(NSString *)extension;
-//- (nullable NSData *)dataOfUri:(NSString *)uri;
-//
-//- (NSData *)dataForBuffer:(GLTFBuffer *)buffer;
-//- (NSData *)dataForBufferIndex:(NSInteger)bufferIndex;
-//- (NSData *)dataForBufferView:(GLTFBufferView *)bufferView;
-//- (NSData *)dataForBufferViewIndex:(NSInteger)bufferViewIndex;
-//
-//- (CGImageRef)cgImageForImage:(GLTFImage *)image;
-//
-//- (NSData *)dataForAccessor:(GLTFAccessor *)accessor
-//                 normalized:(nullable BOOL *)normalized;
-//
-//- (MeshPrimitive *)meshPrimitive:(GLTFMeshPrimitive *)primitive;
-//- (MeshPrimitiveSource *)meshPrimitiveSourceFromAccessor:
-//    (GLTFAccessor *)accessor;
-//- (MeshPrimitiveSources *)meshPrimitiveSourcesFromTarget:
-//    (GLTFMeshPrimitiveTarget *)target;
+class MeshPrimitiveSources {
+public:
+  MeshPrimitiveSource position;
+  MeshPrimitiveSource normal;
+  MeshPrimitiveSource tangent;
+  std::vector<MeshPrimitiveSource> texcoords;
+  std::vector<MeshPrimitiveSource> colors;
+  std::vector<MeshPrimitiveSource> joints;
+  std::vector<MeshPrimitiveSource> weights;
+};
 
-@end
+class MeshPrimitive {
+public:
+  MeshPrimitiveSources sources;
+  std::optional<MeshPrimitiveElement> element;
+};
 
-NS_ASSUME_NONNULL_END
+class GLTFData {
+public:
+  static GLTFData
+  parseJson(const std::string &raw,
+            std::optional<std::filesystem::path> path = std::nullopt);
+  static GLTFData
+  parseData(const char *bytes, uint64_t length,
+            std::optional<std::filesystem::path> path = std::nullopt);
+  static GLTFData parseFile(const std::filesystem::path &path);
+  static GLTFData parseStream(std::istream &fs,
+                              std::optional<std::filesystem::path> path);
+
+  GLTFData() = delete;
+  GLTFData(GLTFJson json,
+           std::optional<std::filesystem::path> path = std::nullopt,
+           std::optional<Data> bin = std::nullopt)
+      : json(json), path(path), bin(bin){};
+
+  GLTFJson json;
+  std::optional<std::filesystem::path> path;
+  std::optional<Data> bin;
+
+  static std::vector<std::string> supportedExtensions();
+
+  Data dataForBufferView(const GLTFBufferView &bufferView,
+                         uint32_t offset = 0) const;
+  Data dataForBufferView(uint32_t index, uint32_t offset = 0) const;
+  Data dataForBufferView(uint32_t index, std::optional<uint32_t> offset) const;
+  Data dataForBuffer(const GLTFBuffer &buffer) const;
+  Data dataForBuffer(uint32_t index) const;
+
+  Data dataForAccessor(const GLTFAccessor &accessor, bool *normalized) const;
+  Data dataForAccessor(uint32_t index, bool *normalized) const;
+  std::vector<uint32_t>
+  indicesForAccessorSparse(const GLTFAccessorSparse &sparse) const;
+  Data normalizeData(const Data &data, const GLTFAccessor &accessor) const;
+
+  MeshPrimitive
+  meshPrimitiveFromPrimitive(const GLTFMeshPrimitive &primitive) const;
+  MeshPrimitiveSource
+  meshPrimitiveSourceFromAccessor(const GLTFAccessor &accessor) const;
+  MeshPrimitiveSource meshPrimitiveSourceFromAccessor(uint32_t index) const;
+  MeshPrimitiveSources
+  meshPrimitiveSourcesFromTarget(const GLTFMeshPrimitiveTarget &target) const;
+  MeshPrimitive meshPrimitiveFromDracoExtension(
+      const GLTFMeshPrimitiveDracoExtension &extension) const;
+
+private:
+  Data dataOfUri(const std::string &uri) const;
+};
+
+} // namespace gltf2
+
+#endif /* GLTFData_h */

@@ -13,7 +13,7 @@ file(GLOB_RECURSE SOURCES "*.cpp")
 add_executable(core_test ${CONFIG_H} ${SOURCES})
 target_include_directories(core_test PRIVATE ${CMAKE_BINARY_DIR} ${cppcodec_SOURCE_DIR})
 
-target_link_libraries(core_test GLTF2Core GTest::gtest_main)
+target_link_libraries(core_test GLTF2 GTest::gtest_main)
 
 set_target_properties(core_test PROPERTIES
     XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET 11.0

@@ -1,4 +1,4 @@
-#include "GLTF2Core.h"
+#include "GLTF2.h"
 #include "config.h"
 #include <cppcodec/base64_rfc4648.hpp>
 #include <gtest/gtest.h>

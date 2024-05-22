@@ -1,459 +1,612 @@
-#import "GLTF2Availability.h"
-#import <Foundation/Foundation.h>
-#import <simd/simd.h>
+#ifndef GLTFJson_h
+#define GLTFJson_h
 
-NS_ASSUME_NONNULL_BEGIN
+#include <optional>
+#include <stdint.h>
+#include <string>
+#include <vector>
 
-GLTF_EXPORT @interface GLTFObject : NSObject
+namespace gltf2 {
 
-@property(nonatomic, strong, nullable) NSDictionary *extensions;
-@property(nonatomic, strong, nullable) NSDictionary *extras;
+// Accessor
 
-- (nullable NSDictionary *)valueForExtensionKey:(NSString *)key;
+class GLTFAccessorSparseIndices {
+public:
+  enum class ComponentType {
+    UNSIGNED_BYTE = 5121,
+    UNSIGNED_SHORT = 5123,
+    UNSIGNED_INT = 5125
+  };
 
-@end
+  static std::optional<ComponentType> ComponentTypeFromInt(uint32_t value) {
+    switch (value) {
+    case 5121:
+      return ComponentType::UNSIGNED_BYTE;
+    case 5123:
+      return ComponentType::UNSIGNED_SHORT;
+    case 5125:
+      return ComponentType::UNSIGNED_INT;
+    default:
+      return std::nullopt;
+    }
+  }
 
-#pragma mark - Accessor
-
-typedef NS_ENUM(NSInteger, GLTFAccessorSparseIndicesComponentType) {
-  GLTFAccessorSparseIndicesComponentTypeUnsignedByte = 5121,
-  GLTFAccessorSparseIndicesComponentTypeUnsignedShort = 5123,
-  GLTFAccessorSparseIndicesComponentTypeUnsignedInt = 5125
+  uint32_t bufferView;
+  std::optional<uint32_t> byteOffset;
+  ComponentType componentType;
 };
 
-GLTF_EXPORT @interface GLTFAccessorSparseIndices : GLTFObject
-
-@property(nonatomic, assign) NSInteger bufferView;
-@property(nonatomic, strong, nullable) NSNumber *byteOffset;
-@property(nonatomic, assign) NSInteger componentType;
-
-@property(nonatomic, readonly) NSInteger byteOffsetValue;
-
-@end
-
-GLTF_EXPORT @interface GLTFAccessorSparseValues : GLTFObject
-
-@property(nonatomic, assign) NSInteger bufferView;
-@property(nonatomic, strong, nullable) NSNumber *byteOffset;
-
-@property(nonatomic, readonly) NSInteger byteOffsetValue;
-
-@end
-
-GLTF_EXPORT @interface GLTFAccessorSparse : GLTFObject
-
-@property(nonatomic, assign) NSInteger count;
-@property(nonatomic, strong) GLTFAccessorSparseIndices *indices;
-@property(nonatomic, strong) GLTFAccessorSparseValues *values;
-
-@end
-
-typedef NS_ENUM(NSInteger, GLTFAccessorComponentType) {
-  GLTFAccessorComponentTypeByte = 5120,
-  GLTFAccessorComponentTypeUnsignedByte = 5121,
-  GLTFAccessorComponentTypeShort = 5122,
-  GLTFAccessorComponentTypeUnsignedShort = 5123,
-  GLTFAccessorComponentTypeUnsignedInt = 5125,
-  GLTFAccessorComponentTypeFloat = 5126
+class GLTFAccessorSparseValues {
+public:
+  uint32_t bufferView;
+  std::optional<uint32_t> byteOffset;
 };
 
-GLTF_EXPORT NSInteger
-sizeOfComponentType(GLTFAccessorComponentType componentType);
-
-GLTF_EXPORT NSString *const GLTFAccessorTypeScalar;
-GLTF_EXPORT NSString *const GLTFAccessorTypeVec2;
-GLTF_EXPORT NSString *const GLTFAccessorTypeVec3;
-GLTF_EXPORT NSString *const GLTFAccessorTypeVec4;
-GLTF_EXPORT NSString *const GLTFAccessorTypeMat2;
-GLTF_EXPORT NSString *const GLTFAccessorTypeMat3;
-GLTF_EXPORT NSString *const GLTFAccessorTypeMat4;
-
-GLTF_EXPORT NSInteger componentsCountOfAccessorType(NSString *accessorType);
-
-GLTF_EXPORT @interface GLTFAccessor : GLTFObject
-
-@property(nonatomic, strong, nullable) NSNumber *bufferView;
-@property(nonatomic, strong, nullable) NSNumber *byteOffset;
-@property(nonatomic, assign) NSInteger componentType;
-@property(nonatomic, strong, nullable) NSNumber *normalized;
-@property(nonatomic, assign) NSInteger count;
-@property(nonatomic, assign) NSString *type;
-@property(nonatomic, strong, nullable) NSArray<NSNumber *> *max;
-@property(nonatomic, strong, nullable) NSArray<NSNumber *> *min;
-@property(nonatomic, strong, nullable) GLTFAccessorSparse *sparse;
-@property(nonatomic, copy, nullable) NSString *name;
-
-@property(nonatomic, readonly) NSInteger byteOffsetValue;
-@property(nonatomic, readonly) BOOL isNormalized;
-
-@end
-
-#pragma mark - Animation
-
-GLTF_EXPORT NSString *const GLTFAnimationChannelTargetPathTranslation;
-GLTF_EXPORT NSString *const GLTFAnimationChannelTargetPathRotation;
-GLTF_EXPORT NSString *const GLTFAnimationChannelTargetPathScale;
-GLTF_EXPORT NSString *const GLTFAnimationChannelTargetPathWeights;
-
-GLTF_EXPORT @interface GLTFAnimationChannelTarget : GLTFObject
-
-@property(nonatomic, strong, nullable) NSNumber *node;
-@property(nonatomic, copy) NSString *path;
-
-@property(nonatomic, readonly) BOOL isPathTranslation;
-@property(nonatomic, readonly) BOOL isPathRotation;
-@property(nonatomic, readonly) BOOL isPathScale;
-@property(nonatomic, readonly) BOOL isPathWeights;
-
-@end
-
-GLTF_EXPORT NSString *const GLTFAnimationSamplerInterpolationLinear;
-GLTF_EXPORT NSString *const GLTFAnimationSamplerInterpolationStep;
-GLTF_EXPORT NSString *const GLTFAnimationSamplerInterpolationCubicSpline;
-
-GLTF_EXPORT @interface GLTFAnimationSampler : GLTFObject
-
-@property(nonatomic, assign) NSInteger input;
-@property(nonatomic, copy, nullable) NSString *interpolation;
-@property(nonatomic, assign) NSInteger output;
-
-@property(nonatomic, readonly) NSString *interpolationValue;
-
-@end
-
-GLTF_EXPORT @interface GLTFAnimationChannel : GLTFObject
-
-@property(nonatomic, assign) NSInteger sampler;
-@property(nonatomic, strong) GLTFAnimationChannelTarget *target;
-
-@end
-
-GLTF_EXPORT @interface GLTFAnimation : GLTFObject
-
-@property(nonatomic, strong) NSArray<GLTFAnimationChannel *> *channels;
-@property(nonatomic, strong) NSArray<GLTFAnimationSampler *> *samplers;
-@property(nonatomic, copy, nullable) NSString *name;
-
-@end
-
-#pragma mark - Asset
-
-GLTF_EXPORT @interface GLTFAsset : GLTFObject
-
-@property(nonatomic, copy, nullable) NSString *copyright;
-@property(nonatomic, copy, nullable) NSString *generator;
-@property(nonatomic, copy) NSString *version;
-@property(nonatomic, copy, nullable) NSString *minVersion;
-
-@end
-
-#pragma mark - Buffer
-
-GLTF_EXPORT @interface GLTFBuffer : GLTFObject
-
-@property(nonatomic, copy, nullable) NSString *uri;
-@property(nonatomic, assign) NSInteger byteLength;
-@property(nonatomic, copy, nullable) NSString *name;
-
-@end
-
-GLTF_EXPORT @interface GLTFBufferView : GLTFObject
-
-@property(nonatomic, assign) NSInteger buffer;
-@property(nonatomic, strong, nullable) NSNumber *byteOffset;
-@property(nonatomic, assign) NSInteger byteLength;
-@property(nonatomic, strong, nullable) NSNumber *byteStride;
-@property(nonatomic, strong, nullable) NSNumber *target;
-@property(nonatomic, copy, nullable) NSString *name;
-
-@property(nonatomic, readonly) NSInteger byteOffsetValue;
-
-@end
-
-#pragma mark - Camera
-
-GLTF_EXPORT @interface GLTFCameraOrthographic : GLTFObject
-
-@property(nonatomic, assign) float xmag;
-@property(nonatomic, assign) float ymag;
-@property(nonatomic, assign) float zfar;
-@property(nonatomic, assign) float znear;
-
-@end
-
-GLTF_EXPORT @interface GLTFCameraPerspective : GLTFObject
-
-@property(nonatomic, strong, nullable) NSNumber *aspectRatio;
-@property(nonatomic, assign) float yfov;
-@property(nonatomic, strong, nullable) NSNumber *zfar;
-@property(nonatomic, assign) float znear;
-
-@end
-
-GLTF_EXPORT NSString *const GLTFCameraTypePerspective;
-GLTF_EXPORT NSString *const GLTFCameraTypeOrthographic;
-
-GLTF_EXPORT @interface GLTFCamera : GLTFObject
-
-@property(nonatomic, strong, nullable) GLTFCameraOrthographic *orthographic;
-@property(nonatomic, strong, nullable) GLTFCameraPerspective *perspective;
-@property(nonatomic, copy) NSString *type;
-@property(nonatomic, copy, nullable) NSString *name;
-
-@end
-
-#pragma mark - Image
-
-GLTF_EXPORT @interface GLTFImage : GLTFObject
-
-@property(nonatomic, copy, nullable) NSString *uri;
-@property(nonatomic, copy, nullable) NSString *mimeType;
-@property(nonatomic, strong, nullable) NSNumber *bufferView;
-@property(nonatomic, copy, nullable) NSString *name;
-
-@end
-
-#pragma mark - Texture
-
-GLTF_EXPORT @interface GLTFTexture : GLTFObject
-
-@property(nonatomic, strong, nullable) NSNumber *sampler;
-@property(nonatomic, strong, nullable) NSNumber *source;
-@property(nonatomic, copy, nullable) NSString *name;
-
-@end
-
-GLTF_EXPORT @interface GLTFTextureInfo : GLTFObject
-
-@property(nonatomic, assign) NSInteger index;
-@property(nonatomic, strong, nullable) NSNumber *texCoord;
-
-@property(nonatomic, readonly) NSInteger texCoordValue;
-
-@end
-
-#pragma mark - Material
-
-GLTF_EXPORT @interface GLTFMaterialNormalTextureInfo : GLTFTextureInfo
-
-@property(nonatomic, strong, nullable) NSNumber *scale;
-
-@property(nonatomic, readonly) float scaleValue;
-
-@end
-
-GLTF_EXPORT @interface GLTFMaterialOcclusionTextureInfo : GLTFTextureInfo
-
-@property(nonatomic, strong, nullable) NSNumber *strength;
-
-@property(nonatomic, readonly) float strengthValue;
-
-@end
-
-GLTF_EXPORT @interface GLTFMaterialPBRMetallicRoughness : GLTFObject
-
-@property(nonatomic, strong, nullable) NSArray<NSNumber *> *baseColorFactor;
-@property(nonatomic, strong, nullable) GLTFTextureInfo *baseColorTexture;
-@property(nonatomic, strong, nullable) NSNumber *metallicFactor;
-@property(nonatomic, strong, nullable) NSNumber *roughnessFactor;
-@property(nonatomic, strong, nullable)
-    GLTFTextureInfo *metallicRoughnessTexture;
-
-@property(nonatomic, readonly) simd_float4 baseColorFactorValue;
-@property(nonatomic, readonly) float metallicFactorValue;
-@property(nonatomic, readonly) float roughnessFactorValue;
-
-@end
-
-GLTF_EXPORT NSString *const GLTFMaterialAlphaModeOpaque;
-GLTF_EXPORT NSString *const GLTFMaterialAlphaModeMask;
-GLTF_EXPORT NSString *const GLTFMaterialAlphaModeBlend;
-
-GLTF_EXPORT @interface GLTFMaterial : GLTFObject
-
-@property(nonatomic, copy, nullable) NSString *name;
-@property(nonatomic, strong, nullable)
-    GLTFMaterialPBRMetallicRoughness *pbrMetallicRoughness;
-@property(nonatomic, strong, nullable)
-    GLTFMaterialNormalTextureInfo *normalTexture;
-@property(nonatomic, strong, nullable)
-    GLTFMaterialOcclusionTextureInfo *occlusionTexture;
-@property(nonatomic, strong, nullable) GLTFTextureInfo *emissiveTexture;
-@property(nonatomic, strong, nullable) NSArray<NSNumber *> *emissiveFactor;
-@property(nonatomic, copy, nullable) NSString *alphaMode;
-@property(nonatomic, strong, nullable) NSNumber *alphaCutoff;
-@property(nonatomic, strong, nullable) NSNumber *doubleSided;
-
-@property(nonatomic, readonly) simd_float3 emissiveFactorValue;
-@property(nonatomic, readonly) NSString *alphaModeValue;
-@property(nonatomic, readonly) float alphaCutoffValue;
-@property(nonatomic, readonly) BOOL isDoubleSided;
-@property(nonatomic, readonly) BOOL isAlphaModeOpaque;
-@property(nonatomic, readonly) BOOL isAlphaModeMask;
-@property(nonatomic, readonly) BOOL isAlphaModeBlend;
-
-@end
-
-#pragma mark - Mesh
-
-typedef NS_ENUM(NSInteger, GLTFMeshPrimitiveMode) {
-  GLTFMeshPrimitiveModePoints = 0,
-  GLTFMeshPrimitiveModeLines = 1,
-  GLTFMeshPrimitiveModeLineLoop = 2,
-  GLTFMeshPrimitiveModeLineStrip = 3,
-  GLTFMeshPrimitiveModeTriangles = 4,
-  GLTFMeshPrimitiveModeTriangleStrip = 5,
-  GLTFMeshPrimitiveModeTriangleFan = 6
+class GLTFAccessorSparse {
+public:
+  uint32_t count;
+  GLTFAccessorSparseIndices indices;
+  GLTFAccessorSparseValues values;
 };
 
-GLTF_EXPORT @interface GLTFMeshPrimitiveTarget : GLTFObject
+class GLTFAccessor {
+public:
+  enum class ComponentType {
+    BYTE = 5120,
+    UNSIGNED_BYTE = 5121,
+    SHORT = 5122,
+    UNSIGNED_SHORT = 5123,
+    UNSIGNED_INT = 5125,
+    FLOAT = 5126
+  };
 
-@property(nonatomic, strong, nullable) NSNumber *position;
-@property(nonatomic, strong, nullable) NSNumber *normal;
-@property(nonatomic, strong, nullable) NSNumber *tangent;
+  enum class Type { SCALAR, VEC2, VEC3, VEC4, MAT2, MAT3, MAT4 };
 
-@end
+  static uint sizeOfComponentType(ComponentType type) {
+    switch (type) {
+    case ComponentType::BYTE:
+    case ComponentType::UNSIGNED_BYTE:
+      return 1;
+    case ComponentType::SHORT:
+    case ComponentType::UNSIGNED_SHORT:
+      return 2;
+    case ComponentType::UNSIGNED_INT:
+    case ComponentType::FLOAT:
+      return 4;
+    }
+  }
 
-GLTF_EXPORT @interface GLTFMeshPrimitiveAttributes : GLTFMeshPrimitiveTarget
+  static uint componentsCountOfType(Type type) {
+    switch (type) {
+    case Type::SCALAR:
+      return 1;
+    case Type::VEC2:
+      return 2;
+    case Type::VEC3:
+      return 3;
+    case Type::VEC4:
+      return 4;
+    case Type::MAT2:
+      return 4;
+    case Type::MAT3:
+      return 9;
+    case Type::MAT4:
+      return 16;
+    }
+  }
 
-@property(nonatomic, strong, nullable) NSArray<NSNumber *> *texcoord;
-@property(nonatomic, strong, nullable) NSArray<NSNumber *> *color;
-@property(nonatomic, strong, nullable) NSArray<NSNumber *> *joints;
-@property(nonatomic, strong, nullable) NSArray<NSNumber *> *weights;
+  static std::optional<ComponentType> ComponentTypeFromInt(uint32_t value) {
+    switch (value) {
+    case 5120:
+      return ComponentType::BYTE;
+    case 5121:
+      return ComponentType::UNSIGNED_BYTE;
+    case 5122:
+      return ComponentType::SHORT;
+    case 5123:
+      return ComponentType::UNSIGNED_SHORT;
+    case 5125:
+      return ComponentType::UNSIGNED_INT;
+    case 5126:
+      return ComponentType::FLOAT;
+    default:
+      return std::nullopt;
+    }
+  }
 
-@end
+  static std::optional<Type> TypeFromString(const std::string &value) {
+    if (value == "SCALAR")
+      return Type::SCALAR;
+    else if (value == "VEC2")
+      return Type::VEC2;
+    else if (value == "VEC3")
+      return Type::VEC3;
+    else if (value == "VEC4")
+      return Type::VEC4;
+    else if (value == "MAT2")
+      return Type::MAT2;
+    else if (value == "MAT3")
+      return Type::MAT3;
+    else if (value == "MAT4")
+      return Type::MAT4;
+    else
+      return std::nullopt;
+  }
 
-GLTF_EXPORT @interface GLTFMeshPrimitiveDracoExtension : GLTFObject
-
-@property(nonatomic, assign) NSInteger bufferView;
-@property(nonatomic, strong) GLTFMeshPrimitiveAttributes *attributes;
-
-@end
-
-GLTF_EXPORT @interface GLTFMeshPrimitive : GLTFObject
-
-@property(nonatomic, strong) GLTFMeshPrimitiveAttributes *attributes;
-@property(nonatomic, strong, nullable) NSNumber *indices;
-@property(nonatomic, strong, nullable) NSNumber *material;
-@property(nonatomic, strong, nullable) NSNumber *mode;
-@property(nonatomic, strong, nullable)
-    NSArray<GLTFMeshPrimitiveTarget *> *targets;
-@property(nonatomic, strong, nullable)
-    GLTFMeshPrimitiveDracoExtension *dracoExtension;
-
-@property(nonatomic, readonly) NSInteger modeValue;
-
-@end
-
-GLTF_EXPORT @interface GLTFMesh : GLTFObject
-
-@property(nonatomic, strong) NSArray<GLTFMeshPrimitive *> *primitives;
-@property(nonatomic, strong, nullable) NSArray<NSNumber *> *weights;
-@property(nonatomic, copy, nullable) NSString *name;
-
-@end
-
-#pragma mark - Node
-
-GLTF_EXPORT @interface GLTFNode : GLTFObject
-
-@property(nonatomic, strong, nullable) NSNumber *camera;
-@property(nonatomic, strong, nullable) NSArray<NSNumber *> *children;
-@property(nonatomic, strong, nullable) NSNumber *skin;
-@property(nonatomic, strong, nullable) NSArray<NSNumber *> *matrix;
-@property(nonatomic, strong, nullable) NSNumber *mesh;
-@property(nonatomic, strong, nullable) NSArray<NSNumber *> *rotation;
-@property(nonatomic, strong, nullable) NSArray<NSNumber *> *scale;
-@property(nonatomic, strong, nullable) NSArray<NSNumber *> *translation;
-@property(nonatomic, strong, nullable) NSArray<NSNumber *> *weights;
-@property(nonatomic, copy, nullable) NSString *name;
-
-@property(nonatomic, readonly) simd_float4x4 matrixValue;
-@property(nonatomic, readonly) simd_quatf rotationValue;
-@property(nonatomic, readonly) simd_float3 scaleValue;
-@property(nonatomic, readonly) simd_float3 translationValue;
-
-@property(nonatomic, readonly) simd_float4x4 simdTransform;
-
-@end
-
-#pragma mark - Sampler
-
-typedef NS_ENUM(NSInteger, GLTFSamplerMagFilter) {
-  GLTFSamplerMagFilterNearest = 9728,
-  GLTFSamplerMagFilterLinear = 9729
+  std::optional<uint32_t> bufferView;
+  std::optional<uint32_t> byteOffset;
+  ComponentType componentType;
+  std::optional<bool> normalized;
+  uint32_t count;
+  Type type;
+  std::optional<std::vector<float>> max;
+  std::optional<std::vector<float>> min;
+  std::optional<GLTFAccessorSparse> sparse;
+  std::optional<std::string> name;
 };
 
-typedef NS_ENUM(NSInteger, GLTFSamplerMinFilter) {
-  GLTFSamplerMinFilterNearest = 9728,
-  GLTFSamplerMinFilterLinear = 9729,
-  GLTFSamplerMinFilterNearestMipmapNearest = 9984,
-  GLTFSamplerMinFilterLinearMipmapNearest = 9985,
-  GLTFSamplerMinFilterNearestMipmapLinear = 9986,
-  GLTFSamplerMinFilterLinearMipmapLinear = 9987
+// Animation
+
+class GLTFAnimationChannelTarget {
+public:
+  std::optional<uint32_t> node;
+  std::string path;
 };
 
-typedef NS_ENUM(NSInteger, GLTFSamplerWrapMode) {
-  GLTFSamplerWrapModeClampToEdge = 33071,
-  GLTFSamplerWrapModeMirroredRepeat = 33648,
-  GLTFSamplerWrapModeRepeat = 10497
+class GLTFAnimationChannel {
+public:
+  uint32_t sampler;
+  GLTFAnimationChannelTarget target;
 };
 
-GLTF_EXPORT @interface GLTFSampler : GLTFObject
+class GLTFAnimationSampler {
+public:
+  enum class Interpolation { LINEAR, STEP, CUBICSPLINE };
 
-@property(nonatomic, strong, nullable) NSNumber *magFilter;
-@property(nonatomic, strong, nullable) NSNumber *minFilter;
-@property(nonatomic, strong, nullable) NSNumber *wrapS;
-@property(nonatomic, strong, nullable) NSNumber *wrapT;
-@property(nonatomic, copy, nullable) NSString *name;
+  static std::optional<Interpolation>
+  InterpolationFromString(const std::string &value) {
+    if (value == "LINEAR")
+      return Interpolation::LINEAR;
+    else if (value == "STEP")
+      return Interpolation::STEP;
+    else if (value == "CUBICSPLINE")
+      return Interpolation::CUBICSPLINE;
+    else
+      return std::nullopt;
+  }
 
-@property(nonatomic, readonly) NSInteger wrapSValue;
-@property(nonatomic, readonly) NSInteger wrapTValue;
+  uint32_t input;
+  std::optional<Interpolation> interpolation;
+  uint32_t output;
 
-@end
+  Interpolation interpolationValue() const {
+    return interpolation.value_or(Interpolation::LINEAR);
+  }
+};
 
-#pragma mark - Scene
+class GLTFAnimation {
+public:
+  std::vector<GLTFAnimationChannel> channels;
+  std::vector<GLTFAnimationSampler> samplers;
+  std::optional<std::string> name;
+};
 
-GLTF_EXPORT @interface GLTFScene : GLTFObject
+// Asset
 
-@property(nonatomic, strong, nullable) NSArray<NSNumber *> *nodes;
-@property(nonatomic, copy, nullable) NSString *name;
+class GLTFAsset {
+public:
+  std::optional<std::string> copyright;
+  std::optional<std::string> generator;
+  std::string version;
+  std::optional<std::string> minVersion;
+};
 
-@end
+// Buffer
 
-#pragma mark - Skin
+class GLTFBuffer {
+public:
+  std::optional<std::string> uri;
+  uint32_t byteLength;
+  std::optional<std::string> name;
+};
 
-GLTF_EXPORT @interface GLTFSkin : GLTFObject
+class GLTFBufferView {
+public:
+  uint32_t buffer;
+  std::optional<uint32_t> byteOffset;
+  uint32_t byteLength;
+  std::optional<uint32_t> byteStride;
+  std::optional<uint32_t> target;
+  std::optional<std::string> name;
+};
 
-@property(nonatomic, strong, nullable) NSNumber *inverseBindMatrices;
-@property(nonatomic, strong, nullable) NSNumber *skeleton;
-@property(nonatomic, strong) NSArray<NSNumber *> *joints;
-@property(nonatomic, copy, nullable) NSString *name;
+// Camera
 
-@end
+class GLTFCameraOrthographic {
+public:
+  float xmag;
+  float ymag;
+  float zfar;
+  float znear;
+};
 
-#pragma mark - Json
+class GLTFCameraPerspective {
+public:
+  std::optional<float> aspectRatio;
+  float yfov;
+  std::optional<float> zfar;
+  float znear;
+};
 
-GLTF_EXPORT @interface GLTFJson : GLTFObject
+class GLTFCamera {
+public:
+  enum class Type { PERSPECTIVE, ORTHOGRAPHIC };
 
-@property(nonatomic, copy, nullable) NSArray<NSString *> *extensionsUsed;
-@property(nonatomic, copy, nullable) NSArray<NSString *> *extensionsRequired;
-@property(nonatomic, strong, nullable) NSArray<GLTFAccessor *> *accessors;
-@property(nonatomic, strong) GLTFAsset *asset;
-@property(nonatomic, strong, nullable) NSArray<GLTFAnimation *> *animations;
-@property(nonatomic, strong, nullable) NSArray<GLTFBuffer *> *buffers;
-@property(nonatomic, strong, nullable) NSArray<GLTFBufferView *> *bufferViews;
-@property(nonatomic, strong, nullable) NSArray<GLTFCamera *> *cameras;
-@property(nonatomic, strong, nullable) NSArray<GLTFImage *> *images;
-@property(nonatomic, strong, nullable) NSArray<GLTFMaterial *> *materials;
-@property(nonatomic, strong, nullable) NSArray<GLTFMesh *> *meshes;
-@property(nonatomic, strong, nullable) NSArray<GLTFNode *> *nodes;
-@property(nonatomic, strong, nullable) NSArray<GLTFSampler *> *samplers;
-@property(nonatomic, strong, nullable) NSNumber *scene;
-@property(nonatomic, strong, nullable) NSArray<GLTFScene *> *scenes;
-@property(nonatomic, strong, nullable) NSArray<GLTFSkin *> *skins;
-@property(nonatomic, strong, nullable) NSArray<GLTFTexture *> *textures;
+  static std::optional<Type> TypeFromString(const std::string &value) {
+    if (value == "PERSPECTIVE")
+      return Type::PERSPECTIVE;
+    else if (value == "ORTHOGRAPHIC")
+      return Type::ORTHOGRAPHIC;
+    else
+      return std::nullopt;
+  }
 
-@end
+  std::optional<GLTFCameraOrthographic> orthographic;
+  std::optional<GLTFCameraPerspective> perspective;
+  Type type;
+  std::optional<std::string> name;
+};
 
-NS_ASSUME_NONNULL_END
+// Image
+
+class GLTFImage {
+public:
+  enum class MimeType { JPEG, PNG };
+
+  static std::optional<MimeType> MimeTypeFromString(const std::string &value) {
+    if (value == "image/jpeg")
+      return MimeType::JPEG;
+    else if (value == "image/png")
+      return MimeType::PNG;
+    else
+      return std::nullopt;
+  }
+
+  std::optional<std::string> uri;
+  std::optional<MimeType> mimeType;
+  std::optional<uint32_t> bufferView;
+  std::optional<std::string> name;
+};
+
+// Texture
+
+class GLTFTexture {
+public:
+  std::optional<uint32_t> sampler;
+  std::optional<uint32_t> source;
+  std::optional<std::string> name;
+};
+
+class GLTFTextureInfo {
+public:
+  uint32_t index;
+  std::optional<uint32_t> texCoord;
+};
+
+// Material
+
+class GLTFMaterialPBRMetallicRoughness {
+public:
+  std::optional<std::array<float, 4>> baseColorFactor;
+  std::optional<GLTFTextureInfo> baseColorTexture;
+  std::optional<float> metallicFactor;
+  std::optional<float> roughnessFactor;
+  std::optional<GLTFTextureInfo> metallicRoughnessTexture;
+
+  std::array<float, 4> baseColorFactorValue() {
+    return baseColorFactor.value_or(
+        std::array<float, 4>{1.0f, 1.0f, 1.0f, 1.0f});
+  }
+
+  float metallicFactorValue() { return metallicFactor.value_or(1.0f); }
+
+  float roughnessFactorValue() { return roughnessFactor.value_or(1.0f); }
+};
+
+class GLTFMaterialNormalTextureInfo {
+public:
+  uint32_t index;
+  std::optional<uint32_t> texCoord;
+  std::optional<float> scale;
+
+  float scaleValue() { return scale.value_or(1.0f); }
+};
+
+class GLTFMaterialOcclusionTextureInfo {
+public:
+  uint32_t index;
+  std::optional<uint32_t> texCoord;
+  std::optional<float> strength;
+
+  float strengthValue() { return strength.value_or(1.0f); }
+};
+
+class GLTFMaterial {
+public:
+  enum class AlphaMode { OPAQUE, MASK, BLEND };
+
+  static std::optional<AlphaMode>
+  AlphaModeFromString(const std::string &value) {
+    if (value == "OPAQUE")
+      return AlphaMode::OPAQUE;
+    else if (value == "MASK")
+      return AlphaMode::MASK;
+    else if (value == "BLEND")
+      return AlphaMode::BLEND;
+    else
+      return std::nullopt;
+  }
+
+  std::optional<std::string> name;
+  std::optional<GLTFMaterialPBRMetallicRoughness> pbrMetallicRoughness;
+  std::optional<GLTFMaterialNormalTextureInfo> normalTexture;
+  std::optional<GLTFMaterialOcclusionTextureInfo> occlusionTexture;
+  std::optional<GLTFTextureInfo> emissiveTexture;
+  std::optional<std::array<float, 3>> emissiveFactor;
+  std::optional<AlphaMode> alphaMode;
+  std::optional<float> alphaCutoff;
+  std::optional<bool> doubleSided;
+
+  std::array<float, 3> emissiveFactorValue() {
+    return emissiveFactor.value_or(std::array<float, 3>{0.0f, 0.0f, 0.0f});
+  }
+
+  AlphaMode alphaModeValue() { return alphaMode.value_or(AlphaMode::OPAQUE); }
+
+  float alphaCutoffValue() { return alphaCutoff.value_or(0.5f); }
+
+  bool isDoubleSided() { return doubleSided.value_or(false); }
+};
+
+// Mesh
+
+class GLTFMeshPrimitiveTarget {
+public:
+  std::optional<uint32_t> position;
+  std::optional<uint32_t> normal;
+  std::optional<uint32_t> tangent;
+};
+
+class GLTFMeshPrimitiveAttributes : public GLTFMeshPrimitiveTarget {
+public:
+  std::optional<std::vector<uint32_t>> texcoords;
+  std::optional<std::vector<uint32_t>> colors;
+  std::optional<std::vector<uint32_t>> joints;
+  std::optional<std::vector<uint32_t>> weights;
+};
+
+class GLTFMeshPrimitiveDracoExtension {
+public:
+  uint32_t bufferView;
+  GLTFMeshPrimitiveAttributes attributes;
+};
+
+class GLTFMeshPrimitive {
+public:
+  enum class Mode {
+    POINTS = 0,
+    LINES = 1,
+    LINE_LOOP = 2,
+    LINE_STRIP = 3,
+    TRIANGLES = 4,
+    TRIANGLE_STRIP = 5,
+
+    TRIANGLE_FAN = 6
+  };
+
+  static std::optional<Mode> ModeFromInt(uint32_t value) {
+    switch (value) {
+    case 0:
+      return Mode::POINTS;
+    case 1:
+      return Mode::LINES;
+    case 2:
+      return Mode::LINE_LOOP;
+    case 3:
+      return Mode::LINE_STRIP;
+    case 4:
+      return Mode::TRIANGLES;
+    case 5:
+      return Mode::TRIANGLE_STRIP;
+    case 6:
+      return Mode::TRIANGLE_FAN;
+    default:
+      return std::nullopt;
+    }
+  }
+
+  GLTFMeshPrimitiveAttributes attributes;
+  std::optional<uint32_t> indices;
+  std::optional<uint32_t> material;
+  std::optional<Mode> mode;
+  std::optional<std::vector<GLTFMeshPrimitiveTarget>> targets;
+  std::optional<GLTFMeshPrimitiveDracoExtension> dracoExtension;
+
+  Mode modeValue() const { return mode.value_or(Mode::TRIANGLES); }
+};
+
+class GLTFMesh {
+public:
+  std::vector<GLTFMeshPrimitive> primitives;
+  std::optional<std::vector<float>> weights;
+  std::optional<std::string> name;
+};
+
+// Node
+
+class GLTFNode {
+public:
+  std::optional<uint32_t> camera;
+  std::optional<std::vector<uint32_t>> children;
+  std::optional<uint32_t> skin;
+  std::optional<std::array<float, 16>> matrix;
+  std::optional<uint32_t> mesh;
+  std::optional<std::array<float, 4>> rotation;
+  std::optional<std::array<float, 3>> scale;
+  std::optional<std::array<float, 3>> translation;
+  std::optional<std::vector<float>> weights;
+  std::optional<std::string> name;
+
+  std::array<float, 16> matrixValue() {
+    return matrix.value_or(std::array<float, 16>{
+        1.0f,
+        0.0f,
+        0.0f,
+        0.0f,
+        0.0f,
+        1.0f,
+        0.0f,
+        0.0f,
+        0.0f,
+        0.0f,
+        1.0f,
+        0.0f,
+        0.0f,
+        0.0f,
+        0.0f,
+        1.0f,
+    });
+  }
+
+  std::array<float, 4> rotationValue() {
+    return rotation.value_or(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f});
+  }
+
+  std::array<float, 3> scaleValue() {
+    return scale.value_or(std::array<float, 3>{1.0f, 1.0f, 1.0f});
+  }
+
+  std::array<float, 3> translationValue() {
+    return translation.value_or(std::array<float, 3>{0.0f, 0.0f, 0.0f});
+  }
+};
+
+// Sampler
+
+class GLTFSampler {
+public:
+  enum class MagFilter { NEAREST = 9728, LINEAR = 9729 };
+
+  enum class MinFilter {
+    NEAREST = 9728,
+    LINEAR = 9729,
+    NEAREST_MIPMAP_NEAREST = 9984,
+    LINEAR_MIPMAP_NEAREST = 9985,
+    NEAREST_MIPMAP_LINEAR = 9986,
+    LINEAR_MIPMAP_LINEAR = 9987
+  };
+
+  enum class WrapMode {
+    CLAMP_TO_EDGE = 33071,
+    MIRRORED_REPEAT = 33648,
+    REPEAT = 10497
+  };
+
+  static std::optional<MagFilter> MagFilterFromInt(uint32_t value) {
+    switch (value) {
+    case 9728:
+      return MagFilter::NEAREST;
+    case 9729:
+      return MagFilter::LINEAR;
+    default:
+      return std::nullopt;
+    }
+  }
+
+  static std::optional<MinFilter> MinFilterFromInt(uint32_t value) {
+    switch (value) {
+    case 9728:
+      return MinFilter::NEAREST;
+    case 9729:
+      return MinFilter::LINEAR;
+    case 9984:
+      return MinFilter::NEAREST_MIPMAP_NEAREST;
+    case 9985:
+      return MinFilter::LINEAR_MIPMAP_NEAREST;
+    case 9986:
+      return MinFilter::NEAREST_MIPMAP_LINEAR;
+    case 9987:
+      return MinFilter::LINEAR_MIPMAP_LINEAR;
+    default:
+      return std::nullopt;
+    }
+  }
+
+  static std::optional<WrapMode> WrapModeFromInt(uint32_t value) {
+    switch (value) {
+    case 33071:
+      return WrapMode::CLAMP_TO_EDGE;
+    case 33648:
+      return WrapMode::MIRRORED_REPEAT;
+    case 10497:
+      return WrapMode::REPEAT;
+    default:
+      return std::nullopt;
+    }
+  }
+
+  std::optional<MagFilter> magFilter;
+  std::optional<MinFilter> minFilter;
+  std::optional<WrapMode> wrapS;
+  std::optional<WrapMode> wrapT;
+  std::optional<std::string> name;
+
+  WrapMode wrapSValue() { return wrapS.value_or(WrapMode::REPEAT); }
+
+  WrapMode wrapTValue() { return wrapT.value_or(WrapMode::REPEAT); }
+};
+
+// Scene
+
+class GLTFScene {
+public:
+  std::optional<std::vector<uint32_t>> nodes;
+  std::optional<std::string> name;
+};
+
+// Skin
+
+class GLTFSkin {
+public:
+  std::optional<uint32_t> inverseBindMatrices;
+  std::optional<uint32_t> skeleton;
+  std::vector<uint32_t> joints;
+  std::optional<std::string> name;
+};
+
+// Json
+
+class GLTFJson {
+public:
+  std::optional<std::vector<std::string>> extensionsUsed;
+  std::optional<std::vector<std::string>> extensionsRequired;
+  std::optional<std::vector<GLTFAccessor>> accessors;
+  std::optional<std::vector<GLTFAnimation>> animations;
+  GLTFAsset asset;
+  std::optional<std::vector<GLTFBuffer>> buffers;
+  std::optional<std::vector<GLTFBufferView>> bufferViews;
+  std::optional<std::vector<GLTFCamera>> cameras;
+  std::optional<std::vector<GLTFImage>> images;
+  std::optional<std::vector<GLTFMaterial>> materials;
+  std::optional<std::vector<GLTFMesh>> meshes;
+  std::optional<std::vector<GLTFNode>> nodes;
+  std::optional<std::vector<GLTFSampler>> samplers;
+  std::optional<uint32_t> scene;
+  std::optional<std::vector<GLTFScene>> scenes;
+  std::optional<std::vector<GLTFSkin>> skins;
+  std::optional<std::vector<GLTFTexture>> textures;
+};
+
+}; // namespace gltf2
+
+#endif /* GLTFJson_h */

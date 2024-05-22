@@ -1,5 +1,6 @@
 #import "GLTF2.h"
 #import <XCTest/XCTest.h>
+#include "config.h"
 
 @interface GLTFDataTests : XCTestCase
 
@@ -8,7 +9,7 @@
 @implementation GLTFDataTests
 
 //- (void)testData {
-//  NSString *path = @"path/to/gltf";
+//  NSString *path =
 //  NSError *error;
 //  GLTFData *data = [GLTFData dataWithFile:path error:&error];
 //  if (error) {

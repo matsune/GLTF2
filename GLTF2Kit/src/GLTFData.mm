@@ -7,7 +7,7 @@
 #include "draco/compression/decode.h"
 #include "draco/core/decoder_buffer.h"
 #endif
-#include "GLTF2Core.h"
+#include "GLTF2.h"
 #import "GLTFConstants.h"
 #import <MetalKit/MetalKit.h>
 #include <cstring>

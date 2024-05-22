@@ -1,31 +1,21 @@
 set(LIB_NAME GLTF2)
 add_library(${LIB_NAME} SHARED)
 
-if(BUILD_FRAMEWORK)
-    set_target_properties(${LIB_NAME} PROPERTIES
-        FRAMEWORK TRUE
-    )
-endif()
-
 file(GLOB HEADERS "include/*.h")
-file(GLOB SOURCES "src/*.m" "src/*.mm")
+file(GLOB SOURCES "src/*.cpp")
 target_sources(${LIB_NAME} PRIVATE ${HEADERS} ${SOURCES})
 target_include_directories(${LIB_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include/${LIB_NAME}>
 )
+target_include_directories(${LIB_NAME} PRIVATE ${json_SOURCE_DIR}/include ${cppcodec_SOURCE_DIR} ${CMAKE_BINARY_DIR} ${draco_SOURCE_DIR}/src)
 
-find_library(COCOA_LIBRARY Cocoa)
-find_library(FOUNDATION_LIBRARY Foundation)
+target_link_libraries(${LIB_NAME} PUBLIC ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY} PRIVATE Boost::url draco::draco)
 
-target_link_libraries(${LIB_NAME} GLTF2Core ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY})
-
+set(PUBLIC_HEADER include/GLTF2.h include/GLTFJson.h include/GLTFData.h)
 set_target_properties(${LIB_NAME} PROPERTIES
     VERSION 1.0
-    PUBLIC_HEADER "${HEADERS}"
-    XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC "YES"
-    XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH "NO"
-    XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET 11.0
+    PUBLIC_HEADER "${PUBLIC_HEADER}"
 )
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES

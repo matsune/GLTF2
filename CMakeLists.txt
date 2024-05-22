@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(BUILD_TESTS "Build tests" OFF)
 option(BUILD_EXAMPLE "Build example" OFF)
+option(BUILD_FRAMEWORK "Build as a framework instead of a dynamic library" OFF)
 
 include(FetchContent)
 
@@ -44,19 +45,17 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(draco)
 
-option(BUILD_FRAMEWORK "Build as a framework instead of a dynamic library" OFF)
-
 set(CONFIG_H ${CMAKE_BINARY_DIR}/config.h)
 configure_file(config.h.in ${CONFIG_H})
 
-set(TARGET_DIRS GLTF2Core GLTF2 GLTF2SceneKit)
+set(TARGET_DIRS GLTF2 GLTF2Kit GLTF2SceneKit)
 
 if(BUILD_TESTS)
     list(APPEND TARGET_DIRS core_test)
 endif()
 
 if(BUILD_FRAMEWORK AND BUILD_TESTS)
-    list(APPEND TARGET_DIRS GLTF2Tests)
+    list(APPEND TARGET_DIRS GLTF2KitTests)
 endif()
 
 if(BUILD_EXAMPLE)

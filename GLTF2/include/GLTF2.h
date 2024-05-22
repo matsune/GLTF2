@@ -1,6 +1,8 @@
-#import "Errors.h"
-#import "GLTFBinary.h"
-#import "GLTFData.h"
-#import "GLTFDecoder.h"
-#import "GLTFJson.h"
-#import "MeshPrimitive.h"
+#ifndef GLTF2_h
+#define GLTF2_h
+
+#include "GLTFData.h"
+#include "GLTFException.h"
+#include "GLTFJson.h"
+
+#endif /* GLTF2_h */

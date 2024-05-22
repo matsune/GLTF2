@@ -11,6 +11,39 @@ namespace gltf2 {
 
 using Data = std::vector<uint8_t>;
 
+class MeshPrimitiveSource {
+public:
+  Data data;
+  uint vectorCount;
+  uint componentsPerVector;
+  GLTFAccessor::ComponentType componentType;
+};
+
+class MeshPrimitiveElement {
+public:
+  Data data;
+  GLTFMeshPrimitive::Mode primitiveMode;
+  uint primitiveCount;
+  GLTFAccessor::ComponentType componentType;
+};
+
+class MeshPrimitiveSources {
+public:
+  MeshPrimitiveSource position;
+  MeshPrimitiveSource normal;
+  MeshPrimitiveSource tangent;
+  std::vector<MeshPrimitiveSource> texcoords;
+  std::vector<MeshPrimitiveSource> colors;
+  std::vector<MeshPrimitiveSource> joints;
+  std::vector<MeshPrimitiveSource> weights;
+};
+
+class MeshPrimitive {
+public:
+  MeshPrimitiveSources sources;
+  std::optional<MeshPrimitiveElement> element;
+};
+
 class GLTFData {
 public:
   static GLTFData
@@ -39,10 +72,20 @@ public:
   Data dataForBufferView(uint32_t index, std::optional<uint32_t> offset) const;
   Data dataForBuffer(const GLTFBuffer &buffer) const;
   Data dataForBuffer(uint32_t index) const;
+
   Data dataForAccessor(const GLTFAccessor &accessor, bool *normalized) const;
+  Data dataForAccessor(uint32_t index, bool *normalized) const;
   std::vector<uint32_t>
   indicesForAccessorSparse(const GLTFAccessorSparse &sparse) const;
   Data normalizeData(const Data &data, const GLTFAccessor &accessor) const;
+
+  MeshPrimitive
+  meshPrimitiveFromPrimitive(const GLTFMeshPrimitive &primitive) const;
+  MeshPrimitiveSource
+  meshPrimitiveSourceFromAccessor(const GLTFAccessor &accessor) const;
+  MeshPrimitiveSource meshPrimitiveSourceFromAccessor(uint32_t index) const;
+  MeshPrimitiveSources
+  meshPrimitiveSourcesFromTarget(const GLTFMeshPrimitiveTarget &target) const;
 
 private:
   Data dataOfUri(const std::string &uri) const;

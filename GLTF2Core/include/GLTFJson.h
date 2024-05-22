@@ -176,8 +176,12 @@ public:
   }
 
   uint32_t input;
-  Interpolation interpolation;
+  std::optional<Interpolation> interpolation;
   uint32_t output;
+
+  Interpolation interpolationValue() const {
+    return interpolation.value_or(Interpolation::LINEAR);
+  }
 };
 
 class GLTFAnimation {
@@ -298,6 +302,15 @@ public:
   std::optional<float> metallicFactor;
   std::optional<float> roughnessFactor;
   std::optional<GLTFTextureInfo> metallicRoughnessTexture;
+
+  std::array<float, 4> baseColorFactorValue() {
+    return baseColorFactor.value_or(
+        std::array<float, 4>{1.0f, 1.0f, 1.0f, 1.0f});
+  }
+
+  float metallicFactorValue() { return metallicFactor.value_or(1.0f); }
+
+  float roughnessFactorValue() { return roughnessFactor.value_or(1.0f); }
 };
 
 class GLTFMaterialNormalTextureInfo {
@@ -305,6 +318,8 @@ public:
   uint32_t index;
   std::optional<uint32_t> texCoord;
   std::optional<float> scale;
+
+  float scaleValue() { return scale.value_or(1.0f); }
 };
 
 class GLTFMaterialOcclusionTextureInfo {
@@ -312,6 +327,8 @@ public:
   uint32_t index;
   std::optional<uint32_t> texCoord;
   std::optional<float> strength;
+
+  float strengthValue() { return strength.value_or(1.0f); }
 };
 
 class GLTFMaterial {
@@ -339,6 +356,16 @@ public:
   std::optional<AlphaMode> alphaMode;
   std::optional<float> alphaCutoff;
   std::optional<bool> doubleSided;
+
+  std::array<float, 3> emissiveFactorValue() {
+    return emissiveFactor.value_or(std::array<float, 3>{0.0f, 0.0f, 0.0f});
+  }
+
+  AlphaMode alphaModeValue() { return alphaMode.value_or(AlphaMode::OPAQUE); }
+
+  float alphaCutoffValue() { return alphaCutoff.value_or(0.5f); }
+
+  bool isDoubleSided() { return doubleSided.value_or(false); }
 };
 
 // Mesh
@@ -397,6 +424,8 @@ public:
   std::optional<uint32_t> material;
   std::optional<Mode> mode;
   std::optional<std::vector<GLTFMeshPrimitiveTarget>> targets;
+
+  Mode modeValue() const { return mode.value_or(Mode::TRIANGLES); }
 };
 
 class GLTFMesh {
@@ -420,6 +449,39 @@ public:
   std::optional<std::array<float, 3>> translation;
   std::optional<std::vector<float>> weights;
   std::optional<std::string> name;
+
+  std::array<float, 16> matrixValue() {
+    return matrix.value_or(std::array<float, 16>{
+        1.0f,
+        0.0f,
+        0.0f,
+        0.0f,
+        0.0f,
+        1.0f,
+        0.0f,
+        0.0f,
+        0.0f,
+        0.0f,
+        1.0f,
+        0.0f,
+        0.0f,
+        0.0f,
+        0.0f,
+        1.0f,
+    });
+  }
+
+  std::array<float, 4> rotationValue() {
+    return rotation.value_or(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f});
+  }
+
+  std::array<float, 3> scaleValue() {
+    return scale.value_or(std::array<float, 3>{1.0f, 1.0f, 1.0f});
+  }
+
+  std::array<float, 3> translationValue() {
+    return translation.value_or(std::array<float, 3>{0.0f, 0.0f, 0.0f});
+  }
 };
 
 // Sampler
@@ -491,6 +553,10 @@ public:
   std::optional<WrapMode> wrapS;
   std::optional<WrapMode> wrapT;
   std::optional<std::string> name;
+
+  WrapMode wrapSValue() { return wrapS.value_or(WrapMode::REPEAT); }
+
+  WrapMode wrapTValue() { return wrapT.value_or(WrapMode::REPEAT); }
 };
 
 // Scene

@@ -605,3 +605,139 @@ TEST(TestGLTFData, dataForAccessorWithByteStride) {
     EXPECT_EQ(floatArray[baseIndex + 2], (float)i + 2);
   }
 }
+
+TEST(TestGLTFData, meshPrimitive) {
+  // bufferViews[0]: vec3<float, 1>
+  // bufferViews[1]: vec3<float, 1>
+  // bufferViews[2]: vec2<float, 1>
+  // bufferViews[3]: uint16_t
+  std::vector<float> bufs = {// bufferViews[0]
+                             0.0f, -1.0f, 1.0f,
+                             // bufferViews[1]
+                             1.0f, 1.0f, 0.0f,
+                             // bufferViews[2]
+                             0.1f, 1.1f};
+  // bufferViews[3]
+  uint16_t b3 = 2;
+
+  std::vector<uint8_t> bin(sizeof(float) * 8 + sizeof(uint16_t));
+  std::memcpy(bin.data(), bufs.data(), sizeof(float) * 8);
+  std::memcpy(bin.data() + sizeof(float) * 8, &b3, sizeof(uint16_t));
+
+  auto rawJson = R"(
+    {
+      "asset": { "version": "1.0" },
+      "meshes": [
+        {
+          "primitives": [
+            {
+              "attributes": {
+                "POSITION": 0,
+                "NORMAL": 1,
+                "TEXCOORD_0": 2
+              },
+              "indices": 3,
+              "mode": 4
+            }
+          ]
+        }
+      ],
+      "accessors": [
+        {
+          "bufferView": 0,
+          "componentType": 5126,
+          "count": 1,
+          "type": "VEC3",
+          "max": [1.0, 1.0, 1.0],
+          "min": [-1.0, -1.0, -1.0]
+        },
+        {
+          "bufferView": 1,
+          "componentType": 5126,
+          "count": 1,
+          "type": "VEC3"
+        },
+        {
+          "bufferView": 2,
+          "componentType": 5126,
+          "count": 1,
+          "type": "VEC2"
+        },
+        {
+          "bufferView": 3,
+          "componentType": 5123,
+          "count": 1,
+          "type": "SCALAR"
+        }
+      ],
+      "bufferViews": [
+        {
+          "buffer": 0,
+          "byteOffset": 0,
+          "byteLength": 12
+        },
+        {
+          "buffer": 0,
+          "byteOffset": 12,
+          "byteLength": 12
+        },
+        {
+          "buffer": 0,
+          "byteOffset": 24,
+          "byteLength": 8
+        },
+        {
+          "buffer": 0,
+          "byteOffset": 32,
+          "byteLength": 2
+        }
+      ],
+      "buffers": [
+        {
+          "byteLength": 34
+        }
+      ]
+    }
+  )";
+  auto gltf = gltf2::GLTFData::parseJson(rawJson);
+  gltf.bin = bin;
+
+  auto meshPrimitive =
+      gltf.meshPrimitiveFromPrimitive(gltf.json.meshes->at(0).primitives.at(0));
+
+  // position
+  EXPECT_EQ(((float *)meshPrimitive.sources.position.data.data())[0], bufs[0]);
+  EXPECT_EQ(((float *)meshPrimitive.sources.position.data.data())[1], bufs[1]);
+  EXPECT_EQ(((float *)meshPrimitive.sources.position.data.data())[2], bufs[2]);
+  EXPECT_EQ(meshPrimitive.sources.position.vectorCount, 1);
+  EXPECT_EQ(meshPrimitive.sources.position.componentType,
+            GLTFAccessor::ComponentType::FLOAT);
+  EXPECT_EQ(meshPrimitive.sources.position.componentsPerVector, 3);
+
+  // normal
+  EXPECT_EQ(((float *)meshPrimitive.sources.normal.data.data())[0], bufs[3]);
+  EXPECT_EQ(((float *)meshPrimitive.sources.normal.data.data())[1], bufs[4]);
+  EXPECT_EQ(((float *)meshPrimitive.sources.normal.data.data())[2], bufs[5]);
+  EXPECT_EQ(meshPrimitive.sources.normal.vectorCount, 1);
+  EXPECT_EQ(meshPrimitive.sources.normal.componentType,
+            GLTFAccessor::ComponentType::FLOAT);
+  EXPECT_EQ(meshPrimitive.sources.normal.componentsPerVector, 3);
+
+  // texcoord
+  EXPECT_EQ(((float *)meshPrimitive.sources.texcoords[0].data.data())[0],
+            bufs[6]);
+  EXPECT_EQ(((float *)meshPrimitive.sources.texcoords[0].data.data())[1],
+            bufs[7]);
+  EXPECT_EQ(meshPrimitive.sources.texcoords[0].vectorCount, 1);
+  EXPECT_EQ(meshPrimitive.sources.texcoords[0].componentType,
+            GLTFAccessor::ComponentType::FLOAT);
+  EXPECT_EQ(meshPrimitive.sources.texcoords[0].componentsPerVector, 2);
+
+  // indices
+  EXPECT_EQ(((uint16_t *)meshPrimitive.element->data.data())[0], b3);
+  EXPECT_EQ(meshPrimitive.element->primitiveMode,
+            GLTFMeshPrimitive::Mode::TRIANGLES);
+  EXPECT_EQ(meshPrimitive.element->componentType,
+            GLTFAccessor::ComponentType::UNSIGNED_SHORT);
+  EXPECT_EQ(meshPrimitive.element->primitiveCount, 1);
+}

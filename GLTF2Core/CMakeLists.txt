@@ -1,23 +1,3 @@
-FetchContent_Declare(
-    json
-    URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
-)
-FetchContent_MakeAvailable(json)
-
-FetchContent_Declare(
-    cppcodec
-    GIT_URL https://github.com/tplgy/cppcodec.git
-    GIT_TAG 302dc28
-)
-FetchContent_MakeAvailable(cppcodec)
-
-set(BOOST_INCLUDE_LIBRARIES url)
-FetchContent_Declare(
-    Boost
-    URL https://github.com/boostorg/boost/releases/download/boost-1.85.0/boost-1.85.0-cmake.tar.xz
-)
-FetchContent_MakeAvailable(Boost)
-
 set(LIB_NAME GLTF2Core)
 add_library(${LIB_NAME} SHARED)
 

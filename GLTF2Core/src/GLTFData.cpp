@@ -234,6 +234,10 @@ Data GLTFData::dataForAccessor(const GLTFAccessor &accessor,
   return data;
 }
 
+Data GLTFData::dataForAccessor(uint32_t index, bool *normalized) const {
+  return dataForAccessor(json.accessors->at(index), normalized);
+}
+
 std::vector<uint32_t>
 GLTFData::indicesForAccessorSparse(const GLTFAccessorSparse &sparse) const {
   Data indicesData =
@@ -311,6 +315,98 @@ Data GLTFData::normalizeData(const Data &data,
   Data res(length);
   std::memcpy(res.data(), values.data(), length);
   return res;
+}
+
+MeshPrimitive
+GLTFData::meshPrimitiveFromPrimitive(const GLTFMeshPrimitive &primitive) const {
+  MeshPrimitive meshPrimitive;
+  if (primitive.attributes.position) {
+    meshPrimitive.sources.position =
+        meshPrimitiveSourceFromAccessor(*primitive.attributes.position);
+  }
+  if (primitive.attributes.normal) {
+    meshPrimitive.sources.normal =
+        meshPrimitiveSourceFromAccessor(*primitive.attributes.normal);
+  }
+  if (primitive.attributes.tangent) {
+    meshPrimitive.sources.tangent =
+        meshPrimitiveSourceFromAccessor(*primitive.attributes.tangent);
+  }
+  if (primitive.attributes.texcoords) {
+    for (auto index : *primitive.attributes.texcoords) {
+      meshPrimitive.sources.texcoords.push_back(
+          meshPrimitiveSourceFromAccessor(index));
+    }
+  }
+  if (primitive.attributes.colors) {
+    for (auto index : *primitive.attributes.colors) {
+      meshPrimitive.sources.colors.push_back(
+          meshPrimitiveSourceFromAccessor(index));
+    }
+  }
+  if (primitive.attributes.joints) {
+    for (auto index : *primitive.attributes.joints) {
+      meshPrimitive.sources.joints.push_back(
+          meshPrimitiveSourceFromAccessor(index));
+    }
+  }
+  if (primitive.attributes.weights) {
+    for (auto index : *primitive.attributes.weights) {
+      meshPrimitive.sources.weights.push_back(
+          meshPrimitiveSourceFromAccessor(index));
+    }
+  }
+
+  if (primitive.indices) {
+    MeshPrimitiveElement element;
+    auto &accessor = json.accessors->at(*primitive.indices);
+    element.data = dataForAccessor(accessor, nullptr);
+    element.primitiveMode = primitive.modeValue();
+    element.primitiveCount = accessor.count;
+    element.componentType = accessor.componentType;
+    meshPrimitive.element = element;
+  }
+
+  return meshPrimitive;
+}
+
+MeshPrimitiveSource
+GLTFData::meshPrimitiveSourceFromAccessor(const GLTFAccessor &accessor) const {
+  MeshPrimitiveSource source;
+
+  bool normalized = false;
+  auto data = dataForAccessor(accessor, &normalized);
+  bool isFloat = accessor.componentType == GLTFAccessor::ComponentType::FLOAT ||
+                 normalized;
+  GLTFAccessor::ComponentType componentType =
+      isFloat ? GLTFAccessor::ComponentType::FLOAT : accessor.componentType;
+
+  source.data = data;
+  source.vectorCount = accessor.count;
+  source.componentsPerVector =
+      GLTFAccessor::componentsCountOfType(accessor.type);
+  source.componentType = componentType;
+  return source;
+}
+
+MeshPrimitiveSource
+GLTFData::meshPrimitiveSourceFromAccessor(uint32_t index) const {
+  return meshPrimitiveSourceFromAccessor(json.accessors->at(index));
+}
+
+MeshPrimitiveSources GLTFData::meshPrimitiveSourcesFromTarget(
+    const GLTFMeshPrimitiveTarget &target) const {
+  MeshPrimitiveSources sources;
+  if (target.position) {
+    sources.position = meshPrimitiveSourceFromAccessor(*target.position);
+  }
+  if (target.normal) {
+    sources.normal = meshPrimitiveSourceFromAccessor(*target.normal);
+  }
+  if (target.tangent) {
+    sources.tangent = meshPrimitiveSourceFromAccessor(*target.tangent);
+  }
+  return sources;
 }
 
 } // namespace gltf2

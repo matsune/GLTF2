@@ -9,6 +9,30 @@ option(BUILD_EXAMPLE "Build example" OFF)
 
 include(FetchContent)
 
+FetchContent_Declare(
+    json
+    URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
+)
+FetchContent_MakeAvailable(json)
+
+FetchContent_Declare(
+    cppcodec
+    GIT_REPOSITORY https://github.com/tplgy/cppcodec.git
+    GIT_TAG 302dc28
+)
+FetchContent_GetProperties(cppcodec)
+
+if(NOT cppcodec_POPULATED)
+    FetchContent_Populate(cppcodec)
+endif()
+
+set(BOOST_INCLUDE_LIBRARIES url)
+FetchContent_Declare(
+    Boost
+    URL https://github.com/boostorg/boost/releases/download/boost-1.85.0/boost-1.85.0-cmake.tar.xz
+)
+FetchContent_MakeAvailable(Boost)
+
 set(CONFIG_H ${CMAKE_BINARY_DIR}/config.h)
 configure_file(config.h.in ${CONFIG_H})
 

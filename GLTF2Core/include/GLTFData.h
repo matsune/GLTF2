@@ -88,10 +88,9 @@ public:
   MeshPrimitiveSource meshPrimitiveSourceFromAccessor(uint32_t index) const;
   MeshPrimitiveSources
   meshPrimitiveSourcesFromTarget(const GLTFMeshPrimitiveTarget &target) const;
-#if DRACO_SUPPORT
   MeshPrimitive meshPrimitiveFromDracoExtension(
       const GLTFMeshPrimitiveDracoExtension &extension) const;
-#endif
+
 private:
   Data dataOfUri(const std::string &uri) const;
 };

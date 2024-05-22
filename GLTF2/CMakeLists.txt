@@ -15,19 +15,10 @@ target_include_directories(${LIB_NAME} PUBLIC
     $<INSTALL_INTERFACE:include/${LIB_NAME}>
 )
 
-if(draco_FOUND)
-    target_compile_definitions(${LIB_NAME} PUBLIC DRACO_SUPPORT)
-    target_include_directories(${LIB_NAME} PRIVATE "${draco_DIR}" "${draco_DIR}/../src")
-endif()
-
 find_library(COCOA_LIBRARY Cocoa)
 find_library(FOUNDATION_LIBRARY Foundation)
 
 target_link_libraries(${LIB_NAME} GLTF2Core ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY})
-
-if(draco_FOUND)
-    target_link_libraries(${LIB_NAME} draco::draco)
-endif()
 
 set_target_properties(${LIB_NAME} PROPERTIES
     VERSION 1.0

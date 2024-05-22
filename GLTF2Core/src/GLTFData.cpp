@@ -2,17 +2,15 @@
 #include "GLTFException.h"
 #include "GLTFExtension.h"
 #include "GLTFJsonDecoder.h"
-#include <boost/url.hpp>
-#include <cppcodec/base64_rfc4648.hpp>
+#include "boost/url.hpp"
+#include "cppcodec/base64_rfc4648.hpp"
+#include "draco/compression/decode.h"
+#include "draco/core/decoder_buffer.h"
+#include "nlohmann/json.hpp"
 #include <fstream>
 #include <iostream>
-#include <nlohmann/json.hpp>
 #include <sstream>
 #include <string>
-#if DRACO_SUPPORT
-#include "draco/compression/decode.h"
-#include <draco/core/decoder_buffer.h>
-#endif
 
 namespace gltf2 {
 
@@ -125,9 +123,7 @@ GLTFData GLTFData::parseStream(std::istream &fs,
 
 std::vector<std::string> GLTFData::supportedExtensions() {
   std::vector<std::string> list = {};
-#if DRACO_SUPPORT
   list.push_back(GLTFExtensionKHRDracoMeshCompression);
-#endif
   return list;
 }
 
@@ -259,21 +255,20 @@ GLTFData::indicesForAccessorSparse(const GLTFAccessorSparse &sparse) const {
   uint8_t *ptr = indicesData.data();
   for (int i = 0; i < sparse.count; i++) {
     switch (sparse.indices.componentType) {
-    case GLTFAccessorSparseIndices::ComponentType::UNSIGNED_BYTE: {
+    case GLTFAccessorSparseIndices::ComponentType::UNSIGNED_BYTE:
       data.push_back(*ptr);
       ptr += sizeof(uint8_t);
       break;
-    }
-    case GLTFAccessorSparseIndices::ComponentType::UNSIGNED_SHORT: {
+
+    case GLTFAccessorSparseIndices::ComponentType::UNSIGNED_SHORT:
       data.push_back(*reinterpret_cast<uint16_t *>(ptr));
       ptr += sizeof(uint16_t);
       break;
-    }
-    case GLTFAccessorSparseIndices::ComponentType::UNSIGNED_INT: {
+
+    case GLTFAccessorSparseIndices::ComponentType::UNSIGNED_INT:
       data.push_back(*reinterpret_cast<uint32_t *>(ptr));
       ptr += sizeof(uint32_t);
       break;
-    }
     }
   }
   return data;
@@ -332,11 +327,9 @@ Data GLTFData::normalizeData(const Data &data,
 
 MeshPrimitive
 GLTFData::meshPrimitiveFromPrimitive(const GLTFMeshPrimitive &primitive) const {
-#if DRACO_SUPPORT
   if (primitive.dracoExtension) {
     return meshPrimitiveFromDracoExtension(*primitive.dracoExtension);
   }
-#endif
   MeshPrimitive meshPrimitive;
   if (primitive.attributes.position) {
     meshPrimitive.sources.position =
@@ -427,7 +420,6 @@ MeshPrimitiveSources GLTFData::meshPrimitiveSourcesFromTarget(
   return sources;
 }
 
-#if DRACO_SUPPORT
 static std::unique_ptr<draco::Mesh> decodeDracoMesh(const Data &data) {
   draco::DecoderBuffer buffer;
   buffer.Init((const char *)data.data(), data.size());
@@ -525,6 +517,5 @@ MeshPrimitive GLTFData::meshPrimitiveFromDracoExtension(
   primitive.element = element;
   return primitive;
 }
-#endif
 
 } // namespace gltf2

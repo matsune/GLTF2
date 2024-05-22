@@ -8,18 +8,9 @@ target_include_directories(${LIB_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include/${LIB_NAME}>
 )
-target_include_directories(${LIB_NAME} PRIVATE ${json_SOURCE_DIR}/include ${cppcodec_SOURCE_DIR})
+target_include_directories(${LIB_NAME} PRIVATE ${json_SOURCE_DIR}/include ${cppcodec_SOURCE_DIR} ${CMAKE_BINARY_DIR} ${draco_SOURCE_DIR}/src)
 
-if(draco_FOUND)
-    target_compile_definitions(${LIB_NAME} PUBLIC DRACO_SUPPORT)
-    target_include_directories(${LIB_NAME} PRIVATE "${draco_DIR}" "${draco_DIR}/../src")
-endif()
-
-target_link_libraries(${LIB_NAME} PUBLIC ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY} PRIVATE Boost::url)
-
-if(draco_FOUND)
-    target_link_libraries(${LIB_NAME} PRIVATE draco::draco)
-endif()
+target_link_libraries(${LIB_NAME} PUBLIC ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY} PRIVATE Boost::url draco::draco)
 
 set(PUBLIC_HEADER include/GLTF2Core.h include/GLTFJson.h include/GLTFData.h)
 set_target_properties(${LIB_NAME} PROPERTIES

@@ -1,5 +1,6 @@
 #include "GLTF2Core.h"
 #include "config.h"
+#include <cppcodec/base64_rfc4648.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
 
@@ -424,6 +425,7 @@ TEST(TestGLTFData, dataForBufferView) {
 
 TEST(TestGLTFData, dataForAccessor) {
   // vec2<uint8_t> { 'a', 'b' }
+  auto encoded = cppcodec::base64_rfc4648::encode({'a', 'b'});
   auto rawJson = R"(
     {
       "asset": { "version": "1.0" },
@@ -446,7 +448,8 @@ TEST(TestGLTFData, dataForAccessor) {
       "buffers": [
         {
           "byteLength": 2,
-          "uri": "data:base64,YWI="
+          "uri": "data:base64,)" +
+                 encoded + R"("
         }
       ]
     }
@@ -501,8 +504,8 @@ TEST(TestGLTFData, dataForAccessorWithNormalized) {
 
 TEST(TestGLTFData, dataForAccessorWithSparse) {
   // buffer data: uint8_t[3] {0x00, 0x00, 0x20}
-  // base64: AAAg
   // indices: 0, values: 0x20
+  auto encoded = cppcodec::base64_rfc4648::encode({0x00, 0x00, 0x20});
   auto rawJson = R"(
     {
       "asset": { "version": "1.0" },
@@ -537,7 +540,8 @@ TEST(TestGLTFData, dataForAccessorWithSparse) {
       "buffers": [
         {
           "byteLength": 3,
-          "uri": "data:base64,AAAg"
+          "uri": "data:base64,)" +
+                 encoded + R"("
         }
       ]
     }
@@ -548,4 +552,56 @@ TEST(TestGLTFData, dataForAccessorWithSparse) {
   EXPECT_FALSE(normalized);
   EXPECT_EQ(data.size(), 1);
   EXPECT_EQ(data[0], 0x20);
+}
+
+TEST(TestGLTFData, dataForAccessorWithByteStride) {
+  // stride is 16 but each data is vec3<float>
+  float bufferData[10 * 4 * 4] = {0};
+  for (int i = 0; i < 10; ++i) {
+    bufferData[i * 4] = (float)i;
+    bufferData[i * 4 + 1] = (float)i + 1;
+    bufferData[i * 4 + 2] = (float)i + 2;
+  }
+  auto encoded = cppcodec::base64_rfc4648::encode(bufferData);
+  auto rawJson = R"(
+    {
+      "asset": { "version": "1.0" },
+      "accessors": [
+        {
+          "bufferView": 0,
+          "byteOffset": 0,
+          "componentType": 5126,
+          "count": 10,
+          "type": "VEC3"
+        }
+      ],
+      "bufferViews": [
+        {
+          "buffer": 0,
+          "byteOffset": 0,
+          "byteLength": 156,
+          "byteStride": 16
+        }
+      ],
+      "buffers": [
+        {
+          "byteLength": 160,
+          "uri": "data:base64,)" +
+                 encoded + R"("
+        }
+      ]
+    }
+  )";
+  auto gltf = gltf2::GLTFData::parseJson(rawJson);
+  bool normalized = false;
+  auto data = gltf.dataForAccessor(gltf.json.accessors->at(0), &normalized);
+  EXPECT_FALSE(normalized);
+  EXPECT_EQ(data.size(), 4 * 3 * 10);
+  float *floatArray = (float *)data.data();
+  for (int i = 0; i < 10; ++i) {
+    int baseIndex = i * 3;
+    EXPECT_EQ(floatArray[baseIndex], (float)i);
+    EXPECT_EQ(floatArray[baseIndex + 1], (float)i + 1);
+    EXPECT_EQ(floatArray[baseIndex + 2], (float)i + 2);
+  }
 }

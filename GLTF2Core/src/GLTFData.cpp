@@ -1,8 +1,8 @@
 #include "GLTFData.h"
 #include "GLTFException.h"
 #include "GLTFJsonDecoder.h"
-#include <boost/beast/core/detail/base64.hpp>
 #include <boost/url.hpp>
+#include <cppcodec/base64_rfc4648.hpp>
 #include <fstream>
 #include <iostream>
 #include <nlohmann/json.hpp>
@@ -85,7 +85,7 @@ GLTFData GLTFData::parseStream(std::istream &fs,
     auto data = nlohmann::json::parse(jsonBuf);
     auto json = GLTFJsonDecoder::decode(data);
 
-    std::optional<std::vector<uint8_t>> bin;
+    std::optional<Data> bin;
     if (!fs.eof()) {
       // binary buffer
       GLBChunkHead chunkHead1;
@@ -96,7 +96,7 @@ GLTFData GLTFData::parseStream(std::istream &fs,
       if (chunkHead1.type != GLBChunkTypeBIN) {
         throw InputException("Chunk type is not BIN");
       }
-      std::vector<uint8_t> binBuf(chunkHead1.length);
+      Data binBuf(chunkHead1.length);
       fs.read(reinterpret_cast<char *>(binBuf.data()), binBuf.size());
       if (fs.gcount() != chunkHead1.length) {
         throw InputException("Failed to read bin data");
@@ -118,7 +118,7 @@ GLTFData GLTFData::parseStream(std::istream &fs,
   }
 }
 
-std::vector<uint8_t> GLTFData::dataOfUri(const std::string &uri) const {
+Data GLTFData::dataOfUri(const std::string &uri) const {
   // decode percent-encoding
   auto url = boost::url(uri);
   if (url.has_scheme()) {
@@ -126,13 +126,10 @@ std::vector<uint8_t> GLTFData::dataOfUri(const std::string &uri) const {
       // base64
       std::string urlStr(url.c_str());
       auto encoded = urlStr.substr(urlStr.find(',') + 1);
-      auto size = boost::beast::detail::base64::decoded_size(encoded.size());
-      std::vector<uint8_t> buf(size);
-      auto res = boost::beast::detail::base64::decode(buf.data(),
-                                                      encoded.c_str(), size);
-      buf.resize(res.first);
+      return cppcodec::base64_rfc4648::decode(encoded);
     } else {
       // unsupported scheme
+      return {};
     }
   } else if (url.is_path_absolute()) {
     // absolute path
@@ -148,10 +145,9 @@ std::vector<uint8_t> GLTFData::dataOfUri(const std::string &uri) const {
     return {std::istreambuf_iterator<char>(file),
             std::istreambuf_iterator<char>()};
   }
-  return {};
 }
 
-std::vector<uint8_t> GLTFData::dataForBuffer(const GLTFBuffer &buffer) const {
+Data GLTFData::dataForBuffer(const GLTFBuffer &buffer) const {
   if (buffer.uri) {
     return dataOfUri(*buffer.uri);
   } else {
@@ -159,12 +155,162 @@ std::vector<uint8_t> GLTFData::dataForBuffer(const GLTFBuffer &buffer) const {
   }
 }
 
-std::vector<uint8_t>
-GLTFData::dataForBufferView(const GLTFBufferView &bufferView,
-                            uint32_t offset) const {
+Data GLTFData::dataForBufferView(uint32_t index, uint32_t offset) const {
+  return dataForBufferView(json.bufferViews->at(index), offset);
+}
+
+Data GLTFData::dataForBufferView(const GLTFBufferView &bufferView,
+                                 uint32_t offset) const {
   auto data = dataForBuffer(json.buffers->at(bufferView.buffer));
   auto loc = data.begin() + bufferView.byteOffset.value_or(0) + offset;
-  return std::vector<uint8_t>(loc, loc + bufferView.byteLength);
+  return Data(loc, loc + bufferView.byteLength);
+}
+
+Data GLTFData::dataForBufferView(uint32_t index,
+                                 std::optional<uint32_t> offset) const {
+  return dataForBufferView(index, offset.value_or(0));
+}
+
+Data GLTFData::dataForBuffer(uint32_t index) const {
+  return dataForBuffer(json.buffers->at(index));
+}
+
+Data GLTFData::dataForAccessor(const GLTFAccessor &accessor,
+                               bool *normalized) const {
+  auto compTypeSize = GLTFAccessor::sizeOfComponentType(accessor.componentType);
+  auto compCount = GLTFAccessor::componentsCountOfType(accessor.type);
+  auto typeSize = compTypeSize * compCount;
+  auto length = typeSize * accessor.count;
+  Data data(length);
+
+  // fill data
+  if (accessor.bufferView) {
+    const GLTFBufferView &bufferView =
+        json.bufferViews->at(*accessor.bufferView);
+    auto bufData = dataForBufferView(bufferView);
+    const char *dstBase = (const char *)data.data();
+    const char *srcBase =
+        (const char *)bufData.data() + accessor.byteOffset.value_or(0);
+    auto byteStride = bufferView.byteStride.value_or(typeSize);
+    if (byteStride != typeSize) {
+      // copy with byteStride
+      for (int i = 0; i < accessor.count; i++) {
+        const char *dst = dstBase + i * typeSize;
+        const char *src = srcBase + i * byteStride;
+        std::memcpy((void *)dst, src, typeSize);
+      }
+    } else {
+      // copy all
+      std::memcpy((void *)dstBase, srcBase, length);
+    }
+  }
+
+  // sparse
+  if (accessor.sparse) {
+    auto sparse = *accessor.sparse;
+    auto indices = indicesForAccessorSparse(sparse);
+    auto valuesData =
+        dataForBufferView(sparse.values.bufferView, sparse.values.byteOffset);
+    const char *dstBase = (const char *)data.data();
+    const char *srcBase = (const char *)valuesData.data();
+    for (int i = 0; i < sparse.count; i++) {
+      auto index = indices[i];
+      const char *dst = dstBase + typeSize * index;
+      const char *src = srcBase + typeSize * i;
+      std::memcpy((void *)dst, src, typeSize);
+    }
+  }
+
+  // normalize
+  if (accessor.normalized.value_or(false) &&
+      accessor.componentType != GLTFAccessor::ComponentType::FLOAT &&
+      accessor.componentType != GLTFAccessor::ComponentType::UNSIGNED_INT) {
+    auto normalizedData = normalizeData(data, accessor);
+    if (normalized)
+      *normalized = true;
+    return normalizedData;
+  }
+
+  return data;
+}
+
+std::vector<uint32_t>
+GLTFData::indicesForAccessorSparse(const GLTFAccessorSparse &sparse) const {
+  Data indicesData =
+      dataForBufferView(sparse.indices.bufferView, sparse.indices.byteOffset);
+  std::vector<uint32_t> data(sparse.count);
+  uint8_t *ptr = indicesData.data();
+  for (int i = 0; i < sparse.count; i++) {
+    switch (sparse.indices.componentType) {
+    case GLTFAccessorSparseIndices::ComponentType::UNSIGNED_BYTE: {
+      data.push_back(*ptr);
+      ptr += sizeof(uint8_t);
+      break;
+    }
+    case GLTFAccessorSparseIndices::ComponentType::UNSIGNED_SHORT: {
+      data.push_back(*reinterpret_cast<uint16_t *>(ptr));
+      ptr += sizeof(uint16_t);
+      break;
+    }
+    case GLTFAccessorSparseIndices::ComponentType::UNSIGNED_INT: {
+      data.push_back(*reinterpret_cast<uint32_t *>(ptr));
+      ptr += sizeof(uint32_t);
+      break;
+    }
+    }
+  }
+  return data;
+}
+
+static float normalizeValue(const void *bytes, int index,
+                            GLTFAccessor::ComponentType compType) {
+  switch (compType) {
+  case GLTFAccessor::ComponentType::BYTE: {
+    int8_t value = *((int8_t *)bytes + index);
+    float f = (float)value;
+    return f > 0 ? f / (float)INT8_MAX : f / (float)INT8_MIN;
+  }
+  case GLTFAccessor::ComponentType::UNSIGNED_BYTE: {
+    uint8_t value = *((uint8_t *)bytes + index);
+    float f = (float)value;
+    return f / (float)UINT8_MAX;
+  }
+  case GLTFAccessor::ComponentType::SHORT: {
+    int16_t value = *((int16_t *)bytes + index);
+    float f = (float)value;
+    return f > 0 ? f / (float)INT16_MAX : f / (float)INT16_MIN;
+  }
+  case GLTFAccessor::ComponentType::UNSIGNED_SHORT: {
+    uint16_t value = *((uint16_t *)bytes + index);
+    float f = (float)value;
+    return f / (float)UINT16_MAX;
+  }
+  case GLTFAccessor::ComponentType::UNSIGNED_INT: {
+    uint32_t value = *((uint32_t *)bytes + index);
+    float f = (float)value;
+    return f / (float)UINT32_MAX;
+  }
+  case GLTFAccessor::ComponentType::FLOAT: {
+    return *((float *)bytes + index);
+  }
+  }
+}
+
+Data GLTFData::normalizeData(const Data &data,
+                             const GLTFAccessor &accessor) const {
+  auto compCount = GLTFAccessor::componentsCountOfType(accessor.type);
+  auto length = sizeof(float) * compCount * accessor.count;
+  std::vector<float> values(compCount * accessor.count);
+  for (int i = 0; i < accessor.count; i++) {
+    for (int j = 0; j < compCount; j++) {
+      int index = i * compCount + j;
+      float value = normalizeValue(data.data(), index, accessor.componentType);
+      values[index] = value;
+    }
+  }
+  Data res(length);
+  std::memcpy(res.data(), values.data(), length);
+  return res;
 }
 
 } // namespace gltf2

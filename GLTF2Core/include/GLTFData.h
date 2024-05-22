@@ -9,6 +9,8 @@
 
 namespace gltf2 {
 
+using Data = std::vector<uint8_t>;
+
 class GLTFData {
 public:
   static GLTFData
@@ -24,17 +26,26 @@ public:
   GLTFData() = delete;
   GLTFData(GLTFJson json,
            std::optional<std::filesystem::path> path = std::nullopt,
-           std::optional<std::vector<uint8_t>> bin = std::nullopt)
+           std::optional<Data> bin = std::nullopt)
       : json(json), path(path), bin(bin){};
 
   GLTFJson json;
   std::optional<std::filesystem::path> path;
-  std::optional<std::vector<uint8_t>> bin;
+  std::optional<Data> bin;
 
-  std::vector<uint8_t> dataForBufferView(const GLTFBufferView &bufferView,
-                                         uint32_t offset = 0) const;
-  std::vector<uint8_t> dataForBuffer(const GLTFBuffer &buffer) const;
-  std::vector<uint8_t> dataOfUri(const std::string &uri) const;
+  Data dataForBufferView(const GLTFBufferView &bufferView,
+                         uint32_t offset = 0) const;
+  Data dataForBufferView(uint32_t index, uint32_t offset = 0) const;
+  Data dataForBufferView(uint32_t index, std::optional<uint32_t> offset) const;
+  Data dataForBuffer(const GLTFBuffer &buffer) const;
+  Data dataForBuffer(uint32_t index) const;
+  Data dataForAccessor(const GLTFAccessor &accessor, bool *normalized) const;
+  std::vector<uint32_t>
+  indicesForAccessorSparse(const GLTFAccessorSparse &sparse) const;
+  Data normalizeData(const Data &data, const GLTFAccessor &accessor) const;
+
+private:
+  Data dataOfUri(const std::string &uri) const;
 };
 
 } // namespace gltf2

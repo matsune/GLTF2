@@ -62,6 +62,39 @@ public:
 
   enum class Type { SCALAR, VEC2, VEC3, VEC4, MAT2, MAT3, MAT4 };
 
+  static uint sizeOfComponentType(ComponentType type) {
+    switch (type) {
+    case ComponentType::BYTE:
+    case ComponentType::UNSIGNED_BYTE:
+      return 1;
+    case ComponentType::SHORT:
+    case ComponentType::UNSIGNED_SHORT:
+      return 2;
+    case ComponentType::UNSIGNED_INT:
+    case ComponentType::FLOAT:
+      return 4;
+    }
+  }
+
+  static uint componentsCountOfType(Type type) {
+    switch (type) {
+    case Type::SCALAR:
+      return 1;
+    case Type::VEC2:
+      return 2;
+    case Type::VEC3:
+      return 3;
+    case Type::VEC4:
+      return 4;
+    case Type::MAT2:
+      return 4;
+    case Type::MAT3:
+      return 9;
+    case Type::MAT4:
+      return 16;
+    }
+  }
+
   static std::optional<ComponentType> ComponentTypeFromInt(uint32_t value) {
     switch (value) {
     case 5120:

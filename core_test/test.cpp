@@ -5,22 +5,6 @@
 
 using namespace gltf2;
 
-TEST(TestGLTFData, parseGLTF) {
-  std::filesystem::path root(PROJECT_SOURCE_DIR);
-  auto path = root / "sample-models/a/a.gltf";
-  auto data = gltf2::GLTFData::parseFile(path);
-  auto buf = data.dataForBufferView(data.json.bufferViews->at(0));
-  EXPECT_EQ(buf, std::vector<uint8_t>({0, 1, 2, 3}));
-
-  buf = data.dataForBufferView(data.json.bufferViews->at(1));
-  EXPECT_EQ(buf, std::vector<uint8_t>({4, 5, 6, 7, 8, 9}));
-  
-  // absolute path
-  data.json.buffers->at(0).uri = root / "sample-models/a/a.bin";
-  buf = data.dataForBufferView(data.json.bufferViews->at(0));
-  EXPECT_EQ(buf, std::vector<uint8_t>({0, 1, 2, 3}));
-}
-
 TEST(TestGLTFData, parseJson) {
   auto rawJson = R"(
     {
@@ -420,4 +404,148 @@ TEST(TestGLTFData, parseJson) {
   EXPECT_EQ(data.json.skins.value()[0].joints.size(), 3);
   EXPECT_EQ(data.json.skins.value()[0].joints[0], 0);
   EXPECT_EQ(data.json.skins.value()[0].name, "Skin1");
+}
+
+TEST(TestGLTFData, dataForBufferView) {
+  std::filesystem::path root(PROJECT_SOURCE_DIR);
+  auto path = root / "sample-models/a/a.gltf";
+  auto data = gltf2::GLTFData::parseFile(path);
+  auto buf = data.dataForBufferView(0);
+  EXPECT_EQ(buf, std::vector<uint8_t>({0, 1, 2, 3}));
+
+  buf = data.dataForBufferView(1);
+  EXPECT_EQ(buf, std::vector<uint8_t>({4, 5, 6, 7, 8, 9}));
+
+  // absolute path
+  data.json.buffers->at(0).uri = root / "sample-models/a/a.bin";
+  buf = data.dataForBufferView(0);
+  EXPECT_EQ(buf, std::vector<uint8_t>({0, 1, 2, 3}));
+}
+
+TEST(TestGLTFData, dataForAccessor) {
+  // vec2<uint8_t> { 'a', 'b' }
+  auto rawJson = R"(
+    {
+      "asset": { "version": "1.0" },
+      "accessors": [
+        {
+          "bufferView": 0,
+          "byteOffset": 0,
+          "componentType": 5121,
+          "count": 1,
+          "type": "VEC2"
+        }
+      ],
+      "bufferViews": [
+        {
+          "buffer": 0,
+          "byteOffset": 0,
+          "byteLength": 2
+        }
+      ],
+      "buffers": [
+        {
+          "byteLength": 2,
+          "uri": "data:base64,YWI="
+        }
+      ]
+    }
+  )";
+  auto gltf = gltf2::GLTFData::parseJson(rawJson);
+  bool normalized = false;
+  auto data = gltf.dataForAccessor(gltf.json.accessors->at(0), &normalized);
+  EXPECT_FALSE(normalized);
+  EXPECT_EQ(data.size(), 2);
+  EXPECT_EQ(data[0], 'a');
+  EXPECT_EQ(data[1], 'b');
+}
+
+TEST(TestGLTFData, dataForAccessorWithNormalized) {
+  // vec2<uint8_t> { 'a', 'b' }
+  auto rawJson = R"(
+    {
+      "asset": { "version": "1.0" },
+      "accessors": [
+        {
+          "bufferView": 0,
+          "byteOffset": 0,
+          "componentType": 5121,
+          "count": 1,
+          "type": "VEC2",
+          "normalized": true
+        }
+      ],
+      "bufferViews": [
+        {
+          "buffer": 0,
+          "byteOffset": 0,
+          "byteLength": 2
+        }
+      ],
+      "buffers": [
+        {
+          "byteLength": 2,
+          "uri": "data:base64,YWI="
+        }
+      ]
+    }
+  )";
+  auto gltf = gltf2::GLTFData::parseJson(rawJson);
+  bool normalized = false;
+  auto data = gltf.dataForAccessor(gltf.json.accessors->at(0), &normalized);
+  EXPECT_TRUE(normalized);
+  EXPECT_EQ(data.size(), sizeof(float) * 2);
+  EXPECT_EQ(((float *)data.data())[0], (float)'a' / (float)UINT8_MAX);
+  EXPECT_EQ(((float *)data.data())[1], (float)'b' / (float)UINT8_MAX);
+}
+
+TEST(TestGLTFData, dataForAccessorWithSparse) {
+  // buffer data: uint8_t[3] {0x00, 0x00, 0x20}
+  // base64: AAAg
+  // indices: 0, values: 0x20
+  auto rawJson = R"(
+    {
+      "asset": { "version": "1.0" },
+      "accessors": [
+        {
+          "bufferView": 0,
+          "byteOffset": 0,
+          "componentType": 5121,
+          "count": 1,
+          "type": "SCALAR",
+          "sparse": {
+            "count": 1,
+            "indices": {
+              "bufferView": 0,
+              "byteOffset": 0,
+              "componentType": 5123
+            },
+            "values": {
+              "bufferView": 0,
+              "byteOffset": 2
+            }
+          }
+        }
+      ],
+      "bufferViews": [
+        {
+          "buffer": 0,
+          "byteOffset": 0,
+          "byteLength": 3
+        }
+      ],
+      "buffers": [
+        {
+          "byteLength": 3,
+          "uri": "data:base64,AAAg"
+        }
+      ]
+    }
+  )";
+  auto gltf = gltf2::GLTFData::parseJson(rawJson);
+  bool normalized = false;
+  auto data = gltf.dataForAccessor(gltf.json.accessors->at(0), &normalized);
+  EXPECT_FALSE(normalized);
+  EXPECT_EQ(data.size(), 1);
+  EXPECT_EQ(data[0], 0x20);
 }

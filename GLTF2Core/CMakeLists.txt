@@ -4,7 +4,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(json)
 
-set(BOOST_INCLUDE_LIBRARIES beast url)
+FetchContent_Declare(
+    cppcodec
+    GIT_URL https://github.com/tplgy/cppcodec.git
+    GIT_TAG 302dc28
+)
+FetchContent_MakeAvailable(cppcodec)
+
+set(BOOST_INCLUDE_LIBRARIES url)
 FetchContent_Declare(
     Boost
     URL https://github.com/boostorg/boost/releases/download/boost-1.85.0/boost-1.85.0-cmake.tar.xz
@@ -21,14 +28,14 @@ target_include_directories(${LIB_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include/${LIB_NAME}>
 )
-target_include_directories(${LIB_NAME} PRIVATE ${json_SOURCE_DIR}/include)
+target_include_directories(${LIB_NAME} PRIVATE ${json_SOURCE_DIR}/include ${cppcodec_SOURCE_DIR})
 
 if(draco_FOUND)
     target_compile_definitions(${LIB_NAME} PUBLIC DRACO_SUPPORT)
     target_include_directories(${LIB_NAME} PRIVATE "${draco_DIR}" "${draco_DIR}/../src")
 endif()
 
-target_link_libraries(${LIB_NAME} PUBLIC ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY} PRIVATE Boost::url Boost::beast)
+target_link_libraries(${LIB_NAME} PUBLIC ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY} PRIVATE Boost::url)
 
 if(draco_FOUND)
     target_link_libraries(${LIB_NAME} PRIVATE draco::draco)

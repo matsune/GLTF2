@@ -1,17 +1,16 @@
-set(LIB_NAME GLTF2SceneKit)
-add_library(${LIB_NAME} SHARED)
+set(TARGET_NAME GLTF2SceneKit)
+add_library(${TARGET_NAME} SHARED)
+
 if(BUILD_FRAMEWORK)
-    set_target_properties(${LIB_NAME} PROPERTIES
-        FRAMEWORK TRUE
-    )
+    set_target_properties(${TARGET_NAME} PROPERTIES FRAMEWORK TRUE)
 endif()
 
 file(GLOB HEADERS "include/*.h")
 file(GLOB SOURCES "src/*.m" "src/*.mm")
-target_sources(${LIB_NAME} PRIVATE ${HEADERS} ${SOURCES})
-target_include_directories(${LIB_NAME} PUBLIC  
+target_sources(${TARGET_NAME} PRIVATE ${HEADERS} ${SOURCES})
+target_include_directories(${TARGET_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include/${LIB_NAME}>
+    $<INSTALL_INTERFACE:include/${TARGET_NAME}>
 )
 
 find_library(COCOA_LIBRARY Cocoa)
@@ -19,9 +18,9 @@ find_library(FOUNDATION_LIBRARY Foundation)
 find_library(SCENEKIT_LIBRARY SceneKit)
 find_library(QUARTZCORE_LIBRARY QuartzCore)
 
-target_link_libraries(${LIB_NAME} GLTF2 ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY} ${SCENEKIT_LIBRARY} ${QUARTZCORE_LIBRARY})
+target_link_libraries(${TARGET_NAME} GLTF2 ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY} ${SCENEKIT_LIBRARY} ${QUARTZCORE_LIBRARY})
 
-set_target_properties(${LIB_NAME} PROPERTIES
+set_target_properties(${TARGET_NAME} PROPERTIES
     VERSION 1.0
     PUBLIC_HEADER "${HEADERS}"
     XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC "YES"
@@ -38,16 +37,16 @@ if(NOT CMAKE_INSTALL_LIBDIR)
     set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING "Installation directory")
 endif()
 
-install(TARGETS ${LIB_NAME}
-    EXPORT ${LIB_NAME}-export
+install(TARGETS ${TARGET_NAME}
+    EXPORT ${TARGET_NAME}-export
     FRAMEWORK DESTINATION ${CMAKE_INSTALL_LIBDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     INCLUDES DESTINATION include
-    PUBLIC_HEADER DESTINATION include/${LIB_NAME}
+    PUBLIC_HEADER DESTINATION include/${TARGET_NAME}
 )
 
-install(EXPORT ${LIB_NAME}-export
-    FILE ${LIB_NAME}-config.cmake
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${LIB_NAME}/
+install(EXPORT ${TARGET_NAME}-export
+    FILE ${TARGET_NAME}-config.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${TARGET_NAME}/
     EXPORT_LINK_INTERFACE_LIBRARIES
 )

@@ -291,6 +291,8 @@ class GLTFTextureInfo {
 public:
   uint32_t index;
   std::optional<uint32_t> texCoord;
+
+  uint32_t texCoordValue() const { return texCoord.value_or(0); }
 };
 
 // Material
@@ -303,32 +305,28 @@ public:
   std::optional<float> roughnessFactor;
   std::optional<GLTFTextureInfo> metallicRoughnessTexture;
 
-  std::array<float, 4> baseColorFactorValue() {
+  std::array<float, 4> baseColorFactorValue() const {
     return baseColorFactor.value_or(
         std::array<float, 4>{1.0f, 1.0f, 1.0f, 1.0f});
   }
 
-  float metallicFactorValue() { return metallicFactor.value_or(1.0f); }
+  float metallicFactorValue() const { return metallicFactor.value_or(1.0f); }
 
-  float roughnessFactorValue() { return roughnessFactor.value_or(1.0f); }
+  float roughnessFactorValue() const { return roughnessFactor.value_or(1.0f); }
 };
 
-class GLTFMaterialNormalTextureInfo {
+class GLTFMaterialNormalTextureInfo : public GLTFTextureInfo {
 public:
-  uint32_t index;
-  std::optional<uint32_t> texCoord;
   std::optional<float> scale;
 
-  float scaleValue() { return scale.value_or(1.0f); }
+  float scaleValue() const { return scale.value_or(1.0f); }
 };
 
-class GLTFMaterialOcclusionTextureInfo {
+class GLTFMaterialOcclusionTextureInfo : public GLTFTextureInfo {
 public:
-  uint32_t index;
-  std::optional<uint32_t> texCoord;
   std::optional<float> strength;
 
-  float strengthValue() { return strength.value_or(1.0f); }
+  float strengthValue() const { return strength.value_or(1.0f); }
 };
 
 class GLTFMaterial {
@@ -357,15 +355,17 @@ public:
   std::optional<float> alphaCutoff;
   std::optional<bool> doubleSided;
 
-  std::array<float, 3> emissiveFactorValue() {
+  std::array<float, 3> emissiveFactorValue() const {
     return emissiveFactor.value_or(std::array<float, 3>{0.0f, 0.0f, 0.0f});
   }
 
-  AlphaMode alphaModeValue() { return alphaMode.value_or(AlphaMode::OPAQUE); }
+  AlphaMode alphaModeValue() const {
+    return alphaMode.value_or(AlphaMode::OPAQUE);
+  }
 
-  float alphaCutoffValue() { return alphaCutoff.value_or(0.5f); }
+  float alphaCutoffValue() const { return alphaCutoff.value_or(0.5f); }
 
-  bool isDoubleSided() { return doubleSided.value_or(false); }
+  bool isDoubleSided() const { return doubleSided.value_or(false); }
 };
 
 // Mesh
@@ -457,7 +457,7 @@ public:
   std::optional<std::vector<float>> weights;
   std::optional<std::string> name;
 
-  std::array<float, 16> matrixValue() {
+  std::array<float, 16> matrixValue() const {
     return matrix.value_or(std::array<float, 16>{
         1.0f,
         0.0f,
@@ -478,15 +478,15 @@ public:
     });
   }
 
-  std::array<float, 4> rotationValue() {
+  std::array<float, 4> rotationValue() const {
     return rotation.value_or(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f});
   }
 
-  std::array<float, 3> scaleValue() {
+  std::array<float, 3> scaleValue() const {
     return scale.value_or(std::array<float, 3>{1.0f, 1.0f, 1.0f});
   }
 
-  std::array<float, 3> translationValue() {
+  std::array<float, 3> translationValue() const {
     return translation.value_or(std::array<float, 3>{0.0f, 0.0f, 0.0f});
   }
 };
@@ -561,9 +561,9 @@ public:
   std::optional<WrapMode> wrapT;
   std::optional<std::string> name;
 
-  WrapMode wrapSValue() { return wrapS.value_or(WrapMode::REPEAT); }
+  WrapMode wrapSValue() const { return wrapS.value_or(WrapMode::REPEAT); }
 
-  WrapMode wrapTValue() { return wrapT.value_or(WrapMode::REPEAT); }
+  WrapMode wrapTValue() const { return wrapT.value_or(WrapMode::REPEAT); }
 };
 
 // Scene

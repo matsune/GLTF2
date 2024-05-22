@@ -48,14 +48,10 @@ FetchContent_MakeAvailable(draco)
 set(CONFIG_H ${CMAKE_BINARY_DIR}/config.h)
 configure_file(config.h.in ${CONFIG_H})
 
-set(TARGET_DIRS GLTF2 GLTF2Kit GLTF2SceneKit)
+set(TARGET_DIRS GLTF2 GLTF2SceneKit)
 
 if(BUILD_TESTS)
     list(APPEND TARGET_DIRS core_test)
-endif()
-
-if(BUILD_FRAMEWORK AND BUILD_TESTS)
-    list(APPEND TARGET_DIRS GLTF2KitTests)
 endif()
 
 if(BUILD_EXAMPLE)

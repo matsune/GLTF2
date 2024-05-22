@@ -1,4 +1,3 @@
-#import "GLTF2.h"
 #import <Cocoa/Cocoa.h>
 #import <SceneKit/SceneKit.h>
 
@@ -6,17 +5,19 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface GLTFSCNAsset : NSObject
 
-@property(nonatomic, strong, readonly) GLTFData *data;
 @property(nonatomic, strong) NSArray<SCNScene *> *scenes;
 @property(nonatomic, strong, readonly) NSArray<SCNNode *> *cameraNodes;
 @property(nonatomic, strong) NSArray<SCNAnimationPlayer *> *animationPlayers;
 
-- (instancetype)initWithGLTFData:(GLTFData *)data;
+- (BOOL)loadFile:(const NSString *)path
+           error:(NSError *_Nullable *_Nullable)error;
 
-+ (instancetype)assetWithGLTFData:(GLTFData *)data;
-
-- (void)loadScenes;
-- (nullable SCNScene *)defaultScene;
+//- (instancetype)initWithGLTFData:(GLTFData *)data;
+//
+//+ (instancetype)assetWithGLTFData:(GLTFData *)data;
+//
+//- (void)loadScenes;
+//- (nullable SCNScene *)defaultScene;
 
 @end
 

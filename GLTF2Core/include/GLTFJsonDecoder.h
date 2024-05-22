@@ -240,6 +240,8 @@ private:
   std::optional<std::vector<uint32_t>>
   decodeMeshPrimitiveAttributesSequenceKey(const nlohmann::json &j,
                                            const std::string &prefix);
+  GLTFMeshPrimitiveDracoExtension
+  decodeMeshPrimitiveDracoExtension(const nlohmann::json &j);
   GLTFMeshPrimitive decodeMeshPrimitive(const nlohmann::json &j);
   GLTFMesh decodeMesh(const nlohmann::json &j);
   GLTFNode decodeNode(const nlohmann::json &j);

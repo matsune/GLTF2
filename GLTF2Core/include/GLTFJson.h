@@ -385,6 +385,12 @@ public:
   std::optional<std::vector<uint32_t>> weights;
 };
 
+class GLTFMeshPrimitiveDracoExtension {
+public:
+  uint32_t bufferView;
+  GLTFMeshPrimitiveAttributes attributes;
+};
+
 class GLTFMeshPrimitive {
 public:
   enum class Mode {
@@ -424,6 +430,7 @@ public:
   std::optional<uint32_t> material;
   std::optional<Mode> mode;
   std::optional<std::vector<GLTFMeshPrimitiveTarget>> targets;
+  std::optional<GLTFMeshPrimitiveDracoExtension> dracoExtension;
 
   Mode modeValue() const { return mode.value_or(Mode::TRIANGLES); }
 };

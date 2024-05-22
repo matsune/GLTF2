@@ -1,5 +1,6 @@
 #include "GLTFData.h"
 #include "GLTFException.h"
+#include "GLTFExtension.h"
 #include "GLTFJsonDecoder.h"
 #include <boost/url.hpp>
 #include <cppcodec/base64_rfc4648.hpp>
@@ -8,6 +9,10 @@
 #include <nlohmann/json.hpp>
 #include <sstream>
 #include <string>
+#if DRACO_SUPPORT
+#include "draco/compression/decode.h"
+#include <draco/core/decoder_buffer.h>
+#endif
 
 namespace gltf2 {
 
@@ -116,6 +121,14 @@ GLTFData GLTFData::parseStream(std::istream &fs,
       throw InputException(e.what());
     }
   }
+}
+
+std::vector<std::string> GLTFData::supportedExtensions() {
+  std::vector<std::string> list = {};
+#if DRACO_SUPPORT
+  list.push_back(GLTFExtensionKHRDracoMeshCompression);
+#endif
+  return list;
 }
 
 Data GLTFData::dataOfUri(const std::string &uri) const {
@@ -319,6 +332,11 @@ Data GLTFData::normalizeData(const Data &data,
 
 MeshPrimitive
 GLTFData::meshPrimitiveFromPrimitive(const GLTFMeshPrimitive &primitive) const {
+#if DRACO_SUPPORT
+  if (primitive.dracoExtension) {
+    return meshPrimitiveFromDracoExtension(*primitive.dracoExtension);
+  }
+#endif
   MeshPrimitive meshPrimitive;
   if (primitive.attributes.position) {
     meshPrimitive.sources.position =
@@ -408,5 +426,105 @@ MeshPrimitiveSources GLTFData::meshPrimitiveSourcesFromTarget(
   }
   return sources;
 }
+
+#if DRACO_SUPPORT
+static std::unique_ptr<draco::Mesh> decodeDracoMesh(const Data &data) {
+  draco::DecoderBuffer buffer;
+  buffer.Init((const char *)data.data(), data.size());
+
+  draco::Decoder decoder;
+  auto status_or_mesh = decoder.DecodeMeshFromBuffer(&buffer);
+  if (!status_or_mesh.ok()) {
+    std::cerr << "Failed to decode Draco mesh: "
+              << status_or_mesh.status().error_msg() << std::endl;
+    return nullptr;
+  }
+
+  return std::move(status_or_mesh).value();
+}
+
+static GLTFAccessor::ComponentType
+convertDracoDataTypeToGLTFComponentType(draco::DataType dracoType) {
+  switch (dracoType) {
+  case draco::DT_INT8:
+    return GLTFAccessor::ComponentType::BYTE;
+  case draco::DT_UINT8:
+    return GLTFAccessor::ComponentType::UNSIGNED_BYTE;
+  case draco::DT_INT16:
+    return GLTFAccessor::ComponentType::SHORT;
+  case draco::DT_UINT16:
+    return GLTFAccessor::ComponentType::UNSIGNED_SHORT;
+  case draco::DT_INT32:
+    return GLTFAccessor::ComponentType::UNSIGNED_INT;
+  case draco::DT_FLOAT32:
+    return GLTFAccessor::ComponentType::FLOAT;
+  default:
+    throw std::runtime_error("Unsupported Draco data type");
+  }
+}
+
+static MeshPrimitiveSource
+processDracoMeshPrimitiveSource(const std::unique_ptr<draco::Mesh> &dracoMesh,
+                                draco::GeometryAttribute::Type type) {
+  const draco::PointAttribute *attr = dracoMesh->GetNamedAttribute(type);
+  auto vectorCount = dracoMesh->num_points();
+  auto componentsPerVector = attr->num_components();
+  auto bytesPerComponent = draco::DataTypeLength(attr->data_type());
+  auto length = vectorCount * componentsPerVector * bytesPerComponent;
+  Data data(length);
+  for (draco::PointIndex i(0); i < dracoMesh->num_points(); ++i) {
+    uint8_t *bytes =
+        data.data() + i.value() * componentsPerVector * bytesPerComponent;
+    attr->GetMappedValue(i, bytes);
+  }
+  MeshPrimitiveSource source;
+  source.data = data;
+  source.vectorCount = vectorCount;
+  source.componentsPerVector = componentsPerVector;
+  source.componentType =
+      convertDracoDataTypeToGLTFComponentType(attr->data_type());
+  return source;
+}
+
+MeshPrimitive GLTFData::meshPrimitiveFromDracoExtension(
+    const GLTFMeshPrimitiveDracoExtension &extension) const {
+  auto compressedData = dataForBufferView(extension.bufferView);
+  auto dracoMesh = decodeDracoMesh(compressedData);
+  auto primitiveCount = dracoMesh->num_faces() * 3;
+  Data indicesData(sizeof(uint32_t) * primitiveCount);
+  for (draco::FaceIndex i(0); i < dracoMesh->num_faces(); i++) {
+    const auto &face = dracoMesh->face(i);
+    uint32_t indices[3] = {face[0].value(), face[1].value(), face[2].value()};
+    auto offset = sizeof(uint32_t) * 3 * i.value();
+    std::memcpy(indicesData.data() + offset, indices, sizeof(uint32_t) * 3);
+  }
+  MeshPrimitiveElement element;
+  element.data = indicesData;
+  element.primitiveMode = GLTFMeshPrimitive::Mode::TRIANGLES;
+  element.primitiveCount = primitiveCount;
+  element.componentType = GLTFAccessor::ComponentType::UNSIGNED_INT;
+
+  MeshPrimitiveSources sources;
+  for (int i = 0; i < dracoMesh->num_attributes(); i++) {
+    const auto *attr = dracoMesh->attribute(i);
+    auto source =
+        processDracoMeshPrimitiveSource(dracoMesh, attr->attribute_type());
+    if (attr->attribute_type() == draco::GeometryAttribute::POSITION) {
+      sources.position = source;
+    } else if (attr->attribute_type() == draco::GeometryAttribute::NORMAL) {
+      sources.normal = source;
+    } else if (attr->attribute_type() == draco::GeometryAttribute::COLOR) {
+      sources.colors.push_back(source);
+    } else if (attr->attribute_type() == draco::GeometryAttribute::TEX_COORD) {
+      sources.texcoords.push_back(source);
+    }
+  }
+
+  MeshPrimitive primitive;
+  primitive.sources = sources;
+  primitive.element = element;
+  return primitive;
+}
+#endif
 
 } // namespace gltf2

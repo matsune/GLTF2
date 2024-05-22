@@ -66,6 +66,8 @@ public:
   std::optional<std::filesystem::path> path;
   std::optional<Data> bin;
 
+  static std::vector<std::string> supportedExtensions();
+
   Data dataForBufferView(const GLTFBufferView &bufferView,
                          uint32_t offset = 0) const;
   Data dataForBufferView(uint32_t index, uint32_t offset = 0) const;
@@ -86,7 +88,10 @@ public:
   MeshPrimitiveSource meshPrimitiveSourceFromAccessor(uint32_t index) const;
   MeshPrimitiveSources
   meshPrimitiveSourcesFromTarget(const GLTFMeshPrimitiveTarget &target) const;
-
+#if DRACO_SUPPORT
+  MeshPrimitive meshPrimitiveFromDracoExtension(
+      const GLTFMeshPrimitiveDracoExtension &extension) const;
+#endif
 private:
   Data dataOfUri(const std::string &uri) const;
 };

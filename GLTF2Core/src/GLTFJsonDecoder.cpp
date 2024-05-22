@@ -1,4 +1,5 @@
 #include "GLTFJsonDecoder.h"
+#include "GLTFExtension.h"
 
 namespace {
 template <typename... Args>
@@ -395,10 +396,26 @@ GLTFJsonDecoder::decodeMeshPrimitiveAttributes(const nlohmann::json &j) {
   return attributes;
 }
 
+GLTFMeshPrimitiveDracoExtension
+GLTFJsonDecoder::decodeMeshPrimitiveDracoExtension(const nlohmann::json &j) {
+  GLTFMeshPrimitiveDracoExtension dracoExtension;
+  decodeTo(j, "bufferView", dracoExtension.bufferView);
+  decodeToMapObj<GLTFMeshPrimitiveAttributes>(
+      j, "attributes", dracoExtension.attributes,
+      [this](const nlohmann::json &value) {
+        return decodeMeshPrimitiveAttributes(value);
+      });
+  return dracoExtension;
+}
+
 GLTFMeshPrimitive
 GLTFJsonDecoder::decodeMeshPrimitive(const nlohmann::json &j) {
   GLTFMeshPrimitive primitive;
-  primitive.attributes = decodeMeshPrimitiveAttributes(j["attributes"]);
+  decodeToMapObj<GLTFMeshPrimitiveAttributes>(
+      j, "attributes", primitive.attributes,
+      [this](const nlohmann::json &value) {
+        return decodeMeshPrimitiveAttributes(value);
+      });
   decodeTo(j, "indices", primitive.indices);
   decodeTo(j, "material", primitive.material);
   decodeToMapValue<GLTFMeshPrimitive::Mode>(
@@ -415,6 +432,15 @@ GLTFJsonDecoder::decodeMeshPrimitive(const nlohmann::json &j) {
         decodeMeshPrimitiveTarget(value, target);
         return target;
       });
+
+  auto extensionsObj = decodeOptObject(j, "extensions");
+  if (extensionsObj) {
+    decodeToMapObj<GLTFMeshPrimitiveDracoExtension>(
+        *extensionsObj, GLTFExtensionKHRDracoMeshCompression,
+        primitive.dracoExtension, [this](const nlohmann::json &value) {
+          return decodeMeshPrimitiveDracoExtension(value);
+        });
+  }
 
   return primitive;
 }

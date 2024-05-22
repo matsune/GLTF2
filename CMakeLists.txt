@@ -9,12 +9,14 @@ option(BUILD_EXAMPLE "Build example" OFF)
 
 include(FetchContent)
 
+# json
 FetchContent_Declare(
     json
     URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
 )
 FetchContent_MakeAvailable(json)
 
+# cppcodec
 FetchContent_Declare(
     cppcodec
     GIT_REPOSITORY https://github.com/tplgy/cppcodec.git
@@ -26,15 +28,13 @@ if(NOT cppcodec_POPULATED)
     FetchContent_Populate(cppcodec)
 endif()
 
+# boost
 set(BOOST_INCLUDE_LIBRARIES url)
 FetchContent_Declare(
     Boost
     URL https://github.com/boostorg/boost/releases/download/boost-1.85.0/boost-1.85.0-cmake.tar.xz
 )
 FetchContent_MakeAvailable(Boost)
-
-set(CONFIG_H ${CMAKE_BINARY_DIR}/config.h)
-configure_file(config.h.in ${CONFIG_H})
 
 option(BUILD_FRAMEWORK "Build as a framework instead of a dynamic library" OFF)
 option(DRACO_DIR "Path to the Draco library" "")
@@ -48,6 +48,9 @@ find_package(draco QUIET PATHS ${DRACO_DIR})
 if(NOT draco_FOUND)
     message(STATUS "draco not found.")
 endif()
+
+set(CONFIG_H ${CMAKE_BINARY_DIR}/config.h)
+configure_file(config.h.in ${CONFIG_H})
 
 set(TARGET_DIRS GLTF2Core GLTF2 GLTF2SceneKit)
 

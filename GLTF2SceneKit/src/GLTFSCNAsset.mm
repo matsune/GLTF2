@@ -42,15 +42,14 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
 
 @implementation GLTFSCNAsset
 
-+ (instancetype)assetWithFile:(NSString *)path
-                        error:(NSError *_Nullable *_Nullable)error {
-  GLTFSCNAsset *asset = [[GLTFSCNAsset alloc] init];
+- (instancetype)init {
+  self = [super init];
   if (self) {
-    if (![asset loadFile:path error:error]) {
-      return nil;
-    }
+    _scenes = [NSArray array];
+    _cameraNodes = [NSArray array];
+    _animationPlayers = [NSArray array];
   }
-  return asset;
+  return self;
 }
 
 - (BOOL)loadFile:(const NSString *)path

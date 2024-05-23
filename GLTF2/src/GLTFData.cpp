@@ -373,7 +373,30 @@ GLTFData::meshPrimitiveFromPrimitive(const GLTFMeshPrimitive &primitive) const {
     auto &accessor = json.accessors->at(*primitive.indices);
     element.data = dataForAccessor(accessor, nullptr);
     element.primitiveMode = primitive.modeValue();
-    element.primitiveCount = accessor.count;
+    auto indicesCount = accessor.count;
+    switch (primitive.modeValue()) {
+    case GLTFMeshPrimitive::Mode::POINTS:
+      element.primitiveCount = indicesCount;
+      break;
+    case GLTFMeshPrimitive::Mode::LINES:
+      element.primitiveCount = indicesCount / 2;
+      break;
+    case GLTFMeshPrimitive::Mode::LINE_LOOP:
+      element.primitiveCount = indicesCount;
+      break;
+    case GLTFMeshPrimitive::Mode::LINE_STRIP:
+      element.primitiveCount = indicesCount - 1;
+      break;
+    case GLTFMeshPrimitive::Mode::TRIANGLES:
+      element.primitiveCount = indicesCount / 3;
+      break;
+    case GLTFMeshPrimitive::Mode::TRIANGLE_STRIP:
+      element.primitiveCount = indicesCount - 2;
+      break;
+    case GLTFMeshPrimitive::Mode::TRIANGLE_FAN:
+      element.primitiveCount = indicesCount - 2;
+      break;
+    }
     element.componentType = accessor.componentType;
     meshPrimitive.element = element;
   }
@@ -482,8 +505,9 @@ MeshPrimitive GLTFData::meshPrimitiveFromDracoExtension(
     const GLTFMeshPrimitiveDracoExtension &extension) const {
   auto compressedData = dataForBufferView(extension.bufferView);
   auto dracoMesh = decodeDracoMesh(compressedData);
-  auto primitiveCount = dracoMesh->num_faces() * 3;
-  Data indicesData(sizeof(uint32_t) * primitiveCount);
+  auto primitiveCount = dracoMesh->num_faces();
+  auto indicesCount = primitiveCount * 3;
+  Data indicesData(sizeof(uint32_t) * indicesCount);
   for (draco::FaceIndex i(0); i < dracoMesh->num_faces(); i++) {
     const auto &face = dracoMesh->face(i);
     uint32_t indices[3] = {face[0].value(), face[1].value(), face[2].value()};

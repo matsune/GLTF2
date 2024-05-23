@@ -9,6 +9,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, strong, readonly) NSArray<SCNNode *> *cameraNodes;
 @property(nonatomic, strong) NSArray<SCNAnimationPlayer *> *animationPlayers;
 
++ (instancetype)assetWithFile:(NSString *)path
+                        error:(NSError *_Nullable *_Nullable)error;
+
 - (BOOL)loadFile:(const NSString *)path
            error:(NSError *_Nullable *_Nullable)error;
 
@@ -17,7 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 //+ (instancetype)assetWithGLTFData:(GLTFData *)data;
 //
 //- (void)loadScenes;
-//- (nullable SCNScene *)defaultScene;
+- (nullable SCNScene *)defaultScene;
 
 @end
 

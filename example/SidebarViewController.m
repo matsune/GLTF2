@@ -43,8 +43,7 @@
   for (int i = 0; i < self.animationPlayers.count; i++) {
     SCNAnimationPlayer *animationPlayer = self.animationPlayers[i];
     [self.animationsPopUpButton
-        addItemWithTitle:asset.data.json.animations[i].name
-                             ?: [NSString stringWithFormat:@"Animation %d", i]];
+        addItemWithTitle:[NSString stringWithFormat:@"Animation %d", i]];
   }
 
   self.currentAnimationPlayer = self.animationPlayers.firstObject;

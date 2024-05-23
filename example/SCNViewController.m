@@ -15,14 +15,13 @@
 }
 
 - (void)loadModelURL:(NSURL *)url {
-  NSError *err;
-  GLTFData *data = [GLTFData dataWithFile:[url path] error:&err];
-  if (err) {
-    [[NSAlert alertWithError:err] runModal];
+  NSError *error;
+  self.asset = [GLTFSCNAsset assetWithFile:[url path] error:&error];
+  if (error) {
+    [[NSAlert alertWithError:error] runModal];
     return;
   }
-  self.asset = [GLTFSCNAsset assetWithGLTFData:data];
-  [self.asset loadScenes];
+
   self.scnView.scene = self.asset.defaultScene;
   for (SCNAnimationPlayer *player in self.asset.animationPlayers) {
     [self.scnView.scene.rootNode addAnimationPlayer:player forKey:nil];

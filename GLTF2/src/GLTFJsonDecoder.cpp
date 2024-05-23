@@ -124,7 +124,14 @@ GLTFAnimationChannelTarget
 GLTFJsonDecoder::decodeAnimationChannelTarget(const nlohmann::json &j) {
   GLTFAnimationChannelTarget target;
   decodeTo(j, "node", target.node);
-  decodeTo(j, "path", target.path);
+  decodeToMapValue<GLTFAnimationChannelTarget::Path>(
+      j, "path", target.path, [this](const nlohmann::json &value) {
+        auto path = GLTFAnimationChannelTarget::PathFromString(
+            decodeAs<std::string>(value));
+        if (!path)
+          throw InvalidFormatException(context());
+        return *path;
+      });
   return target;
 }
 

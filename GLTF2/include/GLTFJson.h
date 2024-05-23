@@ -149,8 +149,23 @@ public:
 
 class GLTFAnimationChannelTarget {
 public:
+  enum class Path { TRANSLATION, ROTATION, SCALE, WEIGHTS };
+
+  static std::optional<Path> PathFromString(const std::string &value) {
+    if (value == "translation")
+      return Path::TRANSLATION;
+    else if (value == "rotation")
+      return Path::ROTATION;
+    else if (value == "scale")
+      return Path::SCALE;
+    else if (value == "weights")
+      return Path::WEIGHTS;
+    else
+      return std::nullopt;
+  }
+
   std::optional<uint32_t> node;
-  std::string path;
+  Path path;
 };
 
 class GLTFAnimationChannel {

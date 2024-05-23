@@ -29,9 +29,9 @@ public:
 
 class MeshPrimitiveSources {
 public:
-  MeshPrimitiveSource position;
-  MeshPrimitiveSource normal;
-  MeshPrimitiveSource tangent;
+  std::optional<MeshPrimitiveSource> position;
+  std::optional<MeshPrimitiveSource> normal;
+  std::optional<MeshPrimitiveSource> tangent;
   std::vector<MeshPrimitiveSource> texcoords;
   std::vector<MeshPrimitiveSource> colors;
   std::vector<MeshPrimitiveSource> joints;
@@ -68,6 +68,8 @@ public:
 
   static std::vector<std::string> supportedExtensions();
 
+  Data dataOfUri(const std::string &uri) const;
+
   Data dataForBufferView(const GLTFBufferView &bufferView,
                          uint32_t offset = 0) const;
   Data dataForBufferView(uint32_t index, uint32_t offset = 0) const;
@@ -90,9 +92,6 @@ public:
   meshPrimitiveSourcesFromTarget(const GLTFMeshPrimitiveTarget &target) const;
   MeshPrimitive meshPrimitiveFromDracoExtension(
       const GLTFMeshPrimitiveDracoExtension &extension) const;
-
-private:
-  Data dataOfUri(const std::string &uri) const;
 };
 
 } // namespace gltf2

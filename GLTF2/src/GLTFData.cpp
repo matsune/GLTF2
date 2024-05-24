@@ -122,9 +122,7 @@ GLTFData GLTFData::parseStream(std::istream &fs,
 }
 
 std::vector<std::string> GLTFData::supportedExtensions() {
-  std::vector<std::string> list = {};
-  list.push_back(GLTFExtensionKHRDracoMeshCompression);
-  return list;
+  return SupportedExtensions;
 }
 
 Data GLTFData::dataOfUri(const std::string &uri) const {

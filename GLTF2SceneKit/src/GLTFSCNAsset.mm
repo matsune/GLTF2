@@ -446,6 +446,76 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
 
 #pragma mark SCNMaterial
 
+class SurfaceShaderModifierBuilder {
+public:
+  std::optional<std::array<float, 4>> diffuseBaseColorFactor;
+  std::optional<gltf2::GLTFKHRTextureTransform> diffuseTextureTransform;
+  bool isOpaque;
+  std::optional<float> alphaCutoffValue;
+
+  NSString *buildShader() {
+    NSMutableString *shader = [NSMutableString string];
+    if (isTransparent()) {
+      [shader appendString:@"#pragma transparent\n"];
+    }
+
+    [shader
+        appendString:@"\n"
+                      "vec2 transformTextureCoordinates(vec2 uv, vec2 Scale, "
+                      "float Rotation, vec2 Offset) {"
+                      "  float3x3 translation = float3x3(float3(1, 0, 0), "
+                      "float3(0, 1, 0), float3(Offset, 1));"
+                      "  float3x3 rotation = float3x3(float3(cos(Rotation), "
+                      "-sin(Rotation), 0), float3(sin(Rotation), "
+                      "cos(Rotation), 0), float3(0, 0, 1));"
+                      "  float3x3 scale = float3x3(float3(Scale.x, 0, 0), "
+                      "float3(0, Scale.y, 0), float3(0, 0, 1));"
+                      "  float3x3 matrix = translation * rotation * scale;"
+                      "  return (matrix * float3(uv, 1)).xy;"
+                      "}\n"];
+
+    [shader appendString:@"#pragma body\n"];
+
+    if (diffuseTextureTransform.has_value()) {
+      auto scale = diffuseTextureTransform->scale.value_or(
+          std::array<float, 2>({1.0f, 1.0f}));
+      auto rotation = diffuseTextureTransform->rotation.value_or(0);
+      auto offset = diffuseTextureTransform->offset.value_or(
+          std::array<float, 2>({0.0f, 0.0f}));
+
+      [shader
+          appendFormat:@"vec2 scale(%f, %f);"
+                        "float rotation = %f;"
+                        "vec2 offset(%f, %f);"
+                        "vec2 uv = "
+                        "transformTextureCoordinates(_surface.diffuseTexcoord, "
+                        "scale, rotation, offset);"
+                        "_surface.diffuse = texture2D(u_diffuseTexture, uv);",
+                       scale[0], scale[1], rotation, offset[0], offset[1]];
+    }
+    if (diffuseBaseColorFactor.has_value()) {
+      [shader appendFormat:@"_surface.diffuse *= float4(%ff, %ff, %ff, %ff);\n",
+                           diffuseBaseColorFactor->at(0),
+                           diffuseBaseColorFactor->at(1),
+                           diffuseBaseColorFactor->at(2),
+                           diffuseBaseColorFactor->at(3)];
+    }
+    if (isOpaque) {
+      [shader appendString:@"_surface.diffuse.a = 1.0;"];
+    } else if (alphaCutoffValue.has_value()) {
+      [shader appendFormat:
+                  @"_surface.diffuse.a = _surface.diffuse.a < %f ? 0.0 : 1.0;",
+                  *alphaCutoffValue];
+    }
+    return shader;
+  }
+
+  bool isTransparent() {
+    return diffuseBaseColorFactor.has_value() &&
+           diffuseBaseColorFactor->at(3) < 1.0f;
+  }
+};
+
 - (nullable NSArray<SCNMaterial *> *)loadSCNMaterials {
   if (!_data->json.materials)
     return nil;
@@ -464,7 +534,7 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
       scnMaterial.lightingModelName = SCNLightingModelBlinn;
     }
 
-    NSMutableString *surfaceShaderModifier = [NSMutableString string];
+    SurfaceShaderModifierBuilder builder;
 
     auto pbrMetallicRoughness = material.pbrMetallicRoughness.value_or(
         gltf2::GLTFMaterialPBRMetallicRoughness());
@@ -477,14 +547,11 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
 
       if (pbrMetallicRoughness.baseColorFactor.has_value()) {
         auto factor = *pbrMetallicRoughness.baseColorFactor;
-        if (factor[3] < 1.0f) {
-          [surfaceShaderModifier
-              appendString:@"#pragma transparent\n#pragma body\n"];
-        }
-        [surfaceShaderModifier
-            appendFormat:@"_surface.diffuse *= float4(%ff, %ff, %ff, %ff);\n",
-                         factor[0], factor[1], factor[2], factor[3]];
+        builder.diffuseBaseColorFactor = factor;
       }
+
+      builder.diffuseTextureTransform =
+          pbrMetallicRoughness.baseColorTexture->khrTextureTransform;
     } else {
       auto value = pbrMetallicRoughness.baseColorFactorValue();
       applyColorContentsToProperty(value[0], value[1], value[2], value[3],
@@ -534,14 +601,11 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
 
     if (material.alphaModeValue() == gltf2::GLTFMaterial::AlphaMode::OPAQUE) {
       scnMaterial.blendMode = SCNBlendModeReplace;
-      [surfaceShaderModifier appendString:@"_surface.diffuse.a = 1.0;"];
+      builder.isOpaque = true;
     } else if (material.alphaModeValue() ==
                gltf2::GLTFMaterial::AlphaMode::MASK) {
       scnMaterial.blendMode = SCNBlendModeReplace;
-      [surfaceShaderModifier
-          appendFormat:
-              @"_surface.diffuse.a = _surface.diffuse.a < %f ? 0.0 : 1.0;",
-              material.alphaCutoffValue()];
+      builder.alphaCutoffValue = material.alphaCutoffValue();
     } else if (material.alphaModeValue() ==
                gltf2::GLTFMaterial::AlphaMode::BLEND) {
       scnMaterial.blendMode = SCNBlendModeAlpha;
@@ -551,7 +615,7 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
     scnMaterial.doubleSided = material.isDoubleSided();
 
     scnMaterial.shaderModifiers = @{
-      SCNShaderModifierEntryPointSurface : surfaceShaderModifier,
+      SCNShaderModifierEntryPointSurface : builder.buildShader(),
     };
 
     [scnMaterials addObject:scnMaterial];

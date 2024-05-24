@@ -152,6 +152,17 @@ TEST(TestGLTFData, parseJson) {
           "pbrMetallicRoughness": {
             "metallicFactor": 0.3,
             "roughnessFactor": 0.4
+          },
+          "emissiveTexture": {
+            "index": 0,
+            "extensions": {
+              "KHR_texture_transform": {
+                "offset": [0, 1],
+                "rotation": 1.5,
+                "scale": [0.5, 0.5],
+                "texCoord": 1
+              }
+            }
           }
         }
       ],
@@ -348,6 +359,18 @@ TEST(TestGLTFData, parseJson) {
   EXPECT_EQ(data.json.materials.value()[1]
                 .pbrMetallicRoughness->roughnessFactor.value(),
             0.4f);
+  EXPECT_EQ(data.json.materials.value()[1]
+                .emissiveTexture->khrTextureTransform->offset,
+            (std::array<float, 2>{0, 1.0f}));
+  EXPECT_EQ(data.json.materials.value()[1]
+                .emissiveTexture->khrTextureTransform->rotation,
+            1.5f);
+  EXPECT_EQ(data.json.materials.value()[1]
+                .emissiveTexture->khrTextureTransform->scale,
+            (std::array<float, 2>{0.5f, 0.5f}));
+  EXPECT_EQ(data.json.materials.value()[1]
+                .emissiveTexture->khrTextureTransform->texCoord,
+            1);
 
   EXPECT_EQ(data.json.meshes.value().size(), 1);
   EXPECT_EQ(data.json.meshes.value()[0].name, "MeshOne");
@@ -379,16 +402,17 @@ TEST(TestGLTFData, parseJson) {
   EXPECT_EQ(data.json.nodes.value()[0].children.value(),
             std::vector<uint32_t>{1});
   EXPECT_EQ(data.json.nodes.value()[0].skin.value(), 0);
-  std::array<float, 16> matrix{1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-                               0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f};
-  EXPECT_EQ(data.json.nodes.value()[0].matrix.value(), matrix);
+  EXPECT_EQ(
+      data.json.nodes.value()[0].matrix.value(),
+      (std::array<float, 16>{1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+                             0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f}));
   EXPECT_EQ(data.json.nodes.value()[0].mesh.value(), 0);
-  std::array<float, 4> rotation{1.0f, 1.0f, 1.0f, 1.0f};
-  std::array<float, 3> scale{1.0f, 1.0f, 1.0f};
-  std::array<float, 3> translation{1.0f, 1.0f, 1.0f};
-  EXPECT_EQ(data.json.nodes.value()[0].rotation.value(), rotation);
-  EXPECT_EQ(data.json.nodes.value()[0].scale.value(), scale);
-  EXPECT_EQ(data.json.nodes.value()[0].translation.value(), translation);
+  EXPECT_EQ(data.json.nodes.value()[0].rotation.value(),
+            (std::array<float, 4>{1.0f, 1.0f, 1.0f, 1.0f}));
+  EXPECT_EQ(data.json.nodes.value()[0].scale.value(),
+            (std::array<float, 3>{1.0f, 1.0f, 1.0f}));
+  EXPECT_EQ(data.json.nodes.value()[0].translation.value(),
+            (std::array<float, 3>{1.0f, 1.0f, 1.0f}));
   EXPECT_EQ(data.json.nodes.value()[0].weights.value(),
             std::vector<float>({1.0f, 1.0f}));
 

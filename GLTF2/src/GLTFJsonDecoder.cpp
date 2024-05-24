@@ -280,10 +280,38 @@ GLTFTexture GLTFJsonDecoder::decodeTexture(const nlohmann::json &j) {
   return texture;
 }
 
+GLTFKHRTextureTransform
+GLTFJsonDecoder::decodeKHRTextureTransform(const nlohmann::json &j) {
+  GLTFKHRTextureTransform t;
+  decodeToMapValue<std::array<float, 2>>(
+      j, "offset", t.offset, [this](const nlohmann::json &value) {
+        if (!value.is_array())
+          throw InvalidFormatException(context());
+        return value.get<std::array<float, 2>>();
+      });
+  decodeTo(j, "rotation", t.rotation);
+  decodeToMapValue<std::array<float, 2>>(
+      j, "scale", t.scale, [this](const nlohmann::json &value) {
+        if (!value.is_array())
+          throw InvalidFormatException(context());
+        return value.get<std::array<float, 2>>();
+      });
+  decodeTo(j, "texCoord", t.texCoord);
+  return t;
+}
+
 GLTFTextureInfo GLTFJsonDecoder::decodeTextureInfo(const nlohmann::json &j) {
   GLTFTextureInfo textureInfo;
   decodeTo(j, "index", textureInfo.index);
   decodeTo(j, "texCoord", textureInfo.texCoord);
+  auto extensionsObj = decodeOptObject(j, "extensions");
+  if (extensionsObj) {
+    decodeToMapObj<GLTFKHRTextureTransform>(
+        *extensionsObj, GLTFExtensionKHRTextureTransform,
+        textureInfo.khrTextureTransform, [this](const nlohmann::json &value) {
+          return decodeKHRTextureTransform(value);
+        });
+  }
   return textureInfo;
 }
 

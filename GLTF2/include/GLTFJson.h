@@ -302,10 +302,19 @@ public:
   std::optional<std::string> name;
 };
 
+class GLTFKHRTextureTransform {
+public:
+  std::optional<std::array<float, 2>> offset;
+  std::optional<float> rotation;
+  std::optional<std::array<float, 2>> scale;
+  std::optional<uint32_t> texCoord;
+};
+
 class GLTFTextureInfo {
 public:
   uint32_t index;
   std::optional<uint32_t> texCoord;
+  std::optional<GLTFKHRTextureTransform> khrTextureTransform;
 
   uint32_t texCoordValue() const { return texCoord.value_or(0); }
 };

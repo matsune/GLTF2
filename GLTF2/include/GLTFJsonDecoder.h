@@ -225,6 +225,7 @@ private:
   GLTFCamera decodeCamera(const nlohmann::json &j);
   GLTFImage decodeImage(const nlohmann::json &j);
   GLTFTexture decodeTexture(const nlohmann::json &j);
+  GLTFKHRTextureTransform decodeKHRTextureTransform(const nlohmann::json &j);
   GLTFTextureInfo decodeTextureInfo(const nlohmann::json &j);
   GLTFMaterialPBRMetallicRoughness
   decodeMaterialPBRMetallicRoughness(const nlohmann::json &j);

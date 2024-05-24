@@ -142,7 +142,10 @@ TEST(TestGLTFData, parseJson) {
             "metallicFactor": 0.1
           },
           "alphaMode": "BLEND",
-          "doubleSided": true
+          "doubleSided": true,
+          "extensions": {
+              "KHR_materials_unlit": {}
+          }
         },
         {
           "name": "MaterialTwo",
@@ -262,11 +265,12 @@ TEST(TestGLTFData, parseJson) {
   auto &channel1 = data.json.animations.value()[0].channels[0];
   EXPECT_EQ(channel1.sampler, 0);
   EXPECT_EQ(channel1.target.node.value(), 2);
-  EXPECT_EQ(channel1.target.path, "rotation");
+  EXPECT_EQ(channel1.target.path, GLTFAnimationChannelTarget::Path::ROTATION);
   auto &channel2 = data.json.animations.value()[0].channels[1];
   EXPECT_EQ(channel2.sampler, 1);
   EXPECT_EQ(channel2.target.node.value(), 3);
-  EXPECT_EQ(channel2.target.path, "translation");
+  EXPECT_EQ(channel2.target.path,
+            GLTFAnimationChannelTarget::Path::TRANSLATION);
   auto &sampler1 = data.json.animations.value()[0].samplers[0];
   EXPECT_EQ(sampler1.input, 0);
   EXPECT_EQ(sampler1.interpolation,
@@ -333,6 +337,7 @@ TEST(TestGLTFData, parseJson) {
   EXPECT_EQ(data.json.materials.value()[0].alphaMode,
             GLTFMaterial::AlphaMode::BLEND);
   EXPECT_EQ(data.json.materials.value()[0].doubleSided, true);
+  EXPECT_EQ(data.json.materials.value()[0].isUnlit(), true);
   EXPECT_EQ(data.json.materials.value()[1].name, "MaterialTwo");
   EXPECT_EQ(
       data.json.materials.value()[1].pbrMetallicRoughness->baseColorFactor,
@@ -706,22 +711,22 @@ TEST(TestGLTFData, meshPrimitive) {
       gltf.meshPrimitiveFromPrimitive(gltf.json.meshes->at(0).primitives.at(0));
 
   // position
-  EXPECT_EQ(((float *)meshPrimitive.sources.position.data.data())[0], bufs[0]);
-  EXPECT_EQ(((float *)meshPrimitive.sources.position.data.data())[1], bufs[1]);
-  EXPECT_EQ(((float *)meshPrimitive.sources.position.data.data())[2], bufs[2]);
-  EXPECT_EQ(meshPrimitive.sources.position.vectorCount, 1);
-  EXPECT_EQ(meshPrimitive.sources.position.componentType,
+  EXPECT_EQ(((float *)meshPrimitive.sources.position->data.data())[0], bufs[0]);
+  EXPECT_EQ(((float *)meshPrimitive.sources.position->data.data())[1], bufs[1]);
+  EXPECT_EQ(((float *)meshPrimitive.sources.position->data.data())[2], bufs[2]);
+  EXPECT_EQ(meshPrimitive.sources.position->vectorCount, 1);
+  EXPECT_EQ(meshPrimitive.sources.position->componentType,
             GLTFAccessor::ComponentType::FLOAT);
-  EXPECT_EQ(meshPrimitive.sources.position.componentsPerVector, 3);
+  EXPECT_EQ(meshPrimitive.sources.position->componentsPerVector, 3);
 
   // normal
-  EXPECT_EQ(((float *)meshPrimitive.sources.normal.data.data())[0], bufs[3]);
-  EXPECT_EQ(((float *)meshPrimitive.sources.normal.data.data())[1], bufs[4]);
-  EXPECT_EQ(((float *)meshPrimitive.sources.normal.data.data())[2], bufs[5]);
-  EXPECT_EQ(meshPrimitive.sources.normal.vectorCount, 1);
-  EXPECT_EQ(meshPrimitive.sources.normal.componentType,
+  EXPECT_EQ(((float *)meshPrimitive.sources.normal->data.data())[0], bufs[3]);
+  EXPECT_EQ(((float *)meshPrimitive.sources.normal->data.data())[1], bufs[4]);
+  EXPECT_EQ(((float *)meshPrimitive.sources.normal->data.data())[2], bufs[5]);
+  EXPECT_EQ(meshPrimitive.sources.normal->vectorCount, 1);
+  EXPECT_EQ(meshPrimitive.sources.normal->componentType,
             GLTFAccessor::ComponentType::FLOAT);
-  EXPECT_EQ(meshPrimitive.sources.normal.componentsPerVector, 3);
+  EXPECT_EQ(meshPrimitive.sources.normal->componentsPerVector, 3);
 
   // texcoord
   EXPECT_EQ(((float *)meshPrimitive.sources.texcoords[0].data.data())[0],
@@ -739,5 +744,4 @@ TEST(TestGLTFData, meshPrimitive) {
             GLTFMeshPrimitive::Mode::TRIANGLES);
   EXPECT_EQ(meshPrimitive.element->componentType,
             GLTFAccessor::ComponentType::UNSIGNED_SHORT);
-  EXPECT_EQ(meshPrimitive.element->primitiveCount, 1);
 }

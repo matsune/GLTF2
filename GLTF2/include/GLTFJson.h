@@ -369,6 +369,7 @@ public:
   std::optional<AlphaMode> alphaMode;
   std::optional<float> alphaCutoff;
   std::optional<bool> doubleSided;
+  std::optional<bool> unlit;
 
   std::array<float, 3> emissiveFactorValue() const {
     return emissiveFactor.value_or(std::array<float, 3>{0.0f, 0.0f, 0.0f});
@@ -381,6 +382,8 @@ public:
   float alphaCutoffValue() const { return alphaCutoff.value_or(0.5f); }
 
   bool isDoubleSided() const { return doubleSided.value_or(false); }
+
+  bool isUnlit() const { return unlit.value_or(false); }
 };
 
 // Mesh

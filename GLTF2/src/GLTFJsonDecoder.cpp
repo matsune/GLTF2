@@ -364,6 +364,13 @@ GLTFMaterial GLTFJsonDecoder::decodeMaterial(const nlohmann::json &j) {
       });
   decodeTo(j, "alphaCutoff", material.alphaCutoff);
   decodeTo(j, "doubleSided", material.doubleSided);
+
+  auto extensionsObj = decodeOptObject(j, "extensions");
+  if (extensionsObj) {
+    bool isUnlit = extensionsObj->contains(GLTFExtensionKHRMaterialsUnlit);
+    material.unlit = isUnlit;
+  }
+
   return material;
 }
 

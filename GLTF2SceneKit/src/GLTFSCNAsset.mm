@@ -456,9 +456,13 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
     SCNMaterial *scnMaterial = [SCNMaterial material];
     //    scnMaterial.name = material.name;
     scnMaterial.locksAmbientWithDiffuse = YES;
-    scnMaterial.lightingModelName = material.pbrMetallicRoughness.has_value()
-                                        ? SCNLightingModelPhysicallyBased
-                                        : SCNLightingModelBlinn;
+    if (material.isUnlit()) {
+      scnMaterial.lightingModelName = SCNLightingModelConstant;
+    } else if (material.pbrMetallicRoughness.has_value()) {
+      scnMaterial.lightingModelName = SCNLightingModelPhysicallyBased;
+    } else {
+      scnMaterial.lightingModelName = SCNLightingModelBlinn;
+    }
 
     NSMutableString *surfaceShaderModifier = [NSMutableString string];
 

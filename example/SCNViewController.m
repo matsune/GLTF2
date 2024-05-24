@@ -16,7 +16,8 @@
 
 - (void)loadModelURL:(NSURL *)url {
   NSError *error;
-  self.asset = [GLTFSCNAsset assetWithFile:[url path] error:&error];
+  self.asset = [[GLTFSCNAsset alloc] init];
+  [self.asset loadFile:[url path] error:&error];
   if (error) {
     [[NSAlert alertWithError:error] runModal];
     return;

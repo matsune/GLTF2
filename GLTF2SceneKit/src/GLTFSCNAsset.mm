@@ -450,8 +450,27 @@ class SurfaceShaderModifierBuilder {
 public:
   std::optional<std::array<float, 4>> diffuseBaseColorFactor;
   std::optional<gltf2::GLTFKHRTextureTransform> diffuseTextureTransform;
+  std::optional<gltf2::GLTFKHRTextureTransform> emissiveTextureTransform;
   bool isOpaque;
   std::optional<float> alphaCutoffValue;
+
+  void applyTextureTransform(NSMutableString *shader,
+                             gltf2::GLTFKHRTextureTransform &t,
+                             NSString *prop) {
+    auto scale = t.scale.value_or(std::array<float, 2>({1.0f, 1.0f}));
+    auto rotation = t.rotation.value_or(0);
+    auto offset = t.offset.value_or(std::array<float, 2>({0.0f, 0.0f}));
+    [shader appendFormat:@"vec2 uv = transformUv("
+                          " _surface.%sTexcoord, "
+                          " vec2(%f, %f),"
+                          " %f, "
+                          " vec2(%f, %f)"
+                          ");"
+                          "_surface.%s = texture2D(u_%sTexture, uv);",
+                         prop.UTF8String, scale[0], scale[1], rotation,
+                         offset[0], offset[1], prop.UTF8String,
+                         prop.UTF8String];
+  }
 
   NSString *buildShader() {
     NSMutableString *shader = [NSMutableString string];
@@ -459,39 +478,44 @@ public:
       [shader appendString:@"#pragma transparent\n"];
     }
 
-    [shader
-        appendString:@"\n"
-                      "vec2 transformTextureCoordinates(vec2 uv, vec2 Scale, "
-                      "float Rotation, vec2 Offset) {"
-                      "  float3x3 translation = float3x3(float3(1, 0, 0), "
-                      "float3(0, 1, 0), float3(Offset, 1));"
-                      "  float3x3 rotation = float3x3(float3(cos(Rotation), "
-                      "-sin(Rotation), 0), float3(sin(Rotation), "
-                      "cos(Rotation), 0), float3(0, 0, 1));"
-                      "  float3x3 scale = float3x3(float3(Scale.x, 0, 0), "
-                      "float3(0, Scale.y, 0), float3(0, 0, 1));"
-                      "  float3x3 matrix = translation * rotation * scale;"
-                      "  return (matrix * float3(uv, 1)).xy;"
-                      "}\n"];
+    [shader appendString:@"\n"
+                          "vec2 transformUv("
+                          " vec2 uv, "
+                          " vec2 scale, "
+                          " float rotation, "
+                          " vec2 offset"
+                          ") {"
+                          " float3x3 t = float3x3("
+                          "   float3(1, 0, 0), "
+                          "   float3(0, 1, 0),"
+                          "   float3(offset, 1)"
+                          " );"
+                          " float3x3 r = float3x3("
+                          "   float3("
+                          "     cos(rotation), "
+                          "     -sin(rotation),"
+                          "     0"
+                          "   ),"
+                          "   float3("
+                          "     sin(rotation), "
+                          "     cos(rotation), "
+                          "     0"
+                          "   ),"
+                          "   float3(0, 0, 1)"
+                          " );"
+                          " float3x3 s = float3x3("
+                          "   float3(scale.x, 0, 0), "
+                          "   float3(0, scale.y, 0), "
+                          "   float3(0, 0, 1)"
+                          " );"
+                          " float3x3 matrix = t * r * s;"
+                          " return (matrix * float3(uv, 1)).xy;"
+                          "}\n"];
 
     [shader appendString:@"#pragma body\n"];
 
     if (diffuseTextureTransform.has_value()) {
-      auto scale = diffuseTextureTransform->scale.value_or(
-          std::array<float, 2>({1.0f, 1.0f}));
-      auto rotation = diffuseTextureTransform->rotation.value_or(0);
-      auto offset = diffuseTextureTransform->offset.value_or(
-          std::array<float, 2>({0.0f, 0.0f}));
-
-      [shader
-          appendFormat:@"vec2 scale(%f, %f);"
-                        "float rotation = %f;"
-                        "vec2 offset(%f, %f);"
-                        "vec2 uv = "
-                        "transformTextureCoordinates(_surface.diffuseTexcoord, "
-                        "scale, rotation, offset);"
-                        "_surface.diffuse = texture2D(u_diffuseTexture, uv);",
-                       scale[0], scale[1], rotation, offset[0], offset[1]];
+      applyTextureTransform(shader, *diffuseTextureTransform, @"diffuse");
     }
     if (diffuseBaseColorFactor.has_value()) {
       [shader appendFormat:@"_surface.diffuse *= float4(%ff, %ff, %ff, %ff);\n",
@@ -506,6 +530,9 @@ public:
       [shader appendFormat:
                   @"_surface.diffuse.a = _surface.diffuse.a < %f ? 0.0 : 1.0;",
                   *alphaCutoffValue];
+    }
+    if (emissiveTextureTransform.has_value()) {
+      applyTextureTransform(shader, *emissiveTextureTransform, @"emission");
     }
     return shader;
   }
@@ -544,12 +571,10 @@ public:
       [self applyTextureInfo:*pbrMetallicRoughness.baseColorTexture
                withIntensity:1.0f
                   toProperty:scnMaterial.diffuse];
-
       if (pbrMetallicRoughness.baseColorFactor.has_value()) {
         auto factor = *pbrMetallicRoughness.baseColorFactor;
         builder.diffuseBaseColorFactor = factor;
       }
-
       builder.diffuseTextureTransform =
           pbrMetallicRoughness.baseColorTexture->khrTextureTransform;
     } else {
@@ -593,6 +618,8 @@ public:
       [self applyTextureInfo:*material.emissiveTexture
                withIntensity:1.0f
                   toProperty:scnMaterial.emission];
+      builder.emissiveTextureTransform =
+          material.emissiveTexture->khrTextureTransform;
     } else {
       auto value = material.emissiveFactorValue();
       applyColorContentsToProperty(value[0], value[1], value[2], 1.0,

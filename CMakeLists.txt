@@ -51,7 +51,7 @@ configure_file(config.h.in ${CONFIG_H})
 set(TARGET_DIRS GLTF2 GLTF2SceneKit)
 
 if(BUILD_TESTS)
-    list(APPEND TARGET_DIRS core_test)
+    list(APPEND TARGET_DIRS GLTF2Tests)
 endif()
 
 if(BUILD_EXAMPLE)

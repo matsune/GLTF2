@@ -234,6 +234,7 @@ private:
   GLTFMaterialOcclusionTextureInfo
   decodeMaterialOcclusionTextureInfo(const nlohmann::json &j);
   GLTFMaterial decodeMaterial(const nlohmann::json &j);
+  GLTFMaterialSheen decodeMaterialSheen(const nlohmann::json &j);
   void decodeMeshPrimitiveTarget(const nlohmann::json &j,
                                  GLTFMeshPrimitiveTarget &target);
   GLTFMeshPrimitiveAttributes

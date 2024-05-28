@@ -448,35 +448,27 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
 
 class SurfaceShaderModifierBuilder {
 public:
-  std::optional<std::array<float, 4>> diffuseBaseColorFactor;
-  std::optional<gltf2::GLTFKHRTextureTransform> diffuseTextureTransform;
-  std::optional<gltf2::GLTFKHRTextureTransform> emissiveTextureTransform;
-  bool isOpaque;
-  std::optional<float> alphaCutoffValue;
-
-  void applyTextureTransform(NSMutableString *shader,
-                             gltf2::GLTFKHRTextureTransform &t,
-                             NSString *prop) {
-    auto scale = t.scale.value_or(std::array<float, 2>({1.0f, 1.0f}));
-    auto rotation = t.rotation.value_or(0);
-    auto offset = t.offset.value_or(std::array<float, 2>({0.0f, 0.0f}));
-    [shader appendFormat:@"vec2 uv = transformUv("
-                          " _surface.%sTexcoord, "
-                          " vec2(%f, %f),"
-                          " %f, "
-                          " vec2(%f, %f)"
-                          ");"
-                          "_surface.%s = texture2D(u_%sTexture, uv);",
-                         prop.UTF8String, scale[0], scale[1], rotation,
-                         offset[0], offset[1], prop.UTF8String,
-                         prop.UTF8String];
-  }
+  SurfaceShaderModifierBuilder(SCNMaterial *scnMaterial)
+      : scnMaterial(scnMaterial){};
 
   NSString *buildShader() {
     NSMutableString *shader = [NSMutableString string];
-    if (isTransparent()) {
+
+    if (diffuseBaseColorFactor &&
+        diffuseBaseColorFactor.SCNVector4Value.w < 1.0f) {
       [shader appendString:@"#pragma transparent\n"];
     }
+    [shader appendString:@"uniform vec4 diffuseBaseColorFactor;"
+                          "uniform float diffuseAlphaCutoff;"
+                          "uniform vec2 diffuseTransformScale;"
+                          "uniform float diffuseTransformRotation;"
+                          "uniform vec2 diffuseTransformOffset;"
+                          "uniform vec2 emissionTransformScale;"
+                          "uniform float emissionTransformRotation;"
+                          "uniform vec2 emissionTransformOffset;"
+                          "uniform vec3 lightPos;"
+                          "uniform vec3 sheenColorFactor;"
+                          "uniform float sheenRoughnessFactor;"];
 
     [shader appendString:@"\n"
                           "vec2 transformUv("
@@ -491,16 +483,8 @@ public:
                           "   float3(offset, 1)"
                           " );"
                           " float3x3 r = float3x3("
-                          "   float3("
-                          "     cos(rotation), "
-                          "     -sin(rotation),"
-                          "     0"
-                          "   ),"
-                          "   float3("
-                          "     sin(rotation), "
-                          "     cos(rotation), "
-                          "     0"
-                          "   ),"
+                          "   float3(cos(rotation), -sin(rotation), 0),"
+                          "   float3(sin(rotation), cos(rotation), 0),"
                           "   float3(0, 0, 1)"
                           " );"
                           " float3x3 s = float3x3("
@@ -509,38 +493,179 @@ public:
                           "   float3(0, 0, 1)"
                           " );"
                           " float3x3 matrix = t * r * s;"
-                          " return (matrix * float3(uv, 1)).xy;"
+                          " return (matrix * vec3(uv, 1)).xy;"
                           "}\n"];
+    [shader
+        appendFormat:
+            @"\n"
+             "float D_Charlie(float sheenRoughness, float NdotH) {"
+             " sheenRoughness = max(sheenRoughness, 0.000001);"
+             " float alphaG = sheenRoughness * sheenRoughness;"
+             " float invR = 1.0 / alphaG;"
+             " float cos2h = NdotH * NdotH;"
+             " float sin2h = 1.0 - cos2h;"
+             " return (2.0 + invR) * pow(sin2h, invR * 0.5) / (2.0 * %f);"
+             "}"
+             "\n"
+             "float lambdaSheenNumericHelper(float x, float alphaG) {"
+             " float oneMinusAlphaSq = (1.0 - alphaG) * (1.0 - alphaG);"
+             " float a = mix(21.5473, 25.3245, oneMinusAlphaSq);"
+             " float b = mix(3.82987, 3.32435, oneMinusAlphaSq);"
+             " float c = mix(0.19823, 0.16801, oneMinusAlphaSq);"
+             " float d = mix(-1.97760, -1.27393, oneMinusAlphaSq);"
+             " float e = mix(-4.32054, -4.85967, oneMinusAlphaSq);"
+             " return a / (1.0 + b * pow(x, c)) + d * x + e;"
+             "}"
+             "\n"
+             "float lambdaSheen(float cosTheta, float alphaG) {"
+             " if (abs(cosTheta) < 0.5) {"
+             "  return exp(lambdaSheenNumericHelper(cosTheta, alphaG));"
+             " } else {"
+             "  return exp(2.0 * lambdaSheenNumericHelper(0.5, alphaG) - "
+             "lambdaSheenNumericHelper(1.0 - cosTheta, alphaG));"
+             " }"
+             "}"
+             "\n"
+             "float V_Sheen(float NdotL, float NdotV, float sheenRoughness) {"
+             " sheenRoughness = max(sheenRoughness, 0.000001);"
+             " float alphaG = sheenRoughness * sheenRoughness;"
+             " return clamp(1.0 / ((1.0 + lambdaSheen(NdotV, alphaG) + "
+             "lambdaSheen(NdotL, alphaG)) * (4.0 * NdotV * NdotL)), 0.0, 1.0);"
+             "}"
+             "\n"
+             "vec3 BRDF_specularSheen(vec3 sheenColor, float sheenRoughness, "
+             "float NdotL, float NdotV, float NdotH) {"
+             " float sheenDistribution = D_Charlie(sheenRoughness, NdotH);"
+             " float sheenVisibility = V_Sheen(NdotL, NdotV, sheenRoughness);"
+             " return sheenColor * sheenDistribution * sheenVisibility;"
+             "}"
+             "\n",
+            M_PI];
 
     [shader appendString:@"#pragma body\n"];
 
     if (diffuseTextureTransform.has_value()) {
-      applyTextureTransform(shader, *diffuseTextureTransform, @"diffuse");
+      [shader
+          appendString:@"vec2 uv = transformUv("
+                        " _surface.diffuseTexcoord, "
+                        " diffuseTransformScale,"
+                        " diffuseTransformRotation, "
+                        " diffuseTransformOffset"
+                        ");"
+                        "_surface.diffuse = texture2D(u_diffuseTexture, uv);"];
     }
-    if (diffuseBaseColorFactor.has_value()) {
-      [shader appendFormat:@"_surface.diffuse *= float4(%ff, %ff, %ff, %ff);\n",
-                           diffuseBaseColorFactor->at(0),
-                           diffuseBaseColorFactor->at(1),
-                           diffuseBaseColorFactor->at(2),
-                           diffuseBaseColorFactor->at(3)];
+    if (diffuseBaseColorFactor) {
+      [shader appendString:@"_surface.diffuse *= diffuseBaseColorFactor;"];
     }
-    if (isOpaque) {
+    if (isDiffuseOpaque) {
       [shader appendString:@"_surface.diffuse.a = 1.0;"];
-    } else if (alphaCutoffValue.has_value()) {
-      [shader appendFormat:
-                  @"_surface.diffuse.a = _surface.diffuse.a < %f ? 0.0 : 1.0;",
-                  *alphaCutoffValue];
+    } else if (diffuseAlphaCutoff) {
+      [shader appendString:@"_surface.diffuse.a = _surface.diffuse.a < "
+                           @"diffuseAlphaCutoff ? 0.0 : 1.0;"];
     }
-    if (emissiveTextureTransform.has_value()) {
-      applyTextureTransform(shader, *emissiveTextureTransform, @"emission");
+    if (emissionTextureTransform.has_value()) {
+      [shader appendString:
+                  @"vec2 uv = transformUv("
+                   " _surface.emissionTexcoord, "
+                   " emissionTransformScale,"
+                   " emissionTransformRotation, "
+                   " emissionTransformOffset"
+                   ");"
+                   "_surface.emission = texture2D(u_emissionTexture, uv);"];
+    }
+    if (sheen.has_value()) {
+      [shader appendString:@"vec3 sheenColor = sheenColorFactor;"
+                            "float sheenRoughness = sheenRoughnessFactor;"
+                            "vec3 N = _surface.normal;"
+                            "vec3 V = _surface.view;"
+                            "vec3 L = normalize(lightPos - _surface.position);"
+                            "vec3 H = normalize(V + L);"
+                            "float NdotL = max(dot(N, L), 0.0);"
+                            "float NdotV = max(dot(N, V), 0.0);"
+                            "float NdotH = max(dot(N, H), 0.0);"
+                            "vec3 brdf = BRDF_specularSheen(sheenColor, "
+                            "sheenRoughness, NdotL, NdotV, NdotH);"
+                            "vec3 finalColor = vec3(0.0);"
+                            "finalColor += brdf;"
+                            "finalColor += _surface.ambient.xyz;"
+                            "finalColor += _surface.emission.xyz;"
+                            "_surface.diffuse.xyz += finalColor;"];
     }
     return shader;
   }
 
-  bool isTransparent() {
-    return diffuseBaseColorFactor.has_value() &&
-           diffuseBaseColorFactor->at(3) < 1.0f;
+  void setIsDiffuseOpaque(bool value) { isDiffuseOpaque = value; }
+
+  void setDiffuseAlphaCutoff(float value) {
+    diffuseAlphaCutoff = [NSNumber numberWithFloat:value];
+    [scnMaterial setValue:diffuseAlphaCutoff forKeyPath:@"diffuseAlphaCutoff"];
   }
+
+  void setDiffuseBaseColorFactor(std::array<float, 4> value) {
+    diffuseBaseColorFactor =
+        [NSValue valueWithSCNVector4:SCNVector4Make(value[0], value[1],
+                                                    value[2], value[3])];
+    [scnMaterial setValue:diffuseBaseColorFactor
+               forKeyPath:@"diffuseBaseColorFactor"];
+  }
+
+  void setDiffuseTextureTransform(gltf2::GLTFKHRTextureTransform t) {
+    auto scale = t.scaleValue();
+    auto rotation = t.rotationValue();
+    auto offset = t.offsetValue();
+    [scnMaterial
+          setValue:[NSValue valueWithPoint:NSMakePoint(scale[0], scale[1])]
+        forKeyPath:@"diffuseTransformScale"];
+    [scnMaterial setValue:[NSNumber numberWithFloat:rotation]
+               forKeyPath:@"diffuseTransformRotation"];
+    [scnMaterial
+          setValue:[NSValue valueWithPoint:NSMakePoint(offset[0], offset[1])]
+        forKeyPath:@"diffuseTransformOffset"];
+    diffuseTextureTransform = t;
+  }
+
+  void setEmissionTextureTransform(gltf2::GLTFKHRTextureTransform t) {
+    auto scale = t.scaleValue();
+    auto rotation = t.rotationValue();
+    auto offset = t.offsetValue();
+    [scnMaterial
+          setValue:[NSValue valueWithPoint:NSMakePoint(scale[0], scale[1])]
+        forKeyPath:@"emissionTransformScale"];
+    [scnMaterial setValue:[NSNumber numberWithFloat:rotation]
+               forKeyPath:@"emissionTransformRotation"];
+    [scnMaterial
+          setValue:[NSValue valueWithPoint:NSMakePoint(offset[0], offset[1])]
+        forKeyPath:@"emissionTransformOffset"];
+    emissionTextureTransform = t;
+  }
+
+  void setSheen(gltf2::GLTFMaterialSheen value, SCNVector3 lightPos) {
+    std::array<float, 3> colorFactor =
+        value.sheenColorFactor.value_or(std::array<float, 3>{0, 0, 0});
+    float roughnessFactor = value.sheenRoughnessFactor.value_or(0);
+    [scnMaterial
+          setValue:[NSValue valueWithSCNVector3:SCNVector3Make(colorFactor[0],
+                                                               colorFactor[1],
+                                                               colorFactor[2])]
+        forKeyPath:@"sheenColorFactor"];
+    [scnMaterial setValue:[NSNumber numberWithFloat:roughnessFactor]
+               forKeyPath:@"sheenRoughnessFactor"];
+    sheen = value;
+
+    this->lightPos = [NSValue valueWithSCNVector3:lightPos];
+    [scnMaterial setValue:this->lightPos forKeyPath:@"lightPos"];
+  }
+
+private:
+  SCNMaterial *scnMaterial;
+
+  NSValue *diffuseBaseColorFactor;
+  std::optional<gltf2::GLTFKHRTextureTransform> diffuseTextureTransform;
+  bool isDiffuseOpaque;
+  NSNumber *diffuseAlphaCutoff;
+  std::optional<gltf2::GLTFKHRTextureTransform> emissionTextureTransform;
+  NSValue *lightPos;
+  std::optional<gltf2::GLTFMaterialSheen> sheen;
 };
 
 - (nullable NSArray<SCNMaterial *> *)loadSCNMaterials {
@@ -561,7 +686,7 @@ public:
       scnMaterial.lightingModelName = SCNLightingModelBlinn;
     }
 
-    SurfaceShaderModifierBuilder builder;
+    SurfaceShaderModifierBuilder builder(scnMaterial);
 
     auto pbrMetallicRoughness = material.pbrMetallicRoughness.value_or(
         gltf2::GLTFMaterialPBRMetallicRoughness());
@@ -573,10 +698,10 @@ public:
                   toProperty:scnMaterial.diffuse];
       if (pbrMetallicRoughness.baseColorFactor.has_value()) {
         auto factor = *pbrMetallicRoughness.baseColorFactor;
-        builder.diffuseBaseColorFactor = factor;
+        builder.setDiffuseBaseColorFactor(factor);
       }
-      builder.diffuseTextureTransform =
-          pbrMetallicRoughness.baseColorTexture->khrTextureTransform;
+      builder.setDiffuseTextureTransform(
+          *pbrMetallicRoughness.baseColorTexture->khrTextureTransform);
     } else {
       auto value = pbrMetallicRoughness.baseColorFactorValue();
       applyColorContentsToProperty(value[0], value[1], value[2], value[3],
@@ -618,8 +743,8 @@ public:
       [self applyTextureInfo:*material.emissiveTexture
                withIntensity:1.0f
                   toProperty:scnMaterial.emission];
-      builder.emissiveTextureTransform =
-          material.emissiveTexture->khrTextureTransform;
+      builder.setEmissionTextureTransform(
+          *material.emissiveTexture->khrTextureTransform);
     } else {
       auto value = material.emissiveFactorValue();
       applyColorContentsToProperty(value[0], value[1], value[2], 1.0,
@@ -628,11 +753,11 @@ public:
 
     if (material.alphaModeValue() == gltf2::GLTFMaterial::AlphaMode::OPAQUE) {
       scnMaterial.blendMode = SCNBlendModeReplace;
-      builder.isOpaque = true;
+      builder.setIsDiffuseOpaque(true);
     } else if (material.alphaModeValue() ==
                gltf2::GLTFMaterial::AlphaMode::MASK) {
       scnMaterial.blendMode = SCNBlendModeReplace;
-      builder.alphaCutoffValue = material.alphaCutoffValue();
+      builder.setDiffuseAlphaCutoff(material.alphaCutoffValue());
     } else if (material.alphaModeValue() ==
                gltf2::GLTFMaterial::AlphaMode::BLEND) {
       scnMaterial.blendMode = SCNBlendModeAlpha;
@@ -640,6 +765,22 @@ public:
     }
 
     scnMaterial.doubleSided = material.isDoubleSided();
+
+    if (material.sheen.has_value()) {
+      //      SCNMaterialProperty *colorTextureProperty;
+      //      if (material.sheen->sheenColorTexture.has_value()) {
+      //        colorTextureProperty = [SCNMaterialProperty new];
+      //        [self applyTextureInfo:*material.sheen->sheenColorTexture
+      //        withIntensity:1.0 toProperty:colorTextureProperty];
+      //      }
+      //      SCNMaterialProperty *roughnessTextureProperty;
+      //      if (material.sheen->sheenRoughnessTexture.has_value()) {
+      //        roughnessTextureProperty = [SCNMaterialProperty new];
+      //        [self applyTextureInfo:*material.sheen->sheenRoughnessTexture
+      //        withIntensity:1.0 toProperty:roughnessTextureProperty];
+      //      }
+      builder.setSheen(*material.sheen, SCNVector3Make(0, 10, 10));
+    }
 
     scnMaterial.shaderModifiers = @{
       SCNShaderModifierEntryPointSurface : builder.buildShader(),

@@ -163,6 +163,18 @@ TEST(TestGLTFData, parseJson) {
                 "texCoord": 1
               }
             }
+          },
+          "extensions": {
+            "KHR_materials_sheen": {
+              "sheenColorFactor": [0.9, 0.9, 0.9],
+              "sheenColorTexture": {
+                "index": 0
+              },
+              "sheenRoughnessFactor": 0.3,
+              "sheenRoughnessTexture": {
+                "index": 1
+              }
+            }
           }
         }
       ],
@@ -370,6 +382,13 @@ TEST(TestGLTFData, parseJson) {
             (std::array<float, 2>{0.5f, 0.5f}));
   EXPECT_EQ(data.json.materials.value()[1]
                 .emissiveTexture->khrTextureTransform->texCoord,
+            1);
+  EXPECT_EQ(data.json.materials.value()[1].sheen->sheenColorFactor.value(),
+            (std::array<float, 3>{0.9f, 0.9f, 0.9f}));
+  EXPECT_EQ(data.json.materials.value()[1].sheen->sheenColorTexture->index, 0);
+  EXPECT_EQ(data.json.materials.value()[1].sheen->sheenRoughnessFactor.value(),
+            0.3f);
+  EXPECT_EQ(data.json.materials.value()[1].sheen->sheenRoughnessTexture->index,
             1);
 
   EXPECT_EQ(data.json.meshes.value().size(), 1);

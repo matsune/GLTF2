@@ -397,9 +397,35 @@ GLTFMaterial GLTFJsonDecoder::decodeMaterial(const nlohmann::json &j) {
   if (extensionsObj) {
     bool isUnlit = extensionsObj->contains(GLTFExtensionKHRMaterialsUnlit);
     material.unlit = isUnlit;
+
+    decodeToMapObj<GLTFMaterialSheen>(
+        *extensionsObj, GLTFExtensionKHRMaterialsSheen, material.sheen,
+        [this](const nlohmann::json &value) {
+          return decodeMaterialSheen(value);
+        });
   }
 
   return material;
+}
+
+GLTFMaterialSheen
+GLTFJsonDecoder::decodeMaterialSheen(const nlohmann::json &j) {
+  GLTFMaterialSheen sheen;
+  decodeToMapValue<std::array<float, 3>>(
+      j, "sheenColorFactor", sheen.sheenColorFactor,
+      [this](const nlohmann::json &value) {
+        if (!value.is_array())
+          throw InvalidFormatException(context());
+        return value.get<std::array<float, 3>>();
+      });
+  decodeToMapObj<GLTFTextureInfo>(
+      j, "sheenColorTexture", sheen.sheenColorTexture,
+      [this](const nlohmann::json &value) { return decodeTextureInfo(value); });
+  decodeTo(j, "sheenRoughnessFactor", sheen.sheenRoughnessFactor);
+  decodeToMapObj<GLTFTextureInfo>(
+      j, "sheenRoughnessTexture", sheen.sheenRoughnessTexture,
+      [this](const nlohmann::json &value) { return decodeTextureInfo(value); });
+  return sheen;
 }
 
 void GLTFJsonDecoder::decodeMeshPrimitiveTarget(

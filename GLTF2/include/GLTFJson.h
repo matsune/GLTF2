@@ -308,6 +308,16 @@ public:
   std::optional<float> rotation;
   std::optional<std::array<float, 2>> scale;
   std::optional<uint32_t> texCoord;
+
+  std::array<float, 2> offsetValue() {
+    return offset.value_or(std::array<float, 2>({0.0f, 0.0f}));
+  }
+
+  float rotationValue() { return rotation.value_or(0); }
+
+  std::array<float, 2> scaleValue() {
+    return scale.value_or(std::array<float, 2>({1.0f, 1.0f}));
+  }
 };
 
 class GLTFTextureInfo {
@@ -353,6 +363,14 @@ public:
   float strengthValue() const { return strength.value_or(1.0f); }
 };
 
+class GLTFMaterialSheen {
+public:
+  std::optional<std::array<float, 3>> sheenColorFactor;
+  std::optional<GLTFTextureInfo> sheenColorTexture;
+  std::optional<float> sheenRoughnessFactor;
+  std::optional<GLTFTextureInfo> sheenRoughnessTexture;
+};
+
 class GLTFMaterial {
 public:
   enum class AlphaMode { OPAQUE, MASK, BLEND };
@@ -379,6 +397,7 @@ public:
   std::optional<float> alphaCutoff;
   std::optional<bool> doubleSided;
   std::optional<bool> unlit;
+  std::optional<GLTFMaterialSheen> sheen;
 
   std::array<float, 3> emissiveFactorValue() const {
     return emissiveFactor.value_or(std::array<float, 3>{0.0f, 0.0f, 0.0f});

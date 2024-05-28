@@ -38,4 +38,11 @@
   self.scnViewController.scnView.pointOfView = cameraNode;
 }
 
+- (void)sidebarViewController:(SidebarViewController *)sidebarViewController
+              didChangeLightX:(float)x {
+  SCNVector3 pos = self.scnViewController.lightNode.position;
+  pos.x = x;
+  self.scnViewController.lightNode.position = pos;
+}
+
 @end

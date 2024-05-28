@@ -9,6 +9,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)sidebarViewController:(SidebarViewController *)sidebarViewController
        didSelectCameraAtIndex:(NSInteger)index;
+- (void)sidebarViewController:(SidebarViewController *)sidebarViewController
+              didChangeLightX:(float)x;
 
 @end
 
@@ -18,10 +20,12 @@ NS_ASSUME_NONNULL_BEGIN
 @property(weak) IBOutlet NSButton *playButton;
 @property(weak) IBOutlet NSPopUpButton *camerasPopUpButton;
 @property(nonatomic, weak) id<SidebarViewControllerDelegate> delegate;
+@property(weak) IBOutlet NSTextField *lightXTextField;
 
 - (IBAction)animationsPopUpButtonAction:(NSPopUpButton *)sender;
 - (IBAction)playButtonAction:(NSButton *)sender;
 - (IBAction)camerasPopUpButtonAction:(NSPopUpButton *)sender;
+- (IBAction)lightXAction:(NSTextField *)sender;
 
 - (void)setupAsset:(GLTFSCNAsset *)asset;
 @end

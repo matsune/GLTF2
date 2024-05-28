@@ -38,6 +38,8 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
   std::unique_ptr<gltf2::GLTFData> _data;
 }
 
+@property(nonatomic, strong) NSArray<SCNMaterial *> *scnMaterials;
+
 @end
 
 @implementation GLTFSCNAsset
@@ -48,6 +50,7 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
     _scenes = [NSArray array];
     _cameraNodes = [NSArray array];
     _animationPlayers = [NSArray array];
+    _scnMaterials = [NSArray array];
   }
   return self;
 }
@@ -74,6 +77,60 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
   [self loadScenes];
 
   return YES;
+}
+
+- (void)setLightNode:(SCNNode *)lightNode {
+  if (_lightNode) {
+    [_lightNode removeObserver:self forKeyPath:@"position"];
+    [_lightNode.light removeObserver:self forKeyPath:@"intensity"];
+    [_lightNode.light removeObserver:self forKeyPath:@"color"];
+  }
+  _lightNode = lightNode;
+  if (_lightNode) {
+    [_lightNode addObserver:self
+                 forKeyPath:@"position"
+                    options:NSKeyValueObservingOptionNew
+                    context:nil];
+    [_lightNode.light addObserver:self
+                       forKeyPath:@"intensity"
+                          options:NSKeyValueObservingOptionNew
+                          context:nil];
+    [_lightNode.light addObserver:self
+                       forKeyPath:@"color"
+                          options:NSKeyValueObservingOptionNew
+                          context:nil];
+  }
+  [self setLightValues];
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath
+                      ofObject:(id)object
+                        change:(NSDictionary<NSKeyValueChangeKey, id> *)change
+                       context:(void *)context {
+  [self setLightValues];
+}
+
+- (void)setLightValues {
+  if (self.lightNode) {
+    for (SCNMaterial *scnMaterial in self.scnMaterials) {
+      [scnMaterial
+            setValue:[NSValue valueWithSCNVector3:self.lightNode.position]
+          forKeyPath:@"lightPos"];
+      [scnMaterial
+            setValue:[NSNumber numberWithFloat:self.lightNode.light.intensity]
+          forKeyPath:@"lightIntensity"];
+      NSColor *rgbColor = [self.lightNode.light.color
+          colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+      SCNVector3 color = SCNVector3Make(1.0f, 1.0f, 1.0f);
+      if (rgbColor) {
+        CGFloat red, green, blue;
+        [rgbColor getRed:&red green:&green blue:&blue alpha:nil];
+        color = SCNVector3Make(red, green, blue);
+      }
+      [scnMaterial setValue:[NSValue valueWithSCNVector3:color]
+                 forKeyPath:@"lightColor"];
+    }
+  }
 }
 
 #pragma mark SCNScene
@@ -127,7 +184,7 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
 
 - (void)loadScenes {
   // load materials
-  NSArray<SCNMaterial *> *scnMaterials = [self loadSCNMaterials];
+  self.scnMaterials = [self loadSCNMaterials];
 
   // load cameras
   NSArray<SCNCamera *> *scnCameras = [self loadSCNCameras];
@@ -171,7 +228,7 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
           }
 
           if (primitive.material.has_value()) {
-            SCNMaterial *scnMaterial = scnMaterials[*primitive.material];
+            SCNMaterial *scnMaterial = self.scnMaterials[*primitive.material];
             geometry.materials = @[ scnMaterial ];
           }
 
@@ -458,86 +515,100 @@ public:
         diffuseBaseColorFactor.SCNVector4Value.w < 1.0f) {
       [shader appendString:@"#pragma transparent\n"];
     }
-    [shader appendString:@"uniform vec4 diffuseBaseColorFactor;"
-                          "uniform float diffuseAlphaCutoff;"
-                          "uniform vec2 diffuseTransformScale;"
-                          "uniform float diffuseTransformRotation;"
-                          "uniform vec2 diffuseTransformOffset;"
-                          "uniform vec2 emissionTransformScale;"
-                          "uniform float emissionTransformRotation;"
-                          "uniform vec2 emissionTransformOffset;"
-                          "uniform vec3 lightPos;"
-                          "uniform vec3 sheenColorFactor;"
-                          "uniform float sheenRoughnessFactor;"];
 
+    NSArray<NSString *> *uniforms = @[
+      @"vec4  diffuseBaseColorFactor",
+      @"float diffuseAlphaCutoff",
+
+      @"vec2  diffuseTransformScale",
+      @"float diffuseTransformRotation",
+      @"vec2  diffuseTransformOffset",
+
+      @"vec2  emissionTransformScale",
+      @"float emissionTransformRotation",
+      @"vec2  emissionTransformOffset",
+
+      @"vec3  lightPos",
+      @"float lightIntensity",
+      @"vec3  lightColor",
+      @"vec3  sheenColorFactor",
+      @"float sheenRoughnessFactor",
+    ];
+    for (NSString *uniform in uniforms) {
+      [shader appendString:[@[ @"uniform ", uniform, @";" ]
+                               componentsJoinedByString:@""]];
+    }
+
+    // texture transform
     [shader appendString:@"\n"
                           "vec2 transformUv("
-                          " vec2 uv, "
-                          " vec2 scale, "
-                          " float rotation, "
-                          " vec2 offset"
+                          "  vec2 uv, "
+                          "  vec2 scale, "
+                          "  float rotation, "
+                          "  vec2 offset"
                           ") {"
-                          " float3x3 t = float3x3("
-                          "   float3(1, 0, 0), "
-                          "   float3(0, 1, 0),"
-                          "   float3(offset, 1)"
-                          " );"
-                          " float3x3 r = float3x3("
-                          "   float3(cos(rotation), -sin(rotation), 0),"
-                          "   float3(sin(rotation), cos(rotation), 0),"
-                          "   float3(0, 0, 1)"
-                          " );"
-                          " float3x3 s = float3x3("
-                          "   float3(scale.x, 0, 0), "
-                          "   float3(0, scale.y, 0), "
-                          "   float3(0, 0, 1)"
-                          " );"
-                          " float3x3 matrix = t * r * s;"
-                          " return (matrix * vec3(uv, 1)).xy;"
+                          "  mat3 t = mat3("
+                          "    vec3(1, 0, 0), "
+                          "    vec3(0, 1, 0),"
+                          "    vec3(offset, 1)"
+                          "  );"
+                          "  mat3 r = mat3("
+                          "    vec3(cos(rotation), -sin(rotation), 0),"
+                          "    vec3(sin(rotation), cos(rotation), 0),"
+                          "    vec3(0, 0, 1)"
+                          "  );"
+                          "  mat3 s = mat3("
+                          "    vec3(scale.x, 0, 0), "
+                          "    vec3(0, scale.y, 0), "
+                          "    vec3(0, 0, 1)"
+                          "  );"
+                          "  mat3 matrix = t * r * s;"
+                          "  return (matrix * vec3(uv, 1)).xy;"
                           "}\n"];
+    // sheen
     [shader
         appendFormat:
             @"\n"
              "float D_Charlie(float sheenRoughness, float NdotH) {"
-             " sheenRoughness = max(sheenRoughness, 0.000001);"
-             " float alphaG = sheenRoughness * sheenRoughness;"
-             " float invR = 1.0 / alphaG;"
-             " float cos2h = NdotH * NdotH;"
-             " float sin2h = 1.0 - cos2h;"
-             " return (2.0 + invR) * pow(sin2h, invR * 0.5) / (2.0 * %f);"
+             "  sheenRoughness = max(sheenRoughness, 0.000001);"
+             "  float alphaG = sheenRoughness * sheenRoughness;"
+             "  float invR = 1.0 / alphaG;"
+             "  float cos2h = NdotH * NdotH;"
+             "  float sin2h = 1.0 - cos2h;"
+             "  return (2.0 + invR) * pow(sin2h, invR * 0.5) / (2.0 * %f);"
              "}"
              "\n"
              "float lambdaSheenNumericHelper(float x, float alphaG) {"
-             " float oneMinusAlphaSq = (1.0 - alphaG) * (1.0 - alphaG);"
-             " float a = mix(21.5473, 25.3245, oneMinusAlphaSq);"
-             " float b = mix(3.82987, 3.32435, oneMinusAlphaSq);"
-             " float c = mix(0.19823, 0.16801, oneMinusAlphaSq);"
-             " float d = mix(-1.97760, -1.27393, oneMinusAlphaSq);"
-             " float e = mix(-4.32054, -4.85967, oneMinusAlphaSq);"
-             " return a / (1.0 + b * pow(x, c)) + d * x + e;"
+             "  float oneMinusAlphaSq = (1.0 - alphaG) * (1.0 - alphaG);"
+             "  float a = mix(21.5473, 25.3245, oneMinusAlphaSq);"
+             "  float b = mix(3.82987, 3.32435, oneMinusAlphaSq);"
+             "  float c = mix(0.19823, 0.16801, oneMinusAlphaSq);"
+             "  float d = mix(-1.97760, -1.27393, oneMinusAlphaSq);"
+             "  float e = mix(-4.32054, -4.85967, oneMinusAlphaSq);"
+             "  return a / (1.0 + b * pow(x, c)) + d * x + e;"
              "}"
              "\n"
              "float lambdaSheen(float cosTheta, float alphaG) {"
-             " if (abs(cosTheta) < 0.5) {"
-             "  return exp(lambdaSheenNumericHelper(cosTheta, alphaG));"
-             " } else {"
-             "  return exp(2.0 * lambdaSheenNumericHelper(0.5, alphaG) - "
+             "  if (abs(cosTheta) < 0.5) {"
+             "    return exp(lambdaSheenNumericHelper(cosTheta, alphaG));"
+             "  } else {"
+             "    return exp(2.0 * lambdaSheenNumericHelper(0.5, alphaG) - "
              "lambdaSheenNumericHelper(1.0 - cosTheta, alphaG));"
-             " }"
+             "  }"
              "}"
              "\n"
              "float V_Sheen(float NdotL, float NdotV, float sheenRoughness) {"
-             " sheenRoughness = max(sheenRoughness, 0.000001);"
-             " float alphaG = sheenRoughness * sheenRoughness;"
-             " return clamp(1.0 / ((1.0 + lambdaSheen(NdotV, alphaG) + "
+             "  sheenRoughness = max(sheenRoughness, 0.000001);"
+             "  float alphaG = sheenRoughness * sheenRoughness;"
+             "  return clamp(1.0 / ((1.0 + lambdaSheen(NdotV, alphaG) + "
              "lambdaSheen(NdotL, alphaG)) * (4.0 * NdotV * NdotL)), 0.0, 1.0);"
              "}"
              "\n"
              "vec3 BRDF_specularSheen(vec3 sheenColor, float sheenRoughness, "
              "float NdotL, float NdotV, float NdotH) {"
-             " float sheenDistribution = D_Charlie(sheenRoughness, NdotH);"
-             " float sheenVisibility = V_Sheen(NdotL, NdotV, sheenRoughness);"
-             " return sheenColor * sheenDistribution * sheenVisibility;"
+             "  float sheenDistribution = D_Charlie(sheenRoughness, NdotH);"
+             "  float sheenVisibility = V_Sheen(NdotL, NdotV, sheenRoughness);"
+             "  return sheenColor * sheenDistribution * sheenVisibility;"
              "}"
              "\n",
             M_PI];
@@ -545,51 +616,55 @@ public:
     [shader appendString:@"#pragma body\n"];
 
     if (diffuseTextureTransform.has_value()) {
-      [shader
-          appendString:@"vec2 uv = transformUv("
-                        " _surface.diffuseTexcoord, "
-                        " diffuseTransformScale,"
-                        " diffuseTransformRotation, "
-                        " diffuseTransformOffset"
-                        ");"
-                        "_surface.diffuse = texture2D(u_diffuseTexture, uv);"];
+      [shader appendString:@"_surface.diffuse = texture2D("
+                            "  u_diffuseTexture,"
+                            "  transformUv("
+                            "    _surface.diffuseTexcoord, "
+                            "    diffuseTransformScale,"
+                            "    diffuseTransformRotation, "
+                            "    diffuseTransformOffset"
+                            "  )"
+                            ");"];
     }
     if (diffuseBaseColorFactor) {
       [shader appendString:@"_surface.diffuse *= diffuseBaseColorFactor;"];
+    }
+    if (emissionTextureTransform.has_value()) {
+      [shader appendString:@"_surface.emission = texture2D("
+                            "  u_emissionTexture,"
+                            "  transformUv("
+                            "    _surface.emissionTexcoord, "
+                            "    emissionTransformScale,"
+                            "    emissionTransformRotation, "
+                            "    emissionTransformOffset"
+                            "  )"
+                            ");"];
+    }
+    if (sheen.has_value()) {
+      [shader
+          appendString:@"vec3 sheenColor = sheenColorFactor;"
+                        "float sheenRoughness = sheenRoughnessFactor;"
+                        "vec3 N = _surface.normal;"
+                        "vec3 V = _surface.view;"
+                        "vec3 L = normalize(lightPos - _surface.position);"
+                        "vec3 H = normalize(V + L);"
+                        "float NdotL = max(dot(N, L), 0.0);"
+                        "float NdotV = max(dot(N, V), 0.0);"
+                        "float NdotH = max(dot(N, H), 0.0);"
+                        "vec3 brdf = BRDF_specularSheen(sheenColor, "
+                        "sheenRoughness, NdotL, NdotV, NdotH);"
+                        "vec3 finalColor = _surface.diffuse.xyz;"
+                        "float distance = length(lightPos - _surface.position);"
+                        "vec3 radiance = (lightColor * lightIntensity) / "
+                        "(distance * distance);"
+                        "finalColor += brdf * radiance;"
+                        "_surface.diffuse.xyz = finalColor;"];
     }
     if (isDiffuseOpaque) {
       [shader appendString:@"_surface.diffuse.a = 1.0;"];
     } else if (diffuseAlphaCutoff) {
       [shader appendString:@"_surface.diffuse.a = _surface.diffuse.a < "
-                           @"diffuseAlphaCutoff ? 0.0 : 1.0;"];
-    }
-    if (emissionTextureTransform.has_value()) {
-      [shader appendString:
-                  @"vec2 uv = transformUv("
-                   " _surface.emissionTexcoord, "
-                   " emissionTransformScale,"
-                   " emissionTransformRotation, "
-                   " emissionTransformOffset"
-                   ");"
-                   "_surface.emission = texture2D(u_emissionTexture, uv);"];
-    }
-    if (sheen.has_value()) {
-      [shader appendString:@"vec3 sheenColor = sheenColorFactor;"
-                            "float sheenRoughness = sheenRoughnessFactor;"
-                            "vec3 N = _surface.normal;"
-                            "vec3 V = _surface.view;"
-                            "vec3 L = normalize(lightPos - _surface.position);"
-                            "vec3 H = normalize(V + L);"
-                            "float NdotL = max(dot(N, L), 0.0);"
-                            "float NdotV = max(dot(N, V), 0.0);"
-                            "float NdotH = max(dot(N, H), 0.0);"
-                            "vec3 brdf = BRDF_specularSheen(sheenColor, "
-                            "sheenRoughness, NdotL, NdotV, NdotH);"
-                            "vec3 finalColor = vec3(0.0);"
-                            "finalColor += brdf;"
-                            "finalColor += _surface.ambient.xyz;"
-                            "finalColor += _surface.emission.xyz;"
-                            "_surface.diffuse.xyz += finalColor;"];
+                            "diffuseAlphaCutoff ? 0.0 : 1.0;"];
     }
     return shader;
   }
@@ -639,7 +714,7 @@ public:
     emissionTextureTransform = t;
   }
 
-  void setSheen(gltf2::GLTFMaterialSheen value, SCNVector3 lightPos) {
+  void setSheen(gltf2::GLTFMaterialSheen value) {
     std::array<float, 3> colorFactor =
         value.sheenColorFactor.value_or(std::array<float, 3>{0, 0, 0});
     float roughnessFactor = value.sheenRoughnessFactor.value_or(0);
@@ -651,9 +726,6 @@ public:
     [scnMaterial setValue:[NSNumber numberWithFloat:roughnessFactor]
                forKeyPath:@"sheenRoughnessFactor"];
     sheen = value;
-
-    this->lightPos = [NSValue valueWithSCNVector3:lightPos];
-    [scnMaterial setValue:this->lightPos forKeyPath:@"lightPos"];
   }
 
 private:
@@ -664,7 +736,6 @@ private:
   bool isDiffuseOpaque;
   NSNumber *diffuseAlphaCutoff;
   std::optional<gltf2::GLTFKHRTextureTransform> emissionTextureTransform;
-  NSValue *lightPos;
   std::optional<gltf2::GLTFMaterialSheen> sheen;
 };
 
@@ -767,19 +838,7 @@ private:
     scnMaterial.doubleSided = material.isDoubleSided();
 
     if (material.sheen.has_value()) {
-      //      SCNMaterialProperty *colorTextureProperty;
-      //      if (material.sheen->sheenColorTexture.has_value()) {
-      //        colorTextureProperty = [SCNMaterialProperty new];
-      //        [self applyTextureInfo:*material.sheen->sheenColorTexture
-      //        withIntensity:1.0 toProperty:colorTextureProperty];
-      //      }
-      //      SCNMaterialProperty *roughnessTextureProperty;
-      //      if (material.sheen->sheenRoughnessTexture.has_value()) {
-      //        roughnessTextureProperty = [SCNMaterialProperty new];
-      //        [self applyTextureInfo:*material.sheen->sheenRoughnessTexture
-      //        withIntensity:1.0 toProperty:roughnessTextureProperty];
-      //      }
-      builder.setSheen(*material.sheen, SCNVector3Make(0, 10, 10));
+      builder.setSheen(*material.sheen);
     }
 
     scnMaterial.shaderModifiers = @{

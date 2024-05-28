@@ -14,6 +14,7 @@
   self.animationsPopUpButton.enabled = NO;
   self.playButton.enabled = NO;
   self.camerasPopUpButton.enabled = NO;
+  self.lightXTextField.floatValue = 0.0f;
 }
 
 - (IBAction)animationsPopUpButtonAction:(NSPopUpButton *)sender {
@@ -53,6 +54,14 @@
         addItemWithTitle:[NSString stringWithFormat:@"Camera %d", i]];
   }
   self.camerasPopUpButton.enabled = asset.cameraNodes.count > 0;
+}
+
+- (IBAction)lightXAction:(NSTextField *)sender {
+  if ([self.delegate respondsToSelector:@selector(sidebarViewController:
+                                                        didChangeLightX:)]) {
+    [self.delegate sidebarViewController:self
+                         didChangeLightX:sender.floatValue];
+  }
 }
 
 - (IBAction)camerasPopUpButtonAction:(NSPopUpButton *)sender {

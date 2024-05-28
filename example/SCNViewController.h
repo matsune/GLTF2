@@ -17,6 +17,9 @@
 @property(nonatomic) GLTFSCNAsset *asset;
 @property(nonatomic, weak) id<SCNViewControllerDelegate> delegate;
 
+@property(nonatomic) SCNLight *light;
+@property(nonatomic) SCNNode *lightNode;
+
 - (void)loadModelURL:(NSURL *)url;
 
 @end

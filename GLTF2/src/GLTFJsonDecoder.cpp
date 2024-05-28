@@ -398,6 +398,12 @@ GLTFMaterial GLTFJsonDecoder::decodeMaterial(const nlohmann::json &j) {
     bool isUnlit = extensionsObj->contains(GLTFExtensionKHRMaterialsUnlit);
     material.unlit = isUnlit;
 
+    decodeToMapObj<GLTFMaterialAnisotropy>(
+        *extensionsObj, GLTFExtensionKHRMaterialsAnisotropy,
+        material.anisotropy, [this](const nlohmann::json &value) {
+          return decodeMaterialAnisotropy(value);
+        });
+
     decodeToMapObj<GLTFMaterialSheen>(
         *extensionsObj, GLTFExtensionKHRMaterialsSheen, material.sheen,
         [this](const nlohmann::json &value) {
@@ -406,6 +412,17 @@ GLTFMaterial GLTFJsonDecoder::decodeMaterial(const nlohmann::json &j) {
   }
 
   return material;
+}
+
+GLTFMaterialAnisotropy
+GLTFJsonDecoder::decodeMaterialAnisotropy(const nlohmann::json &j) {
+  GLTFMaterialAnisotropy anisotropy;
+  decodeTo(j, "anisotropyStrength", anisotropy.anisotropyStrength);
+  decodeTo(j, "anisotropyRotation", anisotropy.anisotropyRotation);
+  decodeToMapObj<GLTFTextureInfo>(
+      j, "anisotropyTexture", anisotropy.anisotropyTexture,
+      [this](const nlohmann::json &value) { return decodeTextureInfo(value); });
+  return anisotropy;
 }
 
 GLTFMaterialSheen

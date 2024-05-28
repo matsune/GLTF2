@@ -165,6 +165,13 @@ TEST(TestGLTFData, parseJson) {
             }
           },
           "extensions": {
+            "KHR_materials_anisotropy": {
+                "anisotropyStrength": 0.6,
+                "anisotropyRotation": 1.57,
+                "anisotropyTexture": {
+                    "index": 0
+                }
+            },
             "KHR_materials_sheen": {
               "sheenColorFactor": [0.9, 0.9, 0.9],
               "sheenColorTexture": {
@@ -383,6 +390,14 @@ TEST(TestGLTFData, parseJson) {
   EXPECT_EQ(data.json.materials.value()[1]
                 .emissiveTexture->khrTextureTransform->texCoord,
             1);
+  EXPECT_EQ(
+      data.json.materials.value()[1].anisotropy->anisotropyStrength.value(),
+      0.6f);
+  EXPECT_EQ(
+      data.json.materials.value()[1].anisotropy->anisotropyRotation.value(),
+      1.57f);
+  EXPECT_EQ(data.json.materials.value()[1].anisotropy->anisotropyTexture->index,
+            0);
   EXPECT_EQ(data.json.materials.value()[1].sheen->sheenColorFactor.value(),
             (std::array<float, 3>{0.9f, 0.9f, 0.9f}));
   EXPECT_EQ(data.json.materials.value()[1].sheen->sheenColorTexture->index, 0);

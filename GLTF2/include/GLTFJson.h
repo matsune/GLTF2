@@ -363,6 +363,21 @@ public:
   float strengthValue() const { return strength.value_or(1.0f); }
 };
 
+class GLTFMaterialAnisotropy {
+public:
+  std::optional<float> anisotropyStrength;
+  std::optional<float> anisotropyRotation;
+  std::optional<GLTFTextureInfo> anisotropyTexture;
+
+  float anisotropyStrengthValue() const {
+    return anisotropyStrength.value_or(0.0f);
+  }
+
+  float anisotropyRotationValue() const {
+    return anisotropyRotation.value_or(0.0f);
+  }
+};
+
 class GLTFMaterialSheen {
 public:
   std::optional<std::array<float, 3>> sheenColorFactor;
@@ -397,6 +412,7 @@ public:
   std::optional<float> alphaCutoff;
   std::optional<bool> doubleSided;
   std::optional<bool> unlit;
+  std::optional<GLTFMaterialAnisotropy> anisotropy;
   std::optional<GLTFMaterialSheen> sheen;
 
   std::array<float, 3> emissiveFactorValue() const {

@@ -117,7 +117,8 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
             setValue:[NSValue valueWithSCNVector3:self.lightNode.position]
           forKeyPath:@"lightPos"];
       [scnMaterial
-            setValue:[NSNumber numberWithFloat:self.lightNode.light.intensity]
+            setValue:[NSNumber numberWithFloat:self.lightNode.light.intensity /
+                                               1000.0f]
           forKeyPath:@"lightIntensity"];
       NSColor *rgbColor = [self.lightNode.light.color
           colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
@@ -505,14 +506,27 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
 
 class SurfaceShaderModifierBuilder {
 public:
-  SurfaceShaderModifierBuilder(SCNMaterial *scnMaterial)
-      : scnMaterial(scnMaterial){};
+  bool transparent;
+  bool hasRoughnessTexture;
+  bool enableDiffuseAlphaCutoff;
+  bool isDiffuseOpaque;
+  bool transformDiffuseTexture;
+  bool transformEmissionTexture;
+  bool enableAnisotropy;
+  bool hasAnisotropyTexture;
+  bool enableSheen;
+
+  SurfaceShaderModifierBuilder()
+      : transparent(false), hasRoughnessTexture(false),
+        enableDiffuseAlphaCutoff(false), isDiffuseOpaque(false),
+        transformDiffuseTexture(false), transformEmissionTexture(false),
+        enableAnisotropy(false), hasAnisotropyTexture(false),
+        enableSheen(false) {}
 
   NSString *buildShader() {
     NSMutableString *shader = [NSMutableString string];
 
-    if (diffuseBaseColorFactor &&
-        diffuseBaseColorFactor.SCNVector4Value.w < 1.0f) {
+    if (transparent) {
       [shader appendString:@"#pragma transparent\n"];
     }
 
@@ -528,9 +542,18 @@ public:
       @"float emissionTransformRotation",
       @"vec2  emissionTransformOffset",
 
+      @"float anisotropyStrength",
+      @"float anisotropyRotation",
+      @"sampler2D anisotropyTexture",
+
       @"vec3  lightPos",
       @"float lightIntensity",
       @"vec3  lightColor",
+
+      @"float metallicFactor",
+      @"float roughnessFactor",
+      @"sampler2D roughnessTexture",
+
       @"vec3  sheenColorFactor",
       @"float sheenRoughnessFactor",
     ];
@@ -565,178 +588,229 @@ public:
                           "  mat3 matrix = t * r * s;"
                           "  return (matrix * vec3(uv, 1)).xy;"
                           "}\n"];
-    // sheen
+    // anisotropy
     [shader
         appendFormat:
             @"\n"
-             "float D_Charlie(float sheenRoughness, float NdotH) {"
-             "  sheenRoughness = max(sheenRoughness, 0.000001);"
-             "  float alphaG = sheenRoughness * sheenRoughness;"
-             "  float invR = 1.0 / alphaG;"
-             "  float cos2h = NdotH * NdotH;"
-             "  float sin2h = 1.0 - cos2h;"
-             "  return (2.0 + invR) * pow(sin2h, invR * 0.5) / (2.0 * %f);"
+             "vec3 F_Schlick(vec3 f0, vec3 f90, float VdotH) {"
+             "  return f0 + (f90 - f0) * pow("
+             "    clamp(1.0 - VdotH, 0.0, 1.0), 5.0"
+             "  );"
              "}"
              "\n"
-             "float lambdaSheenNumericHelper(float x, float alphaG) {"
-             "  float oneMinusAlphaSq = (1.0 - alphaG) * (1.0 - alphaG);"
-             "  float a = mix(21.5473, 25.3245, oneMinusAlphaSq);"
-             "  float b = mix(3.82987, 3.32435, oneMinusAlphaSq);"
-             "  float c = mix(0.19823, 0.16801, oneMinusAlphaSq);"
-             "  float d = mix(-1.97760, -1.27393, oneMinusAlphaSq);"
-             "  float e = mix(-4.32054, -4.85967, oneMinusAlphaSq);"
-             "  return a / (1.0 + b * pow(x, c)) + d * x + e;"
+             "float D_GGX_anisotropic("
+             "  float NdotH, float TdotH, float BdotH,"
+             "  float at, float ab"
+             ") {"
+             "  float a2 = at * ab;"
+             "  vec3 f = vec3(ab * TdotH, at * BdotH, a2 * NdotH);"
+             "  float w2 = a2 / dot(f, f);"
+             "  return a2 * w2 * w2 / %f;"
              "}"
              "\n"
-             "float lambdaSheen(float cosTheta, float alphaG) {"
-             "  if (abs(cosTheta) < 0.5) {"
-             "    return exp(lambdaSheenNumericHelper(cosTheta, alphaG));"
-             "  } else {"
-             "    return exp(2.0 * lambdaSheenNumericHelper(0.5, alphaG) - "
-             "lambdaSheenNumericHelper(1.0 - cosTheta, alphaG));"
-             "  }"
+             "float V_GGX_anisotropic("
+             "  float NdotL, float NdotV, float BdotV, "
+             "  float TdotV, float TdotL, float BdotL, float at, float ab"
+             ") {"
+             "  float GGXV = NdotL * length("
+             "    vec3(at * TdotV, ab * BdotV, NdotV)"
+             "  );"
+             "  float GGXL = NdotV * length("
+             "    vec3(at * TdotL, ab * BdotL, NdotL)"
+             "  );"
+             "  float v = 0.5 / (GGXV + GGXL);"
+             "  return clamp(v, 0.0, 1.0);"
              "}"
              "\n"
-             "float V_Sheen(float NdotL, float NdotV, float sheenRoughness) {"
-             "  sheenRoughness = max(sheenRoughness, 0.000001);"
-             "  float alphaG = sheenRoughness * sheenRoughness;"
-             "  return clamp(1.0 / ((1.0 + lambdaSheen(NdotV, alphaG) + "
-             "lambdaSheen(NdotL, alphaG)) * (4.0 * NdotV * NdotL)), 0.0, 1.0);"
-             "}"
-             "\n"
-             "vec3 BRDF_specularSheen(vec3 sheenColor, float sheenRoughness, "
-             "float NdotL, float NdotV, float NdotH) {"
-             "  float sheenDistribution = D_Charlie(sheenRoughness, NdotH);"
-             "  float sheenVisibility = V_Sheen(NdotL, NdotV, sheenRoughness);"
-             "  return sheenColor * sheenDistribution * sheenVisibility;"
+             "vec3 BRDF_specularAnisotropicGGX("
+             "  vec3 f0, vec3 f90, float alphaRoughness,"
+             "  float VdotH, float NdotL, float NdotV, "
+             "  float NdotH, float BdotV, float TdotV,"
+             "  float TdotL, float BdotL, float TdotH, "
+             "  float BdotH, float anisotropy"
+             ") {"
+             "  float at = mix(alphaRoughness, 1.0, anisotropy * anisotropy);"
+             "  float ab = alphaRoughness;"
+             "  vec3 F = F_Schlick(f0, f90, VdotH);"
+             "  float V = V_GGX_anisotropic("
+             "    NdotL, NdotV, BdotV, TdotV,"
+             "    TdotL, BdotL, at, ab"
+             "  );"
+             "  float D = D_GGX_anisotropic(NdotH, TdotH, BdotH, at, ab);"
+             "  return F * V * D;"
              "}"
              "\n",
             M_PI];
 
-    [shader appendString:@"#pragma body\n"];
+    // sheen
+    // Charlie distribution and Ashikhmin visibility
+    [shader appendFormat:
+                @"\n"
+                 "float CharlieD(float sheenRoughness, float NdotH) {"
+                 "  float roughness = max(sheenRoughness, 0.000001);"
+                 "  float invR = 1. / roughness;"
+                 "  float cos2h = NdotH * NdotH;"
+                 "  float sin2h = 1. - cos2h;"
+                 "  return (2. + invR) * pow(sin2h, invR * .5) / (2. * %f);"
+                 "}"
+                 "\n"
+                 "float AshikhminV(float NdotV, float NdotL) {"
+                 "  return 1.0 / (4.0 * (NdotL + NdotV - NdotL * NdotV));"
+                 "}"
+                 "\n"
+                 "vec3 FresnelTerm(vec3 specularColor, float vdoth) {"
+                 "  vec3 fresnel = specularColor + (1. - specularColor) * "
+                 "pow((1. - vdoth), 5.);"
+                 "  return fresnel;"
+                 "}"
+                 "\n"
+                 "vec3 BRDF_specularSheen("
+                 "  vec3 sheenColor, float sheenRoughness, "
+                 "  float NdotL, float NdotV, float NdotH, "
+                 "  vec3 specularColor, float VdotH"
+                 ") {"
+                 "  float D = CharlieD(sheenRoughness, NdotH);"
+                 "  float V = AshikhminV(NdotV, NdotL);"
+                 "  vec3 f = FresnelTerm(specularColor, VdotH);"
+                 "  return sheenColor * f * D * V * %f * NdotL;"
+                 "}"
+                 "\n",
+                M_PI, M_PI];
 
-    if (diffuseTextureTransform.has_value()) {
+    [shader appendString:@"#pragma body\n"];
+    [shader appendString:[@[
+              @"vec3  f0 = vec3(0.04);",
+              @"vec3  f90 = vec3(1.0);",
+              @"float metallic = metallicFactor;",
+              @"float perceptualRoughness = roughnessFactor;",
+              @"float alphaRoughness = 0.0;",
+            ] componentsJoinedByString:@"\n"]];
+
+    if (transformDiffuseTexture) {
+      [shader appendString:@"vec2 diffuseUv = transformUv("
+                            "  _surface.diffuseTexcoord, "
+                            "  diffuseTransformScale,"
+                            "  diffuseTransformRotation, "
+                            "  diffuseTransformOffset"
+                            ");"];
       [shader appendString:@"_surface.diffuse = texture2D("
                             "  u_diffuseTexture,"
-                            "  transformUv("
-                            "    _surface.diffuseTexcoord, "
-                            "    diffuseTransformScale,"
-                            "    diffuseTransformRotation, "
-                            "    diffuseTransformOffset"
-                            "  )"
+                            "  diffuseUv"
                             ");"];
     }
-    if (diffuseBaseColorFactor) {
-      [shader appendString:@"_surface.diffuse *= diffuseBaseColorFactor;"];
+
+    if (hasRoughnessTexture) {
+      if (!transformDiffuseTexture)
+        [shader appendString:@"vec2 diffuseUv = _surface.diffuseTexcoord;"];
+      [shader appendString:
+                  @"vec4 mrSample = texture2D(roughnessTexture, diffuseUv);"
+                   "perceptualRoughness = mrSample.g;"
+                   "metallic = mrSample.b;"];
     }
-    if (emissionTextureTransform.has_value()) {
+    [shader appendString:
+                @"f0 = mix(f0, _surface.diffuse.rgb, metallic);"
+                 "perceptualRoughness = clamp(perceptualRoughness, 0.0, 1.0);"
+                 "metallic = clamp(metallic, 0.0, 1.0);"
+                 "alphaRoughness = perceptualRoughness * perceptualRoughness;"];
+
+    if (transformEmissionTexture) {
+      [shader appendString:@"vec2 emissionUv = transformUv("
+                            "  _surface.emissionTexcoord, "
+                            "  emissionTransformScale,"
+                            "  emissionTransformRotation, "
+                            "  emissionTransformOffset"
+                            ");"];
       [shader appendString:@"_surface.emission = texture2D("
                             "  u_emissionTexture,"
-                            "  transformUv("
-                            "    _surface.emissionTexcoord, "
-                            "    emissionTransformScale,"
-                            "    emissionTransformRotation, "
-                            "    emissionTransformOffset"
-                            "  )"
+                            "  emissionUv"
                             ");"];
     }
-    if (sheen.has_value()) {
+
+    [shader appendString:@"_surface.diffuse *= diffuseBaseColorFactor;"];
+
+    if (enableAnisotropy) {
+      [shader appendString:@"if (true) {"
+                            "  vec2 direction = vec2(1.0, 0.0);\n"
+                            "  float anisotropy = anisotropyStrength;\n"];
+      if (hasAnisotropyTexture) {
+        [shader appendString:
+                    @"  vec3 anisotropySample = texture2D("
+                     "    anisotropyTexture, "
+                     "    _surface.diffuseTexcoord"
+                     "  ).rgb;\n"
+                     "  direction = anisotropySample.rg * 2.0 - vec2(1.0);\n"
+                     "  anisotropy = anisotropySample.b;\n"];
+      }
       [shader
-          appendString:@"vec3 sheenColor = sheenColorFactor;"
-                        "float sheenRoughness = sheenRoughnessFactor;"
-                        "vec3 N = _surface.normal;"
-                        "vec3 V = _surface.view;"
-                        "vec3 L = normalize(lightPos - _surface.position);"
-                        "vec3 H = normalize(V + L);"
-                        "float NdotL = max(dot(N, L), 0.0);"
-                        "float NdotV = max(dot(N, V), 0.0);"
-                        "float NdotH = max(dot(N, H), 0.0);"
-                        "vec3 brdf = BRDF_specularSheen(sheenColor, "
-                        "sheenRoughness, NdotL, NdotV, NdotH);"
-                        "vec3 finalColor = _surface.diffuse.xyz;"
-                        "float distance = length(lightPos - _surface.position);"
-                        "vec3 radiance = (lightColor * lightIntensity) / "
-                        "(distance * distance);"
-                        "finalColor += brdf * radiance;"
-                        "_surface.diffuse.xyz = finalColor;"];
+          appendString:
+              @"  vec2 u_AnisotropyRotation = vec2("
+               "    cos(anisotropyRotation), "
+               "    sin(anisotropyRotation)"
+               "  );"
+               "  mat2 rotationMat = mat2("
+               "    u_AnisotropyRotation.x, "
+               "    u_AnisotropyRotation.y, "
+               "    -u_AnisotropyRotation.y, "
+               "    u_AnisotropyRotation.x"
+               "  );"
+               "  direction = rotationMat * direction.xy;"
+               "  vec3 N = normalize(_surface.normal);"
+               "  vec3 V = normalize(_surface.view);"
+               "  vec3 L = normalize(lightPos - _surface.position);"
+               "  vec3 H = normalize(V + L);"
+               "  vec3 T = normalize(_surface.tangent);"
+               "  vec3 B = normalize(cross(N, T));"
+               "  mat3 TBN = mat3(T, B, N);\n"
+               "  vec3 anisotropicT = TBN * normalize(vec3(direction, 0.0));\n"
+               "  vec3 anisotropicB = cross(N, anisotropicT);\n"
+               "  float VdotH = max(dot(V, H), 0.0);\n"
+               "  float NdotL = max(dot(N, L), 0.0);\n"
+               "  float NdotV = max(dot(N, V), 0.0);\n"
+               "  float NdotH = max(dot(N, H), 0.0);\n"
+               "  float BdotV = max(dot(anisotropicB, V), 0.0);\n"
+               "  float TdotV = max(dot(anisotropicT, V), 0.0);\n"
+               "  float TdotL = max(dot(anisotropicT, L), 0.0);\n"
+               "  float BdotL = max(dot(anisotropicB, L), 0.0);\n"
+               "  float TdotH = max(dot(anisotropicT, H), 0.0);\n"
+               "  float BdotH = max(dot(anisotropicB, H), 0.0);\n"
+               "  vec3 brdf = BRDF_specularAnisotropicGGX("
+               "    f0, f90, alphaRoughness,"
+               "    VdotH, NdotL, NdotV, "
+               "    NdotH, BdotV, TdotV, "
+               "    TdotL, BdotL, TdotH, "
+               "    BdotH, anisotropy"
+               "  );\n"
+               "  _surface.diffuse.rgb += lightIntensity * NdotL * brdf;"
+               "}"
+               "\n"];
+    }
+
+    if (enableSheen) {
+      [shader
+          appendString:@"if (true) {"
+                        "  vec3 N = normalize(_surface.normal);"
+                        "  vec3 V = normalize(_surface.view);"
+                        "  vec3 L = normalize(lightPos - _surface.position);"
+                        "  vec3 H = normalize(V + L);"
+                        "  float NdotL = max(dot(N, L), 0.0);"
+                        "  float NdotV = max(dot(N, V), 0.0);"
+                        "  float NdotH = max(dot(N, H), 0.0);"
+                        "  float VdotH = max(dot(V, H), 0.0);"
+                        "  vec3 brdf = BRDF_specularSheen("
+                        "    sheenColorFactor, sheenRoughnessFactor,"
+                        "    NdotL, NdotV, NdotH, lightColor, VdotH"
+                        "  );"
+                        "  _surface.diffuse.rgb += brdf;"
+                        "}\n"];
     }
     if (isDiffuseOpaque) {
       [shader appendString:@"_surface.diffuse.a = 1.0;"];
-    } else if (diffuseAlphaCutoff) {
+    } else if (enableDiffuseAlphaCutoff) {
       [shader appendString:@"_surface.diffuse.a = _surface.diffuse.a < "
                             "diffuseAlphaCutoff ? 0.0 : 1.0;"];
     }
     return shader;
   }
-
-  void setIsDiffuseOpaque(bool value) { isDiffuseOpaque = value; }
-
-  void setDiffuseAlphaCutoff(float value) {
-    diffuseAlphaCutoff = [NSNumber numberWithFloat:value];
-    [scnMaterial setValue:diffuseAlphaCutoff forKeyPath:@"diffuseAlphaCutoff"];
-  }
-
-  void setDiffuseBaseColorFactor(std::array<float, 4> value) {
-    diffuseBaseColorFactor =
-        [NSValue valueWithSCNVector4:SCNVector4Make(value[0], value[1],
-                                                    value[2], value[3])];
-    [scnMaterial setValue:diffuseBaseColorFactor
-               forKeyPath:@"diffuseBaseColorFactor"];
-  }
-
-  void setDiffuseTextureTransform(gltf2::GLTFKHRTextureTransform t) {
-    auto scale = t.scaleValue();
-    auto rotation = t.rotationValue();
-    auto offset = t.offsetValue();
-    [scnMaterial
-          setValue:[NSValue valueWithPoint:NSMakePoint(scale[0], scale[1])]
-        forKeyPath:@"diffuseTransformScale"];
-    [scnMaterial setValue:[NSNumber numberWithFloat:rotation]
-               forKeyPath:@"diffuseTransformRotation"];
-    [scnMaterial
-          setValue:[NSValue valueWithPoint:NSMakePoint(offset[0], offset[1])]
-        forKeyPath:@"diffuseTransformOffset"];
-    diffuseTextureTransform = t;
-  }
-
-  void setEmissionTextureTransform(gltf2::GLTFKHRTextureTransform t) {
-    auto scale = t.scaleValue();
-    auto rotation = t.rotationValue();
-    auto offset = t.offsetValue();
-    [scnMaterial
-          setValue:[NSValue valueWithPoint:NSMakePoint(scale[0], scale[1])]
-        forKeyPath:@"emissionTransformScale"];
-    [scnMaterial setValue:[NSNumber numberWithFloat:rotation]
-               forKeyPath:@"emissionTransformRotation"];
-    [scnMaterial
-          setValue:[NSValue valueWithPoint:NSMakePoint(offset[0], offset[1])]
-        forKeyPath:@"emissionTransformOffset"];
-    emissionTextureTransform = t;
-  }
-
-  void setSheen(gltf2::GLTFMaterialSheen value) {
-    std::array<float, 3> colorFactor =
-        value.sheenColorFactor.value_or(std::array<float, 3>{0, 0, 0});
-    float roughnessFactor = value.sheenRoughnessFactor.value_or(0);
-    [scnMaterial
-          setValue:[NSValue valueWithSCNVector3:SCNVector3Make(colorFactor[0],
-                                                               colorFactor[1],
-                                                               colorFactor[2])]
-        forKeyPath:@"sheenColorFactor"];
-    [scnMaterial setValue:[NSNumber numberWithFloat:roughnessFactor]
-               forKeyPath:@"sheenRoughnessFactor"];
-    sheen = value;
-  }
-
-private:
-  SCNMaterial *scnMaterial;
-
-  NSValue *diffuseBaseColorFactor;
-  std::optional<gltf2::GLTFKHRTextureTransform> diffuseTextureTransform;
-  bool isDiffuseOpaque;
-  NSNumber *diffuseAlphaCutoff;
-  std::optional<gltf2::GLTFKHRTextureTransform> emissionTextureTransform;
-  std::optional<gltf2::GLTFMaterialSheen> sheen;
 };
 
 - (nullable NSArray<SCNMaterial *> *)loadSCNMaterials {
@@ -757,7 +831,33 @@ private:
       scnMaterial.lightingModelName = SCNLightingModelBlinn;
     }
 
-    SurfaceShaderModifierBuilder builder(scnMaterial);
+    SurfaceShaderModifierBuilder builder;
+
+    float metallicFactor = 1.0f;
+    float roughnessFactor = 1.0f;
+    SCNMaterialProperty *roughnessTexture;
+
+    SCNVector4 diffuseBaseColorFactor = SCNVector4Make(1.0, 1.0, 1.0, 1.0);
+    float diffuseAlphaCutoff = 0.0f;
+
+    NSPoint diffuseTransformScale = NSZeroPoint;
+    float diffuseTransformRotation = 0.0f;
+    NSPoint diffuseTransformOffset = NSZeroPoint;
+
+    NSPoint emissionTransformScale = NSZeroPoint;
+    float emissionTransformRotation = 0.0f;
+    NSPoint emissionTransformOffset = NSZeroPoint;
+
+    float anisotropyStrength = 1.0f;
+    float anisotropyRotation = 0.0f;
+    SCNMaterialProperty *anisotropyTexture;
+
+    SCNVector3 lightPos = SCNVector3Zero;
+    float lightIntensity = 1000.0;
+    SCNVector3 lightColor = SCNVector3Make(1.0, 1.0, 1.0);
+
+    SCNVector3 sheenColorFactor = SCNVector3Make(1.0, 1.0, 1.0);
+    float sheenRoughnessFactor = 1.0;
 
     auto pbrMetallicRoughness = material.pbrMetallicRoughness.value_or(
         gltf2::GLTFMaterialPBRMetallicRoughness());
@@ -769,10 +869,23 @@ private:
                   toProperty:scnMaterial.diffuse];
       if (pbrMetallicRoughness.baseColorFactor.has_value()) {
         auto factor = *pbrMetallicRoughness.baseColorFactor;
-        builder.setDiffuseBaseColorFactor(factor);
+        diffuseBaseColorFactor =
+            SCNVector4Make(factor[0], factor[1], factor[2], factor[3]);
+        builder.transparent = diffuseBaseColorFactor.w < 1.0f;
       }
-      builder.setDiffuseTextureTransform(
-          *pbrMetallicRoughness.baseColorTexture->khrTextureTransform);
+      if (pbrMetallicRoughness.baseColorTexture->khrTextureTransform
+              .has_value()) {
+        auto scale = pbrMetallicRoughness.baseColorTexture->khrTextureTransform
+                         ->scaleValue();
+        auto rotation = pbrMetallicRoughness.baseColorTexture
+                            ->khrTextureTransform->rotationValue();
+        auto offset = pbrMetallicRoughness.baseColorTexture->khrTextureTransform
+                          ->offsetValue();
+        diffuseTransformScale = NSMakePoint(scale[0], scale[1]);
+        diffuseTransformRotation = rotation;
+        diffuseTransformOffset = NSMakePoint(offset[0], offset[1]);
+        builder.transformDiffuseTexture = true;
+      }
     } else {
       auto value = pbrMetallicRoughness.baseColorFactorValue();
       applyColorContentsToProperty(value[0], value[1], value[2], value[3],
@@ -790,12 +903,17 @@ private:
                withIntensity:pbrMetallicRoughness.roughnessFactorValue()
                   toProperty:scnMaterial.roughness];
       scnMaterial.roughness.textureComponents = SCNColorMaskGreen;
+
+      roughnessTexture = scnMaterial.roughness;
+      builder.hasRoughnessTexture = true;
     } else {
       scnMaterial.metalness.contents =
           @(pbrMetallicRoughness.metallicFactorValue());
       scnMaterial.roughness.contents =
           @(pbrMetallicRoughness.roughnessFactorValue());
     }
+    metallicFactor = pbrMetallicRoughness.metallicFactorValue();
+    roughnessFactor = pbrMetallicRoughness.roughnessFactorValue();
 
     if (material.normalTexture.has_value()) {
       [self applyTextureInfo:*material.normalTexture
@@ -814,8 +932,18 @@ private:
       [self applyTextureInfo:*material.emissiveTexture
                withIntensity:1.0f
                   toProperty:scnMaterial.emission];
-      builder.setEmissionTextureTransform(
-          *material.emissiveTexture->khrTextureTransform);
+      if (material.emissiveTexture->khrTextureTransform.has_value()) {
+        auto scale =
+            material.emissiveTexture->khrTextureTransform->scaleValue();
+        auto rotation =
+            material.emissiveTexture->khrTextureTransform->rotationValue();
+        auto offset =
+            material.emissiveTexture->khrTextureTransform->offsetValue();
+        emissionTransformScale = NSMakePoint(scale[0], scale[1]);
+        emissionTransformRotation = rotation;
+        emissionTransformOffset = NSMakePoint(offset[0], offset[1]);
+        builder.transformEmissionTexture = true;
+      }
     } else {
       auto value = material.emissiveFactorValue();
       applyColorContentsToProperty(value[0], value[1], value[2], 1.0,
@@ -824,11 +952,12 @@ private:
 
     if (material.alphaModeValue() == gltf2::GLTFMaterial::AlphaMode::OPAQUE) {
       scnMaterial.blendMode = SCNBlendModeReplace;
-      builder.setIsDiffuseOpaque(true);
+      builder.isDiffuseOpaque = true;
     } else if (material.alphaModeValue() ==
                gltf2::GLTFMaterial::AlphaMode::MASK) {
       scnMaterial.blendMode = SCNBlendModeReplace;
-      builder.setDiffuseAlphaCutoff(material.alphaCutoffValue());
+      diffuseAlphaCutoff = material.alphaCutoffValue();
+      builder.enableDiffuseAlphaCutoff = true;
     } else if (material.alphaModeValue() ==
                gltf2::GLTFMaterial::AlphaMode::BLEND) {
       scnMaterial.blendMode = SCNBlendModeAlpha;
@@ -837,9 +966,74 @@ private:
 
     scnMaterial.doubleSided = material.isDoubleSided();
 
-    if (material.sheen.has_value()) {
-      builder.setSheen(*material.sheen);
+    if (material.anisotropy.has_value()) {
+      if (material.anisotropy->anisotropyTexture.has_value()) {
+        anisotropyTexture = [SCNMaterialProperty new];
+        [self applyTextureInfo:*material.anisotropy->anisotropyTexture
+                 withIntensity:1.0
+                    toProperty:anisotropyTexture];
+        builder.hasAnisotropyTexture = true;
+      }
+      anisotropyStrength =
+          material.anisotropy->anisotropyStrength.value_or(0.0);
+      anisotropyRotation =
+          material.anisotropy->anisotropyRotation.value_or(0.0);
+      builder.enableAnisotropy = true;
     }
+
+    if (material.sheen.has_value()) {
+      std::array<float, 3> colorFactor =
+          material.sheen->sheenColorFactor.value_or(
+              std::array<float, 3>{0, 0, 0});
+      sheenColorFactor =
+          SCNVector3Make(colorFactor[0], colorFactor[1], colorFactor[2]);
+      sheenRoughnessFactor = material.sheen->sheenRoughnessFactor.value_or(0);
+      // TODO: sheen texture
+      builder.enableSheen = true;
+    }
+
+    [scnMaterial setValue:[NSNumber numberWithFloat:metallicFactor]
+               forKeyPath:@"metallicFactor"];
+    [scnMaterial setValue:[NSNumber numberWithFloat:roughnessFactor]
+               forKeyPath:@"roughnessFactor"];
+    [scnMaterial setValue:roughnessTexture forKeyPath:@"roughnessTexture"];
+
+    [scnMaterial setValue:[NSValue valueWithSCNVector4:diffuseBaseColorFactor]
+               forKeyPath:@"diffuseBaseColorFactor"];
+    [scnMaterial setValue:[NSNumber numberWithFloat:diffuseAlphaCutoff]
+               forKeyPath:@"diffuseAlphaCutoff"];
+
+    [scnMaterial setValue:[NSValue valueWithPoint:diffuseTransformScale]
+               forKeyPath:@"diffuseTransformScale"];
+    [scnMaterial setValue:[NSNumber numberWithFloat:diffuseTransformRotation]
+               forKeyPath:@"diffuseTransformRotation"];
+    [scnMaterial setValue:[NSValue valueWithPoint:diffuseTransformOffset]
+               forKeyPath:@"diffuseTransformOffset"];
+
+    [scnMaterial setValue:[NSValue valueWithPoint:emissionTransformScale]
+               forKeyPath:@"emissionTransformScale"];
+    [scnMaterial setValue:[NSNumber numberWithFloat:emissionTransformRotation]
+               forKeyPath:@"emissionTransformRotation"];
+    [scnMaterial setValue:[NSValue valueWithPoint:emissionTransformOffset]
+               forKeyPath:@"emissionTransformOffset"];
+
+    [scnMaterial setValue:[NSNumber numberWithFloat:anisotropyStrength]
+               forKeyPath:@"anisotropyStrength"];
+    [scnMaterial setValue:[NSNumber numberWithFloat:anisotropyRotation]
+               forKeyPath:@"anisotropyRotation"];
+    [scnMaterial setValue:anisotropyTexture forKeyPath:@"anisotropyTexture"];
+
+    [scnMaterial setValue:[NSValue valueWithSCNVector3:lightPos]
+               forKeyPath:@"lightPos"];
+    [scnMaterial setValue:[NSNumber numberWithFloat:lightIntensity / 1000.0f]
+               forKeyPath:@"lightIntensity"];
+    [scnMaterial setValue:[NSValue valueWithSCNVector3:lightColor]
+               forKeyPath:@"lightColor"];
+
+    [scnMaterial setValue:[NSValue valueWithSCNVector3:sheenColorFactor]
+               forKeyPath:@"sheenColorFactor"];
+    [scnMaterial setValue:[NSNumber numberWithFloat:sheenRoughnessFactor]
+               forKeyPath:@"sheenRoughnessFactor"];
 
     scnMaterial.shaderModifiers = @{
       SCNShaderModifierEntryPointSurface : builder.buildShader(),

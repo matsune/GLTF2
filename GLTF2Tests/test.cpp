@@ -181,6 +181,16 @@ TEST(TestGLTFData, parseJson) {
               "sheenRoughnessTexture": {
                 "index": 1
               }
+            },
+            "KHR_materials_specular": {
+              "specularFactor": 0.3,
+              "specularTexture": {
+                "index": 2
+              },
+              "specularColorFactor": [0.6, 0.7, 0.8],
+              "specularColorTexture": {
+                "index": 3
+              }
             }
           }
         }
@@ -405,6 +415,14 @@ TEST(TestGLTFData, parseJson) {
             0.3f);
   EXPECT_EQ(data.json.materials.value()[1].sheen->sheenRoughnessTexture->index,
             1);
+  EXPECT_EQ(data.json.materials.value()[1].specular->specularFactor.value(),
+            0.3f);
+  EXPECT_EQ(data.json.materials.value()[1].specular->specularTexture->index, 2);
+  EXPECT_EQ(
+      data.json.materials.value()[1].specular->specularColorFactor.value(),
+      (std::array<float, 3>{0.6f, 0.7f, 0.8f}));
+  EXPECT_EQ(
+      data.json.materials.value()[1].specular->specularColorTexture->index, 3);
 
   EXPECT_EQ(data.json.meshes.value().size(), 1);
   EXPECT_EQ(data.json.meshes.value()[0].name, "MeshOne");

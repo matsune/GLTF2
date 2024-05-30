@@ -409,6 +409,12 @@ GLTFMaterial GLTFJsonDecoder::decodeMaterial(const nlohmann::json &j) {
         [this](const nlohmann::json &value) {
           return decodeMaterialSheen(value);
         });
+
+    decodeToMapObj<GLTFMaterialSpecular>(
+        *extensionsObj, GLTFExtensionKHRMaterialsSpecular, material.specular,
+        [this](const nlohmann::json &value) {
+          return decodeMaterialSpecular(value);
+        });
   }
 
   return material;
@@ -443,6 +449,26 @@ GLTFJsonDecoder::decodeMaterialSheen(const nlohmann::json &j) {
       j, "sheenRoughnessTexture", sheen.sheenRoughnessTexture,
       [this](const nlohmann::json &value) { return decodeTextureInfo(value); });
   return sheen;
+}
+
+GLTFMaterialSpecular
+GLTFJsonDecoder::decodeMaterialSpecular(const nlohmann::json &j) {
+  GLTFMaterialSpecular specular;
+  decodeTo(j, "specularFactor", specular.specularFactor);
+  decodeToMapObj<GLTFTextureInfo>(
+      j, "specularTexture", specular.specularTexture,
+      [this](const nlohmann::json &value) { return decodeTextureInfo(value); });
+  decodeToMapValue<std::array<float, 3>>(
+      j, "specularColorFactor", specular.specularColorFactor,
+      [this](const nlohmann::json &value) {
+        if (!value.is_array())
+          throw InvalidFormatException(context());
+        return value.get<std::array<float, 3>>();
+      });
+  decodeToMapObj<GLTFTextureInfo>(
+      j, "specularColorTexture", specular.specularColorTexture,
+      [this](const nlohmann::json &value) { return decodeTextureInfo(value); });
+  return specular;
 }
 
 void GLTFJsonDecoder::decodeMeshPrimitiveTarget(

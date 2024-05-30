@@ -11,7 +11,7 @@
   [super viewDidLoad];
   //  self.scnView.autoenablesDefaultLighting = YES;
   self.scnView.allowsCameraControl = YES;
-  self.scnView.backgroundColor = [NSColor blackColor];
+  self.scnView.backgroundColor = [NSColor grayColor];
   self.scnView.showsStatistics = YES;
 
   self.light = [SCNLight light];

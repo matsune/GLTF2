@@ -106,7 +106,7 @@ TEST(TestGLTFData, parseJson) {
       ],
       "cameras": [
         {
-          "type": "PERSPECTIVE",
+          "type": "perspective",
           "perspective": {
             "aspectRatio": 1.333,
             "yfov": 1.0,
@@ -115,7 +115,7 @@ TEST(TestGLTFData, parseJson) {
           }
         },
         {
-          "type": "ORTHOGRAPHIC",
+          "type": "orthographic",
           "orthographic": {
             "xmag": 2.0,
             "ymag": 2.0,

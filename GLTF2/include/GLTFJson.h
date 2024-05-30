@@ -258,9 +258,9 @@ public:
   enum class Type { PERSPECTIVE, ORTHOGRAPHIC };
 
   static std::optional<Type> TypeFromString(const std::string &value) {
-    if (value == "PERSPECTIVE")
+    if (value == "perspective")
       return Type::PERSPECTIVE;
-    else if (value == "ORTHOGRAPHIC")
+    else if (value == "orthographic")
       return Type::ORTHOGRAPHIC;
     else
       return std::nullopt;

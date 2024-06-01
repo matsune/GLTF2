@@ -461,15 +461,13 @@ public:
   bool enableSheen;
   bool hasSheenColorTexture;
   bool hasSheenRoughnessTexture;
-  bool enableSpecular;
 
   SurfaceShaderModifierBuilder()
       : transparent(false), hasBaseColorTexture(false),
         hasMetallicRoughnessTexture(false), enableDiffuseAlphaCutoff(false),
         isDiffuseOpaque(false), enableAnisotropy(false),
         hasAnisotropyTexture(false), enableSheen(false),
-        hasSheenColorTexture(false), hasSheenRoughnessTexture(false),
-        enableSpecular(false) {}
+        hasSheenColorTexture(false), hasSheenRoughnessTexture(false){}
 
   NSString *buildShader() {
     NSMutableString *shader = [NSMutableString string];
@@ -609,16 +607,6 @@ public:
              "\n",
             M_PI, M_PI];
 
-    // specular
-    [shader appendFormat:@"\n"
-                          "vec3 BRDF_lambertian(vec3 f0, vec3 f90, vec3 "
-                          "diffuseColor, float specularWeight, float VdotH) {"
-                          "  return (1.0 - specularWeight * F_Schlick(f0, f90, "
-                          "VdotH)) * (diffuseColor / %f);"
-                          "}"
-                          "\n",
-                         M_PI];
-
     // Body
     [shader appendString:@"#pragma body\n"];
 
@@ -648,31 +636,6 @@ public:
                           "roughness = clamp(roughness, 0.0, 1.0);"
                           "alphaRoughness = roughness * roughness;"
                           "f0 = mix(f0, baseColor.rgb, metallic);"];
-
-    if (enableSpecular) {
-      [shader
-          appendFormat:
-              @"if (true) {"
-               "  vec4 specularTexture = vec4(1.0);"
-               "  vec3 dielectricSpecularF0 = min(f0 * specularColorFactor * "
-               "specularTexture.rgb, vec3(1.0));"
-               "  f0 = mix(dielectricSpecularF0, baseColor.rgb, "
-               "metallic);"
-               "  specularWeight = specularFactor * specularTexture.a;"
-               "  c_diff = mix(baseColor.rgb, vec3(0), metallic);"
-               "  vec3 N = normalize(_surface.normal);"
-               "  vec3 V = normalize(_surface.view);"
-               "  vec3 L = normalize(scn_lights[0].pos - _surface.position);"
-               "  vec3 H = normalize(V + L);"
-               "  float VdotH = max(dot(V, H), 0.0);\n"
-               "  float NdotL = max(dot(N, L), 0.0);\n"
-               "  vec3 brdf = BRDF_lambertian(f0, f90, baseColor.rgb, "
-               "specularWeight, VdotH);"
-               "  baseColor.rgb += brdf * %f * NdotL;"
-               "}"
-               "\n",
-              M_PI];
-    }
 
     if (enableAnisotropy) {
       [shader appendString:@"if (true) {"
@@ -970,12 +933,18 @@ public:
     }
 
     if (material.specular.has_value()) {
-      specularFactor = material.specular->specularFactorValue();
-      std::array<float, 3> colorFactor =
-          material.specular->specularColorFactorValue();
-      specularColorFactor =
-          SCNVector3Make(colorFactor[0], colorFactor[1], colorFactor[2]);
-      builder.enableSpecular = true;
+      // FIXME: PBR ignores specular
+      if (material.specular->specularColorTexture.has_value()) {
+        [self applyTextureInfo:*material.specular->specularColorTexture
+                 withIntensity:material.specular->specularFactorValue()
+                    toProperty:scnMaterial.specular];
+        scnMaterial.ambientOcclusion.textureComponents = SCNColorMaskRed | SCNColorMaskGreen | SCNColorMaskBlue;
+      } else {
+        auto value = material.specular->specularColorFactorValue();
+        applyColorContentsToProperty(value[0], value[1], value[2], 1.0,
+                                     scnMaterial.specular);
+        scnMaterial.specular.intensity = material.specular->specularFactorValue();
+      }
     }
 
     [scnMaterial setValue:[NSNumber numberWithFloat:metallicFactor]

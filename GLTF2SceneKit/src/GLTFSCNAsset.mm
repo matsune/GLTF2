@@ -510,18 +510,16 @@ public:
   bool hasRoughnessTexture;
   bool enableDiffuseAlphaCutoff;
   bool isDiffuseOpaque;
-  bool transformDiffuseTexture;
-  bool transformEmissionTexture;
   bool enableAnisotropy;
   bool hasAnisotropyTexture;
   bool enableSheen;
+  bool enableSpecular;
 
   SurfaceShaderModifierBuilder()
       : transparent(false), hasRoughnessTexture(false),
         enableDiffuseAlphaCutoff(false), isDiffuseOpaque(false),
-        transformDiffuseTexture(false), transformEmissionTexture(false),
         enableAnisotropy(false), hasAnisotropyTexture(false),
-        enableSheen(false) {}
+        enableSheen(false), enableSpecular(false) {}
 
   NSString *buildShader() {
     NSMutableString *shader = [NSMutableString string];
@@ -533,14 +531,6 @@ public:
     NSArray<NSString *> *uniforms = @[
       @"vec4  diffuseBaseColorFactor",
       @"float diffuseAlphaCutoff",
-
-      @"vec2  diffuseTransformScale",
-      @"float diffuseTransformRotation",
-      @"vec2  diffuseTransformOffset",
-
-      @"vec2  emissionTransformScale",
-      @"float emissionTransformRotation",
-      @"vec2  emissionTransformOffset",
 
       @"float anisotropyStrength",
       @"float anisotropyRotation",
@@ -556,38 +546,15 @@ public:
 
       @"vec3  sheenColorFactor",
       @"float sheenRoughnessFactor",
+
+      @"float specularFactor",
+      @"vec3 specularColorFactor",
     ];
     for (NSString *uniform in uniforms) {
       [shader appendString:[@[ @"uniform ", uniform, @";" ]
                                componentsJoinedByString:@""]];
     }
 
-    // texture transform
-    [shader appendString:@"\n"
-                          "vec2 transformUv("
-                          "  vec2 uv, "
-                          "  vec2 scale, "
-                          "  float rotation, "
-                          "  vec2 offset"
-                          ") {"
-                          "  mat3 t = mat3("
-                          "    vec3(1, 0, 0), "
-                          "    vec3(0, 1, 0),"
-                          "    vec3(offset, 1)"
-                          "  );"
-                          "  mat3 r = mat3("
-                          "    vec3(cos(rotation), -sin(rotation), 0),"
-                          "    vec3(sin(rotation), cos(rotation), 0),"
-                          "    vec3(0, 0, 1)"
-                          "  );"
-                          "  mat3 s = mat3("
-                          "    vec3(scale.x, 0, 0), "
-                          "    vec3(0, scale.y, 0), "
-                          "    vec3(0, 0, 1)"
-                          "  );"
-                          "  mat3 matrix = t * r * s;"
-                          "  return (matrix * vec3(uv, 1)).xy;"
-                          "}\n"];
     // anisotropy
     [shader
         appendFormat:
@@ -637,75 +604,86 @@ public:
              "    TdotL, BdotL, at, ab"
              "  );"
              "  float D = D_GGX_anisotropic(NdotH, TdotH, BdotH, at, ab);"
-             "  return F * V * D;"
+             "  return F * V * D * %f * NdotL;"
              "}"
              "\n",
-            M_PI];
+            M_PI, M_PI];
 
     // sheen
     // Charlie distribution and Ashikhmin visibility
-    [shader appendFormat:
-                @"\n"
-                 "float CharlieD(float sheenRoughness, float NdotH) {"
-                 "  float roughness = max(sheenRoughness, 0.000001);"
-                 "  float invR = 1. / roughness;"
-                 "  float cos2h = NdotH * NdotH;"
-                 "  float sin2h = 1. - cos2h;"
-                 "  return (2. + invR) * pow(sin2h, invR * .5) / (2. * %f);"
-                 "}"
-                 "\n"
-                 "float AshikhminV(float NdotV, float NdotL) {"
-                 "  return 1.0 / (4.0 * (NdotL + NdotV - NdotL * NdotV));"
-                 "}"
-                 "\n"
-                 "vec3 FresnelTerm(vec3 specularColor, float vdoth) {"
-                 "  vec3 fresnel = specularColor + (1. - specularColor) * "
-                 "pow((1. - vdoth), 5.);"
-                 "  return fresnel;"
-                 "}"
-                 "\n"
-                 "vec3 BRDF_specularSheen("
-                 "  vec3 sheenColor, float sheenRoughness, "
-                 "  float NdotL, float NdotV, float NdotH, "
-                 "  vec3 specularColor, float VdotH"
-                 ") {"
-                 "  float D = CharlieD(sheenRoughness, NdotH);"
-                 "  float V = AshikhminV(NdotV, NdotL);"
-                 "  vec3 f = FresnelTerm(specularColor, VdotH);"
-                 "  return sheenColor * f * D * V * %f * NdotL;"
-                 "}"
-                 "\n",
-                M_PI, M_PI];
+    [shader
+        appendFormat:
+            @"\n"
+             "float CharlieD(float sheenRoughness, float NdotH) {"
+             "  float roughness = max(sheenRoughness, 0.000001);"
+             "  float invR = 1. / roughness;"
+             "  float cos2h = NdotH * NdotH;"
+             "  float sin2h = 1. - cos2h;"
+             "  return (2. + invR) * pow(sin2h, invR * .5) / (2. * %f);"
+             "}"
+             "\n"
+             "float lambdaSheenNumericHelper(float x, float alphaG) {"
+             "  float oneMinusAlphaSq = (1.0 - alphaG) * (1.0 - alphaG);"
+             "  float a = mix(21.5473, 25.3245, oneMinusAlphaSq);"
+             "  float b = mix(3.82987, 3.32435, oneMinusAlphaSq);"
+             "  float c = mix(0.19823, 0.16801, oneMinusAlphaSq);"
+             "  float d = mix(-1.97760, -1.27393, oneMinusAlphaSq);"
+             "  float e = mix(-4.32054, -4.85967, oneMinusAlphaSq);"
+             "  return a / (1.0 + b * pow(x, c)) + d * x + e;"
+             "}"
+             "\n"
+             "float lambdaSheen(float cosTheta, float alphaG) {"
+             "  if (abs(cosTheta) < 0.5) {"
+             "    return exp(lambdaSheenNumericHelper(cosTheta, alphaG));"
+             "  } else {"
+             "    return exp(2.0 * lambdaSheenNumericHelper(0.5, alphaG) - "
+             "lambdaSheenNumericHelper(1.0 - cosTheta, alphaG));"
+             "  }"
+             "}"
+             "\n"
+             "float V_Sheen(float NdotV, float NdotL, float sheenRoughness) {"
+             "  float roughness = max(sheenRoughness, 0.000001);"
+             "  float alphaG = roughness * roughness;"
+             "  return clamp(1.0 / ((1.0 + lambdaSheen(NdotV, alphaG) + "
+             "lambdaSheen(NdotL, alphaG)) * (4.0 * NdotV * NdotL)), 0.0, 1.0);"
+             "}"
+             "\n"
+             "\n"
+             "vec3 BRDF_specularSheen("
+             "  float sheenRoughness, "
+             "  float NdotL, float NdotV, float NdotH "
+             ") {"
+             "  float D = CharlieD(sheenRoughness, NdotH);"
+             "  float V = V_Sheen(NdotV, NdotL, sheenRoughness);"
+             "  return D * V * %f * NdotL;"
+             "}"
+             "\n",
+            M_PI, M_PI];
+
+    // specular
+    [shader appendFormat:@"\n"
+                          "vec3 BRDF_lambertian(vec3 f0, vec3 f90, vec3 "
+                          "diffuseColor, float specularWeight, float VdotH) {"
+                          "  return (1.0 - specularWeight * F_Schlick(f0, f90, "
+                          "VdotH)) * (diffuseColor / %f);"
+                          "}"
+                          "\n",
+                         M_PI];
 
     [shader appendString:@"#pragma body\n"];
     [shader appendString:[@[
-              @"vec3  f0 = vec3(0.04);",
-              @"vec3  f90 = vec3(1.0);",
+              @"vec3  f0 = vec3(0.04);", @"vec3  f90 = vec3(1.0);",
               @"float metallic = metallicFactor;",
               @"float perceptualRoughness = roughnessFactor;",
-              @"float alphaRoughness = 0.0;",
+              @"float alphaRoughness = 0.0;", @"float specularWeight = 1.0;",
+              @"vec3 c_diff;"
             ] componentsJoinedByString:@"\n"]];
 
-    if (transformDiffuseTexture) {
-      [shader appendString:@"vec2 diffuseUv = transformUv("
-                            "  _surface.diffuseTexcoord, "
-                            "  diffuseTransformScale,"
-                            "  diffuseTransformRotation, "
-                            "  diffuseTransformOffset"
-                            ");"];
-      [shader appendString:@"_surface.diffuse = texture2D("
-                            "  u_diffuseTexture,"
-                            "  diffuseUv"
-                            ");"];
-    }
-
     if (hasRoughnessTexture) {
-      if (!transformDiffuseTexture)
-        [shader appendString:@"vec2 diffuseUv = _surface.diffuseTexcoord;"];
-      [shader appendString:
-                  @"vec4 mrSample = texture2D(roughnessTexture, diffuseUv);"
-                   "perceptualRoughness = mrSample.g;"
-                   "metallic = mrSample.b;"];
+      [shader appendString:@"vec4 mrSample = texture2D(roughnessTexture, "
+                           @"_surface.diffuseTexcoord);"
+                            "perceptualRoughness = mrSample.g;"
+                            "metallic = mrSample.b;"];
     }
     [shader appendString:
                 @"f0 = mix(f0, _surface.diffuse.rgb, metallic);"
@@ -713,20 +691,32 @@ public:
                  "metallic = clamp(metallic, 0.0, 1.0);"
                  "alphaRoughness = perceptualRoughness * perceptualRoughness;"];
 
-    if (transformEmissionTexture) {
-      [shader appendString:@"vec2 emissionUv = transformUv("
-                            "  _surface.emissionTexcoord, "
-                            "  emissionTransformScale,"
-                            "  emissionTransformRotation, "
-                            "  emissionTransformOffset"
-                            ");"];
-      [shader appendString:@"_surface.emission = texture2D("
-                            "  u_emissionTexture,"
-                            "  emissionUv"
-                            ");"];
-    }
-
     [shader appendString:@"_surface.diffuse *= diffuseBaseColorFactor;"];
+
+    if (enableSpecular) {
+      [shader
+          appendFormat:
+              @"if (true) {"
+               "  vec4 specularTexture = vec4(1.0);"
+               "  vec3 dielectricSpecularF0 = min(f0 * specularColorFactor * "
+               "specularTexture.rgb, vec3(1.0));"
+               "  f0 = mix(dielectricSpecularF0, _surface.diffuse.rgb, "
+               "metallic);"
+               "  specularWeight = specularFactor * specularTexture.a;"
+               "  c_diff = mix(_surface.diffuse.rgb, vec3(0), metallic);"
+               "  vec3 N = normalize(_surface.normal);"
+               "  vec3 V = normalize(_surface.view);"
+               "  vec3 L = normalize(lightPos - _surface.position);"
+               "  vec3 H = normalize(V + L);"
+               "  float VdotH = max(dot(V, H), 0.0);\n"
+               "  float NdotL = max(dot(N, L), 0.0);\n"
+               "  vec3 brdf = BRDF_lambertian(f0, f90, _surface.diffuse.rgb, "
+               "specularWeight, VdotH);"
+               "  _surface.diffuse.rgb += lightIntensity * brdf * %f * NdotL;"
+               "}"
+               "\n",
+              M_PI];
+    }
 
     if (enableAnisotropy) {
       [shader appendString:@"if (true) {"
@@ -780,29 +770,30 @@ public:
                "    TdotL, BdotL, TdotH, "
                "    BdotH, anisotropy"
                "  );\n"
-               "  _surface.diffuse.rgb += lightIntensity * NdotL * brdf;"
+               "  _surface.diffuse.rgb += lightIntensity * brdf;"
                "}"
                "\n"];
     }
 
     if (enableSheen) {
-      [shader
-          appendString:@"if (true) {"
-                        "  vec3 N = normalize(_surface.normal);"
-                        "  vec3 V = normalize(_surface.view);"
-                        "  vec3 L = normalize(lightPos - _surface.position);"
-                        "  vec3 H = normalize(V + L);"
-                        "  float NdotL = max(dot(N, L), 0.0);"
-                        "  float NdotV = max(dot(N, V), 0.0);"
-                        "  float NdotH = max(dot(N, H), 0.0);"
-                        "  float VdotH = max(dot(V, H), 0.0);"
-                        "  vec3 brdf = BRDF_specularSheen("
-                        "    sheenColorFactor, sheenRoughnessFactor,"
-                        "    NdotL, NdotV, NdotH, lightColor, VdotH"
-                        "  );"
-                        "  _surface.diffuse.rgb += brdf;"
-                        "}\n"];
+      [shader appendString:
+                  @"if (true) {"
+                   "  vec3 N = normalize(_surface.normal);"
+                   "  vec3 V = normalize(_surface.view);"
+                   "  vec3 L = normalize(lightPos - _surface.position);"
+                   "  vec3 H = normalize(V + L);"
+                   "  float NdotL = max(dot(N, L), 0.0);"
+                   "  float NdotV = max(dot(N, V), 0.0);"
+                   "  float NdotH = max(dot(N, H), 0.0);"
+                   "  float VdotH = max(dot(V, H), 0.0);"
+                   "  vec3 sheen_brdf = BRDF_specularSheen("
+                   "    sheenRoughnessFactor,"
+                   "    NdotL, NdotV, NdotH"
+                   "  );"
+                   "  _surface.diffuse.rgb += sheenColorFactor * sheen_brdf;"
+                   "}\n"];
     }
+
     if (isDiffuseOpaque) {
       [shader appendString:@"_surface.diffuse.a = 1.0;"];
     } else if (enableDiffuseAlphaCutoff) {
@@ -812,6 +803,27 @@ public:
     return shader;
   }
 };
+
+- (SCNMatrix4)contentsTransformFromKHRTextureTransform:
+    (const gltf2::GLTFKHRTextureTransform &)transform {
+  auto scale = transform.scaleValue();
+  auto rotation = transform.rotationValue();
+  auto offset = transform.offsetValue();
+  SCNMatrix4 t = SCNMatrix4MakeTranslation(offset[0], offset[1], 0);
+  SCNMatrix4 r = SCNMatrix4MakeRotation(-rotation, 0, 0, 1);
+  SCNMatrix4 s = SCNMatrix4MakeScale(scale[0], scale[1], 1);
+  return SCNMatrix4Mult(SCNMatrix4Mult(s, r), t);
+}
+
+- (void)applyKHRTextureTransform:
+            (const gltf2::GLTFKHRTextureTransform &)transform
+                      toProperty:(SCNMaterialProperty *)property {
+  if (transform.texCoord.has_value()) {
+    property.mappingChannel = *transform.texCoord;
+  }
+  property.contentsTransform =
+      [self contentsTransformFromKHRTextureTransform:transform];
+}
 
 - (nullable NSArray<SCNMaterial *> *)loadSCNMaterials {
   if (!_data->json.materials)
@@ -840,14 +852,6 @@ public:
     SCNVector4 diffuseBaseColorFactor = SCNVector4Make(1.0, 1.0, 1.0, 1.0);
     float diffuseAlphaCutoff = 0.0f;
 
-    NSPoint diffuseTransformScale = NSZeroPoint;
-    float diffuseTransformRotation = 0.0f;
-    NSPoint diffuseTransformOffset = NSZeroPoint;
-
-    NSPoint emissionTransformScale = NSZeroPoint;
-    float emissionTransformRotation = 0.0f;
-    NSPoint emissionTransformOffset = NSZeroPoint;
-
     float anisotropyStrength = 1.0f;
     float anisotropyRotation = 0.0f;
     SCNMaterialProperty *anisotropyTexture;
@@ -858,6 +862,9 @@ public:
 
     SCNVector3 sheenColorFactor = SCNVector3Make(1.0, 1.0, 1.0);
     float sheenRoughnessFactor = 1.0;
+
+    float specularFactor = 1.0f;
+    SCNVector3 specularColorFactor = SCNVector3Make(1.0, 1.0, 1.0);
 
     auto pbrMetallicRoughness = material.pbrMetallicRoughness.value_or(
         gltf2::GLTFMaterialPBRMetallicRoughness());
@@ -872,19 +879,6 @@ public:
         diffuseBaseColorFactor =
             SCNVector4Make(factor[0], factor[1], factor[2], factor[3]);
         builder.transparent = diffuseBaseColorFactor.w < 1.0f;
-      }
-      if (pbrMetallicRoughness.baseColorTexture->khrTextureTransform
-              .has_value()) {
-        auto scale = pbrMetallicRoughness.baseColorTexture->khrTextureTransform
-                         ->scaleValue();
-        auto rotation = pbrMetallicRoughness.baseColorTexture
-                            ->khrTextureTransform->rotationValue();
-        auto offset = pbrMetallicRoughness.baseColorTexture->khrTextureTransform
-                          ->offsetValue();
-        diffuseTransformScale = NSMakePoint(scale[0], scale[1]);
-        diffuseTransformRotation = rotation;
-        diffuseTransformOffset = NSMakePoint(offset[0], offset[1]);
-        builder.transformDiffuseTexture = true;
       }
     } else {
       auto value = pbrMetallicRoughness.baseColorFactorValue();
@@ -932,18 +926,6 @@ public:
       [self applyTextureInfo:*material.emissiveTexture
                withIntensity:1.0f
                   toProperty:scnMaterial.emission];
-      if (material.emissiveTexture->khrTextureTransform.has_value()) {
-        auto scale =
-            material.emissiveTexture->khrTextureTransform->scaleValue();
-        auto rotation =
-            material.emissiveTexture->khrTextureTransform->rotationValue();
-        auto offset =
-            material.emissiveTexture->khrTextureTransform->offsetValue();
-        emissionTransformScale = NSMakePoint(scale[0], scale[1]);
-        emissionTransformRotation = rotation;
-        emissionTransformOffset = NSMakePoint(offset[0], offset[1]);
-        builder.transformEmissionTexture = true;
-      }
     } else {
       auto value = material.emissiveFactorValue();
       applyColorContentsToProperty(value[0], value[1], value[2], 1.0,
@@ -974,22 +956,28 @@ public:
                     toProperty:anisotropyTexture];
         builder.hasAnisotropyTexture = true;
       }
-      anisotropyStrength =
-          material.anisotropy->anisotropyStrength.value_or(0.0);
-      anisotropyRotation =
-          material.anisotropy->anisotropyRotation.value_or(0.0);
+      anisotropyStrength = material.anisotropy->anisotropyStrengthValue();
+      anisotropyRotation = material.anisotropy->anisotropyRotationValue();
       builder.enableAnisotropy = true;
     }
 
     if (material.sheen.has_value()) {
       std::array<float, 3> colorFactor =
-          material.sheen->sheenColorFactor.value_or(
-              std::array<float, 3>{0, 0, 0});
+          material.sheen->sheenColorFactorValue();
       sheenColorFactor =
           SCNVector3Make(colorFactor[0], colorFactor[1], colorFactor[2]);
-      sheenRoughnessFactor = material.sheen->sheenRoughnessFactor.value_or(0);
+      sheenRoughnessFactor = material.sheen->sheenRoughnessFactorValue();
       // TODO: sheen texture
       builder.enableSheen = true;
+    }
+
+    if (material.specular.has_value()) {
+      specularFactor = material.specular->specularFactorValue();
+      std::array<float, 3> colorFactor =
+          material.specular->specularColorFactorValue();
+      specularColorFactor =
+          SCNVector3Make(colorFactor[0], colorFactor[1], colorFactor[2]);
+      builder.enableSpecular = true;
     }
 
     [scnMaterial setValue:[NSNumber numberWithFloat:metallicFactor]
@@ -1003,26 +991,13 @@ public:
     [scnMaterial setValue:[NSNumber numberWithFloat:diffuseAlphaCutoff]
                forKeyPath:@"diffuseAlphaCutoff"];
 
-    [scnMaterial setValue:[NSValue valueWithPoint:diffuseTransformScale]
-               forKeyPath:@"diffuseTransformScale"];
-    [scnMaterial setValue:[NSNumber numberWithFloat:diffuseTransformRotation]
-               forKeyPath:@"diffuseTransformRotation"];
-    [scnMaterial setValue:[NSValue valueWithPoint:diffuseTransformOffset]
-               forKeyPath:@"diffuseTransformOffset"];
-
-    [scnMaterial setValue:[NSValue valueWithPoint:emissionTransformScale]
-               forKeyPath:@"emissionTransformScale"];
-    [scnMaterial setValue:[NSNumber numberWithFloat:emissionTransformRotation]
-               forKeyPath:@"emissionTransformRotation"];
-    [scnMaterial setValue:[NSValue valueWithPoint:emissionTransformOffset]
-               forKeyPath:@"emissionTransformOffset"];
-
     [scnMaterial setValue:[NSNumber numberWithFloat:anisotropyStrength]
                forKeyPath:@"anisotropyStrength"];
     [scnMaterial setValue:[NSNumber numberWithFloat:anisotropyRotation]
                forKeyPath:@"anisotropyRotation"];
     [scnMaterial setValue:anisotropyTexture forKeyPath:@"anisotropyTexture"];
 
+    // TODO: multiple lights
     [scnMaterial setValue:[NSValue valueWithSCNVector3:lightPos]
                forKeyPath:@"lightPos"];
     [scnMaterial setValue:[NSNumber numberWithFloat:lightIntensity / 1000.0f]
@@ -1034,6 +1009,11 @@ public:
                forKeyPath:@"sheenColorFactor"];
     [scnMaterial setValue:[NSNumber numberWithFloat:sheenRoughnessFactor]
                forKeyPath:@"sheenRoughnessFactor"];
+
+    [scnMaterial setValue:[NSNumber numberWithFloat:specularFactor]
+               forKeyPath:@"specularFactor"];
+    [scnMaterial setValue:[NSValue valueWithSCNVector3:specularColorFactor]
+               forKeyPath:@"specularColorFactor"];
 
     scnMaterial.shaderModifiers = @{
       SCNShaderModifierEntryPointSurface : builder.buildShader(),
@@ -1063,6 +1043,11 @@ static void applyColorContentsToProperty(float r, float g, float b, float a,
   [self applyTexture:texture toProperty:property];
   property.mappingChannel = textureInfo.texCoordValue();
   property.intensity = intensity;
+
+  if (textureInfo.khrTextureTransform.has_value()) {
+    [self applyKHRTextureTransform:*textureInfo.khrTextureTransform
+                        toProperty:property];
+  }
 }
 
 - (CGImageRef)createCGImageFromData:(NSData *)data {

@@ -309,13 +309,13 @@ public:
   std::optional<std::array<float, 2>> scale;
   std::optional<uint32_t> texCoord;
 
-  std::array<float, 2> offsetValue() {
+  std::array<float, 2> offsetValue() const {
     return offset.value_or(std::array<float, 2>({0.0f, 0.0f}));
   }
 
-  float rotationValue() { return rotation.value_or(0); }
+  float rotationValue() const { return rotation.value_or(0); }
 
-  std::array<float, 2> scaleValue() {
+  std::array<float, 2> scaleValue() const {
     return scale.value_or(std::array<float, 2>({1.0f, 1.0f}));
   }
 };
@@ -384,6 +384,14 @@ public:
   std::optional<GLTFTextureInfo> sheenColorTexture;
   std::optional<float> sheenRoughnessFactor;
   std::optional<GLTFTextureInfo> sheenRoughnessTexture;
+
+  std::array<float, 3> sheenColorFactorValue() const {
+    return sheenColorFactor.value_or(std::array<float, 3>({0.0f, 0.0f, 0.0f}));
+  }
+
+  float sheenRoughnessFactorValue() const {
+    return sheenRoughnessFactor.value_or(0);
+  }
 };
 
 class GLTFMaterialSpecular {
@@ -392,6 +400,13 @@ public:
   std::optional<GLTFTextureInfo> specularTexture;
   std::optional<std::array<float, 3>> specularColorFactor;
   std::optional<GLTFTextureInfo> specularColorTexture;
+
+  float specularFactorValue() const { return specularFactor.value_or(1.0f); }
+
+  std::array<float, 3> specularColorFactorValue() {
+    return specularColorFactor.value_or(
+        std::array<float, 3>({1.0f, 1.0f, 1.0f}));
+  }
 };
 
 class GLTFMaterial {

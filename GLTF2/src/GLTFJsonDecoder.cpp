@@ -342,6 +342,14 @@ GLTFJsonDecoder::decodeMaterialNormalTextureInfo(const nlohmann::json &j) {
   decodeTo(j, "index", normal.index);
   decodeTo(j, "texCoord", normal.texCoord);
   decodeTo(j, "scale", normal.scale);
+  auto extensionsObj = decodeOptObject(j, "extensions");
+  if (extensionsObj) {
+    decodeToMapObj<GLTFKHRTextureTransform>(
+        *extensionsObj, GLTFExtensionKHRTextureTransform,
+        normal.khrTextureTransform, [this](const nlohmann::json &value) {
+          return decodeKHRTextureTransform(value);
+        });
+  }
   return normal;
 }
 
@@ -351,6 +359,14 @@ GLTFJsonDecoder::decodeMaterialOcclusionTextureInfo(const nlohmann::json &j) {
   decodeTo(j, "index", occlusion.index);
   decodeTo(j, "texCoord", occlusion.texCoord);
   decodeTo(j, "strength", occlusion.strength);
+  auto extensionsObj = decodeOptObject(j, "extensions");
+  if (extensionsObj) {
+    decodeToMapObj<GLTFKHRTextureTransform>(
+        *extensionsObj, GLTFExtensionKHRTextureTransform,
+        occlusion.khrTextureTransform, [this](const nlohmann::json &value) {
+          return decodeKHRTextureTransform(value);
+        });
+  }
   return occlusion;
 }
 

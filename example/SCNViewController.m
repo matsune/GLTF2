@@ -43,6 +43,11 @@
                                                        didLoadAsset:)]) {
     [self.delegate scnViewController:self didLoadAsset:self.asset];
   }
+
+  NSString *path = [[NSBundle mainBundle] pathForResource:@"Cannon_Exterior"
+                                                   ofType:@"hdr"];
+  NSImage *hdr = [[NSImage alloc] initWithContentsOfFile:path];
+  self.scnView.scene.lightingEnvironment.contents = hdr;
 }
 
 @end

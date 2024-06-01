@@ -431,6 +431,12 @@ GLTFMaterial GLTFJsonDecoder::decodeMaterial(const nlohmann::json &j) {
         [this](const nlohmann::json &value) {
           return decodeMaterialSpecular(value);
         });
+
+    decodeToMapObj<GLTFMaterialIor>(*extensionsObj,
+                                    GLTFExtensionKHRMaterialsIor, material.ior,
+                                    [this](const nlohmann::json &value) {
+                                      return decodeMaterialIor(value);
+                                    });
   }
 
   return material;
@@ -485,6 +491,12 @@ GLTFJsonDecoder::decodeMaterialSpecular(const nlohmann::json &j) {
       j, "specularColorTexture", specular.specularColorTexture,
       [this](const nlohmann::json &value) { return decodeTextureInfo(value); });
   return specular;
+}
+
+GLTFMaterialIor GLTFJsonDecoder::decodeMaterialIor(const nlohmann::json &j) {
+  GLTFMaterialIor ior;
+  decodeTo(j, "ior", ior.ior);
+  return ior;
 }
 
 void GLTFJsonDecoder::decodeMeshPrimitiveTarget(

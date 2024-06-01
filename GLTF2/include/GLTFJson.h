@@ -409,6 +409,13 @@ public:
   }
 };
 
+class GLTFMaterialIor {
+public:
+  std::optional<float> ior;
+
+  float iorValue() const { return ior.value_or(1.5f); }
+};
+
 class GLTFMaterial {
 public:
   enum class AlphaMode { OPAQUE, MASK, BLEND };
@@ -438,6 +445,7 @@ public:
   std::optional<GLTFMaterialAnisotropy> anisotropy;
   std::optional<GLTFMaterialSheen> sheen;
   std::optional<GLTFMaterialSpecular> specular;
+  std::optional<GLTFMaterialIor> ior;
 
   std::array<float, 3> emissiveFactorValue() const {
     return emissiveFactor.value_or(std::array<float, 3>{0.0f, 0.0f, 0.0f});

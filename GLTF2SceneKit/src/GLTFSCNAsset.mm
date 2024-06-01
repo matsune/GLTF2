@@ -467,7 +467,7 @@ public:
         hasMetallicRoughnessTexture(false), enableDiffuseAlphaCutoff(false),
         isDiffuseOpaque(false), enableAnisotropy(false),
         hasAnisotropyTexture(false), enableSheen(false),
-        hasSheenColorTexture(false), hasSheenRoughnessTexture(false){}
+        hasSheenColorTexture(false), hasSheenRoughnessTexture(false) {}
 
   NSString *buildShader() {
     NSMutableString *shader = [NSMutableString string];
@@ -495,6 +495,8 @@ public:
 
       @"float specularFactor",
       @"vec3 specularColorFactor",
+
+      @"float ior",
     ];
     for (NSString *uniform in uniforms) {
       [shader appendString:[@[ @"uniform ", uniform, @";" ]
@@ -610,7 +612,7 @@ public:
     // Body
     [shader appendString:@"#pragma body\n"];
 
-    [shader appendString:@"vec3 f0 = vec3(0.04);"
+    [shader appendString:@"vec3 f0 = vec3(pow((ior - 1)/(ior + 1), 2));"
                           "vec3 f90 = vec3(1.0);"
                           "float metallic = metallicFactor;"
                           "float roughness = roughnessFactor;"
@@ -811,6 +813,8 @@ public:
     float specularFactor = 1.0f;
     SCNVector3 specularColorFactor = SCNVector3Make(1.0, 1.0, 1.0);
 
+    float ior = 1.5f;
+
     auto pbrMetallicRoughness = material.pbrMetallicRoughness.value_or(
         gltf2::GLTFMaterialPBRMetallicRoughness());
 
@@ -938,13 +942,19 @@ public:
         [self applyTextureInfo:*material.specular->specularColorTexture
                  withIntensity:material.specular->specularFactorValue()
                     toProperty:scnMaterial.specular];
-        scnMaterial.ambientOcclusion.textureComponents = SCNColorMaskRed | SCNColorMaskGreen | SCNColorMaskBlue;
+        scnMaterial.ambientOcclusion.textureComponents =
+            SCNColorMaskRed | SCNColorMaskGreen | SCNColorMaskBlue;
       } else {
         auto value = material.specular->specularColorFactorValue();
         applyColorContentsToProperty(value[0], value[1], value[2], 1.0,
                                      scnMaterial.specular);
-        scnMaterial.specular.intensity = material.specular->specularFactorValue();
+        scnMaterial.specular.intensity =
+            material.specular->specularFactorValue();
       }
+    }
+
+    if (material.ior.has_value()) {
+      ior = material.ior->iorValue();
     }
 
     [scnMaterial setValue:[NSNumber numberWithFloat:metallicFactor]
@@ -977,6 +987,8 @@ public:
                forKeyPath:@"specularFactor"];
     [scnMaterial setValue:[NSValue valueWithSCNVector3:specularColorFactor]
                forKeyPath:@"specularColorFactor"];
+
+    [scnMaterial setValue:[NSNumber numberWithFloat:ior] forKey:@"ior"];
 
     scnMaterial.shaderModifiers = @{
       SCNShaderModifierEntryPointSurface : builder.buildShader(),

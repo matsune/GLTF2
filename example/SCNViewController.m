@@ -36,7 +36,7 @@
     [self.scnView.scene.rootNode addAnimationPlayer:player forKey:nil];
   }
 
-    [self.scnView.scene.rootNode addChildNode:self.lightNode];
+  [self.scnView.scene.rootNode addChildNode:self.lightNode];
 
   if ([self.delegate respondsToSelector:@selector(scnViewController:
                                                        didLoadAsset:)]) {

@@ -191,6 +191,9 @@ TEST(TestGLTFData, parseJson) {
               "specularColorTexture": {
                 "index": 3
               }
+            },
+            "KHR_materials_ior": {
+              "ior": 1.4
             }
           }
         }
@@ -423,6 +426,7 @@ TEST(TestGLTFData, parseJson) {
       (std::array<float, 3>{0.6f, 0.7f, 0.8f}));
   EXPECT_EQ(
       data.json.materials.value()[1].specular->specularColorTexture->index, 3);
+  EXPECT_EQ(data.json.materials.value()[1].ior->iorValue(), 1.4f);
 
   EXPECT_EQ(data.json.meshes.value().size(), 1);
   EXPECT_EQ(data.json.meshes.value()[0].name, "MeshOne");

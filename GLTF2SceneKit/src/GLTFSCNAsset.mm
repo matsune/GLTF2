@@ -676,39 +676,40 @@ public:
 
     if (enableAnisotropy) {
       [shader appendString:@"if (true) {"
-                            "  vec2 direction = vec2(1.0, 0.0);\n"
-                            "  float anisotropy = anisotropyStrength;\n"];
+                            "  vec2 u_AnisotropyRotation = vec2("
+                            "    cos(anisotropyRotation),"
+                            "    sin(anisotropyRotation)"
+                            "  );"
+                            "  vec2 direction = u_AnisotropyRotation;"
+                            "  float anisotropy = anisotropyStrength;"];
       if (hasAnisotropyTexture) {
-        [shader appendString:
-                    @"  vec3 anisotropySample = texture2D("
-                     "    anisotropyTexture, "
-                     "    _surface.diffuseTexcoord"
-                     "  ).rgb;\n"
-                     "  direction = anisotropySample.rg * 2.0 - vec2(1.0);\n"
-                     "  anisotropy = anisotropySample.b;\n"];
+        [shader
+            appendString:@"  vec3 anisotropyTex = texture2D("
+                          "    anisotropyTexture, "
+                          "    _surface.diffuseTexcoord" // surface modifier
+                                                         // cannot
+                          // get texcoords. so we use
+                          // diffuseTexcoord instead
+                          "  ).rgb;"
+                          "  direction = anisotropyTex.rg * 2.0 - vec2(1.0);"
+                          "  direction = mat2(u_AnisotropyRotation.x,"
+                          "                   u_AnisotropyRotation.y,"
+                          "                   -u_AnisotropyRotation.y,"
+                          "                   u_AnisotropyRotation.x"
+                          "  ) * normalize(direction);"
+                          "  anisotropy = anisotropyTex.b;"];
       }
       [shader
           appendString:
-              @"  vec2 u_AnisotropyRotation = vec2("
-               "    cos(anisotropyRotation), "
-               "    sin(anisotropyRotation)"
-               "  );"
-               "  mat2 rotationMat = mat2("
-               "    u_AnisotropyRotation.x, "
-               "    u_AnisotropyRotation.y, "
-               "    -u_AnisotropyRotation.y, "
-               "    u_AnisotropyRotation.x"
-               "  );"
-               "  direction = rotationMat * direction.xy;"
-               "  vec3 N = normalize(_surface.normal);"
+              @"  vec3 N = normalize(_surface.normal);"
                "  vec3 V = normalize(_surface.view);"
                "  vec3 L = normalize(scn_lights[0].pos - _surface.position);"
                "  vec3 H = normalize(V + L);"
                "  vec3 T = normalize(_surface.tangent);"
                "  vec3 B = normalize(cross(N, T));"
-               "  mat3 TBN = mat3(T, B, N);\n"
-               "  vec3 anisotropicT = TBN * normalize(vec3(direction, 0.0));\n"
-               "  vec3 anisotropicB = cross(N, anisotropicT);\n"
+               "  mat3 TBN = mat3(T, B, N);"
+               "  vec3 anisotropicT = normalize(TBN * vec3(direction, 0.0));"
+               "  vec3 anisotropicB = normalize(cross(N, anisotropicT));"
                "  float VdotH = max(dot(V, H), 0.0);\n"
                "  float NdotL = max(dot(N, L), 0.0);\n"
                "  float NdotV = max(dot(N, V), 0.0);\n"

@@ -79,61 +79,6 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
   return YES;
 }
 
-- (void)setLightNode:(SCNNode *)lightNode {
-  if (_lightNode) {
-    [_lightNode removeObserver:self forKeyPath:@"position"];
-    [_lightNode.light removeObserver:self forKeyPath:@"intensity"];
-    [_lightNode.light removeObserver:self forKeyPath:@"color"];
-  }
-  _lightNode = lightNode;
-  if (_lightNode) {
-    [_lightNode addObserver:self
-                 forKeyPath:@"position"
-                    options:NSKeyValueObservingOptionNew
-                    context:nil];
-    [_lightNode.light addObserver:self
-                       forKeyPath:@"intensity"
-                          options:NSKeyValueObservingOptionNew
-                          context:nil];
-    [_lightNode.light addObserver:self
-                       forKeyPath:@"color"
-                          options:NSKeyValueObservingOptionNew
-                          context:nil];
-  }
-  [self setLightValues];
-}
-
-- (void)observeValueForKeyPath:(NSString *)keyPath
-                      ofObject:(id)object
-                        change:(NSDictionary<NSKeyValueChangeKey, id> *)change
-                       context:(void *)context {
-  [self setLightValues];
-}
-
-- (void)setLightValues {
-  if (self.lightNode) {
-    for (SCNMaterial *scnMaterial in self.scnMaterials) {
-      [scnMaterial
-            setValue:[NSValue valueWithSCNVector3:self.lightNode.position]
-          forKeyPath:@"lightPos"];
-      [scnMaterial
-            setValue:[NSNumber numberWithFloat:self.lightNode.light.intensity /
-                                               1000.0f]
-          forKeyPath:@"lightIntensity"];
-      NSColor *rgbColor = [self.lightNode.light.color
-          colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
-      SCNVector3 color = SCNVector3Make(1.0f, 1.0f, 1.0f);
-      if (rgbColor) {
-        CGFloat red, green, blue;
-        [rgbColor getRed:&red green:&green blue:&blue alpha:nil];
-        color = SCNVector3Make(red, green, blue);
-      }
-      [scnMaterial setValue:[NSValue valueWithSCNVector3:color]
-                 forKeyPath:@"lightColor"];
-    }
-  }
-}
-
 #pragma mark SCNScene
 
 - (nullable SCNScene *)defaultScene {
@@ -507,19 +452,24 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
 class SurfaceShaderModifierBuilder {
 public:
   bool transparent;
-  bool hasRoughnessTexture;
+  bool hasBaseColorTexture;
+  bool hasMetallicRoughnessTexture;
   bool enableDiffuseAlphaCutoff;
   bool isDiffuseOpaque;
   bool enableAnisotropy;
   bool hasAnisotropyTexture;
   bool enableSheen;
+  bool hasSheenColorTexture;
+  bool hasSheenRoughnessTexture;
   bool enableSpecular;
 
   SurfaceShaderModifierBuilder()
-      : transparent(false), hasRoughnessTexture(false),
-        enableDiffuseAlphaCutoff(false), isDiffuseOpaque(false),
-        enableAnisotropy(false), hasAnisotropyTexture(false),
-        enableSheen(false), enableSpecular(false) {}
+      : transparent(false), hasBaseColorTexture(false),
+        hasMetallicRoughnessTexture(false), enableDiffuseAlphaCutoff(false),
+        isDiffuseOpaque(false), enableAnisotropy(false),
+        hasAnisotropyTexture(false), enableSheen(false),
+        hasSheenColorTexture(false), hasSheenRoughnessTexture(false),
+        enableSpecular(false) {}
 
   NSString *buildShader() {
     NSMutableString *shader = [NSMutableString string];
@@ -529,6 +479,10 @@ public:
     }
 
     NSArray<NSString *> *uniforms = @[
+      @"float metallicFactor",
+      @"float roughnessFactor",
+      @"sampler2D metallicRoughnessTexture",
+
       @"vec4  diffuseBaseColorFactor",
       @"float diffuseAlphaCutoff",
 
@@ -536,16 +490,10 @@ public:
       @"float anisotropyRotation",
       @"sampler2D anisotropyTexture",
 
-      @"vec3  lightPos",
-      @"float lightIntensity",
-      @"vec3  lightColor",
-
-      @"float metallicFactor",
-      @"float roughnessFactor",
-      @"sampler2D roughnessTexture",
-
       @"vec3  sheenColorFactor",
       @"float sheenRoughnessFactor",
+      @"sampler2D sheenColorTexture",
+      @"sampler2D sheenRoughnessTexture",
 
       @"float specularFactor",
       @"vec3 specularColorFactor",
@@ -555,16 +503,18 @@ public:
                                componentsJoinedByString:@""]];
     }
 
+    [shader appendString:@"\n"
+                          "vec3 F_Schlick(vec3 f0, vec3 f90, float VdotH) {"
+                          "  return f0 + (f90 - f0) * pow("
+                          "    clamp(1.0 - VdotH, 0.0, 1.0), 5.0"
+                          "  );"
+                          "}"
+                          "\n"];
+
     // anisotropy
     [shader
         appendFormat:
             @"\n"
-             "vec3 F_Schlick(vec3 f0, vec3 f90, float VdotH) {"
-             "  return f0 + (f90 - f0) * pow("
-             "    clamp(1.0 - VdotH, 0.0, 1.0), 5.0"
-             "  );"
-             "}"
-             "\n"
              "float D_GGX_anisotropic("
              "  float NdotH, float TdotH, float BdotH,"
              "  float at, float ab"
@@ -614,15 +564,14 @@ public:
     [shader
         appendFormat:
             @"\n"
-             "float CharlieD(float sheenRoughness, float NdotH) {"
-             "  float roughness = max(sheenRoughness, 0.000001);"
-             "  float invR = 1. / roughness;"
+             "float D_Sheen(float alphaG, float NdotH) {"
+             "  float invR = 1. / alphaG;"
              "  float cos2h = NdotH * NdotH;"
              "  float sin2h = 1. - cos2h;"
              "  return (2. + invR) * pow(sin2h, invR * .5) / (2. * %f);"
              "}"
              "\n"
-             "float lambdaSheenNumericHelper(float x, float alphaG) {"
+             "float l(float x, float alphaG) {"
              "  float oneMinusAlphaSq = (1.0 - alphaG) * (1.0 - alphaG);"
              "  float a = mix(21.5473, 25.3245, oneMinusAlphaSq);"
              "  float b = mix(3.82987, 3.32435, oneMinusAlphaSq);"
@@ -634,16 +583,14 @@ public:
              "\n"
              "float lambdaSheen(float cosTheta, float alphaG) {"
              "  if (abs(cosTheta) < 0.5) {"
-             "    return exp(lambdaSheenNumericHelper(cosTheta, alphaG));"
+             "    return exp(l(cosTheta, alphaG));"
              "  } else {"
-             "    return exp(2.0 * lambdaSheenNumericHelper(0.5, alphaG) - "
-             "lambdaSheenNumericHelper(1.0 - cosTheta, alphaG));"
+             "    return exp(2.0 * l(0.5, alphaG) - "
+             "l(1.0 - cosTheta, alphaG));"
              "  }"
              "}"
              "\n"
-             "float V_Sheen(float NdotV, float NdotL, float sheenRoughness) {"
-             "  float roughness = max(sheenRoughness, 0.000001);"
-             "  float alphaG = roughness * roughness;"
+             "float V_Sheen(float alphaG, float NdotV, float NdotL) {"
              "  return clamp(1.0 / ((1.0 + lambdaSheen(NdotV, alphaG) + "
              "lambdaSheen(NdotL, alphaG)) * (4.0 * NdotV * NdotL)), 0.0, 1.0);"
              "}"
@@ -653,8 +600,10 @@ public:
              "  float sheenRoughness, "
              "  float NdotL, float NdotV, float NdotH "
              ") {"
-             "  float D = CharlieD(sheenRoughness, NdotH);"
-             "  float V = V_Sheen(NdotV, NdotL, sheenRoughness);"
+             "  float roughness = max(sheenRoughness, 0.000001);"
+             "  float alphaG = roughness * roughness;"
+             "  float D = D_Sheen(alphaG, NdotH);"
+             "  float V = V_Sheen(alphaG, NdotV, NdotL);"
              "  return D * V * %f * NdotL;"
              "}"
              "\n",
@@ -670,28 +619,35 @@ public:
                           "\n",
                          M_PI];
 
+    // Body
     [shader appendString:@"#pragma body\n"];
-    [shader appendString:[@[
-              @"vec3  f0 = vec3(0.04);", @"vec3  f90 = vec3(1.0);",
-              @"float metallic = metallicFactor;",
-              @"float perceptualRoughness = roughnessFactor;",
-              @"float alphaRoughness = 0.0;", @"float specularWeight = 1.0;",
-              @"vec3 c_diff;"
-            ] componentsJoinedByString:@"\n"]];
 
-    if (hasRoughnessTexture) {
-      [shader appendString:@"vec4 mrSample = texture2D(roughnessTexture, "
-                           @"_surface.diffuseTexcoord);"
-                            "perceptualRoughness = mrSample.g;"
-                            "metallic = mrSample.b;"];
+    [shader appendString:@"vec3 f0 = vec3(0.04);"
+                          "vec3 f90 = vec3(1.0);"
+                          "float metallic = metallicFactor;"
+                          "float roughness = roughnessFactor;"
+                          "float alphaRoughness = 0.0;"
+                          "float specularWeight = 1.0;"
+                          "vec3 c_diff;"
+                          "vec4 baseColor = _surface.diffuse;"];
+
+    if (hasMetallicRoughnessTexture) {
+      [shader appendString:@"vec4 mrSample = texture2D("
+                            "  metallicRoughnessTexture, "
+                            "  _surface.diffuseTexcoord"
+                            ");"
+                            "metallic = mrSample.b * metallicFactor;"
+                            "roughness = mrSample.g * roughnessFactor;"];
     }
-    [shader appendString:
-                @"f0 = mix(f0, _surface.diffuse.rgb, metallic);"
-                 "perceptualRoughness = clamp(perceptualRoughness, 0.0, 1.0);"
-                 "metallic = clamp(metallic, 0.0, 1.0);"
-                 "alphaRoughness = perceptualRoughness * perceptualRoughness;"];
 
-    [shader appendString:@"_surface.diffuse *= diffuseBaseColorFactor;"];
+    if (hasBaseColorTexture) {
+      [shader appendString:@"baseColor *= diffuseBaseColorFactor;"];
+    }
+
+    [shader appendString:@"metallic = clamp(metallic, 0.0, 1.0);"
+                          "roughness = clamp(roughness, 0.0, 1.0);"
+                          "alphaRoughness = roughness * roughness;"
+                          "f0 = mix(f0, baseColor.rgb, metallic);"];
 
     if (enableSpecular) {
       [shader
@@ -700,19 +656,19 @@ public:
                "  vec4 specularTexture = vec4(1.0);"
                "  vec3 dielectricSpecularF0 = min(f0 * specularColorFactor * "
                "specularTexture.rgb, vec3(1.0));"
-               "  f0 = mix(dielectricSpecularF0, _surface.diffuse.rgb, "
+               "  f0 = mix(dielectricSpecularF0, baseColor.rgb, "
                "metallic);"
                "  specularWeight = specularFactor * specularTexture.a;"
-               "  c_diff = mix(_surface.diffuse.rgb, vec3(0), metallic);"
+               "  c_diff = mix(baseColor.rgb, vec3(0), metallic);"
                "  vec3 N = normalize(_surface.normal);"
                "  vec3 V = normalize(_surface.view);"
-               "  vec3 L = normalize(lightPos - _surface.position);"
+               "  vec3 L = normalize(scn_lights[0].pos - _surface.position);"
                "  vec3 H = normalize(V + L);"
                "  float VdotH = max(dot(V, H), 0.0);\n"
                "  float NdotL = max(dot(N, L), 0.0);\n"
-               "  vec3 brdf = BRDF_lambertian(f0, f90, _surface.diffuse.rgb, "
+               "  vec3 brdf = BRDF_lambertian(f0, f90, baseColor.rgb, "
                "specularWeight, VdotH);"
-               "  _surface.diffuse.rgb += lightIntensity * brdf * %f * NdotL;"
+               "  baseColor.rgb += brdf * %f * NdotL;"
                "}"
                "\n",
               M_PI];
@@ -746,7 +702,7 @@ public:
                "  direction = rotationMat * direction.xy;"
                "  vec3 N = normalize(_surface.normal);"
                "  vec3 V = normalize(_surface.view);"
-               "  vec3 L = normalize(lightPos - _surface.position);"
+               "  vec3 L = normalize(scn_lights[0].pos - _surface.position);"
                "  vec3 H = normalize(V + L);"
                "  vec3 T = normalize(_surface.tangent);"
                "  vec3 B = normalize(cross(N, T));"
@@ -770,29 +726,56 @@ public:
                "    TdotL, BdotL, TdotH, "
                "    BdotH, anisotropy"
                "  );\n"
-               "  _surface.diffuse.rgb += lightIntensity * brdf;"
+               "  baseColor.rgb += brdf;"
                "}"
                "\n"];
     }
 
     if (enableSheen) {
-      [shader appendString:
-                  @"if (true) {"
-                   "  vec3 N = normalize(_surface.normal);"
-                   "  vec3 V = normalize(_surface.view);"
-                   "  vec3 L = normalize(lightPos - _surface.position);"
-                   "  vec3 H = normalize(V + L);"
-                   "  float NdotL = max(dot(N, L), 0.0);"
-                   "  float NdotV = max(dot(N, V), 0.0);"
-                   "  float NdotH = max(dot(N, H), 0.0);"
-                   "  float VdotH = max(dot(V, H), 0.0);"
-                   "  vec3 sheen_brdf = BRDF_specularSheen("
-                   "    sheenRoughnessFactor,"
-                   "    NdotL, NdotV, NdotH"
-                   "  );"
-                   "  _surface.diffuse.rgb += sheenColorFactor * sheen_brdf;"
-                   "}\n"];
+      [shader
+          appendString:
+              @"if (true) {"
+               "  vec3 N = normalize(_surface.normal);"
+               "  vec3 V = normalize(_surface.view);"
+               "  vec3 L = normalize(scn_lights[0].pos - _surface.position);"
+               "  vec3 H = normalize(V + L);"
+               "  float NdotL = max(dot(N, L), 0.0);"
+               "  float NdotV = max(dot(N, V), 0.0);"
+               "  float NdotH = max(dot(N, H), 0.0);"
+               "  float VdotH = max(dot(V, H), 0.0);"
+               "  vec3 sheenColor = sheenColorFactor;"
+               "  float sheenRoughness = sheenRoughnessFactor;\n"];
+
+      if (hasSheenColorTexture) {
+        [shader appendString:
+                    @"  sheenColor = texture2D("
+                     "    sheenColorTexture, "
+                     "    _surface.diffuseTexcoord" // surface modifier cannot
+                                                    // get texcoords. so we use
+                                                    // diffuseTexcoord instead
+                     "  ).rgb;"
+                     "  sheenColor *= sheenColorFactor;"];
+      }
+      if (hasSheenRoughnessTexture) {
+        [shader appendString:
+                    @"  sheenRoughness = texture2D("
+                     "    sheenRoughnessTexture, "
+                     "    _surface.diffuseTexcoord" // surface modifier cannot
+                                                    // get texcoords. so we use
+                                                    // diffuseTexcoord instead
+                     "  ).a;"
+                     "  sheenRoughness *= sheenRoughnessFactor;"];
+      }
+
+      [shader appendString:@"\n"
+                            "  vec3 sheen_brdf = BRDF_specularSheen("
+                            "    sheenRoughness,"
+                            "    NdotL, NdotV, NdotH"
+                            "  );"
+                            "  baseColor.rgb += sheenColor * sheen_brdf;"
+                            "}\n"];
     }
+    [shader appendString:@"_surface.diffuse = baseColor;"];
 
     if (isDiffuseOpaque) {
       [shader appendString:@"_surface.diffuse.a = 1.0;"];
@@ -847,7 +830,7 @@ public:
 
     float metallicFactor = 1.0f;
     float roughnessFactor = 1.0f;
-    SCNMaterialProperty *roughnessTexture;
+    SCNMaterialProperty *metallicRoughnessTexture;
 
     SCNVector4 diffuseBaseColorFactor = SCNVector4Make(1.0, 1.0, 1.0, 1.0);
     float diffuseAlphaCutoff = 0.0f;
@@ -856,12 +839,10 @@ public:
     float anisotropyRotation = 0.0f;
     SCNMaterialProperty *anisotropyTexture;
 
-    SCNVector3 lightPos = SCNVector3Zero;
-    float lightIntensity = 1000.0;
-    SCNVector3 lightColor = SCNVector3Make(1.0, 1.0, 1.0);
-
     SCNVector3 sheenColorFactor = SCNVector3Make(1.0, 1.0, 1.0);
+    SCNMaterialProperty *sheenColorTexture;
     float sheenRoughnessFactor = 1.0;
+    SCNMaterialProperty *sheenRoughnessTexture;
 
     float specularFactor = 1.0f;
     SCNVector3 specularColorFactor = SCNVector3Make(1.0, 1.0, 1.0);
@@ -869,11 +850,14 @@ public:
     auto pbrMetallicRoughness = material.pbrMetallicRoughness.value_or(
         gltf2::GLTFMaterialPBRMetallicRoughness());
 
+    // baseColor
     if (pbrMetallicRoughness.baseColorTexture.has_value()) {
       // set contents to texture
       [self applyTextureInfo:*pbrMetallicRoughness.baseColorTexture
                withIntensity:1.0f
                   toProperty:scnMaterial.diffuse];
+      builder.hasBaseColorTexture = true;
+
       if (pbrMetallicRoughness.baseColorFactor.has_value()) {
         auto factor = *pbrMetallicRoughness.baseColorFactor;
         diffuseBaseColorFactor =
@@ -886,7 +870,7 @@ public:
                                    scnMaterial.diffuse);
     }
 
-    // metallicRoughnessTexture
+    // metallic & roughness
     if (pbrMetallicRoughness.metallicRoughnessTexture.has_value()) {
       [self applyTextureInfo:*pbrMetallicRoughness.metallicRoughnessTexture
                withIntensity:pbrMetallicRoughness.metallicFactorValue()
@@ -898,8 +882,8 @@ public:
                   toProperty:scnMaterial.roughness];
       scnMaterial.roughness.textureComponents = SCNColorMaskGreen;
 
-      roughnessTexture = scnMaterial.roughness;
-      builder.hasRoughnessTexture = true;
+      metallicRoughnessTexture = scnMaterial.roughness;
+      builder.hasMetallicRoughnessTexture = true;
     } else {
       scnMaterial.metalness.contents =
           @(pbrMetallicRoughness.metallicFactorValue());
@@ -967,7 +951,20 @@ public:
       sheenColorFactor =
           SCNVector3Make(colorFactor[0], colorFactor[1], colorFactor[2]);
       sheenRoughnessFactor = material.sheen->sheenRoughnessFactorValue();
-      // TODO: sheen texture
+      if (material.sheen->sheenColorTexture.has_value()) {
+        sheenColorTexture = [SCNMaterialProperty new];
+        [self applyTextureInfo:*material.sheen->sheenColorTexture
+                 withIntensity:1.0
+                    toProperty:sheenColorTexture];
+        builder.hasSheenColorTexture = true;
+      }
+      if (material.sheen->sheenRoughnessTexture.has_value()) {
+        sheenRoughnessTexture = [SCNMaterialProperty new];
+        [self applyTextureInfo:*material.sheen->sheenRoughnessTexture
+                 withIntensity:1.0
+                    toProperty:sheenRoughnessTexture];
+        builder.hasSheenRoughnessTexture = true;
+      }
       builder.enableSheen = true;
     }
 
@@ -984,7 +981,8 @@ public:
                forKeyPath:@"metallicFactor"];
     [scnMaterial setValue:[NSNumber numberWithFloat:roughnessFactor]
                forKeyPath:@"roughnessFactor"];
-    [scnMaterial setValue:roughnessTexture forKeyPath:@"roughnessTexture"];
+    [scnMaterial setValue:metallicRoughnessTexture
+               forKeyPath:@"metallicRoughnessTexture"];
 
     [scnMaterial setValue:[NSValue valueWithSCNVector4:diffuseBaseColorFactor]
                forKeyPath:@"diffuseBaseColorFactor"];
@@ -997,18 +995,13 @@ public:
                forKeyPath:@"anisotropyRotation"];
     [scnMaterial setValue:anisotropyTexture forKeyPath:@"anisotropyTexture"];
 
-    // TODO: multiple lights
-    [scnMaterial setValue:[NSValue valueWithSCNVector3:lightPos]
-               forKeyPath:@"lightPos"];
-    [scnMaterial setValue:[NSNumber numberWithFloat:lightIntensity / 1000.0f]
-               forKeyPath:@"lightIntensity"];
-    [scnMaterial setValue:[NSValue valueWithSCNVector3:lightColor]
-               forKeyPath:@"lightColor"];
-
     [scnMaterial setValue:[NSValue valueWithSCNVector3:sheenColorFactor]
                forKeyPath:@"sheenColorFactor"];
+    [scnMaterial setValue:sheenColorTexture forKeyPath:@"sheenColorTexture"];
     [scnMaterial setValue:[NSNumber numberWithFloat:sheenRoughnessFactor]
                forKeyPath:@"sheenRoughnessFactor"];
+    [scnMaterial setValue:sheenRoughnessTexture
+               forKeyPath:@"sheenRoughnessTexture"];
 
     [scnMaterial setValue:[NSNumber numberWithFloat:specularFactor]
                forKeyPath:@"specularFactor"];

@@ -941,6 +941,18 @@ public:
       }
     }
 
+    if (material.transmission.has_value()) {
+      if (material.transmission->transmissionTexture.has_value()) {
+        [self applyTextureInfo:*material.transmission->transmissionTexture
+                 withIntensity:material.transmission->transmissionFactorValue()
+                    toProperty:scnMaterial.transparent];
+        scnMaterial.transparent.textureComponents = SCNColorMaskRed;
+      } else {
+        scnMaterial.transparent.contents =
+            @(material.transmission->transmissionFactorValue());
+      }
+    }
+
     [scnMaterial setValue:[NSValue valueWithSCNVector4:diffuseBaseColorFactor]
                forKeyPath:@"diffuseBaseColorFactor"];
     [scnMaterial setValue:[NSNumber numberWithFloat:diffuseAlphaCutoff]

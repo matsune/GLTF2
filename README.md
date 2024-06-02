@@ -9,6 +9,7 @@ GLTF2 library is a C++ decoder for glTF 2.0 format .gltf and .glb files.
 - [x] KHR_materials_clearcoat
 - [x] KHR_materials_ior
 - [x] KHR_materials_sheen
+- [x] KHR_materials_transmission
 - [x] KHR_materials_unlit
 - [x] KHR_texture_transform
 

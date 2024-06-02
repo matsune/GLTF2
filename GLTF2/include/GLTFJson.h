@@ -431,6 +431,16 @@ public:
   }
 };
 
+class GLTFMaterialTransmission {
+public:
+  std::optional<float> transmissionFactor;
+  std::optional<GLTFTextureInfo> transmissionTexture;
+
+  float transmissionFactorValue() const {
+    return transmissionFactor.value_or(0.0f);
+  }
+};
+
 class GLTFMaterial {
 public:
   enum class AlphaMode { OPAQUE, MASK, BLEND };
@@ -462,6 +472,7 @@ public:
   std::optional<GLTFMaterialSpecular> specular;
   std::optional<GLTFMaterialIor> ior;
   std::optional<GLTFMaterialClearcoat> clearcoat;
+  std::optional<GLTFMaterialTransmission> transmission;
 
   std::array<float, 3> emissiveFactorValue() const {
     return emissiveFactor.value_or(std::array<float, 3>{0.0f, 0.0f, 0.0f});

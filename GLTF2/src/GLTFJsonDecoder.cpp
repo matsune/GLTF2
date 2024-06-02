@@ -443,6 +443,12 @@ GLTFMaterial GLTFJsonDecoder::decodeMaterial(const nlohmann::json &j) {
         [this](const nlohmann::json &value) {
           return decodeMaterialClearcoat(value);
         });
+
+    decodeToMapObj<GLTFMaterialTransmission>(
+        *extensionsObj, GLTFExtensionKHRMaterialsTransmission,
+        material.transmission, [this](const nlohmann::json &value) {
+          return decodeMaterialTransmission(value);
+        });
   }
 
   return material;
@@ -522,6 +528,16 @@ GLTFJsonDecoder::decodeMaterialClearcoat(const nlohmann::json &j) {
         return decodeMaterialNormalTextureInfo(value);
       });
   return clearcoat;
+}
+
+GLTFMaterialTransmission
+GLTFJsonDecoder::decodeMaterialTransmission(const nlohmann::json &j) {
+  GLTFMaterialTransmission transmission;
+  decodeTo(j, "transmissionFactor", transmission.transmissionFactor);
+  decodeToMapObj<GLTFTextureInfo>(
+      j, "transmissionTexture", transmission.transmissionTexture,
+      [this](const nlohmann::json &value) { return decodeTextureInfo(value); });
+  return transmission;
 }
 
 void GLTFJsonDecoder::decodeMeshPrimitiveTarget(

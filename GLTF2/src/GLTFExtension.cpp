@@ -11,14 +11,17 @@ const std::string GLTFExtensionKHRMaterialsClearcoat =
 const std::string GLTFExtensionKHRMaterialsIor = "KHR_materials_ior";
 const std::string GLTFExtensionKHRMaterialsSheen = "KHR_materials_sheen";
 const std::string GLTFExtensionKHRMaterialsSpecular = "KHR_materials_specular";
+const std::string GLTFExtensionKHRMaterialsTransmission =
+    "KHR_materials_transmission";
 const std::string GLTFExtensionKHRMaterialsUnlit = "KHR_materials_unlit";
 const std::string GLTFExtensionKHRTextureTransform = "KHR_texture_transform";
 
 const std::vector<std::string> SupportedExtensions = {
-    GLTFExtensionKHRDracoMeshCompression, GLTFExtensionKHRMaterialsAnisotropy,
-    GLTFExtensionKHRMaterialsClearcoat,   GLTFExtensionKHRMaterialsIor,
-    GLTFExtensionKHRMaterialsSheen,       GLTFExtensionKHRMaterialsSpecular,
-    GLTFExtensionKHRMaterialsUnlit,       GLTFExtensionKHRTextureTransform,
+    GLTFExtensionKHRDracoMeshCompression,  GLTFExtensionKHRMaterialsAnisotropy,
+    GLTFExtensionKHRMaterialsClearcoat,    GLTFExtensionKHRMaterialsIor,
+    GLTFExtensionKHRMaterialsSheen,        GLTFExtensionKHRMaterialsSpecular,
+    GLTFExtensionKHRMaterialsTransmission, GLTFExtensionKHRMaterialsUnlit,
+    GLTFExtensionKHRTextureTransform,
 };
 
 } // namespace gltf2

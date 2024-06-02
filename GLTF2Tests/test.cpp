@@ -211,6 +211,13 @@ TEST(TestGLTFData, parseJson) {
                   "texCoord": 0,
                   "scale": 1.0
               }
+            },
+            "KHR_materials_transmission": {
+              "transmissionFactor": 1.0,
+              "transmissionTexture": {
+                  "index": 0,
+                  "texCoord": 0
+              }
             }
           }
         }
@@ -468,6 +475,15 @@ TEST(TestGLTFData, parseJson) {
   EXPECT_EQ(data.json.materials.value()[1]
                 .clearcoat->clearcoatNormalTexture->scaleValue(),
             1.0f);
+  EXPECT_EQ(
+      data.json.materials.value()[1].transmission->transmissionFactorValue(),
+      1.0f);
+  EXPECT_EQ(
+      data.json.materials.value()[1].transmission->transmissionTexture->index,
+      0);
+  EXPECT_EQ(data.json.materials.value()[1]
+                .transmission->transmissionTexture->texCoord,
+            0);
 
   EXPECT_EQ(data.json.meshes.value().size(), 1);
   EXPECT_EQ(data.json.meshes.value()[0].name, "MeshOne");

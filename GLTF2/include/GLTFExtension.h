@@ -12,6 +12,7 @@ extern const std::string GLTFExtensionKHRMaterialsClearcoat;
 extern const std::string GLTFExtensionKHRMaterialsIor;
 extern const std::string GLTFExtensionKHRMaterialsSheen;
 extern const std::string GLTFExtensionKHRMaterialsSpecular;
+extern const std::string GLTFExtensionKHRMaterialsTransmission;
 extern const std::string GLTFExtensionKHRMaterialsUnlit;
 extern const std::string GLTFExtensionKHRTextureTransform;
 

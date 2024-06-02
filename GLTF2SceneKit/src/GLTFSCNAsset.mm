@@ -488,6 +488,8 @@ public:
       @"sampler2D sheenColorTexture",
       @"sampler2D sheenRoughnessTexture",
 
+      @"float emissiveStrength",
+
       @"float ior",
     ];
     for (NSString *uniform in uniforms) {
@@ -609,7 +611,8 @@ public:
                           "float metalness = _surface.metalness;"
                           "float roughness = _surface.roughness;"
                           "float alphaRoughness = 0.0;"
-                          "vec4 baseColor = _surface.diffuse;"];
+                          "vec4 baseColor = _surface.diffuse;"
+                          "_surface.emission *= emissiveStrength;"];
 
     if (hasBaseColorTexture) {
       [shader appendString:@"baseColor *= diffuseBaseColorFactor;"];
@@ -787,6 +790,8 @@ public:
     float sheenRoughnessFactor = 1.0;
     SCNMaterialProperty *sheenRoughnessTexture;
 
+    float emissiveStrength = 1.0f;
+
     float ior = 1.5f;
 
     auto pbrMetallicRoughness = material.pbrMetallicRoughness.value_or(
@@ -852,6 +857,9 @@ public:
       auto value = material.emissiveFactorValue();
       applyColorContentsToProperty(value[0], value[1], value[2], 1.0,
                                    scnMaterial.emission);
+    }
+    if (material.emissiveStrength.has_value()) {
+      emissiveStrength = material.emissiveStrength->emissiveStrengthValue();
     }
 
     if (material.alphaModeValue() == gltf2::GLTFMaterial::AlphaMode::OPAQUE) {
@@ -971,6 +979,9 @@ public:
                forKeyPath:@"sheenRoughnessFactor"];
     [scnMaterial setValue:sheenRoughnessTexture
                forKeyPath:@"sheenRoughnessTexture"];
+
+    [scnMaterial setValue:[NSNumber numberWithFloat:emissiveStrength]
+                   forKey:@"emissiveStrength"];
 
     [scnMaterial setValue:[NSNumber numberWithFloat:ior] forKey:@"ior"];
 

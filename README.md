@@ -25,6 +25,18 @@ TODO: other extensions
 
 GLTF2SceneKit framework provides a bridge to display glTF models using SceneKit on macOS.
 
+## Supported Extensions (Khronos)
+
+- [x] KHR_draco_mesh_compression
+- [x] KHR_materials_anisotropy
+- [x] KHR_materials_clearcoat
+- [x] KHR_materials_emissive_strength
+- [x] KHR_materials_ior
+- [x] KHR_materials_sheen
+- [x] KHR_materials_transmission
+- [x] KHR_materials_unlit
+- [x] KHR_texture_transform
+
 ## Requirements
 
 Building these libraries requires [CMake](<(https://cmake.org/)>). Ensure you have CMake installed on your system before proceeding with the build process.

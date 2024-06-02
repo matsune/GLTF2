@@ -431,6 +431,64 @@ public:
   }
 };
 
+class GLTFMaterialDispersion {
+public:
+  std::optional<float> dispersion;
+
+  float dispersionValue() const { return dispersion.value_or(0.0f); }
+};
+
+class GLTFMaterialEmissiveStrength {
+public:
+  std::optional<float> emissiveStrength;
+
+  float emissiveStrengthValue() const {
+    return emissiveStrength.value_or(1.0f);
+  }
+};
+
+class GLTFMaterialIridescence {
+public:
+  std::optional<float> iridescenceFactor;
+  std::optional<GLTFTextureInfo> iridescenceTexture;
+  std::optional<float> iridescenceIor;
+  std::optional<float> iridescenceThicknessMinimum;
+  std::optional<float> iridescenceThicknessMaximum;
+  std::optional<GLTFTextureInfo> iridescenceThicknessTexture;
+
+  float iridescenceFactorValue() const {
+    return iridescenceFactor.value_or(0.0f);
+  }
+
+  float iridescenceIorValue() const { return iridescenceIor.value_or(1.3f); }
+
+  float iridescenceThicknessMinimumValue() const {
+    return iridescenceThicknessMinimum.value_or(100.0f);
+  }
+
+  float iridescenceThicknessMaximumValue() const {
+    return iridescenceThicknessMaximum.value_or(400.0f);
+  }
+};
+
+class GLTFMaterialVolume {
+public:
+  std::optional<float> thicknessFactor;
+  std::optional<GLTFTextureInfo> thicknessTexture;
+  std::optional<float> attenuationDistance;
+  std::optional<std::array<float, 3>> attenuationColor;
+
+  float thicknessFactorValue() const { return thicknessFactor.value_or(0.0f); }
+
+  float attenuationDistanceValue() const {
+    return attenuationDistance.value_or(std::numeric_limits<float>::infinity());
+  }
+
+  std::array<float, 3> attenuationColorValue() {
+    return attenuationColor.value_or(std::array<float, 3>({1.0f, 1.0f, 1.0f}));
+  }
+};
+
 class GLTFMaterialTransmission {
 public:
   std::optional<float> transmissionFactor;
@@ -466,13 +524,17 @@ public:
   std::optional<AlphaMode> alphaMode;
   std::optional<float> alphaCutoff;
   std::optional<bool> doubleSided;
-  std::optional<bool> unlit;
   std::optional<GLTFMaterialAnisotropy> anisotropy;
+  std::optional<GLTFMaterialClearcoat> clearcoat;
+  std::optional<GLTFMaterialDispersion> dispersion;
+  std::optional<GLTFMaterialEmissiveStrength> emissiveStrength;
+  std::optional<GLTFMaterialIor> ior;
+  std::optional<GLTFMaterialIridescence> iridescence;
   std::optional<GLTFMaterialSheen> sheen;
   std::optional<GLTFMaterialSpecular> specular;
-  std::optional<GLTFMaterialIor> ior;
-  std::optional<GLTFMaterialClearcoat> clearcoat;
   std::optional<GLTFMaterialTransmission> transmission;
+  std::optional<bool> unlit;
+  std::optional<GLTFMaterialVolume> volume;
 
   std::array<float, 3> emissiveFactorValue() const {
     return emissiveFactor.value_or(std::array<float, 3>{0.0f, 0.0f, 0.0f});
@@ -705,6 +767,48 @@ public:
   std::optional<std::string> name;
 };
 
+// Light
+
+class GLTFLightSpot {
+public:
+  std::optional<float> innerConeAngle;
+  std::optional<float> outerConeAngle;
+
+  float innerConeAngleValue() const { return innerConeAngle.value_or(0.0f); }
+
+  float outerConeAngleValue() const {
+    return outerConeAngle.value_or(M_PI / 4.0f);
+  }
+};
+
+class GLTFLight {
+public:
+  enum class Type { POINT, SPOT, DIRECTIONAL };
+
+  static std::optional<Type> TypeFromString(const std::string &value) {
+    if (value == "point")
+      return Type::POINT;
+    else if (value == "spot")
+      return Type::SPOT;
+    else if (value == "directional")
+      return Type::DIRECTIONAL;
+    else
+      return std::nullopt;
+  }
+
+  std::optional<std::string> name;
+  std::optional<std::array<float, 3>> color;
+  std::optional<float> intensity;
+  Type type;
+  std::optional<GLTFLightSpot> spot;
+
+  float intensityValue() const { return intensity.value_or(1.0f); }
+
+  std::array<float, 3> colorValue() const {
+    return color.value_or(std::array<float, 3>{1.0f, 1.0f, 1.0f});
+  }
+};
+
 // Json
 
 class GLTFJson {
@@ -726,6 +830,7 @@ public:
   std::optional<std::vector<GLTFScene>> scenes;
   std::optional<std::vector<GLTFSkin>> skins;
   std::optional<std::vector<GLTFTexture>> textures;
+  std::optional<std::vector<GLTFLight>> lights;
 };
 
 }; // namespace gltf2

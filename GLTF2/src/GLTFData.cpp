@@ -121,10 +121,6 @@ GLTFData GLTFData::parseStream(std::istream &fs,
   }
 }
 
-std::vector<std::string> GLTFData::supportedExtensions() {
-  return SupportedExtensions;
-}
-
 Data GLTFData::dataOfUri(const std::string &uri) const {
   // decode percent-encoding
   auto url = boost::url(uri);

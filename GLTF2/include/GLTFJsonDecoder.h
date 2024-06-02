@@ -235,11 +235,16 @@ private:
   decodeMaterialOcclusionTextureInfo(const nlohmann::json &j);
   GLTFMaterial decodeMaterial(const nlohmann::json &j);
   GLTFMaterialAnisotropy decodeMaterialAnisotropy(const nlohmann::json &j);
+  GLTFMaterialClearcoat decodeMaterialClearcoat(const nlohmann::json &j);
+  GLTFMaterialDispersion decodeMaterialDispersion(const nlohmann::json &j);
+  GLTFMaterialEmissiveStrength
+  decodeMaterialEmissiveStrength(const nlohmann::json &j);
+  GLTFMaterialIor decodeMaterialIor(const nlohmann::json &j);
+  GLTFMaterialIridescence decodeMaterialIridescence(const nlohmann::json &j);
   GLTFMaterialSheen decodeMaterialSheen(const nlohmann::json &j);
   GLTFMaterialSpecular decodeMaterialSpecular(const nlohmann::json &j);
-  GLTFMaterialIor decodeMaterialIor(const nlohmann::json &j);
-  GLTFMaterialClearcoat decodeMaterialClearcoat(const nlohmann::json &j);
   GLTFMaterialTransmission decodeMaterialTransmission(const nlohmann::json &j);
+  GLTFMaterialVolume decodeMaterialVolume(const nlohmann::json &j);
   void decodeMeshPrimitiveTarget(const nlohmann::json &j,
                                  GLTFMeshPrimitiveTarget &target);
   GLTFMeshPrimitiveAttributes
@@ -255,6 +260,8 @@ private:
   GLTFSampler decodeSampler(const nlohmann::json &j);
   GLTFScene decodeScene(const nlohmann::json &j);
   GLTFSkin decodeSkin(const nlohmann::json &j);
+  GLTFLightSpot decodeLightSpot(const nlohmann::json &j);
+  GLTFLight decodeLight(const nlohmann::json &j);
   GLTFJson decodeJson(const nlohmann::json &j);
 
 public:

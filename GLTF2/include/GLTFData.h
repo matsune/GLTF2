@@ -66,8 +66,6 @@ public:
   std::optional<std::filesystem::path> path;
   std::optional<Data> bin;
 
-  static std::vector<std::string> supportedExtensions();
-
   Data dataOfUri(const std::string &uri) const;
 
   Data dataForBufferView(const GLTFBufferView &bufferView,

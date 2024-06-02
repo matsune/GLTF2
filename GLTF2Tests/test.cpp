@@ -212,12 +212,29 @@ TEST(TestGLTFData, parseJson) {
                   "scale": 1.0
               }
             },
+            "KHR_materials_dispersion": {
+              "dispersion": 0.1
+            },
+            "KHR_materials_emissive_strength": {
+              "emissiveStrength": 5.0
+            },
+            "KHR_materials_iridescence": {
+              "iridescenceFactor": 1.2,
+              "iridescenceIor": 1.3,
+              "iridescenceThicknessMinimum": 200.0,
+              "iridescenceThicknessMaximum": 500.0
+            },
             "KHR_materials_transmission": {
               "transmissionFactor": 1.0,
               "transmissionTexture": {
                   "index": 0,
                   "texCoord": 0
               }
+            },
+            "KHR_materials_volume": {
+              "thicknessFactor": 1.0,
+              "attenuationDistance":  0.006,
+              "attenuationColor": [ 0.5, 0.5, 0.5 ]
             }
           }
         }
@@ -290,7 +307,25 @@ TEST(TestGLTFData, parseJson) {
           "wrapT": 10497,
           "name": "Sampler1"
         }
-      ]
+      ],
+      "extensions": {
+        "KHR_lights_punctual" : {
+          "lights": [
+            {
+              "spot": {
+                  "innerConeAngle": 0.78,
+                  "outerConeAngle": 1.57
+              },
+              "color": [
+                  0.0,
+                  0.5,
+                  1.0
+              ],
+              "type": "spot"
+            }
+          ]
+        }
+      }
     }
   )";
   auto data = gltf2::GLTFData::parseJson(rawJson);
@@ -475,6 +510,21 @@ TEST(TestGLTFData, parseJson) {
   EXPECT_EQ(data.json.materials.value()[1]
                 .clearcoat->clearcoatNormalTexture->scaleValue(),
             1.0f);
+  EXPECT_EQ(data.json.materials.value()[1].dispersion->dispersionValue(), 0.1f);
+  EXPECT_EQ(
+      data.json.materials.value()[1].emissiveStrength->emissiveStrengthValue(),
+      5.0f);
+  EXPECT_EQ(
+      data.json.materials.value()[1].iridescence->iridescenceFactorValue(),
+      1.2f);
+  EXPECT_EQ(data.json.materials.value()[1].iridescence->iridescenceIorValue(),
+            1.3f);
+  EXPECT_EQ(data.json.materials.value()[1]
+                .iridescence->iridescenceThicknessMinimumValue(),
+            200.0f);
+  EXPECT_EQ(data.json.materials.value()[1]
+                .iridescence->iridescenceThicknessMaximumValue(),
+            500.0f);
   EXPECT_EQ(
       data.json.materials.value()[1].transmission->transmissionFactorValue(),
       1.0f);
@@ -484,6 +534,12 @@ TEST(TestGLTFData, parseJson) {
   EXPECT_EQ(data.json.materials.value()[1]
                 .transmission->transmissionTexture->texCoord,
             0);
+  EXPECT_EQ(data.json.materials.value()[1].volume->thicknessFactorValue(),
+            1.0f);
+  EXPECT_EQ(data.json.materials.value()[1].volume->attenuationDistanceValue(),
+            0.006f);
+  EXPECT_EQ(data.json.materials.value()[1].volume->attenuationColorValue(),
+            (std::array<float, 3>{0.5f, 0.5f, 0.5f}));
 
   EXPECT_EQ(data.json.meshes.value().size(), 1);
   EXPECT_EQ(data.json.meshes.value()[0].name, "MeshOne");
@@ -547,6 +603,13 @@ TEST(TestGLTFData, parseJson) {
   EXPECT_EQ(data.json.skins.value()[0].joints.size(), 3);
   EXPECT_EQ(data.json.skins.value()[0].joints[0], 0);
   EXPECT_EQ(data.json.skins.value()[0].name, "Skin1");
+
+  EXPECT_EQ(data.json.lights->size(), 1);
+  EXPECT_EQ(data.json.lights->at(0).type, GLTFLight::Type::SPOT);
+  EXPECT_EQ(data.json.lights->at(0).colorValue(),
+            (std::array<float, 3>{0.0f, 0.5f, 1.0f}));
+  EXPECT_EQ(data.json.lights->at(0).spot->innerConeAngleValue(), 0.78f);
+  EXPECT_EQ(data.json.lights->at(0).spot->outerConeAngleValue(), 1.57f);
 }
 
 TEST(TestGLTFData, dataForBufferView) {

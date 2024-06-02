@@ -437,6 +437,12 @@ GLTFMaterial GLTFJsonDecoder::decodeMaterial(const nlohmann::json &j) {
                                     [this](const nlohmann::json &value) {
                                       return decodeMaterialIor(value);
                                     });
+
+    decodeToMapObj<GLTFMaterialClearcoat>(
+        *extensionsObj, GLTFExtensionKHRMaterialsClearcoat, material.clearcoat,
+        [this](const nlohmann::json &value) {
+          return decodeMaterialClearcoat(value);
+        });
   }
 
   return material;
@@ -497,6 +503,25 @@ GLTFMaterialIor GLTFJsonDecoder::decodeMaterialIor(const nlohmann::json &j) {
   GLTFMaterialIor ior;
   decodeTo(j, "ior", ior.ior);
   return ior;
+}
+
+GLTFMaterialClearcoat
+GLTFJsonDecoder::decodeMaterialClearcoat(const nlohmann::json &j) {
+  GLTFMaterialClearcoat clearcoat;
+  decodeTo(j, "clearcoatFactor", clearcoat.clearcoatFactor);
+  decodeToMapObj<GLTFTextureInfo>(
+      j, "clearcoatTexture", clearcoat.clearcoatTexture,
+      [this](const nlohmann::json &value) { return decodeTextureInfo(value); });
+  decodeTo(j, "clearcoatRoughnessFactor", clearcoat.clearcoatRoughnessFactor);
+  decodeToMapObj<GLTFTextureInfo>(
+      j, "clearcoatRoughnessTexture", clearcoat.clearcoatRoughnessTexture,
+      [this](const nlohmann::json &value) { return decodeTextureInfo(value); });
+  decodeToMapObj<GLTFMaterialNormalTextureInfo>(
+      j, "clearcoatNormalTexture", clearcoat.clearcoatNormalTexture,
+      [this](const nlohmann::json &value) {
+        return decodeMaterialNormalTextureInfo(value);
+      });
+  return clearcoat;
 }
 
 void GLTFJsonDecoder::decodeMeshPrimitiveTarget(

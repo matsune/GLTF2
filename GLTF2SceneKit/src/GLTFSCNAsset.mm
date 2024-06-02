@@ -453,7 +453,6 @@ class SurfaceShaderModifierBuilder {
 public:
   bool transparent;
   bool hasBaseColorTexture;
-  bool hasMetallicRoughnessTexture;
   bool enableDiffuseAlphaCutoff;
   bool isDiffuseOpaque;
   bool enableAnisotropy;
@@ -464,10 +463,10 @@ public:
 
   SurfaceShaderModifierBuilder()
       : transparent(false), hasBaseColorTexture(false),
-        hasMetallicRoughnessTexture(false), enableDiffuseAlphaCutoff(false),
-        isDiffuseOpaque(false), enableAnisotropy(false),
-        hasAnisotropyTexture(false), enableSheen(false),
-        hasSheenColorTexture(false), hasSheenRoughnessTexture(false) {}
+        enableDiffuseAlphaCutoff(false), isDiffuseOpaque(false),
+        enableAnisotropy(false), hasAnisotropyTexture(false),
+        enableSheen(false), hasSheenColorTexture(false),
+        hasSheenRoughnessTexture(false) {}
 
   NSString *buildShader() {
     NSMutableString *shader = [NSMutableString string];
@@ -477,10 +476,6 @@ public:
     }
 
     NSArray<NSString *> *uniforms = @[
-      @"float metallicFactor",
-      @"float roughnessFactor",
-      @"sampler2D metallicRoughnessTexture",
-
       @"vec4  diffuseBaseColorFactor",
       @"float diffuseAlphaCutoff",
 
@@ -492,9 +487,6 @@ public:
       @"float sheenRoughnessFactor",
       @"sampler2D sheenColorTexture",
       @"sampler2D sheenRoughnessTexture",
-
-      @"float specularFactor",
-      @"vec3 specularColorFactor",
 
       @"float ior",
     ];
@@ -614,30 +606,17 @@ public:
 
     [shader appendString:@"vec3 f0 = vec3(pow((ior - 1)/(ior + 1), 2));"
                           "vec3 f90 = vec3(1.0);"
-                          "float metallic = metallicFactor;"
-                          "float roughness = roughnessFactor;"
+                          "float metalness = _surface.metalness;"
+                          "float roughness = _surface.roughness;"
                           "float alphaRoughness = 0.0;"
-                          "float specularWeight = 1.0;"
-                          "vec3 c_diff;"
                           "vec4 baseColor = _surface.diffuse;"];
-
-    if (hasMetallicRoughnessTexture) {
-      [shader appendString:@"vec4 mrSample = texture2D("
-                            "  metallicRoughnessTexture, "
-                            "  _surface.diffuseTexcoord"
-                            ");"
-                            "metallic = mrSample.b * metallicFactor;"
-                            "roughness = mrSample.g * roughnessFactor;"];
-    }
 
     if (hasBaseColorTexture) {
       [shader appendString:@"baseColor *= diffuseBaseColorFactor;"];
     }
 
-    [shader appendString:@"metallic = clamp(metallic, 0.0, 1.0);"
-                          "roughness = clamp(roughness, 0.0, 1.0);"
-                          "alphaRoughness = roughness * roughness;"
-                          "f0 = mix(f0, baseColor.rgb, metallic);"];
+    [shader appendString:@"alphaRoughness = roughness * roughness;"
+                          "f0 = mix(f0, baseColor.rgb, metalness);"];
 
     if (enableAnisotropy) {
       [shader appendString:@"if (true) {"
@@ -741,7 +720,9 @@ public:
                             "  baseColor.rgb += sheenColor * sheen_brdf;"
                             "}\n"];
     }
-    [shader appendString:@"_surface.diffuse = baseColor;"];
+    [shader appendString:@"_surface.diffuse = baseColor;"
+                          "_surface.metalness = metalness;"
+                          "_surface.roughness = roughness;"];
 
     if (isDiffuseOpaque) {
       [shader appendString:@"_surface.diffuse.a = 1.0;"];
@@ -794,10 +775,6 @@ public:
 
     SurfaceShaderModifierBuilder builder;
 
-    float metallicFactor = 1.0f;
-    float roughnessFactor = 1.0f;
-    SCNMaterialProperty *metallicRoughnessTexture;
-
     SCNVector4 diffuseBaseColorFactor = SCNVector4Make(1.0, 1.0, 1.0, 1.0);
     float diffuseAlphaCutoff = 0.0f;
 
@@ -809,9 +786,6 @@ public:
     SCNMaterialProperty *sheenColorTexture;
     float sheenRoughnessFactor = 1.0;
     SCNMaterialProperty *sheenRoughnessTexture;
-
-    float specularFactor = 1.0f;
-    SCNVector3 specularColorFactor = SCNVector3Make(1.0, 1.0, 1.0);
 
     float ior = 1.5f;
 
@@ -850,16 +824,12 @@ public:
                   toProperty:scnMaterial.roughness];
       scnMaterial.roughness.textureComponents = SCNColorMaskGreen;
 
-      metallicRoughnessTexture = scnMaterial.roughness;
-      builder.hasMetallicRoughnessTexture = true;
     } else {
       scnMaterial.metalness.contents =
           @(pbrMetallicRoughness.metallicFactorValue());
       scnMaterial.roughness.contents =
           @(pbrMetallicRoughness.roughnessFactorValue());
     }
-    metallicFactor = pbrMetallicRoughness.metallicFactorValue();
-    roughnessFactor = pbrMetallicRoughness.roughnessFactorValue();
 
     if (material.normalTexture.has_value()) {
       [self applyTextureInfo:*material.normalTexture
@@ -937,32 +907,39 @@ public:
     }
 
     if (material.specular.has_value()) {
-      // FIXME: PBR ignores specular
-      if (material.specular->specularColorTexture.has_value()) {
-        [self applyTextureInfo:*material.specular->specularColorTexture
-                 withIntensity:material.specular->specularFactorValue()
-                    toProperty:scnMaterial.specular];
-        scnMaterial.ambientOcclusion.textureComponents =
-            SCNColorMaskRed | SCNColorMaskGreen | SCNColorMaskBlue;
-      } else {
-        auto value = material.specular->specularColorFactorValue();
-        applyColorContentsToProperty(value[0], value[1], value[2], 1.0,
-                                     scnMaterial.specular);
-        scnMaterial.specular.intensity =
-            material.specular->specularFactorValue();
-      }
+      // TODO: specular
     }
 
     if (material.ior.has_value()) {
       ior = material.ior->iorValue();
     }
 
-    [scnMaterial setValue:[NSNumber numberWithFloat:metallicFactor]
-               forKeyPath:@"metallicFactor"];
-    [scnMaterial setValue:[NSNumber numberWithFloat:roughnessFactor]
-               forKeyPath:@"roughnessFactor"];
-    [scnMaterial setValue:metallicRoughnessTexture
-               forKeyPath:@"metallicRoughnessTexture"];
+    if (material.clearcoat.has_value()) {
+      if (material.clearcoat->clearcoatTexture.has_value()) {
+        [self applyTextureInfo:*material.clearcoat->clearcoatTexture
+                 withIntensity:material.clearcoat->clearcoatFactorValue()
+                    toProperty:scnMaterial.clearCoat];
+        scnMaterial.clearCoat.textureComponents = SCNColorMaskRed;
+      } else {
+        scnMaterial.clearCoat.contents =
+            @(material.clearcoat->clearcoatFactorValue());
+      }
+      if (material.clearcoat->clearcoatRoughnessTexture.has_value()) {
+        [self
+            applyTextureInfo:*material.clearcoat->clearcoatRoughnessTexture
+               withIntensity:material.clearcoat->clearcoatRoughnessFactorValue()
+                  toProperty:scnMaterial.clearCoatRoughness];
+        scnMaterial.clearCoatRoughness.textureComponents = SCNColorMaskGreen;
+      } else {
+        scnMaterial.clearCoatRoughness.contents =
+            @(material.clearcoat->clearcoatRoughnessFactorValue());
+      }
+      if (material.clearcoat->clearcoatNormalTexture.has_value()) {
+        [self applyTextureInfo:*material.clearcoat->clearcoatNormalTexture
+                 withIntensity:1.0
+                    toProperty:scnMaterial.clearCoatNormal];
+      }
+    }
 
     [scnMaterial setValue:[NSValue valueWithSCNVector4:diffuseBaseColorFactor]
                forKeyPath:@"diffuseBaseColorFactor"];
@@ -982,11 +959,6 @@ public:
                forKeyPath:@"sheenRoughnessFactor"];
     [scnMaterial setValue:sheenRoughnessTexture
                forKeyPath:@"sheenRoughnessTexture"];
-
-    [scnMaterial setValue:[NSNumber numberWithFloat:specularFactor]
-               forKeyPath:@"specularFactor"];
-    [scnMaterial setValue:[NSValue valueWithSCNVector3:specularColorFactor]
-               forKeyPath:@"specularColorFactor"];
 
     [scnMaterial setValue:[NSNumber numberWithFloat:ior] forKey:@"ior"];
 

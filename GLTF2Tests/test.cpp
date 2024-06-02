@@ -194,6 +194,23 @@ TEST(TestGLTFData, parseJson) {
             },
             "KHR_materials_ior": {
               "ior": 1.4
+            },
+            "KHR_materials_clearcoat": {
+              "clearcoatFactor": 1.0,
+              "clearcoatTexture": {
+                  "index": 0,
+                  "texCoord": 0
+              },
+              "clearcoatRoughnessFactor": 0.5,
+              "clearcoatRoughnessTexture": {
+                  "index": 1,
+                  "texCoord": 0
+              },
+              "clearcoatNormalTexture": {
+                  "index": 2,
+                  "texCoord": 0,
+                  "scale": 1.0
+              }
             }
           }
         }
@@ -427,6 +444,30 @@ TEST(TestGLTFData, parseJson) {
   EXPECT_EQ(
       data.json.materials.value()[1].specular->specularColorTexture->index, 3);
   EXPECT_EQ(data.json.materials.value()[1].ior->iorValue(), 1.4f);
+  EXPECT_EQ(data.json.materials.value()[1].clearcoat->clearcoatFactorValue(),
+            1.0f);
+  EXPECT_EQ(data.json.materials.value()[1].clearcoat->clearcoatTexture->index,
+            0);
+  EXPECT_EQ(
+      data.json.materials.value()[1].clearcoat->clearcoatTexture->texCoord, 0);
+  EXPECT_EQ(
+      data.json.materials.value()[1].clearcoat->clearcoatRoughnessFactorValue(),
+      0.5f);
+  EXPECT_EQ(data.json.materials.value()[1]
+                .clearcoat->clearcoatRoughnessTexture->index,
+            1);
+  EXPECT_EQ(data.json.materials.value()[1]
+                .clearcoat->clearcoatRoughnessTexture->texCoord,
+            0);
+  EXPECT_EQ(
+      data.json.materials.value()[1].clearcoat->clearcoatNormalTexture->index,
+      2);
+  EXPECT_EQ(data.json.materials.value()[1]
+                .clearcoat->clearcoatNormalTexture->texCoord,
+            0);
+  EXPECT_EQ(data.json.materials.value()[1]
+                .clearcoat->clearcoatNormalTexture->scaleValue(),
+            1.0f);
 
   EXPECT_EQ(data.json.meshes.value().size(), 1);
   EXPECT_EQ(data.json.meshes.value()[0].name, "MeshOne");

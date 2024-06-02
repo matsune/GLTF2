@@ -416,6 +416,21 @@ public:
   float iorValue() const { return ior.value_or(1.5f); }
 };
 
+class GLTFMaterialClearcoat {
+public:
+  std::optional<float> clearcoatFactor;
+  std::optional<GLTFTextureInfo> clearcoatTexture;
+  std::optional<float> clearcoatRoughnessFactor;
+  std::optional<GLTFTextureInfo> clearcoatRoughnessTexture;
+  std::optional<GLTFMaterialNormalTextureInfo> clearcoatNormalTexture;
+
+  float clearcoatFactorValue() const { return clearcoatFactor.value_or(0.0f); }
+
+  float clearcoatRoughnessFactorValue() const {
+    return clearcoatRoughnessFactor.value_or(0.0f);
+  }
+};
+
 class GLTFMaterial {
 public:
   enum class AlphaMode { OPAQUE, MASK, BLEND };
@@ -446,6 +461,7 @@ public:
   std::optional<GLTFMaterialSheen> sheen;
   std::optional<GLTFMaterialSpecular> specular;
   std::optional<GLTFMaterialIor> ior;
+  std::optional<GLTFMaterialClearcoat> clearcoat;
 
   std::array<float, 3> emissiveFactorValue() const {
     return emissiveFactor.value_or(std::array<float, 3>{0.0f, 0.0f, 0.0f});

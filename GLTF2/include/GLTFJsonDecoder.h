@@ -238,6 +238,7 @@ private:
   GLTFMaterialSheen decodeMaterialSheen(const nlohmann::json &j);
   GLTFMaterialSpecular decodeMaterialSpecular(const nlohmann::json &j);
   GLTFMaterialIor decodeMaterialIor(const nlohmann::json &j);
+  GLTFMaterialClearcoat decodeMaterialClearcoat(const nlohmann::json &j);
   void decodeMeshPrimitiveTarget(const nlohmann::json &j,
                                  GLTFMeshPrimitiveTarget &target);
   GLTFMeshPrimitiveAttributes

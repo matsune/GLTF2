@@ -605,7 +605,7 @@ TEST(TestGLTFData, parseJson) {
   EXPECT_EQ(data.json.skins.value()[0].name, "Skin1");
 
   EXPECT_EQ(data.json.lights->size(), 1);
-  EXPECT_EQ(data.json.lights->at(0).type, GLTFLight::Type::SPOT);
+  EXPECT_EQ(data.json.lights->at(0).type, KHRLight::Type::SPOT);
   EXPECT_EQ(data.json.lights->at(0).colorValue(),
             (std::array<float, 3>{0.0f, 0.5f, 1.0f}));
   EXPECT_EQ(data.json.lights->at(0).spot->innerConeAngleValue(), 0.78f);

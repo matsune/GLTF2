@@ -302,7 +302,7 @@ public:
   std::optional<std::string> name;
 };
 
-class GLTFKHRTextureTransform {
+class KHRTextureTransform {
 public:
   std::optional<std::array<float, 2>> offset;
   std::optional<float> rotation;
@@ -324,7 +324,7 @@ class GLTFTextureInfo {
 public:
   uint32_t index;
   std::optional<uint32_t> texCoord;
-  std::optional<GLTFKHRTextureTransform> khrTextureTransform;
+  std::optional<KHRTextureTransform> khrTextureTransform;
 
   uint32_t texCoordValue() const { return texCoord.value_or(0); }
 };
@@ -363,7 +363,7 @@ public:
   float strengthValue() const { return strength.value_or(1.0f); }
 };
 
-class GLTFMaterialAnisotropy {
+class KHRMaterialAnisotropy {
 public:
   std::optional<float> anisotropyStrength;
   std::optional<float> anisotropyRotation;
@@ -378,7 +378,7 @@ public:
   }
 };
 
-class GLTFMaterialSheen {
+class KHRMaterialSheen {
 public:
   std::optional<std::array<float, 3>> sheenColorFactor;
   std::optional<GLTFTextureInfo> sheenColorTexture;
@@ -394,7 +394,7 @@ public:
   }
 };
 
-class GLTFMaterialSpecular {
+class KHRMaterialSpecular {
 public:
   std::optional<float> specularFactor;
   std::optional<GLTFTextureInfo> specularTexture;
@@ -409,14 +409,14 @@ public:
   }
 };
 
-class GLTFMaterialIor {
+class KHRMaterialIor {
 public:
   std::optional<float> ior;
 
   float iorValue() const { return ior.value_or(1.5f); }
 };
 
-class GLTFMaterialClearcoat {
+class KHRMaterialClearcoat {
 public:
   std::optional<float> clearcoatFactor;
   std::optional<GLTFTextureInfo> clearcoatTexture;
@@ -431,14 +431,14 @@ public:
   }
 };
 
-class GLTFMaterialDispersion {
+class KHRMaterialDispersion {
 public:
   std::optional<float> dispersion;
 
   float dispersionValue() const { return dispersion.value_or(0.0f); }
 };
 
-class GLTFMaterialEmissiveStrength {
+class KHRMaterialEmissiveStrength {
 public:
   std::optional<float> emissiveStrength;
 
@@ -447,7 +447,7 @@ public:
   }
 };
 
-class GLTFMaterialIridescence {
+class KHRMaterialIridescence {
 public:
   std::optional<float> iridescenceFactor;
   std::optional<GLTFTextureInfo> iridescenceTexture;
@@ -471,7 +471,7 @@ public:
   }
 };
 
-class GLTFMaterialVolume {
+class KHRMaterialVolume {
 public:
   std::optional<float> thicknessFactor;
   std::optional<GLTFTextureInfo> thicknessTexture;
@@ -489,7 +489,7 @@ public:
   }
 };
 
-class GLTFMaterialTransmission {
+class KHRMaterialTransmission {
 public:
   std::optional<float> transmissionFactor;
   std::optional<GLTFTextureInfo> transmissionTexture;
@@ -524,17 +524,17 @@ public:
   std::optional<AlphaMode> alphaMode;
   std::optional<float> alphaCutoff;
   std::optional<bool> doubleSided;
-  std::optional<GLTFMaterialAnisotropy> anisotropy;
-  std::optional<GLTFMaterialClearcoat> clearcoat;
-  std::optional<GLTFMaterialDispersion> dispersion;
-  std::optional<GLTFMaterialEmissiveStrength> emissiveStrength;
-  std::optional<GLTFMaterialIor> ior;
-  std::optional<GLTFMaterialIridescence> iridescence;
-  std::optional<GLTFMaterialSheen> sheen;
-  std::optional<GLTFMaterialSpecular> specular;
-  std::optional<GLTFMaterialTransmission> transmission;
+  std::optional<KHRMaterialAnisotropy> anisotropy;
+  std::optional<KHRMaterialClearcoat> clearcoat;
+  std::optional<KHRMaterialDispersion> dispersion;
+  std::optional<KHRMaterialEmissiveStrength> emissiveStrength;
+  std::optional<KHRMaterialIor> ior;
+  std::optional<KHRMaterialIridescence> iridescence;
+  std::optional<KHRMaterialSheen> sheen;
+  std::optional<KHRMaterialSpecular> specular;
+  std::optional<KHRMaterialTransmission> transmission;
   std::optional<bool> unlit;
-  std::optional<GLTFMaterialVolume> volume;
+  std::optional<KHRMaterialVolume> volume;
 
   std::array<float, 3> emissiveFactorValue() const {
     return emissiveFactor.value_or(std::array<float, 3>{0.0f, 0.0f, 0.0f});
@@ -769,7 +769,7 @@ public:
 
 // Light
 
-class GLTFLightSpot {
+class KHRLightSpot {
 public:
   std::optional<float> innerConeAngle;
   std::optional<float> outerConeAngle;
@@ -781,7 +781,7 @@ public:
   }
 };
 
-class GLTFLight {
+class KHRLight {
 public:
   enum class Type { POINT, SPOT, DIRECTIONAL };
 
@@ -800,7 +800,7 @@ public:
   std::optional<std::array<float, 3>> color;
   std::optional<float> intensity;
   Type type;
-  std::optional<GLTFLightSpot> spot;
+  std::optional<KHRLightSpot> spot;
 
   float intensityValue() const { return intensity.value_or(1.0f); }
 
@@ -830,7 +830,7 @@ public:
   std::optional<std::vector<GLTFScene>> scenes;
   std::optional<std::vector<GLTFSkin>> skins;
   std::optional<std::vector<GLTFTexture>> textures;
-  std::optional<std::vector<GLTFLight>> lights;
+  std::optional<std::vector<KHRLight>> lights;
 };
 
 }; // namespace gltf2

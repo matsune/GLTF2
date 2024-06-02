@@ -280,9 +280,9 @@ GLTFTexture GLTFJsonDecoder::decodeTexture(const nlohmann::json &j) {
   return texture;
 }
 
-GLTFKHRTextureTransform
+KHRTextureTransform
 GLTFJsonDecoder::decodeKHRTextureTransform(const nlohmann::json &j) {
-  GLTFKHRTextureTransform t;
+  KHRTextureTransform t;
   decodeToMapValue<std::array<float, 2>>(
       j, "offset", t.offset, [this](const nlohmann::json &value) {
         if (!value.is_array())
@@ -306,7 +306,7 @@ GLTFTextureInfo GLTFJsonDecoder::decodeTextureInfo(const nlohmann::json &j) {
   decodeTo(j, "texCoord", textureInfo.texCoord);
   auto extensionsObj = decodeOptObject(j, "extensions");
   if (extensionsObj) {
-    decodeToMapObj<GLTFKHRTextureTransform>(
+    decodeToMapObj<KHRTextureTransform>(
         *extensionsObj, GLTFExtensionKHRTextureTransform,
         textureInfo.khrTextureTransform, [this](const nlohmann::json &value) {
           return decodeKHRTextureTransform(value);
@@ -344,7 +344,7 @@ GLTFJsonDecoder::decodeMaterialNormalTextureInfo(const nlohmann::json &j) {
   decodeTo(j, "scale", normal.scale);
   auto extensionsObj = decodeOptObject(j, "extensions");
   if (extensionsObj) {
-    decodeToMapObj<GLTFKHRTextureTransform>(
+    decodeToMapObj<KHRTextureTransform>(
         *extensionsObj, GLTFExtensionKHRTextureTransform,
         normal.khrTextureTransform, [this](const nlohmann::json &value) {
           return decodeKHRTextureTransform(value);
@@ -361,7 +361,7 @@ GLTFJsonDecoder::decodeMaterialOcclusionTextureInfo(const nlohmann::json &j) {
   decodeTo(j, "strength", occlusion.strength);
   auto extensionsObj = decodeOptObject(j, "extensions");
   if (extensionsObj) {
-    decodeToMapObj<GLTFKHRTextureTransform>(
+    decodeToMapObj<KHRTextureTransform>(
         *extensionsObj, GLTFExtensionKHRTextureTransform,
         occlusion.khrTextureTransform, [this](const nlohmann::json &value) {
           return decodeKHRTextureTransform(value);
@@ -414,73 +414,73 @@ GLTFMaterial GLTFJsonDecoder::decodeMaterial(const nlohmann::json &j) {
     bool isUnlit = extensionsObj->contains(GLTFExtensionKHRMaterialsUnlit);
     material.unlit = isUnlit;
 
-    decodeToMapObj<GLTFMaterialAnisotropy>(
+    decodeToMapObj<KHRMaterialAnisotropy>(
         *extensionsObj, GLTFExtensionKHRMaterialsAnisotropy,
         material.anisotropy, [this](const nlohmann::json &value) {
-          return decodeMaterialAnisotropy(value);
+          return decodeKHRMaterialAnisotropy(value);
         });
 
-    decodeToMapObj<GLTFMaterialClearcoat>(
+    decodeToMapObj<KHRMaterialClearcoat>(
         *extensionsObj, GLTFExtensionKHRMaterialsClearcoat, material.clearcoat,
         [this](const nlohmann::json &value) {
-          return decodeMaterialClearcoat(value);
+          return decodeKHRMaterialClearcoat(value);
         });
 
-    decodeToMapObj<GLTFMaterialDispersion>(
+    decodeToMapObj<KHRMaterialDispersion>(
         *extensionsObj, GLTFExtensionKHRMaterialsDispersion,
         material.dispersion, [this](const nlohmann::json &value) {
-          return decodeMaterialDispersion(value);
+          return decodeKHRMaterialDispersion(value);
         });
 
-    decodeToMapObj<GLTFMaterialEmissiveStrength>(
+    decodeToMapObj<KHRMaterialEmissiveStrength>(
         *extensionsObj, GLTFExtensionKHRMaterialsEmissiveStrength,
         material.emissiveStrength, [this](const nlohmann::json &value) {
-          return decodeMaterialEmissiveStrength(value);
+          return decodeKHRMaterialEmissiveStrength(value);
         });
 
-    decodeToMapObj<GLTFMaterialIor>(*extensionsObj,
-                                    GLTFExtensionKHRMaterialsIor, material.ior,
-                                    [this](const nlohmann::json &value) {
-                                      return decodeMaterialIor(value);
-                                    });
+    decodeToMapObj<KHRMaterialIor>(*extensionsObj, GLTFExtensionKHRMaterialsIor,
+                                   material.ior,
+                                   [this](const nlohmann::json &value) {
+                                     return decodeKHRMaterialIor(value);
+                                   });
 
-    decodeToMapObj<GLTFMaterialIridescence>(
+    decodeToMapObj<KHRMaterialIridescence>(
         *extensionsObj, GLTFExtensionKHRMaterialsIridescence,
         material.iridescence, [this](const nlohmann::json &value) {
-          return decodeMaterialIridescence(value);
+          return decodeKHRMaterialIridescence(value);
         });
 
-    decodeToMapObj<GLTFMaterialSheen>(
+    decodeToMapObj<KHRMaterialSheen>(
         *extensionsObj, GLTFExtensionKHRMaterialsSheen, material.sheen,
         [this](const nlohmann::json &value) {
-          return decodeMaterialSheen(value);
+          return decodeKHRMaterialSheen(value);
         });
 
-    decodeToMapObj<GLTFMaterialSpecular>(
+    decodeToMapObj<KHRMaterialSpecular>(
         *extensionsObj, GLTFExtensionKHRMaterialsSpecular, material.specular,
         [this](const nlohmann::json &value) {
-          return decodeMaterialSpecular(value);
+          return decodeKHRMaterialSpecular(value);
         });
 
-    decodeToMapObj<GLTFMaterialTransmission>(
+    decodeToMapObj<KHRMaterialTransmission>(
         *extensionsObj, GLTFExtensionKHRMaterialsTransmission,
         material.transmission, [this](const nlohmann::json &value) {
-          return decodeMaterialTransmission(value);
+          return decodeKHRMaterialTransmission(value);
         });
 
-    decodeToMapObj<GLTFMaterialVolume>(
+    decodeToMapObj<KHRMaterialVolume>(
         *extensionsObj, GLTFExtensionKHRMaterialsVolume, material.volume,
         [this](const nlohmann::json &value) {
-          return decodeMaterialVolume(value);
+          return decodeKHRMaterialVolume(value);
         });
   }
 
   return material;
 }
 
-GLTFMaterialAnisotropy
-GLTFJsonDecoder::decodeMaterialAnisotropy(const nlohmann::json &j) {
-  GLTFMaterialAnisotropy anisotropy;
+KHRMaterialAnisotropy
+GLTFJsonDecoder::decodeKHRMaterialAnisotropy(const nlohmann::json &j) {
+  KHRMaterialAnisotropy anisotropy;
   decodeTo(j, "anisotropyStrength", anisotropy.anisotropyStrength);
   decodeTo(j, "anisotropyRotation", anisotropy.anisotropyRotation);
   decodeToMapObj<GLTFTextureInfo>(
@@ -489,9 +489,9 @@ GLTFJsonDecoder::decodeMaterialAnisotropy(const nlohmann::json &j) {
   return anisotropy;
 }
 
-GLTFMaterialClearcoat
-GLTFJsonDecoder::decodeMaterialClearcoat(const nlohmann::json &j) {
-  GLTFMaterialClearcoat clearcoat;
+KHRMaterialClearcoat
+GLTFJsonDecoder::decodeKHRMaterialClearcoat(const nlohmann::json &j) {
+  KHRMaterialClearcoat clearcoat;
   decodeTo(j, "clearcoatFactor", clearcoat.clearcoatFactor);
   decodeToMapObj<GLTFTextureInfo>(
       j, "clearcoatTexture", clearcoat.clearcoatTexture,
@@ -508,29 +508,29 @@ GLTFJsonDecoder::decodeMaterialClearcoat(const nlohmann::json &j) {
   return clearcoat;
 }
 
-GLTFMaterialDispersion
-GLTFJsonDecoder::decodeMaterialDispersion(const nlohmann::json &j) {
-  GLTFMaterialDispersion dispersion;
+KHRMaterialDispersion
+GLTFJsonDecoder::decodeKHRMaterialDispersion(const nlohmann::json &j) {
+  KHRMaterialDispersion dispersion;
   decodeTo(j, "dispersion", dispersion.dispersion);
   return dispersion;
 }
 
-GLTFMaterialEmissiveStrength
-GLTFJsonDecoder::decodeMaterialEmissiveStrength(const nlohmann::json &j) {
-  GLTFMaterialEmissiveStrength strength;
+KHRMaterialEmissiveStrength
+GLTFJsonDecoder::decodeKHRMaterialEmissiveStrength(const nlohmann::json &j) {
+  KHRMaterialEmissiveStrength strength;
   decodeTo(j, "emissiveStrength", strength.emissiveStrength);
   return strength;
 }
 
-GLTFMaterialIor GLTFJsonDecoder::decodeMaterialIor(const nlohmann::json &j) {
-  GLTFMaterialIor ior;
+KHRMaterialIor GLTFJsonDecoder::decodeKHRMaterialIor(const nlohmann::json &j) {
+  KHRMaterialIor ior;
   decodeTo(j, "ior", ior.ior);
   return ior;
 }
 
-GLTFMaterialIridescence
-GLTFJsonDecoder::decodeMaterialIridescence(const nlohmann::json &j) {
-  GLTFMaterialIridescence iridescence;
+KHRMaterialIridescence
+GLTFJsonDecoder::decodeKHRMaterialIridescence(const nlohmann::json &j) {
+  KHRMaterialIridescence iridescence;
   decodeTo(j, "iridescenceFactor", iridescence.iridescenceFactor);
   decodeToMapObj<GLTFTextureInfo>(
       j, "iridescenceTexture", iridescence.iridescenceTexture,
@@ -546,9 +546,9 @@ GLTFJsonDecoder::decodeMaterialIridescence(const nlohmann::json &j) {
   return iridescence;
 }
 
-GLTFMaterialSheen
-GLTFJsonDecoder::decodeMaterialSheen(const nlohmann::json &j) {
-  GLTFMaterialSheen sheen;
+KHRMaterialSheen
+GLTFJsonDecoder::decodeKHRMaterialSheen(const nlohmann::json &j) {
+  KHRMaterialSheen sheen;
   decodeToMapValue<std::array<float, 3>>(
       j, "sheenColorFactor", sheen.sheenColorFactor,
       [this](const nlohmann::json &value) {
@@ -566,9 +566,9 @@ GLTFJsonDecoder::decodeMaterialSheen(const nlohmann::json &j) {
   return sheen;
 }
 
-GLTFMaterialSpecular
-GLTFJsonDecoder::decodeMaterialSpecular(const nlohmann::json &j) {
-  GLTFMaterialSpecular specular;
+KHRMaterialSpecular
+GLTFJsonDecoder::decodeKHRMaterialSpecular(const nlohmann::json &j) {
+  KHRMaterialSpecular specular;
   decodeTo(j, "specularFactor", specular.specularFactor);
   decodeToMapObj<GLTFTextureInfo>(
       j, "specularTexture", specular.specularTexture,
@@ -586,9 +586,9 @@ GLTFJsonDecoder::decodeMaterialSpecular(const nlohmann::json &j) {
   return specular;
 }
 
-GLTFMaterialTransmission
-GLTFJsonDecoder::decodeMaterialTransmission(const nlohmann::json &j) {
-  GLTFMaterialTransmission transmission;
+KHRMaterialTransmission
+GLTFJsonDecoder::decodeKHRMaterialTransmission(const nlohmann::json &j) {
+  KHRMaterialTransmission transmission;
   decodeTo(j, "transmissionFactor", transmission.transmissionFactor);
   decodeToMapObj<GLTFTextureInfo>(
       j, "transmissionTexture", transmission.transmissionTexture,
@@ -596,9 +596,9 @@ GLTFJsonDecoder::decodeMaterialTransmission(const nlohmann::json &j) {
   return transmission;
 }
 
-GLTFMaterialVolume
-GLTFJsonDecoder::decodeMaterialVolume(const nlohmann::json &j) {
-  GLTFMaterialVolume volume;
+KHRMaterialVolume
+GLTFJsonDecoder::decodeKHRMaterialVolume(const nlohmann::json &j) {
+  KHRMaterialVolume volume;
   decodeTo(j, "thicknessFactor", volume.thicknessFactor);
   decodeToMapObj<GLTFTextureInfo>(
       j, "thicknessTexture", volume.thicknessTexture,
@@ -807,15 +807,15 @@ GLTFSkin GLTFJsonDecoder::decodeSkin(const nlohmann::json &j) {
   return skin;
 }
 
-GLTFLightSpot GLTFJsonDecoder::decodeLightSpot(const nlohmann::json &j) {
-  GLTFLightSpot spot;
+KHRLightSpot GLTFJsonDecoder::decodeKHRLightSpot(const nlohmann::json &j) {
+  KHRLightSpot spot;
   decodeTo(j, "innerConeAngle", spot.innerConeAngle);
   decodeTo(j, "outerConeAngle", spot.outerConeAngle);
   return spot;
 }
 
-GLTFLight GLTFJsonDecoder::decodeLight(const nlohmann::json &j) {
-  GLTFLight light;
+KHRLight GLTFJsonDecoder::decodeKHRLight(const nlohmann::json &j) {
+  KHRLight light;
   decodeTo(j, "name", light.name);
   decodeToMapValue<std::array<float, 3>>(
       j, "color", light.color, [this](const nlohmann::json &value) {
@@ -824,17 +824,18 @@ GLTFLight GLTFJsonDecoder::decodeLight(const nlohmann::json &j) {
         return value.get<std::array<float, 3>>();
       });
   decodeTo(j, "intensity", light.intensity);
-  decodeToMapValue<GLTFLight::Type>(
+  decodeToMapValue<KHRLight::Type>(
       j, "type", light.type, [this](const nlohmann::json &value) {
-        auto type = GLTFLight::TypeFromString(decodeAs<std::string>(value));
+        auto type = KHRLight::TypeFromString(decodeAs<std::string>(value));
         if (!type)
           throw InvalidFormatException(context());
         return *type;
       });
-  if (light.type == GLTFLight::Type::SPOT) {
-    decodeToMapObj<GLTFLightSpot>(
-        j, "spot", light.spot,
-        [this](const nlohmann::json &value) { return decodeLightSpot(value); });
+  if (light.type == KHRLight::Type::SPOT) {
+    decodeToMapObj<KHRLightSpot>(j, "spot", light.spot,
+                                 [this](const nlohmann::json &value) {
+                                   return decodeKHRLightSpot(value);
+                                 });
   }
   return light;
 }
@@ -900,9 +901,9 @@ GLTFJson GLTFJsonDecoder::decodeJson(const nlohmann::json &j) {
     auto lightsPunctualObj =
         decodeOptObject(*extensionsObj, GLTFExtensionKHRLightsPunctual);
     if (lightsPunctualObj.has_value()) {
-      decodeToMapArray<GLTFLight>(
+      decodeToMapArray<KHRLight>(
           *lightsPunctualObj, "lights", data.lights,
-          [this](const nlohmann::json &item) { return decodeLight(item); });
+          [this](const nlohmann::json &item) { return decodeKHRLight(item); });
     }
   }
 

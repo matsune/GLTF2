@@ -810,8 +810,6 @@ public:
   }
 };
 
-// VRM
-
 class VRMCMeta {
 public:
   enum class AvatarPermissionType {
@@ -834,7 +832,7 @@ public:
     ALLOW_MODIFICATION_REDISTRIBUTION
   };
 
-  std::optional<AvatarPermissionType>
+  static std::optional<AvatarPermissionType>
   AvatarPermissionFromString(const std::string &value) {
     if (value == "onlyAuthor")
       return AvatarPermissionType::ONLY_AUTHOR;
@@ -845,7 +843,7 @@ public:
     return std::nullopt;
   }
 
-  std::optional<CommercialUsageType>
+  static std::optional<CommercialUsageType>
   CommercialUsageFromString(const std::string &value) {
     if (value == "personalNonProfit")
       return CommercialUsageType::PERSONAL_NON_PROFIT;
@@ -856,7 +854,7 @@ public:
     return std::nullopt;
   }
 
-  std::optional<CreditNotationType>
+  static std::optional<CreditNotationType>
   CreditNotationFromString(const std::string &value) {
     if (value == "required")
       return CreditNotationType::REQUIRED;
@@ -865,7 +863,7 @@ public:
     return std::nullopt;
   }
 
-  std::optional<ModificationType>
+  static std::optional<ModificationType>
   ModificationFromString(const std::string &value) {
     if (value == "prohibited")
       return ModificationType::PROHIBITED;

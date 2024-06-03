@@ -1,6 +1,7 @@
 #ifndef GLTFJson_h
 #define GLTFJson_h
 
+#include <map>
 #include <optional>
 #include <stdint.h>
 #include <string>
@@ -809,6 +810,381 @@ public:
   }
 };
 
+// VRM
+
+class VRMCMeta {
+public:
+  enum class AvatarPermissionType {
+    ONLY_AUTHOR,
+    ONLY_SEPARATELY_LICENSED_PERSION,
+    EVERYONE
+  };
+
+  enum class CommercialUsageType {
+    PERSONAL_NON_PROFIT,
+    PERSONAL_PROFIT,
+    CORPORATION
+  };
+
+  enum class CreditNotationType { REQUIRED, UNNECESSARY };
+
+  enum class ModificationType {
+    PROHIBITED,
+    ALLOW_MODIFICATION,
+    ALLOW_MODIFICATION_REDISTRIBUTION
+  };
+
+  std::optional<AvatarPermissionType>
+  AvatarPermissionFromString(const std::string &value) {
+    if (value == "onlyAuthor")
+      return AvatarPermissionType::ONLY_AUTHOR;
+    if (value == "onlySeparatelyLicensedPerson")
+      return AvatarPermissionType::ONLY_SEPARATELY_LICENSED_PERSION;
+    if (value == "everyone")
+      return AvatarPermissionType::EVERYONE;
+    return std::nullopt;
+  }
+
+  std::optional<CommercialUsageType>
+  CommercialUsageFromString(const std::string &value) {
+    if (value == "personalNonProfit")
+      return CommercialUsageType::PERSONAL_NON_PROFIT;
+    if (value == "personalProfit")
+      return CommercialUsageType::PERSONAL_PROFIT;
+    if (value == "corporation")
+      return CommercialUsageType::CORPORATION;
+    return std::nullopt;
+  }
+
+  std::optional<CreditNotationType>
+  CreditNotationFromString(const std::string &value) {
+    if (value == "required")
+      return CreditNotationType::REQUIRED;
+    if (value == "unnecessary")
+      return CreditNotationType::UNNECESSARY;
+    return std::nullopt;
+  }
+
+  std::optional<ModificationType>
+  ModificationFromString(const std::string &value) {
+    if (value == "prohibited")
+      return ModificationType::PROHIBITED;
+    if (value == "allowModification")
+      return ModificationType::ALLOW_MODIFICATION;
+    if (value == "allowModificationRedistribution")
+      return ModificationType::ALLOW_MODIFICATION_REDISTRIBUTION;
+    return std::nullopt;
+  }
+
+  std::string name;
+  std::optional<std::string> version;
+  std::vector<std::string> authors;
+  std::optional<std::string> copyrightInformation;
+  std::optional<std::string> contactInformation;
+  std::optional<std::vector<std::string>> references;
+  std::optional<std::string> thirdPartyLicenses;
+  std::optional<uint32_t> thumbnailImage;
+  std::string licenseUrl;
+  std::optional<AvatarPermissionType> avatarPermission;
+  std::optional<bool> allowExcessivelyViolentUsage;
+  std::optional<bool> allowExcessivelySexualUsage;
+  std::optional<CommercialUsageType> commercialUsage;
+  std::optional<bool> allowPoliticalOrReligiousUsage;
+  std::optional<bool> allowAntisocialOrHateUsage;
+  std::optional<CreditNotationType> creditNotation;
+  std::optional<bool> allowRedistribution;
+  std::optional<ModificationType> modification;
+  std::optional<std::string> otherLicenseUrl;
+
+  AvatarPermissionType avatarPermissionValue() const {
+    return avatarPermission.value_or(AvatarPermissionType::ONLY_AUTHOR);
+  }
+
+  bool allowExcessivelyViolentUsageValue() const {
+    return allowExcessivelyViolentUsage.value_or(false);
+  }
+
+  bool allowExcessivelySexualUsageValue() const {
+    return allowExcessivelySexualUsage.value_or(false);
+  }
+
+  CommercialUsageType commercialUsageValue() const {
+    return commercialUsage.value_or(CommercialUsageType::PERSONAL_NON_PROFIT);
+  }
+
+  bool allowPoliticalOrReligiousUsageValue() const {
+    return allowPoliticalOrReligiousUsage.value_or(false);
+  }
+
+  bool allowAntisocialOrHateUsageValue() const {
+    return allowAntisocialOrHateUsage.value_or(false);
+  }
+
+  CreditNotationType creditNotationValue() const {
+    return creditNotation.value_or(CreditNotationType::REQUIRED);
+  }
+
+  ModificationType modificationValue() const {
+    return modification.value_or(ModificationType::PROHIBITED);
+  }
+};
+
+class VRMCHumanBone {
+public:
+  uint32_t node;
+};
+
+class VRMCHumanBones {
+public:
+  VRMCHumanBone hips;
+  VRMCHumanBone spine;
+  std::optional<VRMCHumanBone> chest;
+  std::optional<VRMCHumanBone> upperChest;
+  std::optional<VRMCHumanBone> neck;
+  VRMCHumanBone head;
+  std::optional<VRMCHumanBone> leftEye;
+  std::optional<VRMCHumanBone> rightEye;
+  std::optional<VRMCHumanBone> jaw;
+  VRMCHumanBone leftUpperLeg;
+  VRMCHumanBone leftLowerLeg;
+  VRMCHumanBone leftFoot;
+  std::optional<VRMCHumanBone> leftToes;
+  VRMCHumanBone rightUpperLeg;
+  VRMCHumanBone rightLowerLeg;
+  VRMCHumanBone rightFoot;
+  std::optional<VRMCHumanBone> rightToes;
+  std::optional<VRMCHumanBone> leftShoulder;
+  VRMCHumanBone leftUpperArm;
+  VRMCHumanBone leftLowerArm;
+  VRMCHumanBone leftHand;
+  std::optional<VRMCHumanBone> rightShoulder;
+  VRMCHumanBone rightUpperArm;
+  VRMCHumanBone rightLowerArm;
+  VRMCHumanBone rightHand;
+  std::optional<VRMCHumanBone> leftThumbMetacarpal;
+  std::optional<VRMCHumanBone> leftThumbProximal;
+  std::optional<VRMCHumanBone> leftThumbDistal;
+  std::optional<VRMCHumanBone> leftIndexProximal;
+  std::optional<VRMCHumanBone> leftIndexIntermediate;
+  std::optional<VRMCHumanBone> leftIndexDistal;
+  std::optional<VRMCHumanBone> leftMiddleProximal;
+  std::optional<VRMCHumanBone> leftMiddleIntermediate;
+  std::optional<VRMCHumanBone> leftMiddleDistal;
+  std::optional<VRMCHumanBone> leftRingProximal;
+  std::optional<VRMCHumanBone> leftRingIntermediate;
+  std::optional<VRMCHumanBone> leftRingDistal;
+  std::optional<VRMCHumanBone> leftLittleProximal;
+  std::optional<VRMCHumanBone> leftLittleIntermediate;
+  std::optional<VRMCHumanBone> leftLittleDistal;
+  std::optional<VRMCHumanBone> rightThumbMetacarpal;
+  std::optional<VRMCHumanBone> rightThumbProximal;
+  std::optional<VRMCHumanBone> rightThumbDistal;
+  std::optional<VRMCHumanBone> rightIndexProximal;
+  std::optional<VRMCHumanBone> rightIndexIntermediate;
+  std::optional<VRMCHumanBone> rightIndexDistal;
+  std::optional<VRMCHumanBone> rightMiddleProximal;
+  std::optional<VRMCHumanBone> rightMiddleIntermediate;
+  std::optional<VRMCHumanBone> rightMiddleDistal;
+  std::optional<VRMCHumanBone> rightRingProximal;
+  std::optional<VRMCHumanBone> rightRingIntermediate;
+  std::optional<VRMCHumanBone> rightRingDistal;
+  std::optional<VRMCHumanBone> rightLittleProximal;
+  std::optional<VRMCHumanBone> rightLittleIntermediate;
+  std::optional<VRMCHumanBone> rightLittleDistal;
+};
+
+class VRMCHumanoid {
+public:
+  VRMCHumanBones humanBones;
+};
+
+class VRMCFirstPersonMeshAnnotation {
+public:
+  enum class Type { AUTO, BOTH, THIRD_PERSON_ONLY, FIRST_PERSON_ONLY };
+
+  static std::optional<Type> TypeFromString(const std::string &value) {
+    if (value == "auto")
+      return Type::AUTO;
+    else if (value == "both")
+      return Type::BOTH;
+    else if (value == "thirdPersonOnly")
+      return Type::THIRD_PERSON_ONLY;
+    else if (value == "firstPersonOnly")
+      return Type::FIRST_PERSON_ONLY;
+    else
+      return std::nullopt;
+  }
+
+  uint32_t node;
+  Type type;
+};
+
+class VRMCFirstPerson {
+public:
+  std::optional<std::vector<VRMCFirstPersonMeshAnnotation>> meshAnnotations;
+};
+
+class VRMCLookAtRangeMap {
+public:
+  std::optional<float> inputMaxValue;
+  std::optional<float> outputScale;
+};
+
+class VRMCLookAt {
+public:
+  enum class Type { BONE, EXPRESSION };
+
+  static std::optional<Type> TypeFromString(const std::string &value) {
+    if (value == "bone")
+      return Type::BONE;
+    else if (value == "expression")
+      return Type::EXPRESSION;
+    else
+      return std::nullopt;
+  }
+
+  std::optional<std::array<float, 3>> offsetFromHeadBone;
+  std::optional<Type> type;
+  std::optional<VRMCLookAtRangeMap> rangeMapHorizontalInner;
+  std::optional<VRMCLookAtRangeMap> rangeMapHorizontalOuter;
+  std::optional<VRMCLookAtRangeMap> rangeMapVerticalDown;
+  std::optional<VRMCLookAtRangeMap> rangeMapVerticalUp;
+};
+
+class VRMCExpressionMaterialColorBind {
+public:
+  enum class Type {
+    COLOR,
+    EMISSION_COLOR,
+    SHADE_COLOR,
+    MATCAP_COLOR,
+    RIM_COLOR,
+    OUTLINE_COLOR
+  };
+
+  static std::optional<Type> TypeFromString(const std::string &value) {
+    if (value == "color")
+      return Type::COLOR;
+    else if (value == "emissionColor")
+      return Type::EMISSION_COLOR;
+    else if (value == "shadeColor")
+      return Type::SHADE_COLOR;
+    else if (value == "matcapColor")
+      return Type::MATCAP_COLOR;
+    else if (value == "rimColor")
+      return Type::RIM_COLOR;
+    else if (value == "outlineColor")
+      return Type::OUTLINE_COLOR;
+    else
+      return std::nullopt;
+  }
+
+  uint32_t material;
+  Type type;
+  std::array<float, 4> targetValue;
+};
+
+class VRMCExpressionMorphTargetBind {
+public:
+  uint32_t node;
+  uint32_t index;
+  float weight;
+};
+
+class VRMCExpressionTextureTransformBind {
+public:
+  uint32_t material;
+  std::optional<std::array<float, 2>> scale;
+  std::optional<std::array<float, 2>> offset;
+
+  std::array<float, 2> scaleValue() const {
+    return scale.value_or(std::array<float, 2>{1.0f, 1.0f});
+  }
+
+  std::array<float, 2> offsetValue() const {
+    return offset.value_or(std::array<float, 2>{0.0f, 0.0f});
+  }
+};
+
+class VRMCExpression {
+public:
+  enum class OverrideType { NONE, BLOCK, BLEND };
+
+  static std::optional<OverrideType>
+  OverrideTypeFromString(const std::string &value) {
+    if (value == "none")
+      return OverrideType::NONE;
+    else if (value == "block")
+      return OverrideType::BLOCK;
+    else if (value == "blend")
+      return OverrideType::BLEND;
+    else
+      return std::nullopt;
+  }
+
+  std::optional<std::vector<VRMCExpressionMorphTargetBind>> morphTargetBinds;
+  std::optional<std::vector<VRMCExpressionMaterialColorBind>>
+      materialColorBinds;
+  std::optional<std::vector<VRMCExpressionTextureTransformBind>>
+      textureTransformBinds;
+  std::optional<bool> isBinary;
+  std::optional<OverrideType> overrideBlink;
+  std::optional<OverrideType> overrideLookAt;
+  std::optional<OverrideType> overrideMouth;
+
+  bool isBinaryValue() const { return isBinary.value_or(false); }
+
+  OverrideType overrideBlinkValue() const {
+    return overrideBlink.value_or(OverrideType::NONE);
+  }
+
+  OverrideType overrideLookAtValue() const {
+    return overrideLookAt.value_or(OverrideType::NONE);
+  }
+
+  OverrideType overrideMouthValue() const {
+    return overrideMouth.value_or(OverrideType::NONE);
+  }
+};
+
+class VRMCExpressionsPreset {
+public:
+  std::optional<VRMCExpression> happy;
+  std::optional<VRMCExpression> angry;
+  std::optional<VRMCExpression> sad;
+  std::optional<VRMCExpression> relaxed;
+  std::optional<VRMCExpression> surprised;
+  std::optional<VRMCExpression> aa;
+  std::optional<VRMCExpression> ih;
+  std::optional<VRMCExpression> ou;
+  std::optional<VRMCExpression> ee;
+  std::optional<VRMCExpression> oh;
+  std::optional<VRMCExpression> blink;
+  std::optional<VRMCExpression> blinkLeft;
+  std::optional<VRMCExpression> blinkRight;
+  std::optional<VRMCExpression> lookUp;
+  std::optional<VRMCExpression> lookDown;
+  std::optional<VRMCExpression> lookLeft;
+  std::optional<VRMCExpression> lookRight;
+  std::optional<VRMCExpression> neutral;
+};
+
+class VRMCExpressions {
+public:
+  std::optional<VRMCExpressionsPreset> preset;
+  std::optional<std::map<std::string, VRMCExpression>> custom;
+};
+
+class VRMCVrm {
+public:
+  std::string specVersion;
+  VRMCMeta meta;
+  VRMCHumanoid humanoid;
+  std::optional<VRMCFirstPerson> firstPerson;
+  std::optional<VRMCLookAt> lookAt;
+  std::optional<VRMCExpressions> expressions;
+};
+
 // Json
 
 class GLTFJson {
@@ -831,6 +1207,7 @@ public:
   std::optional<std::vector<GLTFSkin>> skins;
   std::optional<std::vector<GLTFTexture>> textures;
   std::optional<std::vector<KHRLight>> lights;
+  std::optional<VRMCVrm> vrm;
 };
 
 }; // namespace gltf2

@@ -738,7 +738,7 @@ public:
 };
 
 - (SCNMatrix4)contentsTransformFromKHRTextureTransform:
-    (const gltf2::GLTFKHRTextureTransform &)transform {
+    (const gltf2::KHRTextureTransform &)transform {
   auto scale = transform.scaleValue();
   auto rotation = transform.rotationValue();
   auto offset = transform.offsetValue();
@@ -748,8 +748,7 @@ public:
   return SCNMatrix4Mult(SCNMatrix4Mult(s, r), t);
 }
 
-- (void)applyKHRTextureTransform:
-            (const gltf2::GLTFKHRTextureTransform &)transform
+- (void)applyKHRTextureTransform:(const gltf2::KHRTextureTransform &)transform
                       toProperty:(SCNMaterialProperty *)property {
   if (transform.texCoord.has_value()) {
     property.mappingChannel = *transform.texCoord;

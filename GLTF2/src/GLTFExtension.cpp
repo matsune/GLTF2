@@ -24,4 +24,6 @@ const std::string GLTFExtensionKHRMaterialsUnlit = "KHR_materials_unlit";
 const std::string GLTFExtensionKHRMaterialsVolume = "KHR_materials_volume";
 const std::string GLTFExtensionKHRTextureTransform = "KHR_texture_transform";
 
+const std::string GLTFExtensionVRMCvrm = "VRMC_vrm";
+
 } // namespace gltf2

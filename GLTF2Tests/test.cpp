@@ -945,3 +945,387 @@ TEST(TestGLTFData, meshPrimitive) {
   EXPECT_EQ(meshPrimitive.element->componentType,
             GLTFAccessor::ComponentType::UNSIGNED_SHORT);
 }
+
+TEST(TestGLTFData, validVRM) {
+  auto rawJson = R"(
+    {
+      "asset": { "version": "1.0" },
+      "extensionsUsed": ["VRMC_vrm"],
+      "extensions": {
+        "VRMC_vrm": {
+          "specVersion": "1.0",
+          "meta": {
+            "name": "test",
+            "authors": [ "test author 1" ],
+            "copyrightInformation": "copyrightInformation",
+            "contactInformation": "contactInformation",
+            "references": ["references_1"],
+            "thumbnailImage": 0,
+            "thirdPartyLicenses": "thirdPartyLicenses",
+            "licenseUrl": "https://vrm.dev/licenses/1.0",
+            "avatarPermission": "onlySeparatelyLicensedPerson",
+            "allowExcessivelyViolentUsage": true,
+            "allowExcessivelySexualUsage": true,
+            "commercialUsage": "personalProfit",
+            "allowPoliticalOrReligiousUsage": true,
+            "allowAntisocialOrHateUsage": true,
+            "creditNotation": "unnecessary",
+            "allowRedistribution": true,
+            "modification": "allowModificationRedistribution",
+            "otherLicenseUrl": "otherLicenseUrl"
+          },
+          "humanoid": {
+            "humanBones": {
+              "chest":{
+                "node":22
+              },
+              "head":{
+                "node":25
+              },
+              "hips":{
+                "node":4
+              },
+              "leftEye":{
+                "node":26
+              },
+              "leftFoot":{
+                "node":162
+              },
+              "leftHand":{
+                "node":98
+              },
+              "leftIndexDistal":{
+                "node":101
+              },
+              "leftIndexIntermediate":{
+                "node":100
+              },
+              "leftIndexProximal":{
+                "node":99
+              },
+              "leftLittleDistal":{
+                "node":105
+              },
+              "leftLittleIntermediate":{
+                "node":104
+              },
+              "leftLittleProximal":{
+                "node":103
+              },
+              "leftLowerArm":{
+                "node":97
+              },
+              "leftLowerLeg":{
+                "node":161
+              },
+              "leftMiddleDistal":{
+                "node":109
+              },
+              "leftMiddleIntermediate":{
+                "node":108
+              },
+              "leftMiddleProximal":{
+                "node":107
+              },
+              "leftRingDistal":{
+                "node":113
+              },
+              "leftRingIntermediate":{
+                "node":112
+              },
+              "leftRingProximal":{
+                "node":111
+              },
+              "leftShoulder":{
+                "node":88
+              },
+              "leftThumbDistal":{
+                "node":117
+              },
+              "leftThumbMetacarpal":{
+                "node":115
+              },
+              "leftThumbProximal":{
+                "node":116
+              },
+              "leftToes":{
+                "node":163
+              },
+              "leftUpperArm":{
+                "node":96
+              },
+              "leftUpperLeg":{
+                "node":160
+              },
+              "neck":{
+                "node":24
+              },
+              "rightEye":{
+                "node":27
+              },
+              "rightFoot":{
+                "node":167
+              },
+              "rightHand":{
+                "node":132
+              },
+              "rightIndexDistal":{
+                "node":135
+              },
+              "rightIndexIntermediate":{
+                "node":134
+              },
+              "rightIndexProximal":{
+                "node":133
+              },
+              "rightLittleDistal":{
+                "node":139
+              },
+              "rightLittleIntermediate":{
+                "node":138
+              },
+              "rightLittleProximal":{
+                "node":137
+              },
+              "rightLowerArm":{
+                "node":131
+              },
+              "rightLowerLeg":{
+                "node":166
+              },
+              "rightMiddleDistal":{
+                "node":143
+              },
+              "rightMiddleIntermediate":{
+                "node":142
+              },
+              "rightMiddleProximal":{
+                "node":141
+              },
+              "rightRingDistal":{
+                "node":147
+              },
+              "rightRingIntermediate":{
+                "node":146
+              },
+              "rightRingProximal":{
+                "node":145
+              },
+              "rightShoulder":{
+                "node":122
+              },
+              "rightThumbDistal":{
+                "node":151
+              },
+              "rightThumbMetacarpal":{
+                "node":149
+              },
+              "rightThumbProximal":{
+                "node":150
+              },
+              "rightToes":{
+                "node":168
+              },
+              "rightUpperArm":{
+                "node":130
+              },
+              "rightUpperLeg":{
+                "node":165
+              },
+              "spine":{
+                "node":21
+              },
+              "upperChest":{
+                "node":23
+              }
+            }
+          },
+          "firstPerson": {
+            "meshAnnotations": [
+              {
+                "node": 1,
+                "type": "firstPersonOnly"
+              }
+            ]
+          },
+          "lookAt": {
+            "offsetFromHeadBone": [1.0, 2.0, 3.0],
+            "type": "expression",
+            "rangeMapHorizontalInner": {
+              "inputMaxValue": 1.0,
+              "outputScale": 2.0
+            },
+            "rangeMapHorizontalOuter": {
+              "inputMaxValue": 3.0,
+              "outputScale": 4.0
+            },
+            "rangeMapVerticalDown": {
+              "inputMaxValue": 5.0,
+              "outputScale": 6.0
+            },
+            "rangeMapVerticalUp": {
+              "inputMaxValue": 7.0,
+              "outputScale": 8.0
+            }
+          },
+          "expressions": {
+            "preset": {
+              "happy": {
+                "morphTargetBinds": [
+                  {
+                    "node": 1,
+                    "index": 2,
+                    "weight": 3.0
+                  }
+                ],
+                "materialColorBinds": [
+                  {
+                    "material": 1,
+                    "type": "outlineColor",
+                    "targetValue": [0.0, 1.0, 2.0, 3.0]
+                  }
+                ],
+                "textureTransformBinds": [
+                  {
+                    "material": 3,
+                    "scale": [0.1, 0.2],
+                    "offset": [1, 2]
+                  }
+                ],
+                "isBinary": true,
+                "overrideBlink": "none",
+                "overrideLookAt": "block",
+                "overrideMouth": "blend"
+              }
+            }
+          }
+        }
+      }
+    }
+  )";
+  auto gltf = gltf2::GLTFData::parseJson(rawJson);
+  ASSERT_TRUE(gltf.json.vrm.has_value());
+  auto vrm = *gltf.json.vrm;
+
+  ASSERT_EQ(vrm.specVersion, "1.0");
+
+  auto &meta = vrm.meta;
+  ASSERT_EQ(meta.name, "test");
+  ASSERT_EQ(meta.authors, std::vector<std::string>{"test author 1"});
+  ASSERT_EQ(meta.copyrightInformation, "copyrightInformation");
+  ASSERT_EQ(meta.contactInformation, "contactInformation");
+  ASSERT_EQ(meta.references, std::vector<std::string>{"references_1"});
+  ASSERT_EQ(meta.thumbnailImage, 0);
+  ASSERT_EQ(meta.thirdPartyLicenses, "thirdPartyLicenses");
+  ASSERT_EQ(meta.licenseUrl, "https://vrm.dev/licenses/1.0");
+  ASSERT_EQ(meta.avatarPermission,
+            VRMCMeta::AvatarPermissionType::ONLY_SEPARATELY_LICENSED_PERSION);
+  ASSERT_TRUE(meta.allowExcessivelyViolentUsage);
+  ASSERT_TRUE(meta.allowExcessivelySexualUsage);
+  ASSERT_EQ(meta.commercialUsage,
+            VRMCMeta::CommercialUsageType::PERSONAL_PROFIT);
+  ASSERT_TRUE(meta.allowPoliticalOrReligiousUsage);
+  ASSERT_TRUE(meta.allowAntisocialOrHateUsage);
+  ASSERT_EQ(meta.creditNotation, VRMCMeta::CreditNotationType::UNNECESSARY);
+  ASSERT_TRUE(meta.allowRedistribution);
+  ASSERT_EQ(meta.modification,
+            VRMCMeta::ModificationType::ALLOW_MODIFICATION_REDISTRIBUTION);
+  ASSERT_EQ(meta.otherLicenseUrl, "otherLicenseUrl");
+
+  auto &humanBones = vrm.humanoid.humanBones;
+  ASSERT_EQ(humanBones.chest->node, 22);
+  ASSERT_EQ(humanBones.head.node, 25);
+  ASSERT_EQ(humanBones.hips.node, 4);
+  ASSERT_EQ(humanBones.leftEye->node, 26);
+  ASSERT_EQ(humanBones.leftFoot.node, 162);
+  ASSERT_EQ(humanBones.leftHand.node, 98);
+  ASSERT_EQ(humanBones.leftIndexDistal->node, 101);
+  ASSERT_EQ(humanBones.leftIndexIntermediate->node, 100);
+  ASSERT_EQ(humanBones.leftIndexProximal->node, 99);
+  ASSERT_EQ(humanBones.leftLittleDistal->node, 105);
+  ASSERT_EQ(humanBones.leftLittleIntermediate->node, 104);
+  ASSERT_EQ(humanBones.leftLittleProximal->node, 103);
+  ASSERT_EQ(humanBones.leftLowerArm.node, 97);
+  ASSERT_EQ(humanBones.leftLowerLeg.node, 161);
+  ASSERT_EQ(humanBones.leftMiddleDistal->node, 109);
+  ASSERT_EQ(humanBones.leftMiddleIntermediate->node, 108);
+  ASSERT_EQ(humanBones.leftMiddleProximal->node, 107);
+  ASSERT_EQ(humanBones.leftRingDistal->node, 113);
+  ASSERT_EQ(humanBones.leftRingIntermediate->node, 112);
+  ASSERT_EQ(humanBones.leftRingProximal->node, 111);
+  ASSERT_EQ(humanBones.leftShoulder->node, 88);
+  ASSERT_EQ(humanBones.leftThumbDistal->node, 117);
+  ASSERT_EQ(humanBones.leftThumbMetacarpal->node, 115);
+  ASSERT_EQ(humanBones.leftThumbProximal->node, 116);
+  ASSERT_EQ(humanBones.leftToes->node, 163);
+  ASSERT_EQ(humanBones.leftUpperArm.node, 96);
+  ASSERT_EQ(humanBones.leftUpperLeg.node, 160);
+  ASSERT_EQ(humanBones.neck->node, 24);
+  ASSERT_EQ(humanBones.rightEye->node, 27);
+  ASSERT_EQ(humanBones.rightFoot.node, 167);
+  ASSERT_EQ(humanBones.rightHand.node, 132);
+  ASSERT_EQ(humanBones.rightIndexDistal->node, 135);
+  ASSERT_EQ(humanBones.rightIndexIntermediate->node, 134);
+  ASSERT_EQ(humanBones.rightIndexProximal->node, 133);
+  ASSERT_EQ(humanBones.rightLittleDistal->node, 139);
+  ASSERT_EQ(humanBones.rightLittleIntermediate->node, 138);
+  ASSERT_EQ(humanBones.rightLittleProximal->node, 137);
+  ASSERT_EQ(humanBones.rightLowerArm.node, 131);
+  ASSERT_EQ(humanBones.rightLowerLeg.node, 166);
+  ASSERT_EQ(humanBones.rightMiddleDistal->node, 143);
+  ASSERT_EQ(humanBones.rightMiddleIntermediate->node, 142);
+  ASSERT_EQ(humanBones.rightMiddleProximal->node, 141);
+  ASSERT_EQ(humanBones.rightRingDistal->node, 147);
+  ASSERT_EQ(humanBones.rightRingIntermediate->node, 146);
+  ASSERT_EQ(humanBones.rightRingProximal->node, 145);
+  ASSERT_EQ(humanBones.rightShoulder->node, 122);
+  ASSERT_EQ(humanBones.rightThumbDistal->node, 151);
+  ASSERT_EQ(humanBones.rightThumbMetacarpal->node, 149);
+  ASSERT_EQ(humanBones.rightThumbProximal->node, 150);
+  ASSERT_EQ(humanBones.rightToes->node, 168);
+  ASSERT_EQ(humanBones.rightUpperArm.node, 130);
+  ASSERT_EQ(humanBones.rightUpperLeg.node, 165);
+  ASSERT_EQ(humanBones.spine.node, 21);
+  ASSERT_EQ(humanBones.upperChest->node, 23);
+
+  auto &firstPerson = *vrm.firstPerson;
+  auto &meshAnnotation = firstPerson.meshAnnotations->at(0);
+  ASSERT_EQ(meshAnnotation.node, 1);
+  ASSERT_EQ(meshAnnotation.type,
+            VRMCFirstPersonMeshAnnotation::Type::FIRST_PERSON_ONLY);
+
+  VRMCLookAt &lookAt = *vrm.lookAt;
+  ASSERT_EQ(lookAt.offsetFromHeadBone->at(0), 1.0f);
+  ASSERT_EQ(lookAt.offsetFromHeadBone->at(1), 2.0f);
+  ASSERT_EQ(lookAt.offsetFromHeadBone->at(2), 3.0f);
+  ASSERT_EQ(lookAt.type, VRMCLookAt::Type::EXPRESSION);
+  ASSERT_EQ(lookAt.rangeMapHorizontalInner->inputMaxValue, 1.0f);
+  ASSERT_EQ(lookAt.rangeMapHorizontalInner->outputScale, 2.0f);
+  ASSERT_EQ(lookAt.rangeMapHorizontalOuter->inputMaxValue, 3.0f);
+  ASSERT_EQ(lookAt.rangeMapHorizontalOuter->outputScale, 4.0f);
+  ASSERT_EQ(lookAt.rangeMapVerticalDown->inputMaxValue, 5.0f);
+  ASSERT_EQ(lookAt.rangeMapVerticalDown->outputScale, 6.0f);
+  ASSERT_EQ(lookAt.rangeMapVerticalUp->inputMaxValue, 7.0f);
+  ASSERT_EQ(lookAt.rangeMapVerticalUp->outputScale, 8.0f);
+
+  VRMCExpression &happy = *vrm.expressions->preset->happy;
+  ASSERT_EQ(happy.morphTargetBinds->at(0).node, 1);
+  ASSERT_EQ(happy.morphTargetBinds->at(0).index, 2);
+  ASSERT_EQ(happy.morphTargetBinds->at(0).weight, 3.0f);
+  ASSERT_EQ(happy.materialColorBinds->at(0).material, 1);
+  ASSERT_EQ(happy.materialColorBinds->at(0).type,
+            VRMCExpressionMaterialColorBind::Type::OUTLINE_COLOR);
+  ASSERT_EQ(happy.materialColorBinds->at(0).targetValue.at(0), 0.0f);
+  ASSERT_EQ(happy.materialColorBinds->at(0).targetValue.at(1), 1.0f);
+  ASSERT_EQ(happy.materialColorBinds->at(0).targetValue.at(2), 2.0f);
+  ASSERT_EQ(happy.materialColorBinds->at(0).targetValue.at(3), 3.0f);
+  ASSERT_EQ(happy.textureTransformBinds->at(0).material, 3);
+  ASSERT_EQ(happy.textureTransformBinds->at(0).scale->at(0), 0.1f);
+  ASSERT_EQ(happy.textureTransformBinds->at(0).scale->at(1), 0.2f);
+  ASSERT_EQ(happy.textureTransformBinds->at(0).offset->at(0), 1.0f);
+  ASSERT_EQ(happy.textureTransformBinds->at(0).offset->at(1), 2.0f);
+  ASSERT_EQ(happy.isBinary, true);
+  ASSERT_EQ(happy.overrideBlink, VRMCExpression::OverrideType::NONE);
+  ASSERT_EQ(happy.overrideLookAt, VRMCExpression::OverrideType::BLOCK);
+  ASSERT_EQ(happy.overrideMouth, VRMCExpression::OverrideType::BLEND);
+}

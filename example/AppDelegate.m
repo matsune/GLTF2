@@ -32,7 +32,8 @@
   [openPanel setCanChooseFiles:YES];
   [openPanel setAllowedContentTypes:@[
     [UTType typeWithFilenameExtension:@"gltf"],
-    [UTType typeWithFilenameExtension:@"glb"]
+    [UTType typeWithFilenameExtension:@"glb"],
+    [UTType typeWithFilenameExtension:@"vrm"]
   ]];
 
   [openPanel beginWithCompletionHandler:^(NSInteger result) {

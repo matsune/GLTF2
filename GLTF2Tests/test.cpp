@@ -330,14 +330,14 @@ TEST(TestGLTFData, parseJson) {
   )";
   auto data = gltf2::GLTFData::parseJson(rawJson);
 
-  EXPECT_EQ(data.json.extensionsUsed->size(), 2);
-  EXPECT_EQ(data.json.extensionsUsed.value()[0], "ext1");
-  EXPECT_EQ(data.json.extensionsUsed.value()[1], "ext2");
-  EXPECT_EQ(data.json.extensionsRequired->size(), 1);
-  EXPECT_EQ(data.json.extensionsRequired.value()[0], "ext1");
+  EXPECT_EQ(data.json().extensionsUsed->size(), 2);
+  EXPECT_EQ(data.json().extensionsUsed.value()[0], "ext1");
+  EXPECT_EQ(data.json().extensionsUsed.value()[1], "ext2");
+  EXPECT_EQ(data.json().extensionsRequired->size(), 1);
+  EXPECT_EQ(data.json().extensionsRequired.value()[0], "ext1");
 
-  EXPECT_EQ(data.json.accessors.value().size(), 2);
-  auto &accessor1 = data.json.accessors.value()[0];
+  EXPECT_EQ(data.json().accessors.value().size(), 2);
+  auto &accessor1 = data.json().accessors.value()[0];
   EXPECT_EQ(accessor1.bufferView, 0);
   EXPECT_EQ(accessor1.byteOffset, 0);
   EXPECT_EQ(accessor1.componentType,
@@ -347,7 +347,7 @@ TEST(TestGLTFData, parseJson) {
   EXPECT_EQ(accessor1.type, GLTFAccessor::Type::VEC3);
   EXPECT_EQ(accessor1.max.value(), std::vector<float>({1, 1, 1}));
   EXPECT_EQ(accessor1.min.value(), std::vector<float>({-1, -1, -1}));
-  auto &accessor2 = data.json.accessors.value()[1];
+  auto &accessor2 = data.json().accessors.value()[1];
   EXPECT_EQ(accessor2.bufferView, 1);
   EXPECT_EQ(accessor2.byteOffset, 24);
   EXPECT_EQ(accessor2.componentType, GLTFAccessor::ComponentType::UNSIGNED_INT);
@@ -364,271 +364,283 @@ TEST(TestGLTFData, parseJson) {
   EXPECT_EQ(sparse.values.bufferView, 4);
   EXPECT_EQ(sparse.values.byteOffset, 8);
 
-  auto &channel1 = data.json.animations.value()[0].channels[0];
+  auto &channel1 = data.json().animations.value()[0].channels[0];
   EXPECT_EQ(channel1.sampler, 0);
   EXPECT_EQ(channel1.target.node.value(), 2);
   EXPECT_EQ(channel1.target.path, GLTFAnimationChannelTarget::Path::ROTATION);
-  auto &channel2 = data.json.animations.value()[0].channels[1];
+  auto &channel2 = data.json().animations.value()[0].channels[1];
   EXPECT_EQ(channel2.sampler, 1);
   EXPECT_EQ(channel2.target.node.value(), 3);
   EXPECT_EQ(channel2.target.path,
             GLTFAnimationChannelTarget::Path::TRANSLATION);
-  auto &sampler1 = data.json.animations.value()[0].samplers[0];
+  auto &sampler1 = data.json().animations.value()[0].samplers[0];
   EXPECT_EQ(sampler1.input, 0);
   EXPECT_EQ(sampler1.interpolation,
             GLTFAnimationSampler::Interpolation::LINEAR);
   EXPECT_EQ(sampler1.output, 1);
-  auto &sampler2 = data.json.animations.value()[0].samplers[1];
+  auto &sampler2 = data.json().animations.value()[0].samplers[1];
   EXPECT_EQ(sampler2.input, 2);
   EXPECT_EQ(sampler2.interpolation,
             GLTFAnimationSampler::Interpolation::CUBICSPLINE);
   EXPECT_EQ(sampler2.output, 3);
 
-  EXPECT_EQ(data.json.buffers.value().size(), 1);
-  EXPECT_EQ(data.json.buffers.value()[0].uri, "buffer.bin");
-  EXPECT_EQ(data.json.buffers.value()[0].byteLength, 1024);
+  EXPECT_EQ(data.json().buffers.value().size(), 1);
+  EXPECT_EQ(data.json().buffers.value()[0].uri, "buffer.bin");
+  EXPECT_EQ(data.json().buffers.value()[0].byteLength, 1024);
 
-  EXPECT_EQ(data.json.bufferViews.value().size(), 2);
-  EXPECT_EQ(data.json.bufferViews.value()[0].buffer, 0);
-  EXPECT_EQ(data.json.bufferViews.value()[0].byteOffset, 0);
-  EXPECT_EQ(data.json.bufferViews.value()[0].byteLength, 512);
-  EXPECT_EQ(data.json.bufferViews.value()[0].byteStride, 12);
-  EXPECT_EQ(data.json.bufferViews.value()[0].target, 34962);
+  EXPECT_EQ(data.json().bufferViews.value().size(), 2);
+  EXPECT_EQ(data.json().bufferViews.value()[0].buffer, 0);
+  EXPECT_EQ(data.json().bufferViews.value()[0].byteOffset, 0);
+  EXPECT_EQ(data.json().bufferViews.value()[0].byteLength, 512);
+  EXPECT_EQ(data.json().bufferViews.value()[0].byteStride, 12);
+  EXPECT_EQ(data.json().bufferViews.value()[0].target, 34962);
 
-  EXPECT_EQ(data.json.bufferViews.value()[1].buffer, 0);
-  EXPECT_EQ(data.json.bufferViews.value()[1].byteOffset, 512);
-  EXPECT_EQ(data.json.bufferViews.value()[1].byteLength, 512);
-  EXPECT_EQ(data.json.bufferViews.value()[1].byteStride, 16);
-  EXPECT_EQ(data.json.bufferViews.value()[1].target, 34963);
+  EXPECT_EQ(data.json().bufferViews.value()[1].buffer, 0);
+  EXPECT_EQ(data.json().bufferViews.value()[1].byteOffset, 512);
+  EXPECT_EQ(data.json().bufferViews.value()[1].byteLength, 512);
+  EXPECT_EQ(data.json().bufferViews.value()[1].byteStride, 16);
+  EXPECT_EQ(data.json().bufferViews.value()[1].target, 34963);
 
-  EXPECT_EQ(data.json.asset.copyright, "COPYRIGHT");
-  EXPECT_EQ(data.json.asset.generator, "GENERATOR");
-  EXPECT_EQ(data.json.asset.version, "1.0");
-  EXPECT_EQ(data.json.asset.minVersion, "0.1");
+  EXPECT_EQ(data.json().asset.copyright, "COPYRIGHT");
+  EXPECT_EQ(data.json().asset.generator, "GENERATOR");
+  EXPECT_EQ(data.json().asset.version, "1.0");
+  EXPECT_EQ(data.json().asset.minVersion, "0.1");
 
-  EXPECT_EQ(data.json.cameras.value().size(), 2);
-  EXPECT_EQ(data.json.cameras.value()[0].type, GLTFCamera::Type::PERSPECTIVE);
-  EXPECT_EQ(data.json.cameras.value()[0].perspective.value().aspectRatio,
+  EXPECT_EQ(data.json().cameras.value().size(), 2);
+  EXPECT_EQ(data.json().cameras.value()[0].type, GLTFCamera::Type::PERSPECTIVE);
+  EXPECT_EQ(data.json().cameras.value()[0].perspective.value().aspectRatio,
             1.333f);
-  EXPECT_EQ(data.json.cameras.value()[0].perspective.value().yfov, 1.0f);
-  EXPECT_EQ(data.json.cameras.value()[0].perspective.value().zfar, 100.0f);
-  EXPECT_EQ(data.json.cameras.value()[0].perspective.value().znear, 0.1f);
-  EXPECT_EQ(data.json.cameras.value()[1].type, GLTFCamera::Type::ORTHOGRAPHIC);
-  EXPECT_EQ(data.json.cameras.value()[1].orthographic.value().xmag, 2.0f);
-  EXPECT_EQ(data.json.cameras.value()[1].orthographic.value().ymag, 2.0f);
-  EXPECT_EQ(data.json.cameras.value()[1].orthographic.value().zfar, 50.0f);
-  EXPECT_EQ(data.json.cameras.value()[1].orthographic.value().znear, 0.5f);
+  EXPECT_EQ(data.json().cameras.value()[0].perspective.value().yfov, 1.0f);
+  EXPECT_EQ(data.json().cameras.value()[0].perspective.value().zfar, 100.0f);
+  EXPECT_EQ(data.json().cameras.value()[0].perspective.value().znear, 0.1f);
+  EXPECT_EQ(data.json().cameras.value()[1].type,
+            GLTFCamera::Type::ORTHOGRAPHIC);
+  EXPECT_EQ(data.json().cameras.value()[1].orthographic.value().xmag, 2.0f);
+  EXPECT_EQ(data.json().cameras.value()[1].orthographic.value().ymag, 2.0f);
+  EXPECT_EQ(data.json().cameras.value()[1].orthographic.value().zfar, 50.0f);
+  EXPECT_EQ(data.json().cameras.value()[1].orthographic.value().znear, 0.5f);
 
-  EXPECT_EQ(data.json.images.value().size(), 2);
-  EXPECT_EQ(data.json.images.value()[0].uri.value(), "image1.png");
-  EXPECT_EQ(data.json.images.value()[0].mimeType.value(),
+  EXPECT_EQ(data.json().images.value().size(), 2);
+  EXPECT_EQ(data.json().images.value()[0].uri.value(), "image1.png");
+  EXPECT_EQ(data.json().images.value()[0].mimeType.value(),
             GLTFImage::MimeType::PNG);
-  EXPECT_EQ(data.json.images.value()[1].uri.value(), "image2.jpeg");
-  EXPECT_EQ(data.json.images.value()[1].mimeType.value(),
+  EXPECT_EQ(data.json().images.value()[1].uri.value(), "image2.jpeg");
+  EXPECT_EQ(data.json().images.value()[1].mimeType.value(),
             GLTFImage::MimeType::JPEG);
 
-  EXPECT_EQ(data.json.materials.value().size(), 2);
-  EXPECT_EQ(data.json.materials.value()[0].name, "MaterialOne");
+  EXPECT_EQ(data.json().materials.value().size(), 2);
+  EXPECT_EQ(data.json().materials.value()[0].name, "MaterialOne");
   std::array<float, 4> baseColorFactor{0.5, 0.5, 0.5, 1.0};
-  EXPECT_EQ(data.json.materials.value()[0]
+  EXPECT_EQ(data.json()
+                .materials.value()[0]
                 .pbrMetallicRoughness->baseColorFactor.value(),
             baseColorFactor);
-  EXPECT_EQ(data.json.materials.value()[0]
+  EXPECT_EQ(data.json()
+                .materials.value()[0]
                 .pbrMetallicRoughness->metallicFactor.value(),
             0.1f);
-  EXPECT_EQ(data.json.materials.value()[0].alphaMode,
+  EXPECT_EQ(data.json().materials.value()[0].alphaMode,
             GLTFMaterial::AlphaMode::BLEND);
-  EXPECT_EQ(data.json.materials.value()[0].doubleSided, true);
-  EXPECT_EQ(data.json.materials.value()[0].isUnlit(), true);
-  EXPECT_EQ(data.json.materials.value()[1].name, "MaterialTwo");
+  EXPECT_EQ(data.json().materials.value()[0].doubleSided, true);
+  EXPECT_EQ(data.json().materials.value()[0].isUnlit(), true);
+  EXPECT_EQ(data.json().materials.value()[1].name, "MaterialTwo");
   EXPECT_EQ(
-      data.json.materials.value()[1].pbrMetallicRoughness->baseColorFactor,
+      data.json().materials.value()[1].pbrMetallicRoughness->baseColorFactor,
       std::nullopt);
-  EXPECT_EQ(data.json.materials.value()[1]
+  EXPECT_EQ(data.json()
+                .materials.value()[1]
                 .pbrMetallicRoughness->metallicFactor.value(),
             0.3f);
-  EXPECT_EQ(data.json.materials.value()[1]
+  EXPECT_EQ(data.json()
+                .materials.value()[1]
                 .pbrMetallicRoughness->roughnessFactor.value(),
             0.4f);
-  EXPECT_EQ(data.json.materials.value()[1]
+  EXPECT_EQ(data.json()
+                .materials.value()[1]
                 .emissiveTexture->khrTextureTransform->offset,
             (std::array<float, 2>{0, 1.0f}));
-  EXPECT_EQ(data.json.materials.value()[1]
+  EXPECT_EQ(data.json()
+                .materials.value()[1]
                 .emissiveTexture->khrTextureTransform->rotation,
             1.5f);
-  EXPECT_EQ(data.json.materials.value()[1]
+  EXPECT_EQ(data.json()
+                .materials.value()[1]
                 .emissiveTexture->khrTextureTransform->scale,
             (std::array<float, 2>{0.5f, 0.5f}));
-  EXPECT_EQ(data.json.materials.value()[1]
+  EXPECT_EQ(data.json()
+                .materials.value()[1]
                 .emissiveTexture->khrTextureTransform->texCoord,
             1);
   EXPECT_EQ(
-      data.json.materials.value()[1].anisotropy->anisotropyStrength.value(),
+      data.json().materials.value()[1].anisotropy->anisotropyStrength.value(),
       0.6f);
   EXPECT_EQ(
-      data.json.materials.value()[1].anisotropy->anisotropyRotation.value(),
+      data.json().materials.value()[1].anisotropy->anisotropyRotation.value(),
       1.57f);
-  EXPECT_EQ(data.json.materials.value()[1].anisotropy->anisotropyTexture->index,
-            0);
-  EXPECT_EQ(data.json.materials.value()[1].sheen->sheenColorFactor.value(),
-            (std::array<float, 3>{0.9f, 0.9f, 0.9f}));
-  EXPECT_EQ(data.json.materials.value()[1].sheen->sheenColorTexture->index, 0);
-  EXPECT_EQ(data.json.materials.value()[1].sheen->sheenRoughnessFactor.value(),
-            0.3f);
-  EXPECT_EQ(data.json.materials.value()[1].sheen->sheenRoughnessTexture->index,
-            1);
-  EXPECT_EQ(data.json.materials.value()[1].specular->specularFactor.value(),
-            0.3f);
-  EXPECT_EQ(data.json.materials.value()[1].specular->specularTexture->index, 2);
   EXPECT_EQ(
-      data.json.materials.value()[1].specular->specularColorFactor.value(),
+      data.json().materials.value()[1].anisotropy->anisotropyTexture->index, 0);
+  EXPECT_EQ(data.json().materials.value()[1].sheen->sheenColorFactor.value(),
+            (std::array<float, 3>{0.9f, 0.9f, 0.9f}));
+  EXPECT_EQ(data.json().materials.value()[1].sheen->sheenColorTexture->index,
+            0);
+  EXPECT_EQ(
+      data.json().materials.value()[1].sheen->sheenRoughnessFactor.value(),
+      0.3f);
+  EXPECT_EQ(
+      data.json().materials.value()[1].sheen->sheenRoughnessTexture->index, 1);
+  EXPECT_EQ(data.json().materials.value()[1].specular->specularFactor.value(),
+            0.3f);
+  EXPECT_EQ(data.json().materials.value()[1].specular->specularTexture->index,
+            2);
+  EXPECT_EQ(
+      data.json().materials.value()[1].specular->specularColorFactor.value(),
       (std::array<float, 3>{0.6f, 0.7f, 0.8f}));
   EXPECT_EQ(
-      data.json.materials.value()[1].specular->specularColorTexture->index, 3);
-  EXPECT_EQ(data.json.materials.value()[1].ior->iorValue(), 1.4f);
-  EXPECT_EQ(data.json.materials.value()[1].clearcoat->clearcoatFactorValue(),
+      data.json().materials.value()[1].specular->specularColorTexture->index,
+      3);
+  EXPECT_EQ(data.json().materials.value()[1].ior->iorValue(), 1.4f);
+  EXPECT_EQ(data.json().materials.value()[1].clearcoat->clearcoatFactorValue(),
             1.0f);
-  EXPECT_EQ(data.json.materials.value()[1].clearcoat->clearcoatTexture->index,
+  EXPECT_EQ(data.json().materials.value()[1].clearcoat->clearcoatTexture->index,
             0);
   EXPECT_EQ(
-      data.json.materials.value()[1].clearcoat->clearcoatTexture->texCoord, 0);
-  EXPECT_EQ(
-      data.json.materials.value()[1].clearcoat->clearcoatRoughnessFactorValue(),
-      0.5f);
-  EXPECT_EQ(data.json.materials.value()[1]
+      data.json().materials.value()[1].clearcoat->clearcoatTexture->texCoord,
+      0);
+  EXPECT_EQ(data.json()
+                .materials.value()[1]
+                .clearcoat->clearcoatRoughnessFactorValue(),
+            0.5f);
+  EXPECT_EQ(data.json()
+                .materials.value()[1]
                 .clearcoat->clearcoatRoughnessTexture->index,
             1);
-  EXPECT_EQ(data.json.materials.value()[1]
+  EXPECT_EQ(data.json()
+                .materials.value()[1]
                 .clearcoat->clearcoatRoughnessTexture->texCoord,
             0);
   EXPECT_EQ(
-      data.json.materials.value()[1].clearcoat->clearcoatNormalTexture->index,
+      data.json().materials.value()[1].clearcoat->clearcoatNormalTexture->index,
       2);
-  EXPECT_EQ(data.json.materials.value()[1]
+  EXPECT_EQ(data.json()
+                .materials.value()[1]
                 .clearcoat->clearcoatNormalTexture->texCoord,
             0);
-  EXPECT_EQ(data.json.materials.value()[1]
+  EXPECT_EQ(data.json()
+                .materials.value()[1]
                 .clearcoat->clearcoatNormalTexture->scaleValue(),
             1.0f);
-  EXPECT_EQ(data.json.materials.value()[1].dispersion->dispersionValue(), 0.1f);
+  EXPECT_EQ(data.json().materials.value()[1].dispersion->dispersionValue(),
+            0.1f);
+  EXPECT_EQ(data.json()
+                .materials.value()[1]
+                .emissiveStrength->emissiveStrengthValue(),
+            5.0f);
   EXPECT_EQ(
-      data.json.materials.value()[1].emissiveStrength->emissiveStrengthValue(),
-      5.0f);
-  EXPECT_EQ(
-      data.json.materials.value()[1].iridescence->iridescenceFactorValue(),
+      data.json().materials.value()[1].iridescence->iridescenceFactorValue(),
       1.2f);
-  EXPECT_EQ(data.json.materials.value()[1].iridescence->iridescenceIorValue(),
+  EXPECT_EQ(data.json().materials.value()[1].iridescence->iridescenceIorValue(),
             1.3f);
-  EXPECT_EQ(data.json.materials.value()[1]
+  EXPECT_EQ(data.json()
+                .materials.value()[1]
                 .iridescence->iridescenceThicknessMinimumValue(),
             200.0f);
-  EXPECT_EQ(data.json.materials.value()[1]
+  EXPECT_EQ(data.json()
+                .materials.value()[1]
                 .iridescence->iridescenceThicknessMaximumValue(),
             500.0f);
   EXPECT_EQ(
-      data.json.materials.value()[1].transmission->transmissionFactorValue(),
+      data.json().materials.value()[1].transmission->transmissionFactorValue(),
       1.0f);
   EXPECT_EQ(
-      data.json.materials.value()[1].transmission->transmissionTexture->index,
+      data.json().materials.value()[1].transmission->transmissionTexture->index,
       0);
-  EXPECT_EQ(data.json.materials.value()[1]
+  EXPECT_EQ(data.json()
+                .materials.value()[1]
                 .transmission->transmissionTexture->texCoord,
             0);
-  EXPECT_EQ(data.json.materials.value()[1].volume->thicknessFactorValue(),
+  EXPECT_EQ(data.json().materials.value()[1].volume->thicknessFactorValue(),
             1.0f);
-  EXPECT_EQ(data.json.materials.value()[1].volume->attenuationDistanceValue(),
+  EXPECT_EQ(data.json().materials.value()[1].volume->attenuationDistanceValue(),
             0.006f);
-  EXPECT_EQ(data.json.materials.value()[1].volume->attenuationColorValue(),
+  EXPECT_EQ(data.json().materials.value()[1].volume->attenuationColorValue(),
             (std::array<float, 3>{0.5f, 0.5f, 0.5f}));
 
-  EXPECT_EQ(data.json.meshes.value().size(), 1);
-  EXPECT_EQ(data.json.meshes.value()[0].name, "MeshOne");
-  EXPECT_EQ(data.json.meshes.value()[0].primitives.size(), 2);
-  EXPECT_EQ(data.json.meshes.value()[0].primitives[0].mode,
+  EXPECT_EQ(data.json().meshes.value().size(), 1);
+  EXPECT_EQ(data.json().meshes.value()[0].name, "MeshOne");
+  EXPECT_EQ(data.json().meshes.value()[0].primitives.size(), 2);
+  EXPECT_EQ(data.json().meshes.value()[0].primitives[0].mode,
             GLTFMeshPrimitive::ModeFromInt(4));
-  EXPECT_EQ(data.json.meshes.value()[0].primitives[0].indices, 1);
-  EXPECT_EQ(data.json.meshes.value()[0].primitives[0].attributes.position, 0);
-  EXPECT_EQ(data.json.meshes.value()[0].primitives[0].attributes.normal, 2);
-  EXPECT_EQ(data.json.meshes.value()[0].primitives[0].mode,
+  EXPECT_EQ(data.json().meshes.value()[0].primitives[0].indices, 1);
+  EXPECT_EQ(data.json().meshes.value()[0].primitives[0].attributes.position, 0);
+  EXPECT_EQ(data.json().meshes.value()[0].primitives[0].attributes.normal, 2);
+  EXPECT_EQ(data.json().meshes.value()[0].primitives[0].mode,
             GLTFMeshPrimitive::ModeFromInt(4));
-  EXPECT_EQ(data.json.meshes.value()[0].primitives[1].indices, 2);
-  EXPECT_EQ(data.json.meshes.value()[0].primitives[1].attributes.position, 1);
+  EXPECT_EQ(data.json().meshes.value()[0].primitives[1].indices, 2);
+  EXPECT_EQ(data.json().meshes.value()[0].primitives[1].attributes.position, 1);
   EXPECT_EQ(
-      data.json.meshes.value()[0].primitives[1].attributes.texcoords->size(),
+      data.json().meshes.value()[0].primitives[1].attributes.texcoords->size(),
       2);
-  EXPECT_EQ(
-      data.json.meshes.value()[0].primitives[1].attributes.texcoords.value()[0],
-      3);
-  EXPECT_EQ(
-      data.json.meshes.value()[0].primitives[1].attributes.texcoords.value()[1],
-      4);
-  EXPECT_EQ(data.json.meshes.value()[0].primitives[1].mode,
+  EXPECT_EQ(data.json()
+                .meshes.value()[0]
+                .primitives[1]
+                .attributes.texcoords.value()[0],
+            3);
+  EXPECT_EQ(data.json()
+                .meshes.value()[0]
+                .primitives[1]
+                .attributes.texcoords.value()[1],
+            4);
+  EXPECT_EQ(data.json().meshes.value()[0].primitives[1].mode,
             GLTFMeshPrimitive::ModeFromInt(3));
 
-  EXPECT_EQ(data.json.nodes.value().size(), 1);
-  EXPECT_EQ(data.json.nodes.value()[0].name, "Node 1");
-  EXPECT_EQ(data.json.nodes.value()[0].camera.value(), 0);
-  EXPECT_EQ(data.json.nodes.value()[0].children.value(),
+  EXPECT_EQ(data.json().nodes.value().size(), 1);
+  EXPECT_EQ(data.json().nodes.value()[0].name, "Node 1");
+  EXPECT_EQ(data.json().nodes.value()[0].camera.value(), 0);
+  EXPECT_EQ(data.json().nodes.value()[0].children.value(),
             std::vector<uint32_t>{1});
-  EXPECT_EQ(data.json.nodes.value()[0].skin.value(), 0);
+  EXPECT_EQ(data.json().nodes.value()[0].skin.value(), 0);
   EXPECT_EQ(
-      data.json.nodes.value()[0].matrix.value(),
+      data.json().nodes.value()[0].matrix.value(),
       (std::array<float, 16>{1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
                              0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f}));
-  EXPECT_EQ(data.json.nodes.value()[0].mesh.value(), 0);
-  EXPECT_EQ(data.json.nodes.value()[0].rotation.value(),
+  EXPECT_EQ(data.json().nodes.value()[0].mesh.value(), 0);
+  EXPECT_EQ(data.json().nodes.value()[0].rotation.value(),
             (std::array<float, 4>{1.0f, 1.0f, 1.0f, 1.0f}));
-  EXPECT_EQ(data.json.nodes.value()[0].scale.value(),
+  EXPECT_EQ(data.json().nodes.value()[0].scale.value(),
             (std::array<float, 3>{1.0f, 1.0f, 1.0f}));
-  EXPECT_EQ(data.json.nodes.value()[0].translation.value(),
+  EXPECT_EQ(data.json().nodes.value()[0].translation.value(),
             (std::array<float, 3>{1.0f, 1.0f, 1.0f}));
-  EXPECT_EQ(data.json.nodes.value()[0].weights.value(),
+  EXPECT_EQ(data.json().nodes.value()[0].weights.value(),
             std::vector<float>({1.0f, 1.0f}));
 
-  EXPECT_EQ(data.json.textures.value().size(), 1);
-  EXPECT_EQ(data.json.textures.value()[0].sampler.value(), 0);
-  EXPECT_EQ(data.json.textures.value()[0].source.value(), 0);
-  EXPECT_EQ(data.json.textures.value()[0].name, "tex1");
+  EXPECT_EQ(data.json().textures.value().size(), 1);
+  EXPECT_EQ(data.json().textures.value()[0].sampler.value(), 0);
+  EXPECT_EQ(data.json().textures.value()[0].source.value(), 0);
+  EXPECT_EQ(data.json().textures.value()[0].name, "tex1");
 
-  EXPECT_EQ(data.json.scene.value(), 0);
+  EXPECT_EQ(data.json().scene.value(), 0);
 
-  EXPECT_EQ(data.json.scenes.value().size(), 1);
-  EXPECT_EQ(data.json.scenes.value()[0].nodes.value()[0], 1);
-  EXPECT_EQ(data.json.scenes.value()[0].nodes.value()[1], 2);
-  EXPECT_EQ(data.json.scenes.value()[0].name, "Scene1");
+  EXPECT_EQ(data.json().scenes.value().size(), 1);
+  EXPECT_EQ(data.json().scenes.value()[0].nodes.value()[0], 1);
+  EXPECT_EQ(data.json().scenes.value()[0].nodes.value()[1], 2);
+  EXPECT_EQ(data.json().scenes.value()[0].name, "Scene1");
 
-  EXPECT_EQ(data.json.skins.value().size(), 1);
-  EXPECT_EQ(data.json.skins.value()[0].inverseBindMatrices.value(), 0);
-  EXPECT_EQ(data.json.skins.value()[0].skeleton.value(), 1);
-  EXPECT_EQ(data.json.skins.value()[0].joints.size(), 3);
-  EXPECT_EQ(data.json.skins.value()[0].joints[0], 0);
-  EXPECT_EQ(data.json.skins.value()[0].name, "Skin1");
+  EXPECT_EQ(data.json().skins.value().size(), 1);
+  EXPECT_EQ(data.json().skins.value()[0].inverseBindMatrices.value(), 0);
+  EXPECT_EQ(data.json().skins.value()[0].skeleton.value(), 1);
+  EXPECT_EQ(data.json().skins.value()[0].joints.size(), 3);
+  EXPECT_EQ(data.json().skins.value()[0].joints[0], 0);
+  EXPECT_EQ(data.json().skins.value()[0].name, "Skin1");
 
-  EXPECT_EQ(data.json.lights->size(), 1);
-  EXPECT_EQ(data.json.lights->at(0).type, KHRLight::Type::SPOT);
-  EXPECT_EQ(data.json.lights->at(0).colorValue(),
+  EXPECT_EQ(data.json().lights->size(), 1);
+  EXPECT_EQ(data.json().lights->at(0).type, KHRLight::Type::SPOT);
+  EXPECT_EQ(data.json().lights->at(0).colorValue(),
             (std::array<float, 3>{0.0f, 0.5f, 1.0f}));
-  EXPECT_EQ(data.json.lights->at(0).spot->innerConeAngleValue(), 0.78f);
-  EXPECT_EQ(data.json.lights->at(0).spot->outerConeAngleValue(), 1.57f);
+  EXPECT_EQ(data.json().lights->at(0).spot->innerConeAngleValue(), 0.78f);
+  EXPECT_EQ(data.json().lights->at(0).spot->outerConeAngleValue(), 1.57f);
 }
 
-TEST(TestGLTFData, dataForBufferView) {
-  std::filesystem::path root(PROJECT_SOURCE_DIR);
-  auto path = root / "sample-models/a/a.gltf";
-  auto data = gltf2::GLTFData::parseFile(path);
-  auto buf = data.dataForBufferView(0);
-  EXPECT_EQ(buf, std::vector<uint8_t>({0, 1, 2, 3}));
-
-  buf = data.dataForBufferView(1);
-  EXPECT_EQ(buf, std::vector<uint8_t>({4, 5, 6, 7, 8, 9}));
-
-  // absolute path
-  data.json.buffers->at(0).uri = root / "sample-models/a/a.bin";
-  buf = data.dataForBufferView(0);
-  EXPECT_EQ(buf, std::vector<uint8_t>({0, 1, 2, 3}));
-}
-
-TEST(TestGLTFData, dataForAccessor) {
+TEST(TestGLTFData, binaryForAccessor) {
   // vec2<uint8_t> { 'a', 'b' }
   auto encoded = cppcodec::base64_rfc4648::encode({'a', 'b'});
   auto rawJson = R"(
@@ -661,14 +673,14 @@ TEST(TestGLTFData, dataForAccessor) {
   )";
   auto gltf = gltf2::GLTFData::parseJson(rawJson);
   bool normalized = false;
-  auto data = gltf.dataForAccessor(gltf.json.accessors->at(0), &normalized);
+  auto data = gltf.binaryForAccessor(gltf.json().accessors->at(0), &normalized);
   EXPECT_FALSE(normalized);
   EXPECT_EQ(data.size(), 2);
   EXPECT_EQ(data[0], 'a');
   EXPECT_EQ(data[1], 'b');
 }
 
-TEST(TestGLTFData, dataForAccessorWithNormalized) {
+TEST(TestGLTFData, binaryForAccessorWithNormalized) {
   // vec2<uint8_t> { 'a', 'b' }
   auto rawJson = R"(
     {
@@ -700,14 +712,14 @@ TEST(TestGLTFData, dataForAccessorWithNormalized) {
   )";
   auto gltf = gltf2::GLTFData::parseJson(rawJson);
   bool normalized = false;
-  auto data = gltf.dataForAccessor(gltf.json.accessors->at(0), &normalized);
+  auto data = gltf.binaryForAccessor(gltf.json().accessors->at(0), &normalized);
   EXPECT_TRUE(normalized);
   EXPECT_EQ(data.size(), sizeof(float) * 2);
   EXPECT_EQ(((float *)data.data())[0], (float)'a' / (float)UINT8_MAX);
   EXPECT_EQ(((float *)data.data())[1], (float)'b' / (float)UINT8_MAX);
 }
 
-TEST(TestGLTFData, dataForAccessorWithSparse) {
+TEST(TestGLTFData, binaryForAccessorWithSparse) {
   // buffer data: uint8_t[3] {0x00, 0x00, 0x20}
   // indices: 0, values: 0x20
   auto encoded = cppcodec::base64_rfc4648::encode({0x00, 0x00, 0x20});
@@ -753,13 +765,13 @@ TEST(TestGLTFData, dataForAccessorWithSparse) {
   )";
   auto gltf = gltf2::GLTFData::parseJson(rawJson);
   bool normalized = false;
-  auto data = gltf.dataForAccessor(gltf.json.accessors->at(0), &normalized);
+  auto data = gltf.binaryForAccessor(gltf.json().accessors->at(0), &normalized);
   EXPECT_FALSE(normalized);
   EXPECT_EQ(data.size(), 1);
   EXPECT_EQ(data[0], 0x20);
 }
 
-TEST(TestGLTFData, dataForAccessorWithByteStride) {
+TEST(TestGLTFData, binaryForAccessorWithByteStride) {
   // stride is 16 but each data is vec3<float>
   float bufferData[10 * 4 * 4] = {0};
   for (int i = 0; i < 10; ++i) {
@@ -799,7 +811,7 @@ TEST(TestGLTFData, dataForAccessorWithByteStride) {
   )";
   auto gltf = gltf2::GLTFData::parseJson(rawJson);
   bool normalized = false;
-  auto data = gltf.dataForAccessor(gltf.json.accessors->at(0), &normalized);
+  auto data = gltf.binaryForAccessor(gltf.json().accessors->at(0), &normalized);
   EXPECT_FALSE(normalized);
   EXPECT_EQ(data.size(), 4 * 3 * 10);
   float *floatArray = (float *)data.data();
@@ -904,34 +916,36 @@ TEST(TestGLTFData, meshPrimitive) {
       ]
     }
   )";
-  auto gltf = gltf2::GLTFData::parseJson(rawJson);
-  gltf.bin = bin;
+  auto gltf = gltf2::GLTFData::parseJson(rawJson, std::nullopt, bin);
 
-  auto meshPrimitive =
-      gltf.meshPrimitiveFromPrimitive(gltf.json.meshes->at(0).primitives.at(0));
+  auto meshPrimitive = gltf.meshPrimitiveFromPrimitive(
+      gltf.json().meshes->at(0).primitives.at(0));
 
   // position
-  EXPECT_EQ(((float *)meshPrimitive.sources.position->data.data())[0], bufs[0]);
-  EXPECT_EQ(((float *)meshPrimitive.sources.position->data.data())[1], bufs[1]);
-  EXPECT_EQ(((float *)meshPrimitive.sources.position->data.data())[2], bufs[2]);
+  EXPECT_EQ(((float *)meshPrimitive.sources.position->binary.data())[0],
+            bufs[0]);
+  EXPECT_EQ(((float *)meshPrimitive.sources.position->binary.data())[1],
+            bufs[1]);
+  EXPECT_EQ(((float *)meshPrimitive.sources.position->binary.data())[2],
+            bufs[2]);
   EXPECT_EQ(meshPrimitive.sources.position->vectorCount, 1);
   EXPECT_EQ(meshPrimitive.sources.position->componentType,
             GLTFAccessor::ComponentType::FLOAT);
   EXPECT_EQ(meshPrimitive.sources.position->componentsPerVector, 3);
 
   // normal
-  EXPECT_EQ(((float *)meshPrimitive.sources.normal->data.data())[0], bufs[3]);
-  EXPECT_EQ(((float *)meshPrimitive.sources.normal->data.data())[1], bufs[4]);
-  EXPECT_EQ(((float *)meshPrimitive.sources.normal->data.data())[2], bufs[5]);
+  EXPECT_EQ(((float *)meshPrimitive.sources.normal->binary.data())[0], bufs[3]);
+  EXPECT_EQ(((float *)meshPrimitive.sources.normal->binary.data())[1], bufs[4]);
+  EXPECT_EQ(((float *)meshPrimitive.sources.normal->binary.data())[2], bufs[5]);
   EXPECT_EQ(meshPrimitive.sources.normal->vectorCount, 1);
   EXPECT_EQ(meshPrimitive.sources.normal->componentType,
             GLTFAccessor::ComponentType::FLOAT);
   EXPECT_EQ(meshPrimitive.sources.normal->componentsPerVector, 3);
 
   // texcoord
-  EXPECT_EQ(((float *)meshPrimitive.sources.texcoords[0].data.data())[0],
+  EXPECT_EQ(((float *)meshPrimitive.sources.texcoords[0].binary.data())[0],
             bufs[6]);
-  EXPECT_EQ(((float *)meshPrimitive.sources.texcoords[0].data.data())[1],
+  EXPECT_EQ(((float *)meshPrimitive.sources.texcoords[0].binary.data())[1],
             bufs[7]);
   EXPECT_EQ(meshPrimitive.sources.texcoords[0].vectorCount, 1);
   EXPECT_EQ(meshPrimitive.sources.texcoords[0].componentType,
@@ -939,7 +953,7 @@ TEST(TestGLTFData, meshPrimitive) {
   EXPECT_EQ(meshPrimitive.sources.texcoords[0].componentsPerVector, 2);
 
   // indices
-  EXPECT_EQ(((uint16_t *)meshPrimitive.element->data.data())[0], b3);
+  EXPECT_EQ(((uint16_t *)meshPrimitive.element->binary.data())[0], b3);
   EXPECT_EQ(meshPrimitive.element->primitiveMode,
             GLTFMeshPrimitive::Mode::TRIANGLES);
   EXPECT_EQ(meshPrimitive.element->componentType,
@@ -1204,8 +1218,8 @@ TEST(TestGLTFData, validVRM) {
     }
   )";
   auto gltf = gltf2::GLTFData::parseJson(rawJson);
-  ASSERT_TRUE(gltf.json.vrm.has_value());
-  auto vrm = *gltf.json.vrm;
+  ASSERT_TRUE(gltf.json().vrm.has_value());
+  auto vrm = *gltf.json().vrm;
 
   ASSERT_EQ(vrm.specVersion, "1.0");
 

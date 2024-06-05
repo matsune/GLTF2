@@ -30,18 +30,19 @@ struct GLBChunkHead {
 };
 
 GLTFData GLTFData::parseJson(const std::string &raw,
-                             std::optional<std::filesystem::path> path) {
+                             const std::optional<std::filesystem::path> path,
+                             const std::optional<Binary> bin) {
   try {
     auto data = nlohmann::json::parse(raw);
     auto json = GLTFJsonDecoder::decode(data);
-    return GLTFData(json, path);
+    return GLTFData(json, path, bin);
   } catch (nlohmann::json::exception e) {
     throw InputException(e.what());
   }
 }
 
 GLTFData GLTFData::parseData(const char *bytes, uint64_t length,
-                             std::optional<std::filesystem::path> path) {
+                             const std::optional<std::filesystem::path> path) {
   std::istringstream fs(std::string(bytes, length), std::ios::binary);
   return parseStream(fs, path);
 }
@@ -88,7 +89,7 @@ GLTFData GLTFData::parseStream(std::istream &fs,
     auto data = nlohmann::json::parse(jsonBuf);
     auto json = GLTFJsonDecoder::decode(data);
 
-    std::optional<Data> bin;
+    std::optional<Binary> bin;
     if (!fs.eof()) {
       // binary buffer
       GLBChunkHead chunkHead1;
@@ -99,7 +100,7 @@ GLTFData GLTFData::parseStream(std::istream &fs,
       if (chunkHead1.type != GLBChunkTypeBIN) {
         throw InputException("Chunk type is not BIN");
       }
-      Data binBuf(chunkHead1.length);
+      Binary binBuf(chunkHead1.length);
       fs.read(reinterpret_cast<char *>(binBuf.data()), binBuf.size());
       if (fs.gcount() != chunkHead1.length) {
         throw InputException("Failed to read bin data");
@@ -121,7 +122,7 @@ GLTFData GLTFData::parseStream(std::istream &fs,
   }
 }
 
-Data GLTFData::dataOfUri(const std::string &uri) const {
+Binary GLTFData::binaryOfUri(const std::string &uri) const {
   // decode percent-encoding
   auto url = boost::url(uri);
   if (url.has_scheme()) {
@@ -142,7 +143,7 @@ Data GLTFData::dataOfUri(const std::string &uri) const {
 
   } else {
     // relative path
-    std::filesystem::path basePathUrl(path.value());
+    std::filesystem::path basePathUrl(_path.value());
     std::filesystem::path fullUrl = basePathUrl.parent_path() / url.c_str();
     std::ifstream file(fullUrl.string(), std::ios::binary);
     return {std::istreambuf_iterator<char>(file),
@@ -150,50 +151,45 @@ Data GLTFData::dataOfUri(const std::string &uri) const {
   }
 }
 
-Data GLTFData::dataForBuffer(const GLTFBuffer &buffer) const {
+Binary GLTFData::binaryForBuffer(const GLTFBuffer &buffer) const {
   if (buffer.uri) {
-    return dataOfUri(*buffer.uri);
+    return binaryOfUri(*buffer.uri);
   } else {
-    return bin.value();
+    return _bin.value();
   }
 }
 
-Data GLTFData::dataForBufferView(uint32_t index, uint32_t offset) const {
-  return dataForBufferView(json.bufferViews->at(index), offset);
+Binary GLTFData::binaryForBufferView(uint32_t index, uint32_t offset) const {
+  return binaryForBufferView(_json.bufferViews->at(index), offset);
 }
 
-Data GLTFData::dataForBufferView(const GLTFBufferView &bufferView,
-                                 uint32_t offset) const {
-  auto data = dataForBuffer(json.buffers->at(bufferView.buffer));
+Binary GLTFData::binaryForBufferView(const GLTFBufferView &bufferView,
+                                     uint32_t offset) const {
+  auto data = binaryForBuffer(_json.buffers->at(bufferView.buffer));
   auto loc = data.begin() + bufferView.byteOffset.value_or(0) + offset;
-  return Data(loc, loc + bufferView.byteLength);
+  return Binary(loc, loc + bufferView.byteLength);
 }
 
-Data GLTFData::dataForBufferView(uint32_t index,
-                                 std::optional<uint32_t> offset) const {
-  return dataForBufferView(index, offset.value_or(0));
+Binary GLTFData::binaryForBuffer(uint32_t index) const {
+  return binaryForBuffer(_json.buffers->at(index));
 }
 
-Data GLTFData::dataForBuffer(uint32_t index) const {
-  return dataForBuffer(json.buffers->at(index));
-}
-
-Data GLTFData::dataForAccessor(const GLTFAccessor &accessor,
-                               bool *normalized) const {
+Binary GLTFData::binaryForAccessor(const GLTFAccessor &accessor,
+                                   bool *normalized) const {
   auto compTypeSize = GLTFAccessor::sizeOfComponentType(accessor.componentType);
   auto compCount = GLTFAccessor::componentsCountOfType(accessor.type);
   auto typeSize = compTypeSize * compCount;
   auto length = typeSize * accessor.count;
-  Data data(length);
+  Binary data(length);
 
   // fill data
   if (accessor.bufferView) {
     const GLTFBufferView &bufferView =
-        json.bufferViews->at(*accessor.bufferView);
-    auto bufData = dataForBufferView(bufferView);
+        _json.bufferViews->at(*accessor.bufferView);
+    auto bufData =
+        binaryForBufferView(bufferView, accessor.byteOffset.value_or(0));
     const char *dstBase = (const char *)data.data();
-    const char *srcBase =
-        (const char *)bufData.data() + accessor.byteOffset.value_or(0);
+    const char *srcBase = (const char *)bufData.data();
     auto byteStride = bufferView.byteStride.value_or(typeSize);
     if (byteStride != typeSize) {
       // copy with byteStride
@@ -212,8 +208,8 @@ Data GLTFData::dataForAccessor(const GLTFAccessor &accessor,
   if (accessor.sparse) {
     auto sparse = *accessor.sparse;
     auto indices = indicesForAccessorSparse(sparse);
-    auto valuesData =
-        dataForBufferView(sparse.values.bufferView, sparse.values.byteOffset);
+    auto valuesData = binaryForBufferView(sparse.values.bufferView,
+                                          sparse.values.byteOffset.value_or(0));
     const char *dstBase = (const char *)data.data();
     const char *srcBase = (const char *)valuesData.data();
     for (int i = 0; i < sparse.count; i++) {
@@ -228,7 +224,7 @@ Data GLTFData::dataForAccessor(const GLTFAccessor &accessor,
   if (accessor.normalized.value_or(false) &&
       accessor.componentType != GLTFAccessor::ComponentType::FLOAT &&
       accessor.componentType != GLTFAccessor::ComponentType::UNSIGNED_INT) {
-    auto normalizedData = normalizeData(data, accessor);
+    auto normalizedData = normalizeBinary(data, accessor);
     if (normalized)
       *normalized = true;
     return normalizedData;
@@ -237,14 +233,14 @@ Data GLTFData::dataForAccessor(const GLTFAccessor &accessor,
   return data;
 }
 
-Data GLTFData::dataForAccessor(uint32_t index, bool *normalized) const {
-  return dataForAccessor(json.accessors->at(index), normalized);
+Binary GLTFData::binaryForAccessor(uint32_t index, bool *normalized) const {
+  return binaryForAccessor(_json.accessors->at(index), normalized);
 }
 
 std::vector<uint32_t>
 GLTFData::indicesForAccessorSparse(const GLTFAccessorSparse &sparse) const {
-  Data indicesData =
-      dataForBufferView(sparse.indices.bufferView, sparse.indices.byteOffset);
+  Binary indicesData = binaryForBufferView(
+      sparse.indices.bufferView, sparse.indices.byteOffset.value_or(0));
   std::vector<uint32_t> data(sparse.count);
   uint8_t *ptr = indicesData.data();
   for (int i = 0; i < sparse.count; i++) {
@@ -302,21 +298,30 @@ static float normalizeValue(const void *bytes, int index,
   }
 }
 
-Data GLTFData::normalizeData(const Data &data,
-                             const GLTFAccessor &accessor) const {
+Binary GLTFData::normalizeBinary(const Binary &binary,
+                                 const GLTFAccessor &accessor) const {
   auto compCount = GLTFAccessor::componentsCountOfType(accessor.type);
   auto length = sizeof(float) * compCount * accessor.count;
   std::vector<float> values(compCount * accessor.count);
   for (int i = 0; i < accessor.count; i++) {
     for (int j = 0; j < compCount; j++) {
       int index = i * compCount + j;
-      float value = normalizeValue(data.data(), index, accessor.componentType);
+      float value =
+          normalizeValue(binary.data(), index, accessor.componentType);
       values[index] = value;
     }
   }
-  Data res(length);
+  Binary res(length);
   std::memcpy(res.data(), values.data(), length);
   return res;
+}
+
+Binary GLTFData::binaryForImage(const GLTFImage &image) const {
+  if (image.uri.has_value()) {
+    return binaryOfUri(*image.uri);
+  } else {
+    return binaryForBufferView(image.bufferView.value_or(0));
+  }
 }
 
 MeshPrimitive
@@ -364,8 +369,8 @@ GLTFData::meshPrimitiveFromPrimitive(const GLTFMeshPrimitive &primitive) const {
 
   if (primitive.indices) {
     MeshPrimitiveElement element;
-    auto &accessor = json.accessors->at(*primitive.indices);
-    element.data = dataForAccessor(accessor, nullptr);
+    auto &accessor = _json.accessors->at(*primitive.indices);
+    element.binary = binaryForAccessor(accessor, nullptr);
     element.primitiveMode = primitive.modeValue();
     auto indicesCount = accessor.count;
     switch (primitive.modeValue()) {
@@ -403,13 +408,13 @@ GLTFData::meshPrimitiveSourceFromAccessor(const GLTFAccessor &accessor) const {
   MeshPrimitiveSource source;
 
   bool normalized = false;
-  auto data = dataForAccessor(accessor, &normalized);
+  auto data = binaryForAccessor(accessor, &normalized);
   bool isFloat = accessor.componentType == GLTFAccessor::ComponentType::FLOAT ||
                  normalized;
   GLTFAccessor::ComponentType componentType =
       isFloat ? GLTFAccessor::ComponentType::FLOAT : accessor.componentType;
 
-  source.data = data;
+  source.binary = data;
   source.vectorCount = accessor.count;
   source.componentsPerVector =
       GLTFAccessor::componentsCountOfType(accessor.type);
@@ -419,7 +424,7 @@ GLTFData::meshPrimitiveSourceFromAccessor(const GLTFAccessor &accessor) const {
 
 MeshPrimitiveSource
 GLTFData::meshPrimitiveSourceFromAccessor(uint32_t index) const {
-  return meshPrimitiveSourceFromAccessor(json.accessors->at(index));
+  return meshPrimitiveSourceFromAccessor(_json.accessors->at(index));
 }
 
 MeshPrimitiveSources GLTFData::meshPrimitiveSourcesFromTarget(
@@ -437,9 +442,9 @@ MeshPrimitiveSources GLTFData::meshPrimitiveSourcesFromTarget(
   return sources;
 }
 
-static std::unique_ptr<draco::Mesh> decodeDracoMesh(const Data &data) {
+static std::unique_ptr<draco::Mesh> decodeDracoMesh(const Binary &binary) {
   draco::DecoderBuffer buffer;
-  buffer.Init((const char *)data.data(), data.size());
+  buffer.Init((const char *)binary.data(), binary.size());
 
   draco::Decoder decoder;
   auto status_or_mesh = decoder.DecodeMeshFromBuffer(&buffer);
@@ -480,14 +485,14 @@ processDracoMeshPrimitiveSource(const std::unique_ptr<draco::Mesh> &dracoMesh,
   auto componentsPerVector = attr->num_components();
   auto bytesPerComponent = draco::DataTypeLength(attr->data_type());
   auto length = vectorCount * componentsPerVector * bytesPerComponent;
-  Data data(length);
+  Binary data(length);
   for (draco::PointIndex i(0); i < dracoMesh->num_points(); ++i) {
     uint8_t *bytes =
         data.data() + i.value() * componentsPerVector * bytesPerComponent;
     attr->GetMappedValue(i, bytes);
   }
   MeshPrimitiveSource source;
-  source.data = data;
+  source.binary = data;
   source.vectorCount = vectorCount;
   source.componentsPerVector = componentsPerVector;
   source.componentType =
@@ -497,11 +502,11 @@ processDracoMeshPrimitiveSource(const std::unique_ptr<draco::Mesh> &dracoMesh,
 
 MeshPrimitive GLTFData::meshPrimitiveFromDracoExtension(
     const GLTFMeshPrimitiveDracoExtension &extension) const {
-  auto compressedData = dataForBufferView(extension.bufferView);
+  auto compressedData = binaryForBufferView(extension.bufferView);
   auto dracoMesh = decodeDracoMesh(compressedData);
   auto primitiveCount = dracoMesh->num_faces();
   auto indicesCount = primitiveCount * 3;
-  Data indicesData(sizeof(uint32_t) * indicesCount);
+  Binary indicesData(sizeof(uint32_t) * indicesCount);
   for (draco::FaceIndex i(0); i < dracoMesh->num_faces(); i++) {
     const auto &face = dracoMesh->face(i);
     uint32_t indices[3] = {face[0].value(), face[1].value(), face[2].value()};
@@ -509,7 +514,7 @@ MeshPrimitive GLTFData::meshPrimitiveFromDracoExtension(
     std::memcpy(indicesData.data() + offset, indices, sizeof(uint32_t) * 3);
   }
   MeshPrimitiveElement element;
-  element.data = indicesData;
+  element.binary = indicesData;
   element.primitiveMode = GLTFMeshPrimitive::Mode::TRIANGLES;
   element.primitiveCount = primitiveCount;
   element.componentType = GLTFAccessor::ComponentType::UNSIGNED_INT;

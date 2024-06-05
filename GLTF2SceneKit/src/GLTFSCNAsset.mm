@@ -82,8 +82,8 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
 #pragma mark SCNScene
 
 - (nullable SCNScene *)defaultScene {
-  if (_data->json.scene.has_value()) {
-    return self.scenes[*_data->json.scene];
+  if (_data->json().scene.has_value()) {
+    return self.scenes[*_data->json().scene];
   } else {
     return self.scenes.firstObject;
   }
@@ -142,10 +142,10 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
   std::unordered_map<uint32_t, std::vector<gltf2::MeshPrimitive>>
       meshPrimitiveCache;
 
-  if (_data->json.nodes.has_value()) {
-    scnNodes = [NSMutableArray arrayWithCapacity:_data->json.nodes->size()];
+  if (_data->json().nodes.has_value()) {
+    scnNodes = [NSMutableArray arrayWithCapacity:_data->json().nodes->size()];
 
-    for (const auto &node : *_data->json.nodes) {
+    for (const auto &node : *_data->json().nodes) {
       SCNNode *scnNode = [SCNNode node];
       scnNode.name = [[NSUUID UUID] UUIDString];
       scnNode.simdTransform = [self simdTransformOfNode:node];
@@ -156,7 +156,7 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
       }
 
       if (node.mesh.has_value()) {
-        const auto &mesh = _data->json.meshes->at(*node.mesh);
+        const auto &mesh = _data->json().meshes->at(*node.mesh);
 
         std::vector<gltf2::MeshPrimitive> meshPrimitives;
         for (const auto &primitive : mesh.primitives) {
@@ -199,8 +199,8 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
       [scnNodes addObject:scnNode];
     }
 
-    for (int i = 0; i < _data->json.nodes->size(); i++) {
-      const auto &node = _data->json.nodes->at(i);
+    for (int i = 0; i < _data->json().nodes->size(); i++) {
+      const auto &node = _data->json().nodes->at(i);
       SCNNode *scnNode = scnNodes[i];
 
       if (node.children.has_value()) {
@@ -211,7 +211,7 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
       }
 
       if (node.skin.has_value()) {
-        const auto &skin = _data->json.skins->at(*node.skin);
+        const auto &skin = _data->json().skins->at(*node.skin);
 
         NSMutableArray<SCNNode *> *bones =
             [NSMutableArray arrayWithCapacity:skin.joints.size()];
@@ -223,8 +223,8 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
         NSArray<NSValue *> *boneInverseBindTransforms;
         if (skin.inverseBindMatrices.has_value()) {
           const auto &accessor =
-              _data->json.accessors->at(*skin.inverseBindMatrices);
-          auto data = _data->dataForAccessor(accessor, nil);
+              _data->json().accessors->at(*skin.inverseBindMatrices);
+          auto data = _data->binaryForAccessor(accessor, nil);
           // inverseBindMatrices must be mat4 type with float
           assert(accessor.type == gltf2::GLTFAccessor::Type::MAT4 &&
                  accessor.componentType ==
@@ -239,7 +239,7 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
           boneInverseBindTransforms = [arr copy];
         }
 
-        const auto &mesh = _data->json.meshes->at(*node.mesh);
+        const auto &mesh = _data->json().meshes->at(*node.mesh);
         const auto &meshPrimitives = meshPrimitiveCache[*node.mesh];
         for (int j = 0; j < mesh.primitives.size(); j++) {
           const auto &primitive = mesh.primitives[j];
@@ -292,8 +292,8 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
   NSMutableArray<SCNAnimationPlayer *> *animationPlayers =
       [NSMutableArray array];
 
-  if (_data->json.animations.has_value()) {
-    for (const auto &animation : *_data->json.animations) {
+  if (_data->json().animations.has_value()) {
+    for (const auto &animation : *_data->json().animations) {
       NSMutableArray *channelAnimations = [NSMutableArray array];
       float maxDuration = 1.0f;
 
@@ -301,7 +301,7 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
         if (!channel.target.node.has_value())
           continue;
 
-        const auto &node = _data->json.nodes->at(*channel.target.node);
+        const auto &node = _data->json().nodes->at(*channel.target.node);
         SCNNode *scnNode = scnNodes[*channel.target.node];
 
         const auto &sampler = animation.samplers[channel.sampler];
@@ -311,17 +311,18 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
             [self keyTimesFromAnimationSampler:sampler maxKeyTime:&maxKeyTime];
         maxDuration = MAX(maxDuration, maxKeyTime);
 
-        const auto &outputAccessor = _data->json.accessors->at(sampler.output);
+        const auto &outputAccessor =
+            _data->json().accessors->at(sampler.output);
         bool normalized = false;
         const auto &outputData =
-            _data->dataForAccessor(outputAccessor, &normalized);
+            _data->binaryForAccessor(outputAccessor, &normalized);
 
         if (channel.target.path ==
             gltf2::GLTFAnimationChannelTarget::Path::WEIGHTS) {
           // Weights animation
           NSArray<NSNumber *> *numbers = NSArrayFromPackedFloatData(outputData);
 
-          const auto &mesh = _data->json.meshes->at(*node.mesh);
+          const auto &mesh = _data->json().meshes->at(*node.mesh);
 
           for (NSInteger i = 0; i < mesh.primitives.size(); i++) {
             const auto &primitive = mesh.primitives[i];
@@ -432,8 +433,8 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
 
   // scenes
   NSMutableArray<SCNScene *> *scnScenes = [NSMutableArray array];
-  if (_data->json.scenes.has_value()) {
-    for (const auto &scene : *_data->json.scenes) {
+  if (_data->json().scenes.has_value()) {
+    for (const auto &scene : *_data->json().scenes) {
       SCNScene *scnScene = [SCNScene scene];
       if (scene.nodes.has_value()) {
         for (auto nodeIndex : *scene.nodes) {
@@ -758,12 +759,12 @@ public:
 }
 
 - (nullable NSArray<SCNMaterial *> *)loadSCNMaterials {
-  if (!_data->json.materials)
+  if (!_data->json().materials)
     return nil;
   NSMutableArray<SCNMaterial *> *scnMaterials =
-      [NSMutableArray arrayWithCapacity:_data->json.materials->size()];
+      [NSMutableArray arrayWithCapacity:_data->json().materials->size()];
 
-  for (auto &material : _data->json.materials.value()) {
+  for (auto &material : _data->json().materials.value()) {
     SCNMaterial *scnMaterial = [SCNMaterial material];
     //    scnMaterial.name = material.name;
     scnMaterial.locksAmbientWithDiffuse = YES;
@@ -1008,7 +1009,7 @@ static void applyColorContentsToProperty(float r, float g, float b, float a,
 - (void)applyTextureInfo:(const gltf2::GLTFTextureInfo &)textureInfo
            withIntensity:(CGFloat)intensity
               toProperty:(SCNMaterialProperty *)property {
-  auto &texture = _data->json.textures->at(textureInfo.index);
+  auto &texture = _data->json().textures->at(textureInfo.index);
   [self applyTexture:texture toProperty:property];
   property.mappingChannel = textureInfo.texCoordValue();
   property.intensity = intensity;
@@ -1028,13 +1029,7 @@ static void applyColorContentsToProperty(float r, float g, float b, float a,
 }
 
 - (CGImageRef)cgImageForImage:(const gltf2::GLTFImage &)image {
-  gltf2::Data data;
-  if (image.uri.has_value()) {
-    data = _data->dataOfUri(*image.uri);
-  } else {
-    assert(image.bufferView.has_value());
-    data = _data->dataForBufferView(*image.bufferView);
-  }
+  gltf2::Binary data = _data->binaryForImage(image);
   return [self createCGImageFromData:[NSData dataWithBytes:data.data()
                                                     length:data.size()]];
 }
@@ -1048,12 +1043,12 @@ static void applyColorContentsToProperty(float r, float g, float b, float a,
   property.mipFilter = SCNFilterModeNone;
 
   if (texture.source.has_value()) {
-    auto &image = _data->json.images->at(*texture.source);
+    auto &image = _data->json().images->at(*texture.source);
     property.contents = (__bridge id)[self cgImageForImage:image];
   }
 
   if (texture.sampler.has_value()) {
-    auto &sampler = _data->json.samplers->at(*texture.sampler);
+    auto &sampler = _data->json().samplers->at(*texture.sampler);
     [self applyTextureSampler:sampler toProperty:property];
   }
 }
@@ -1119,12 +1114,12 @@ SCNWrapModeFromGLTFSamplerWrapMode(gltf2::GLTFSampler::WrapMode mode) {
 #pragma mark SCNCamera
 
 - (nullable NSArray<SCNCamera *> *)loadSCNCameras {
-  if (!_data->json.cameras.has_value())
+  if (!_data->json().cameras.has_value())
     return nil;
 
   NSMutableArray<SCNCamera *> *scnCameras =
-      [NSMutableArray arrayWithCapacity:_data->json.cameras->size()];
-  for (const auto &camera : *_data->json.cameras) {
+      [NSMutableArray arrayWithCapacity:_data->json().cameras->size()];
+  for (const auto &camera : *_data->json().cameras) {
     SCNCamera *scnCamera = [SCNCamera camera];
     //     scnCamera.name = camera.name;
 
@@ -1260,8 +1255,8 @@ SCNWrapModeFromGLTFSamplerWrapMode(gltf2::GLTFSampler::WrapMode mode) {
                                         (SCNGeometrySourceSemantic)semantic {
   auto bytesPerComponent =
       gltf2::GLTFAccessor::sizeOfComponentType(source.componentType);
-  NSData *data = [NSData dataWithBytes:source.data.data()
-                                length:source.data.size()];
+  NSData *data = [NSData dataWithBytes:source.binary.data()
+                                length:source.binary.size()];
   return [SCNGeometrySource
       geometrySourceWithData:data
                     semantic:semantic
@@ -1281,7 +1276,7 @@ SCNWrapModeFromGLTFSamplerWrapMode(gltf2::GLTFSampler::WrapMode mode) {
       gltf2::GLTFAccessor::sizeOfComponentType(element.componentType);
   NSUInteger primitiveCount = element.primitiveCount;
   NSData *data = convertDataToSCNGeometryPrimitiveType(
-      element.data, sizeOfComponent, &primitiveCount, element.primitiveMode,
+      element.binary, sizeOfComponent, &primitiveCount, element.primitiveMode,
       &primitiveType);
   return [SCNGeometryElement geometryElementWithData:data
                                        primitiveType:primitiveType
@@ -1291,7 +1286,7 @@ SCNWrapModeFromGLTFSamplerWrapMode(gltf2::GLTFSampler::WrapMode mode) {
 
 // convert indices data with SceneKit compatible primitive type
 static NSData *convertDataToSCNGeometryPrimitiveType(
-    const gltf2::Data &bufferData, NSUInteger sizeOfComponent,
+    const gltf2::Binary &bufferData, NSUInteger sizeOfComponent,
     NSUInteger *primitiveCount, gltf2::GLTFMeshPrimitive::Mode mode,
     SCNGeometryPrimitiveType *primitiveType) {
   switch (mode) {
@@ -1420,12 +1415,12 @@ CAAnimationCalculationModeFromGLTFAnimationSamplerInterpolation(
 - (NSArray<NSNumber *> *)keyTimesFromAnimationSampler:
                              (const gltf2::GLTFAnimationSampler &)sampler
                                            maxKeyTime:(float *)maxKeyTime {
-  const auto &inputAccessor = _data->json.accessors->at(sampler.input);
+  const auto &inputAccessor = _data->json().accessors->at(sampler.input);
   // input must be scalar type with float
   assert(inputAccessor.type == gltf2::GLTFAccessor::Type::SCALAR &&
          inputAccessor.componentType ==
              gltf2::GLTFAccessor::ComponentType::FLOAT);
-  const auto inputData = _data->dataForAccessor(inputAccessor, nil);
+  const auto inputData = _data->binaryForAccessor(inputAccessor, nil);
   NSArray<NSNumber *> *array = NSArrayFromPackedFloatData(inputData);
   float max = inputAccessor.max.has_value() ? inputAccessor.max.value()[0]
                                             : array.lastObject.floatValue;
@@ -1441,7 +1436,7 @@ CAAnimationCalculationModeFromGLTFAnimationSamplerInterpolation(
 
 #pragma mark -
 
-NSArray<NSNumber *> *NSArrayFromPackedFloatData(const gltf2::Data &data) {
+NSArray<NSNumber *> *NSArrayFromPackedFloatData(const gltf2::Binary &data) {
   NSUInteger count = data.size() / sizeof(float);
   NSMutableArray<NSNumber *> *array = [NSMutableArray arrayWithCapacity:count];
   const float *bytes = (const float *)data.data();
@@ -1451,7 +1446,7 @@ NSArray<NSNumber *> *NSArrayFromPackedFloatData(const gltf2::Data &data) {
   return [array copy];
 }
 
-NSArray<NSValue *> *SCNMat4ArrayFromPackedFloatData(const gltf2::Data &data) {
+NSArray<NSValue *> *SCNMat4ArrayFromPackedFloatData(const gltf2::Binary &data) {
   NSUInteger count = data.size() / sizeof(float) / 16;
   NSMutableArray<NSValue *> *arr = [NSMutableArray arrayWithCapacity:count];
   const float *base = (float *)data.data();
@@ -1480,7 +1475,7 @@ NSArray<NSValue *> *SCNMat4ArrayFromPackedFloatData(const gltf2::Data &data) {
 }
 
 NSArray<NSValue *> *
-SCNVec4ArrayFromPackedFloatDataWithAccessor(const gltf2::Data &data,
+SCNVec4ArrayFromPackedFloatDataWithAccessor(const gltf2::Binary &data,
                                             const gltf2::GLTFAccessor &accessor,
                                             BOOL isCubisSpline) {
   NSInteger count = isCubisSpline ? accessor.count / 3 : accessor.count;
@@ -1522,7 +1517,7 @@ SCNVec4ArrayFromPackedFloatDataWithAccessor(const gltf2::Data &data,
 }
 
 NSArray<NSValue *> *
-SCNVec3ArrayFromPackedFloatDataWithAccessor(const gltf2::Data &data,
+SCNVec3ArrayFromPackedFloatDataWithAccessor(const gltf2::Binary &data,
                                             const gltf2::GLTFAccessor &accessor,
                                             BOOL isCubisSpline) {
   NSInteger count = isCubisSpline ? accessor.count / 3 : accessor.count;

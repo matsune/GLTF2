@@ -485,7 +485,7 @@ public:
     return attenuationDistance.value_or(std::numeric_limits<float>::infinity());
   }
 
-  std::array<float, 3> attenuationColorValue() {
+  std::array<float, 3> attenuationColorValue() const {
     return attenuationColor.value_or(std::array<float, 3>({1.0f, 1.0f, 1.0f}));
   }
 };

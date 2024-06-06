@@ -14,258 +14,14 @@
 
 namespace gltf2 {
 
-static const uint32_t GLBHeaderMagic = 0x46546C67;
-static const uint32_t GLBChunkTypeJSON = 0x4E4F534A;
-static const uint32_t GLBChunkTypeBIN = 0x004E4942;
-
-struct GLBHeader {
-  uint32_t magic = 0;
-  uint32_t version = 0;
-  uint32_t length = 0;
-};
-
-struct GLBChunkHead {
-  uint32_t length = 0;
-  uint32_t type = 0;
-};
-
-GLTFData GLTFData::parseJson(const std::string &raw,
-                             const std::optional<std::filesystem::path> path,
-                             const std::optional<Binary> bin) {
-  try {
-    auto data = nlohmann::json::parse(raw);
-    auto json = GLTFJsonDecoder::decode(data);
-    return GLTFData(json, path, bin);
-  } catch (nlohmann::json::exception e) {
-    throw InputException(e.what());
+static void waitFutures(std::vector<std::future<void>> &futures) {
+  for (auto &future : futures) {
+    future.get();
   }
 }
 
-GLTFData GLTFData::parseData(const char *bytes, uint64_t length,
-                             const std::optional<std::filesystem::path> path) {
-  std::istringstream fs(std::string(bytes, length), std::ios::binary);
-  return parseStream(fs, path);
-}
-
-GLTFData GLTFData::parseFile(const std::filesystem::path &path) {
-  std::ifstream fs;
-  fs.open(path.string(), std::ios::binary);
-  if (!fs)
-    throw InputException("Failed to open file");
-
-  return parseStream(fs, path);
-}
-
-GLTFData GLTFData::parseStream(std::istream &fs,
-                               std::optional<std::filesystem::path> path) {
-  uint32_t magic;
-  if (!fs.read(reinterpret_cast<char *>(&magic), sizeof(uint32_t))) {
-    throw InputException("Failed to read file");
-  }
-  fs.seekg(0, std::ios::beg);
-
-  if (magic == GLBHeaderMagic) {
-    // GLB
-    GLBHeader header;
-    if (!fs.read(reinterpret_cast<char *>(&header), sizeof(GLBHeader))) {
-      throw InputException("Failed to read glb header");
-    }
-    if (header.version != 2) {
-      std::cerr << "Expected glTF version is 2." << std::endl;
-    }
-
-    GLBChunkHead chunkHead0;
-    if (!fs.read(reinterpret_cast<char *>(&chunkHead0), sizeof(GLBChunkHead))) {
-      throw InputException("Failed to read chunk head");
-    }
-    if (chunkHead0.type != GLBChunkTypeJSON) {
-      throw InputException("Chunk type is not JSON");
-    }
-    std::string jsonBuf(chunkHead0.length, '\0');
-    fs.read(&jsonBuf[0], chunkHead0.length);
-    if (fs.gcount() != chunkHead0.length) {
-      throw InputException("Failed to read json data");
-    }
-    auto data = nlohmann::json::parse(jsonBuf);
-    auto json = GLTFJsonDecoder::decode(data);
-
-    std::optional<Binary> bin;
-    if (!fs.eof()) {
-      // binary buffer
-      GLBChunkHead chunkHead1;
-      if (!fs.read(reinterpret_cast<char *>(&chunkHead1),
-                   sizeof(GLBChunkHead))) {
-        throw InputException("Failed to read chunk head");
-      }
-      if (chunkHead1.type != GLBChunkTypeBIN) {
-        throw InputException("Chunk type is not BIN");
-      }
-      Binary binBuf(chunkHead1.length);
-      fs.read(reinterpret_cast<char *>(binBuf.data()), binBuf.size());
-      if (fs.gcount() != chunkHead1.length) {
-        throw InputException("Failed to read bin data");
-      }
-      bin = binBuf;
-    }
-    return GLTFData(json, path, bin);
-  } else {
-    // GLTF
-    std::string raw((std::istreambuf_iterator<char>(fs)),
-                    std::istreambuf_iterator<char>());
-    try {
-      auto data = nlohmann::json::parse(raw);
-      auto json = GLTFJsonDecoder::decode(data);
-      return GLTFData(json, path);
-    } catch (nlohmann::json::exception e) {
-      throw InputException(e.what());
-    }
-  }
-}
-
-Binary GLTFData::binaryOfUri(const std::string &uri) const {
-  // decode percent-encoding
-  auto url = boost::url(uri);
-  if (url.has_scheme()) {
-    if (url.scheme() == "data") {
-      // base64
-      std::string urlStr(url.c_str());
-      auto encoded = urlStr.substr(urlStr.find(',') + 1);
-      return cppcodec::base64_rfc4648::decode(encoded);
-    } else {
-      // unsupported scheme
-      return {};
-    }
-  } else if (url.is_path_absolute()) {
-    // absolute path
-    std::ifstream file(uri, std::ios::binary);
-    return {std::istreambuf_iterator<char>(file),
-            std::istreambuf_iterator<char>()};
-
-  } else {
-    // relative path
-    std::filesystem::path basePathUrl(_path.value());
-    std::filesystem::path fullUrl = basePathUrl.parent_path() / url.c_str();
-    std::ifstream file(fullUrl.string(), std::ios::binary);
-    return {std::istreambuf_iterator<char>(file),
-            std::istreambuf_iterator<char>()};
-  }
-}
-
-Binary GLTFData::binaryForBuffer(const GLTFBuffer &buffer) const {
-  if (buffer.uri) {
-    return binaryOfUri(*buffer.uri);
-  } else {
-    return _bin.value();
-  }
-}
-
-Binary GLTFData::binaryForBufferView(uint32_t index, uint32_t offset) const {
-  return binaryForBufferView(_json.bufferViews->at(index), offset);
-}
-
-Binary GLTFData::binaryForBufferView(const GLTFBufferView &bufferView,
-                                     uint32_t offset) const {
-  auto data = binaryForBuffer(_json.buffers->at(bufferView.buffer));
-  auto loc = data.begin() + bufferView.byteOffset.value_or(0) + offset;
-  return Binary(loc, loc + bufferView.byteLength);
-}
-
-Binary GLTFData::binaryForBuffer(uint32_t index) const {
-  return binaryForBuffer(_json.buffers->at(index));
-}
-
-Binary GLTFData::binaryForAccessor(const GLTFAccessor &accessor,
-                                   bool *normalized) const {
-  auto compTypeSize = GLTFAccessor::sizeOfComponentType(accessor.componentType);
-  auto compCount = GLTFAccessor::componentsCountOfType(accessor.type);
-  auto typeSize = compTypeSize * compCount;
-  auto length = typeSize * accessor.count;
-  Binary data(length);
-
-  // fill data
-  if (accessor.bufferView) {
-    const GLTFBufferView &bufferView =
-        _json.bufferViews->at(*accessor.bufferView);
-    auto bufData =
-        binaryForBufferView(bufferView, accessor.byteOffset.value_or(0));
-    const char *dstBase = (const char *)data.data();
-    const char *srcBase = (const char *)bufData.data();
-    auto byteStride = bufferView.byteStride.value_or(typeSize);
-    if (byteStride != typeSize) {
-      // copy with byteStride
-      for (int i = 0; i < accessor.count; i++) {
-        const char *dst = dstBase + i * typeSize;
-        const char *src = srcBase + i * byteStride;
-        std::memcpy((void *)dst, src, typeSize);
-      }
-    } else {
-      // copy all
-      std::memcpy((void *)dstBase, srcBase, length);
-    }
-  }
-
-  // sparse
-  if (accessor.sparse) {
-    auto sparse = *accessor.sparse;
-    auto indices = indicesForAccessorSparse(sparse);
-    auto valuesData = binaryForBufferView(sparse.values.bufferView,
-                                          sparse.values.byteOffset.value_or(0));
-    const char *dstBase = (const char *)data.data();
-    const char *srcBase = (const char *)valuesData.data();
-    for (int i = 0; i < sparse.count; i++) {
-      auto index = indices[i];
-      const char *dst = dstBase + typeSize * index;
-      const char *src = srcBase + typeSize * i;
-      std::memcpy((void *)dst, src, typeSize);
-    }
-  }
-
-  // normalize
-  if (accessor.normalized.value_or(false) &&
-      accessor.componentType != GLTFAccessor::ComponentType::FLOAT &&
-      accessor.componentType != GLTFAccessor::ComponentType::UNSIGNED_INT) {
-    auto normalizedData = normalizeBinary(data, accessor);
-    if (normalized)
-      *normalized = true;
-    return normalizedData;
-  }
-
-  return data;
-}
-
-Binary GLTFData::binaryForAccessor(uint32_t index, bool *normalized) const {
-  return binaryForAccessor(_json.accessors->at(index), normalized);
-}
-
-std::vector<uint32_t>
-GLTFData::indicesForAccessorSparse(const GLTFAccessorSparse &sparse) const {
-  Binary indicesData = binaryForBufferView(
-      sparse.indices.bufferView, sparse.indices.byteOffset.value_or(0));
-  std::vector<uint32_t> data(sparse.count);
-  uint8_t *ptr = indicesData.data();
-  for (int i = 0; i < sparse.count; i++) {
-    switch (sparse.indices.componentType) {
-    case GLTFAccessorSparseIndices::ComponentType::UNSIGNED_BYTE:
-      data.push_back(*ptr);
-      ptr += sizeof(uint8_t);
-      break;
-
-    case GLTFAccessorSparseIndices::ComponentType::UNSIGNED_SHORT:
-      data.push_back(*reinterpret_cast<uint16_t *>(ptr));
-      ptr += sizeof(uint16_t);
-      break;
-
-    case GLTFAccessorSparseIndices::ComponentType::UNSIGNED_INT:
-      data.push_back(*reinterpret_cast<uint32_t *>(ptr));
-      ptr += sizeof(uint32_t);
-      break;
-    }
-  }
-  return data;
-}
-
-static float normalizeValue(const void *bytes, int index,
-                            GLTFAccessor::ComponentType compType) {
+static float normalize(const void *bytes, int index,
+                       GLTFAccessor::ComponentType compType) {
   switch (compType) {
   case GLTFAccessor::ComponentType::BYTE: {
     int8_t value = *((int8_t *)bytes + index);
@@ -298,123 +54,402 @@ static float normalizeValue(const void *bytes, int index,
   }
 }
 
-Binary GLTFData::normalizeBinary(const Binary &binary,
-                                 const GLTFAccessor &accessor) const {
+static Buffer normalizeBuffer(const Buffer &binary,
+                              const GLTFAccessor &accessor) {
   auto compCount = GLTFAccessor::componentsCountOfType(accessor.type);
   auto length = sizeof(float) * compCount * accessor.count;
   std::vector<float> values(compCount * accessor.count);
   for (int i = 0; i < accessor.count; i++) {
     for (int j = 0; j < compCount; j++) {
       int index = i * compCount + j;
-      float value =
-          normalizeValue(binary.data(), index, accessor.componentType);
+      float value = normalize(binary.data(), index, accessor.componentType);
       values[index] = value;
     }
   }
-  Binary res(length);
+  Buffer res(length);
   std::memcpy(res.data(), values.data(), length);
   return res;
 }
 
-Binary GLTFData::binaryForImage(const GLTFImage &image) const {
-  if (image.uri.has_value()) {
-    return binaryOfUri(*image.uri);
-  } else {
-    return binaryForBufferView(image.bufferView.value_or(0));
-  }
+std::future<void> GLTFData::eagerLoad() {
+  return std::async(std::launch::async, [this] {
+    clear();
+
+    loadBuffers().get();
+    loadBufferViews().get(); // depends buffer
+
+    std::vector<std::future<void>> futures;
+    futures.push_back(loadAccessorBuffers());
+    futures.push_back(loadImageBuffers());
+    waitFutures(futures);
+
+    loadMeshPrimitives().get(); // depends accessor
+  });
 }
 
-MeshPrimitive
-GLTFData::meshPrimitiveFromPrimitive(const GLTFMeshPrimitive &primitive) const {
-  if (primitive.dracoExtension) {
-    return meshPrimitiveFromDracoExtension(*primitive.dracoExtension);
-  }
-  MeshPrimitive meshPrimitive;
-  if (primitive.attributes.position) {
-    meshPrimitive.sources.position =
-        meshPrimitiveSourceFromAccessor(*primitive.attributes.position);
-  }
-  if (primitive.attributes.normal) {
-    meshPrimitive.sources.normal =
-        meshPrimitiveSourceFromAccessor(*primitive.attributes.normal);
-  }
-  if (primitive.attributes.tangent) {
-    meshPrimitive.sources.tangent =
-        meshPrimitiveSourceFromAccessor(*primitive.attributes.tangent);
-  }
-  if (primitive.attributes.texcoords) {
-    for (auto index : *primitive.attributes.texcoords) {
-      meshPrimitive.sources.texcoords.push_back(
-          meshPrimitiveSourceFromAccessor(index));
-    }
-  }
-  if (primitive.attributes.colors) {
-    for (auto index : *primitive.attributes.colors) {
-      meshPrimitive.sources.colors.push_back(
-          meshPrimitiveSourceFromAccessor(index));
-    }
-  }
-  if (primitive.attributes.joints) {
-    for (auto index : *primitive.attributes.joints) {
-      meshPrimitive.sources.joints.push_back(
-          meshPrimitiveSourceFromAccessor(index));
-    }
-  }
-  if (primitive.attributes.weights) {
-    for (auto index : *primitive.attributes.weights) {
-      meshPrimitive.sources.weights.push_back(
-          meshPrimitiveSourceFromAccessor(index));
-    }
-  }
+void GLTFData::clear() {
+  _buffers.clear();
+  _bufferViews.clear();
+  _accessorBuffers.clear();
+  _imageBuffers.clear();
+  _meshPrimitives.clear();
+}
 
-  if (primitive.indices) {
-    MeshPrimitiveElement element;
-    auto &accessor = _json.accessors->at(*primitive.indices);
-    element.binary = binaryForAccessor(accessor, nullptr);
-    element.primitiveMode = primitive.modeValue();
-    auto indicesCount = accessor.count;
-    switch (primitive.modeValue()) {
-    case GLTFMeshPrimitive::Mode::POINTS:
-      element.primitiveCount = indicesCount;
+std::future<void> GLTFData::loadBuffers() {
+  return std::async(std::launch::async, [this] {
+    if (!json().buffers.has_value())
+      return;
+
+    auto count = json().buffers->size();
+    _buffers.resize(count);
+
+    std::vector<std::future<void>> futures;
+    futures.reserve(count);
+
+    for (uint32_t i = 0; i < count; i++) {
+      futures.push_back(loadBufferAt(i));
+    }
+    waitFutures(futures);
+  });
+}
+
+std::future<void> GLTFData::loadBufferAt(uint32_t index) {
+  return std::async(std::launch::async, [this, index] {
+    _buffers[index] = std::make_unique<Buffer>(_file.getBuffer(index));
+  });
+}
+
+std::future<void> GLTFData::loadBufferViews() {
+  return std::async(std::launch::async, [this] {
+    if (!json().bufferViews.has_value())
+      return;
+
+    auto count = json().bufferViews->size();
+    _bufferViews.resize(count);
+
+    std::vector<std::future<void>> futures;
+    futures.reserve(count);
+
+    for (uint32_t i = 0; i < count; i++) {
+      futures.push_back(loadBufferViewAt(i));
+    }
+    waitFutures(futures);
+  });
+}
+
+std::future<void> GLTFData::loadBufferViewAt(uint32_t index) {
+  const auto &bufferView = json().bufferViews->at(index);
+  return std::async(std::launch::async, [this, index, &bufferView] {
+    uint8_t *begin = (uint8_t *)_buffers[bufferView.buffer]->data() +
+                     bufferView.byteOffset.value_or(0);
+    _bufferViews[index] =
+        std::make_unique<BufferView>(begin, bufferView.byteLength);
+  });
+}
+
+std::future<void> GLTFData::loadAccessorBuffers() {
+  return std::async(std::launch::async, [this] {
+    if (!json().accessors.has_value())
+      return;
+
+    auto count = json().accessors->size();
+    _accessorBuffers.resize(count);
+
+    std::vector<std::future<void>> futures;
+    futures.reserve(count);
+
+    for (uint32_t i = 0; i < count; i++) {
+      futures.push_back(loadAccessorBufferAt(i));
+    }
+    waitFutures(futures);
+  });
+}
+
+std::future<void> GLTFData::loadAccessorBufferAt(uint32_t index) {
+  const auto &accessor = json().accessors->at(index);
+  return std::async(std::launch::async, [this, index, &accessor] {
+    auto compTypeSize =
+        GLTFAccessor::sizeOfComponentType(accessor.componentType);
+    auto compCount = GLTFAccessor::componentsCountOfType(accessor.type);
+    auto typeSize = compTypeSize * compCount;
+    auto length = typeSize * accessor.count;
+    Buffer binary(length);
+    bool normalized = false;
+
+    // fill data
+    if (accessor.bufferView.has_value()) {
+      const auto &bufferView = json().bufferViews->at(*accessor.bufferView);
+      const char *dstBase = (const char *)binary.data();
+      const char *srcBase =
+          (const char *)_bufferViews[*accessor.bufferView]->data +
+          accessor.byteOffset.value_or(0);
+      auto byteStride = bufferView.byteStride.value_or(typeSize);
+      if (byteStride != typeSize) {
+        // copy with byteStride
+        for (int i = 0; i < accessor.count; i++) {
+          const char *dst = dstBase + i * typeSize;
+          const char *src = srcBase + i * byteStride;
+          std::memcpy((void *)dst, src, typeSize);
+        }
+      } else {
+        // copy all
+        std::memcpy((void *)dstBase, srcBase, length);
+      }
+    }
+
+    // sparse
+    if (accessor.sparse) {
+      const auto &sparse = *accessor.sparse;
+      const auto indices = indicesForAccessorSparse(sparse);
+      const auto valuesData = _bufferViews[sparse.values.bufferView]->data +
+                              sparse.values.byteOffset.value_or(0);
+      const char *dstBase = (const char *)binary.data();
+      const char *srcBase = (const char *)valuesData;
+      for (int i = 0; i < sparse.count; i++) {
+        auto index = indices[i];
+        const char *dst = dstBase + typeSize * index;
+        const char *src = srcBase + typeSize * i;
+        std::memcpy((void *)dst, src, typeSize);
+      }
+    }
+
+    // normalize
+    if (accessor.normalized.value_or(false) &&
+        accessor.componentType != GLTFAccessor::ComponentType::FLOAT &&
+        accessor.componentType != GLTFAccessor::ComponentType::UNSIGNED_INT) {
+      binary = normalizeBuffer(binary, accessor);
+      normalized = true;
+    }
+
+    _accessorBuffers[index] =
+        std::make_unique<AccessorBuffer>(binary, normalized);
+  });
+}
+
+std::future<void> GLTFData::loadImageBuffers() {
+  return std::async(std::launch::async, [this] {
+    if (!json().images.has_value())
+      return;
+
+    auto count = json().images->size();
+    _imageBuffers.resize(count);
+
+    std::vector<std::future<void>> futures;
+    futures.reserve(count);
+
+    for (uint32_t i = 0; i < count; i++) {
+      futures.push_back(loadImageBufferAt(i));
+    }
+    waitFutures(futures);
+  });
+}
+
+std::future<void> GLTFData::loadImageBufferAt(uint32_t index) {
+  const auto &image = json().images->at(index);
+  return std::async(std::launch::async, [this, index, &image] {
+    if (image.uri.has_value()) {
+      _imageBuffers[index] =
+          std::make_unique<Buffer>(_file.bufferFromUri(*image.uri));
+    } else {
+      _imageBuffers[index] = std::make_unique<Buffer>(
+          _bufferViews[image.bufferView.value_or(0)]->toBuffer());
+    }
+  });
+}
+
+std::vector<uint32_t>
+GLTFData::indicesForAccessorSparse(const GLTFAccessorSparse &sparse) const {
+  std::vector<uint32_t> data(sparse.count);
+  const uint8_t *ptr = _bufferViews[sparse.indices.bufferView]->data +
+                       sparse.indices.byteOffset.value_or(0);
+  for (int i = 0; i < sparse.count; i++) {
+    switch (sparse.indices.componentType) {
+    case GLTFAccessorSparseIndices::ComponentType::UNSIGNED_BYTE:
+      data.push_back(*ptr);
+      ptr += sizeof(uint8_t);
       break;
-    case GLTFMeshPrimitive::Mode::LINES:
-      element.primitiveCount = indicesCount / 2;
+
+    case GLTFAccessorSparseIndices::ComponentType::UNSIGNED_SHORT:
+      data.push_back(*reinterpret_cast<const uint16_t *>(ptr));
+      ptr += sizeof(uint16_t);
       break;
-    case GLTFMeshPrimitive::Mode::LINE_LOOP:
-      element.primitiveCount = indicesCount;
-      break;
-    case GLTFMeshPrimitive::Mode::LINE_STRIP:
-      element.primitiveCount = indicesCount - 1;
-      break;
-    case GLTFMeshPrimitive::Mode::TRIANGLES:
-      element.primitiveCount = indicesCount / 3;
-      break;
-    case GLTFMeshPrimitive::Mode::TRIANGLE_STRIP:
-      element.primitiveCount = indicesCount - 2;
-      break;
-    case GLTFMeshPrimitive::Mode::TRIANGLE_FAN:
-      element.primitiveCount = indicesCount - 2;
+
+    case GLTFAccessorSparseIndices::ComponentType::UNSIGNED_INT:
+      data.push_back(*reinterpret_cast<const uint32_t *>(ptr));
+      ptr += sizeof(uint32_t);
       break;
     }
-    element.componentType = accessor.componentType;
-    meshPrimitive.element = element;
   }
+  return data;
+}
 
-  return meshPrimitive;
+std::future<void> GLTFData::loadMeshPrimitives() {
+  return std::async(std::launch::async, [this] {
+    if (!json().meshes.has_value())
+      return;
+
+    auto meshCount = json().meshes->size();
+    _meshPrimitives.resize(meshCount);
+
+    std::vector<std::future<void>> meshFutures;
+    meshFutures.reserve(meshCount);
+
+    for (uint32_t i = 0; i < meshCount; i++) {
+      meshFutures.push_back(loadMeshPrimitiveAtMesh(i));
+    }
+    waitFutures(meshFutures);
+  });
+}
+
+std::future<void> GLTFData::loadMeshPrimitiveAtMesh(uint32_t meshIndex) {
+  return std::async(std::launch::async, [this, meshIndex] {
+    const auto &mesh = json().meshes->at(meshIndex);
+    auto primitivesCount = mesh.primitives.size();
+    _meshPrimitives[meshIndex].resize(primitivesCount);
+
+    std::vector<std::future<void>> futures;
+    futures.reserve(primitivesCount);
+
+    for (uint32_t primitiveIndex = 0; primitiveIndex < primitivesCount;
+         primitiveIndex++) {
+      futures.push_back(loadMeshPrimitiveAt(meshIndex, primitiveIndex));
+    }
+    waitFutures(futures);
+  });
+}
+
+std::future<void> GLTFData::loadMeshPrimitiveAt(uint32_t meshIndex,
+                                                uint32_t primitiveIndex) {
+  const auto &primitive =
+      json().meshes->at(meshIndex).primitives.at(primitiveIndex);
+  return std::async(std::launch::async, [this, meshIndex, primitiveIndex,
+                                         &primitive] {
+    MeshPrimitive meshPrimitive;
+    if (primitive.dracoExtension) {
+      meshPrimitive =
+          meshPrimitiveFromDracoExtension(*primitive.dracoExtension).get();
+    } else {
+      std::vector<std::future<void>> futures;
+      if (primitive.attributes.position) {
+        futures.push_back(std::async(std::launch::async, [this, &meshPrimitive,
+                                                          &primitive] {
+          meshPrimitive.sources.position =
+              meshPrimitiveSourceFromAccessor(*primitive.attributes.position);
+        }));
+      }
+      if (primitive.attributes.normal) {
+        futures.push_back(
+            std::async(std::launch::async, [this, &meshPrimitive, &primitive] {
+              meshPrimitive.sources.normal =
+                  meshPrimitiveSourceFromAccessor(*primitive.attributes.normal);
+            }));
+      }
+      if (primitive.attributes.tangent) {
+        futures.push_back(std::async(std::launch::async, [this, &meshPrimitive,
+                                                          &primitive] {
+          meshPrimitive.sources.tangent =
+              meshPrimitiveSourceFromAccessor(*primitive.attributes.tangent);
+        }));
+      }
+      if (primitive.attributes.texcoords) {
+        futures.push_back(
+            std::async(std::launch::async, [this, &meshPrimitive, &primitive] {
+              for (auto index : *primitive.attributes.texcoords) {
+                meshPrimitive.sources.texcoords.push_back(
+                    meshPrimitiveSourceFromAccessor(index));
+              }
+            }));
+      }
+      if (primitive.attributes.colors) {
+        futures.push_back(
+            std::async(std::launch::async, [this, &meshPrimitive, &primitive] {
+              for (auto index : *primitive.attributes.colors) {
+                meshPrimitive.sources.colors.push_back(
+                    meshPrimitiveSourceFromAccessor(index));
+              }
+            }));
+      }
+      if (primitive.attributes.joints) {
+        futures.push_back(
+            std::async(std::launch::async, [this, &meshPrimitive, &primitive] {
+              for (auto index : *primitive.attributes.joints) {
+                meshPrimitive.sources.joints.push_back(
+                    meshPrimitiveSourceFromAccessor(index));
+              }
+            }));
+      }
+      if (primitive.attributes.weights) {
+        futures.push_back(
+            std::async(std::launch::async, [this, &meshPrimitive, &primitive] {
+              for (auto index : *primitive.attributes.weights) {
+                meshPrimitive.sources.weights.push_back(
+                    meshPrimitiveSourceFromAccessor(index));
+              }
+            }));
+      }
+
+      if (primitive.indices) {
+        futures.push_back(
+            std::async(std::launch::async, [this, &meshPrimitive, &primitive] {
+              MeshPrimitiveElement element;
+              auto &accessor = json().accessors->at(*primitive.indices);
+              element.buffer = accessorBufferAt(*primitive.indices).buffer;
+              element.primitiveMode = primitive.modeValue();
+              auto indicesCount = accessor.count;
+              switch (primitive.modeValue()) {
+              case GLTFMeshPrimitive::Mode::POINTS:
+                element.primitiveCount = indicesCount;
+                break;
+              case GLTFMeshPrimitive::Mode::LINES:
+                element.primitiveCount = indicesCount / 2;
+                break;
+              case GLTFMeshPrimitive::Mode::LINE_LOOP:
+                element.primitiveCount = indicesCount;
+                break;
+              case GLTFMeshPrimitive::Mode::LINE_STRIP:
+                element.primitiveCount = indicesCount - 1;
+                break;
+              case GLTFMeshPrimitive::Mode::TRIANGLES:
+                element.primitiveCount = indicesCount / 3;
+                break;
+              case GLTFMeshPrimitive::Mode::TRIANGLE_STRIP:
+                element.primitiveCount = indicesCount - 2;
+                break;
+              case GLTFMeshPrimitive::Mode::TRIANGLE_FAN:
+                element.primitiveCount = indicesCount - 2;
+                break;
+              }
+              element.componentType = accessor.componentType;
+              meshPrimitive.element = element;
+            }));
+      }
+
+      waitFutures(futures);
+    }
+
+    if (primitive.targets.has_value()) {
+      for (const auto &target : *primitive.targets) {
+        meshPrimitive.targets.push_back(meshPrimitiveSourcesFromTarget(target));
+      }
+    }
+
+    _meshPrimitives[meshIndex][primitiveIndex] =
+        std::make_unique<MeshPrimitive>(meshPrimitive);
+  });
 }
 
 MeshPrimitiveSource
-GLTFData::meshPrimitiveSourceFromAccessor(const GLTFAccessor &accessor) const {
+GLTFData::meshPrimitiveSourceFromAccessor(uint32_t index) const {
   MeshPrimitiveSource source;
 
-  bool normalized = false;
-  auto data = binaryForAccessor(accessor, &normalized);
+  const auto &accessor = json().accessors->at(index);
+  const auto &accessorBuffer = accessorBufferAt(index);
   bool isFloat = accessor.componentType == GLTFAccessor::ComponentType::FLOAT ||
-                 normalized;
+                 accessorBuffer.normalized;
   GLTFAccessor::ComponentType componentType =
       isFloat ? GLTFAccessor::ComponentType::FLOAT : accessor.componentType;
 
-  source.binary = data;
+  source.buffer = accessorBuffer.buffer;
   source.vectorCount = accessor.count;
   source.componentsPerVector =
       GLTFAccessor::componentsCountOfType(accessor.type);
@@ -422,29 +457,34 @@ GLTFData::meshPrimitiveSourceFromAccessor(const GLTFAccessor &accessor) const {
   return source;
 }
 
-MeshPrimitiveSource
-GLTFData::meshPrimitiveSourceFromAccessor(uint32_t index) const {
-  return meshPrimitiveSourceFromAccessor(_json.accessors->at(index));
-}
-
 MeshPrimitiveSources GLTFData::meshPrimitiveSourcesFromTarget(
     const GLTFMeshPrimitiveTarget &target) const {
   MeshPrimitiveSources sources;
+  std::vector<std::future<void>> futures;
+
   if (target.position) {
-    sources.position = meshPrimitiveSourceFromAccessor(*target.position);
+    futures.push_back(std::async(std::launch::async, [this, &sources, &target] {
+      sources.position = meshPrimitiveSourceFromAccessor(*target.position);
+    }));
   }
   if (target.normal) {
-    sources.normal = meshPrimitiveSourceFromAccessor(*target.normal);
+    futures.push_back(std::async(std::launch::async, [this, &sources, &target] {
+      sources.normal = meshPrimitiveSourceFromAccessor(*target.normal);
+    }));
   }
   if (target.tangent) {
-    sources.tangent = meshPrimitiveSourceFromAccessor(*target.tangent);
+    futures.push_back(std::async(std::launch::async, [this, &sources, &target] {
+      sources.tangent = meshPrimitiveSourceFromAccessor(*target.tangent);
+    }));
   }
+  waitFutures(futures);
   return sources;
 }
 
-static std::unique_ptr<draco::Mesh> decodeDracoMesh(const Binary &binary) {
+static std::unique_ptr<draco::Mesh>
+decodeDracoMesh(const BufferView &bufferView) {
   draco::DecoderBuffer buffer;
-  buffer.Init((const char *)binary.data(), binary.size());
+  buffer.Init((const char *)bufferView.data, bufferView.bytes);
 
   draco::Decoder decoder;
   auto status_or_mesh = decoder.DecodeMeshFromBuffer(&buffer);
@@ -485,14 +525,14 @@ processDracoMeshPrimitiveSource(const std::unique_ptr<draco::Mesh> &dracoMesh,
   auto componentsPerVector = attr->num_components();
   auto bytesPerComponent = draco::DataTypeLength(attr->data_type());
   auto length = vectorCount * componentsPerVector * bytesPerComponent;
-  Binary data(length);
+  Buffer data(length);
   for (draco::PointIndex i(0); i < dracoMesh->num_points(); ++i) {
     uint8_t *bytes =
         data.data() + i.value() * componentsPerVector * bytesPerComponent;
     attr->GetMappedValue(i, bytes);
   }
   MeshPrimitiveSource source;
-  source.binary = data;
+  source.buffer = data;
   source.vectorCount = vectorCount;
   source.componentsPerVector = componentsPerVector;
   source.componentType =
@@ -500,45 +540,47 @@ processDracoMeshPrimitiveSource(const std::unique_ptr<draco::Mesh> &dracoMesh,
   return source;
 }
 
-MeshPrimitive GLTFData::meshPrimitiveFromDracoExtension(
+std::future<MeshPrimitive> GLTFData::meshPrimitiveFromDracoExtension(
     const GLTFMeshPrimitiveDracoExtension &extension) const {
-  auto compressedData = binaryForBufferView(extension.bufferView);
-  auto dracoMesh = decodeDracoMesh(compressedData);
-  auto primitiveCount = dracoMesh->num_faces();
-  auto indicesCount = primitiveCount * 3;
-  Binary indicesData(sizeof(uint32_t) * indicesCount);
-  for (draco::FaceIndex i(0); i < dracoMesh->num_faces(); i++) {
-    const auto &face = dracoMesh->face(i);
-    uint32_t indices[3] = {face[0].value(), face[1].value(), face[2].value()};
-    auto offset = sizeof(uint32_t) * 3 * i.value();
-    std::memcpy(indicesData.data() + offset, indices, sizeof(uint32_t) * 3);
-  }
-  MeshPrimitiveElement element;
-  element.binary = indicesData;
-  element.primitiveMode = GLTFMeshPrimitive::Mode::TRIANGLES;
-  element.primitiveCount = primitiveCount;
-  element.componentType = GLTFAccessor::ComponentType::UNSIGNED_INT;
-
-  MeshPrimitiveSources sources;
-  for (int i = 0; i < dracoMesh->num_attributes(); i++) {
-    const auto *attr = dracoMesh->attribute(i);
-    auto source =
-        processDracoMeshPrimitiveSource(dracoMesh, attr->attribute_type());
-    if (attr->attribute_type() == draco::GeometryAttribute::POSITION) {
-      sources.position = source;
-    } else if (attr->attribute_type() == draco::GeometryAttribute::NORMAL) {
-      sources.normal = source;
-    } else if (attr->attribute_type() == draco::GeometryAttribute::COLOR) {
-      sources.colors.push_back(source);
-    } else if (attr->attribute_type() == draco::GeometryAttribute::TEX_COORD) {
-      sources.texcoords.push_back(source);
+  return std::async(std::launch::async, [this, &extension] {
+    auto dracoMesh = decodeDracoMesh(bufferViewAt(extension.bufferView));
+    auto primitiveCount = dracoMesh->num_faces();
+    auto indicesCount = primitiveCount * 3;
+    Buffer indicesData(sizeof(uint32_t) * indicesCount);
+    for (draco::FaceIndex i(0); i < dracoMesh->num_faces(); i++) {
+      const auto &face = dracoMesh->face(i);
+      uint32_t indices[3] = {face[0].value(), face[1].value(), face[2].value()};
+      auto offset = sizeof(uint32_t) * 3 * i.value();
+      std::memcpy(indicesData.data() + offset, indices, sizeof(uint32_t) * 3);
     }
-  }
+    MeshPrimitiveElement element;
+    element.buffer = indicesData;
+    element.primitiveMode = GLTFMeshPrimitive::Mode::TRIANGLES;
+    element.primitiveCount = primitiveCount;
+    element.componentType = GLTFAccessor::ComponentType::UNSIGNED_INT;
 
-  MeshPrimitive primitive;
-  primitive.sources = sources;
-  primitive.element = element;
-  return primitive;
+    MeshPrimitiveSources sources;
+    for (int i = 0; i < dracoMesh->num_attributes(); i++) {
+      const auto *attr = dracoMesh->attribute(i);
+      auto source =
+          processDracoMeshPrimitiveSource(dracoMesh, attr->attribute_type());
+      if (attr->attribute_type() == draco::GeometryAttribute::POSITION) {
+        sources.position = source;
+      } else if (attr->attribute_type() == draco::GeometryAttribute::NORMAL) {
+        sources.normal = source;
+      } else if (attr->attribute_type() == draco::GeometryAttribute::COLOR) {
+        sources.colors.push_back(source);
+      } else if (attr->attribute_type() ==
+                 draco::GeometryAttribute::TEX_COORD) {
+        sources.texcoords.push_back(source);
+      }
+    }
+
+    MeshPrimitive primitive;
+    primitive.sources = sources;
+    primitive.element = element;
+    return primitive;
+  });
 }
 
 } // namespace gltf2

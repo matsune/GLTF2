@@ -958,7 +958,7 @@ TEST(TestGLTFData, parseStream) {
 //             GLTFAccessor::ComponentType::UNSIGNED_SHORT);
 // }
 
-TEST(TestGLTFData, validVRM) {
+TEST(TestGLTFData, validVRM1) {
   auto rawJson = R"(
     {
       "asset": { "version": "1.0" },
@@ -1216,8 +1216,8 @@ TEST(TestGLTFData, validVRM) {
     }
   )";
   auto gltf = gltf2::GLTFFile::parseStream(std::istringstream(rawJson));
-  ASSERT_TRUE(gltf.json().vrm.has_value());
-  auto vrm = *gltf.json().vrm;
+  ASSERT_TRUE(gltf.json().vrm1.has_value());
+  auto vrm = *gltf.json().vrm1;
 
   ASSERT_EQ(vrm.specVersion, "1.0");
 
@@ -1231,17 +1231,16 @@ TEST(TestGLTFData, validVRM) {
   ASSERT_EQ(meta.thirdPartyLicenses, "thirdPartyLicenses");
   ASSERT_EQ(meta.licenseUrl, "https://vrm.dev/licenses/1.0");
   ASSERT_EQ(meta.avatarPermission,
-            VRMCMeta::AvatarPermissionType::ONLY_SEPARATELY_LICENSED_PERSION);
+            VRMCMeta::AvatarPermission::ONLY_SEPARATELY_LICENSED_PERSON);
   ASSERT_TRUE(meta.allowExcessivelyViolentUsage);
   ASSERT_TRUE(meta.allowExcessivelySexualUsage);
-  ASSERT_EQ(meta.commercialUsage,
-            VRMCMeta::CommercialUsageType::PERSONAL_PROFIT);
+  ASSERT_EQ(meta.commercialUsage, VRMCMeta::CommercialUsage::PERSONAL_PROFIT);
   ASSERT_TRUE(meta.allowPoliticalOrReligiousUsage);
   ASSERT_TRUE(meta.allowAntisocialOrHateUsage);
-  ASSERT_EQ(meta.creditNotation, VRMCMeta::CreditNotationType::UNNECESSARY);
+  ASSERT_EQ(meta.creditNotation, VRMCMeta::CreditNotation::UNNECESSARY);
   ASSERT_TRUE(meta.allowRedistribution);
   ASSERT_EQ(meta.modification,
-            VRMCMeta::ModificationType::ALLOW_MODIFICATION_REDISTRIBUTION);
+            VRMCMeta::Modification::ALLOW_MODIFICATION_REDISTRIBUTION);
   ASSERT_EQ(meta.otherLicenseUrl, "otherLicenseUrl");
 
   auto &humanBones = vrm.humanoid.humanBones;
@@ -1337,7 +1336,377 @@ TEST(TestGLTFData, validVRM) {
   ASSERT_EQ(happy.textureTransformBinds->at(0).offset->at(0), 1.0f);
   ASSERT_EQ(happy.textureTransformBinds->at(0).offset->at(1), 2.0f);
   ASSERT_EQ(happy.isBinary, true);
-  ASSERT_EQ(happy.overrideBlink, VRMCExpression::OverrideType::NONE);
-  ASSERT_EQ(happy.overrideLookAt, VRMCExpression::OverrideType::BLOCK);
-  ASSERT_EQ(happy.overrideMouth, VRMCExpression::OverrideType::BLEND);
+  ASSERT_EQ(happy.overrideBlink, VRMCExpression::Override::NONE);
+  ASSERT_EQ(happy.overrideLookAt, VRMCExpression::Override::BLOCK);
+  ASSERT_EQ(happy.overrideMouth, VRMCExpression::Override::BLEND);
+}
+
+TEST(TestGLTFData, validVRM0) {
+  auto rawJson = R"(
+    {
+      "asset": { "version": "1.0" },
+      "extensionsUsed": ["VRM"],
+      "extensions": {
+        "VRM": {
+          "exporterVersion": "UniVRM-0.46",
+          "specVersion": "0.0",
+          "meta": {
+            "title": "Sample VRM Model",
+            "version": "1.0",
+            "author": "John Doe",
+            "contactInformation": "john.doe@example.com",
+            "reference": "https://example.com/reference",
+            "texture": 1,
+            "allowedUserName": "Everyone",
+            "violentUssageName": "Allow",
+            "sexualUssageName": "Disallow",
+            "commercialUssageName": "Allow",
+            "otherPermissionUrl": "https://example.com/permissions",
+            "licenseName": "CC_BY",
+            "otherLicenseUrl": "https://example.com/other-license"
+          },
+          "humanoid": {
+            "humanBones": [
+              {
+                "bone": "hips",
+                "node": 0,
+                "useDefaultValues": true,
+                "min": { "x": -0.5, "y": -0.5, "z": -0.5 },
+                "max": { "x": 0.5, "y": 0.5, "z": 0.5 },
+                "center": { "x": 0.0, "y": 0.0, "z": 0.0 },
+                "axisLength": 1.0
+              },
+              {
+                "bone": "leftUpperLeg",
+                "node": 1,
+                "useDefaultValues": false,
+                "min": { "x": -0.3, "y": -0.3, "z": -0.3 },
+                "max": { "x": 0.3, "y": 0.3, "z": 0.3 },
+                "center": { "x": 0.1, "y": 0.1, "z": 0.1 },
+                "axisLength": 1.2
+              }
+            ],
+            "armStretch": 0.05,
+            "legStretch": 0.03,
+            "upperArmTwist": 0.5,
+            "lowerArmTwist": 0.4,
+            "upperLegTwist": 0.6,
+            "lowerLegTwist": 0.5,
+            "feetSpacing": 0.2,
+            "hasTranslationDoF": true
+          },
+          "firstPerson": {
+            "firstPersonBone": 1,
+            "firstPersonBoneOffset": {
+              "x": 0.0,
+              "y": 0.1,
+              "z": 0.2
+            },
+            "meshAnnotations": [
+              {
+                "mesh": 0,
+                "firstPersonFlag": "Auto"
+              }
+            ],
+            "lookAtTypeName": "Bone",
+            "lookAtHorizontalInner": {
+              "curve": [0.0, 0.5, 1.0, 1.5],
+              "xRange": 90.0,
+              "yRange": 10.0
+            },
+            "lookAtHorizontalOuter": {
+              "curve": [0.0, 0.5, 1.0, 1.5],
+              "xRange": 90.0,
+              "yRange": 10.0
+            },
+            "lookAtVerticalDown": {
+              "curve": [0.0, 0.5, 1.0, 1.5],
+              "xRange": 90.0,
+              "yRange": 10.0
+            },
+            "lookAtVerticalUp": {
+              "curve": [0.0, 0.5, 1.0, 1.5],
+              "xRange": 90.0,
+              "yRange": 10.0
+            }
+          },
+          "blendShapeMaster": {
+            "blendShapeGroups": [
+              {
+                "name": "smile",
+                "presetName": "joy",
+                "binds": [
+                  {
+                    "mesh": 0,
+                    "index": 1,
+                    "weight": 50.0
+                  }
+                ],
+                "materialValues": [
+                  {
+                    "materialName": "face",
+                    "propertyName": "_Color",
+                    "targetValue": [1.0, 0.5, 0.5, 1.0]
+                  }
+                ],
+                "isBinary": true
+              }
+            ]
+          },
+          "secondaryAnimation": {
+            "boneGroups": [
+              {
+                "comment": "Hair",
+                "stiffiness": 0.5,
+                "gravityPower": 0.98,
+                "gravityDir": { "x": 0.0, "y": -1.0, "z": 0.0 },
+                "dragForce": 0.3,
+                "center": 0,
+                "hitRadius": 0.2,
+                "bones": [1, 2, 3],
+                "colliderGroups": [0]
+              }
+            ],
+            "colliderGroups": [
+              {
+                "node": 0,
+                "colliders": [
+                  {
+                    "offset": { "x": 0.0, "y": 0.0, "z": 0.0 },
+                    "radius": 0.5
+                  }
+                ]
+              }
+            ]
+          },
+          "materialProperties": [
+            {
+              "name": "exampleMaterial",
+              "shader": "VRM/MToon",
+              "renderQueue": 2000,
+              "floatProperties": {
+                "_Cutoff": 0.5,
+                "_BumpScale": 1.0
+              },
+              "vectorProperties": {
+                "_MainTex": [1.0, 1.0, 0.0, 0.0],
+                "_Color": [1.0, 0.5, 0.5, 1.0]
+              },
+              "textureProperties": {
+                "_MainTex": 0,
+                "_BumpMap": 1
+              },
+              "keywordMap": {
+                "_ALPHABLEND_ON": true,
+                "_ALPHATEST_ON": false
+              },
+              "tagMap": {
+                "RenderType": "Transparent"
+              }
+            }
+          ]
+        }
+      }
+    }
+  )";
+  auto gltf = gltf2::GLTFFile::parseStream(std::istringstream(rawJson));
+  ASSERT_TRUE(gltf.json().vrm0.has_value());
+  auto vrm = *gltf.json().vrm0;
+
+  ASSERT_EQ(vrm.exporterVersion, "UniVRM-0.46");
+  ASSERT_EQ(vrm.specVersion, "0.0");
+
+  auto &meta = vrm.meta;
+  ASSERT_EQ(meta->title, "Sample VRM Model");
+  ASSERT_EQ(meta->version, "1.0");
+  ASSERT_EQ(meta->author, "John Doe");
+  ASSERT_EQ(meta->contactInformation, "john.doe@example.com");
+  ASSERT_EQ(meta->reference, "https://example.com/reference");
+  ASSERT_EQ(meta->texture, 1);
+  ASSERT_EQ(meta->allowedUserNameValue(), VRMMeta::AllowedUserName::EVERYONE);
+  ASSERT_EQ(meta->violentUsageValue(), VRMMeta::UsagePermission::ALLOW);
+  ASSERT_EQ(meta->sexualUsageValue(), VRMMeta::UsagePermission::DISALLOW);
+  ASSERT_EQ(meta->commercialUsageValue(), VRMMeta::UsagePermission::ALLOW);
+  ASSERT_EQ(meta->otherPermissionUrl, "https://example.com/permissions");
+  ASSERT_EQ(meta->licenseNameValue(), VRMMeta::LicenseName::CC_BY);
+  ASSERT_EQ(meta->otherLicenseUrl, "https://example.com/other-license");
+
+  auto &humanoid = vrm.humanoid;
+  ASSERT_EQ(humanoid->armStretch.value(), 0.05f);
+  ASSERT_EQ(humanoid->legStretch.value(), 0.03f);
+  ASSERT_EQ(humanoid->upperArmTwist.value(), 0.5f);
+  ASSERT_EQ(humanoid->lowerArmTwist.value(), 0.4f);
+  ASSERT_EQ(humanoid->upperLegTwist.value(), 0.6f);
+  ASSERT_EQ(humanoid->lowerLegTwist.value(), 0.5f);
+  ASSERT_EQ(humanoid->feetSpacing.value(), 0.2f);
+  ASSERT_TRUE(humanoid->hasTranslationDoF.value());
+
+  auto &humanBones = humanoid->humanBones;
+  ASSERT_EQ(humanBones->size(), 2);
+
+  auto &bone1 = humanBones->at(0);
+  ASSERT_EQ(bone1.bone, VRMHumanoidBone::Bone::HIPS);
+  ASSERT_EQ(bone1.node, 0);
+  ASSERT_TRUE(bone1.useDefaultValues.value());
+  ASSERT_EQ(bone1.min->x.value(), -0.5f);
+  ASSERT_EQ(bone1.min->y.value(), -0.5f);
+  ASSERT_EQ(bone1.min->z.value(), -0.5f);
+  ASSERT_EQ(bone1.max->x.value(), 0.5f);
+  ASSERT_EQ(bone1.max->y.value(), 0.5f);
+  ASSERT_EQ(bone1.max->z.value(), 0.5f);
+  ASSERT_EQ(bone1.center->x.value(), 0.0f);
+  ASSERT_EQ(bone1.center->y.value(), 0.0f);
+  ASSERT_EQ(bone1.center->z.value(), 0.0f);
+  ASSERT_EQ(bone1.axisLength.value(), 1.0f);
+
+  auto &bone2 = humanBones->at(1);
+  ASSERT_EQ(bone2.bone, VRMHumanoidBone::Bone::LEFT_UPPER_LEG);
+  ASSERT_EQ(bone2.node, 1);
+  ASSERT_FALSE(bone2.useDefaultValues.value());
+  ASSERT_EQ(bone2.min->x.value(), -0.3f);
+  ASSERT_EQ(bone2.min->y.value(), -0.3f);
+  ASSERT_EQ(bone2.min->z.value(), -0.3f);
+  ASSERT_EQ(bone2.max->x.value(), 0.3f);
+  ASSERT_EQ(bone2.max->y.value(), 0.3f);
+  ASSERT_EQ(bone2.max->z.value(), 0.3f);
+  ASSERT_EQ(bone2.center->x.value(), 0.1f);
+  ASSERT_EQ(bone2.center->y.value(), 0.1f);
+  ASSERT_EQ(bone2.center->z.value(), 0.1f);
+  ASSERT_EQ(bone2.axisLength.value(), 1.2f);
+
+  auto &firstPerson = vrm.firstPerson;
+  ASSERT_EQ(firstPerson->firstPersonBone.value(), 1);
+  ASSERT_EQ(firstPerson->firstPersonBoneOffset->x.value(), 0.0f);
+  ASSERT_EQ(firstPerson->firstPersonBoneOffset->y.value(), 0.1f);
+  ASSERT_EQ(firstPerson->firstPersonBoneOffset->z.value(), 0.2f);
+
+  ASSERT_EQ(firstPerson->meshAnnotations->size(), 1);
+  ASSERT_EQ(firstPerson->meshAnnotations->at(0).mesh, 0);
+  ASSERT_EQ(firstPerson->meshAnnotations->at(0).firstPersonFlag, "Auto");
+
+  ASSERT_EQ(firstPerson->lookAtTypeName.value(), "Bone");
+
+  auto &horizontalInner = firstPerson->lookAtHorizontalInner.value();
+  ASSERT_EQ(horizontalInner.curve->size(), 4);
+  ASSERT_EQ(horizontalInner.curve->at(0), 0.0f);
+  ASSERT_EQ(horizontalInner.curve->at(1), 0.5f);
+  ASSERT_EQ(horizontalInner.curve->at(2), 1.0f);
+  ASSERT_EQ(horizontalInner.curve->at(3), 1.5f);
+  ASSERT_EQ(horizontalInner.xRange.value(), 90.0f);
+  ASSERT_EQ(horizontalInner.yRange.value(), 10.0f);
+
+  auto &horizontalOuter = firstPerson->lookAtHorizontalOuter.value();
+  ASSERT_EQ(horizontalOuter.curve->size(), 4);
+  ASSERT_EQ(horizontalOuter.curve->at(0), 0.0f);
+  ASSERT_EQ(horizontalOuter.curve->at(1), 0.5f);
+  ASSERT_EQ(horizontalOuter.curve->at(2), 1.0f);
+  ASSERT_EQ(horizontalOuter.curve->at(3), 1.5f);
+  ASSERT_EQ(horizontalOuter.xRange.value(), 90.0f);
+  ASSERT_EQ(horizontalOuter.yRange.value(), 10.0f);
+
+  auto &verticalDown = firstPerson->lookAtVerticalDown.value();
+  ASSERT_EQ(verticalDown.curve->size(), 4);
+  ASSERT_EQ(verticalDown.curve->at(0), 0.0f);
+  ASSERT_EQ(verticalDown.curve->at(1), 0.5f);
+  ASSERT_EQ(verticalDown.curve->at(2), 1.0f);
+  ASSERT_EQ(verticalDown.curve->at(3), 1.5f);
+  ASSERT_EQ(verticalDown.xRange.value(), 90.0f);
+  ASSERT_EQ(verticalDown.yRange.value(), 10.0f);
+
+  auto &verticalUp = firstPerson->lookAtVerticalUp.value();
+  ASSERT_EQ(verticalUp.curve->size(), 4);
+  ASSERT_EQ(verticalUp.curve->at(0), 0.0f);
+  ASSERT_EQ(verticalUp.curve->at(1), 0.5f);
+  ASSERT_EQ(verticalUp.curve->at(2), 1.0f);
+  ASSERT_EQ(verticalUp.curve->at(3), 1.5f);
+  ASSERT_EQ(verticalUp.xRange.value(), 90.0f);
+  ASSERT_EQ(verticalUp.yRange.value(), 10.0f);
+
+  auto &blendShape = vrm.blendShapeMaster;
+  ASSERT_EQ(blendShape->blendShapeGroups->size(), 1);
+
+  auto &blendShapeGroup = blendShape->blendShapeGroups->at(0);
+  ASSERT_EQ(blendShapeGroup.name, "smile");
+  ASSERT_EQ(blendShapeGroup.presetName.value(),
+            VRMBlendShapeGroup::PresetName::JOY);
+  ASSERT_EQ(blendShapeGroup.binds->size(), 1);
+  ASSERT_EQ(blendShapeGroup.materialValues->size(), 1);
+  ASSERT_TRUE(blendShapeGroup.isBinary.value());
+
+  auto &bind = blendShapeGroup.binds->at(0);
+  ASSERT_EQ(bind.mesh, 0);
+  ASSERT_EQ(bind.index, 1);
+  ASSERT_EQ(bind.weight, 50.0f);
+
+  auto &materialBind = blendShapeGroup.materialValues->at(0);
+  ASSERT_EQ(materialBind.materialName, "face");
+  ASSERT_EQ(materialBind.propertyName, "_Color");
+  ASSERT_EQ(materialBind.targetValue->size(), 4);
+  ASSERT_EQ(materialBind.targetValue->at(0), 1.0f);
+  ASSERT_EQ(materialBind.targetValue->at(1), 0.5f);
+  ASSERT_EQ(materialBind.targetValue->at(2), 0.5f);
+  ASSERT_EQ(materialBind.targetValue->at(3), 1.0f);
+
+  auto &secondaryAnimation = vrm.secondaryAnimation;
+  ASSERT_EQ(secondaryAnimation->boneGroups->size(), 1);
+  ASSERT_EQ(secondaryAnimation->colliderGroups->size(), 1);
+
+  auto &boneGroup = secondaryAnimation->boneGroups->at(0);
+  ASSERT_EQ(boneGroup.comment, "Hair");
+  ASSERT_EQ(boneGroup.stiffiness.value(), 0.5f);
+  ASSERT_EQ(boneGroup.gravityPower.value(), 0.98f);
+  ASSERT_EQ(boneGroup.gravityDir->x.value(), 0.0f);
+  ASSERT_EQ(boneGroup.gravityDir->y.value(), -1.0f);
+  ASSERT_EQ(boneGroup.gravityDir->z.value(), 0.0f);
+  ASSERT_EQ(boneGroup.dragForce.value(), 0.3f);
+  ASSERT_EQ(boneGroup.center.value(), 0);
+  ASSERT_EQ(boneGroup.hitRadius.value(), 0.2f);
+  ASSERT_EQ(boneGroup.bones->size(), 3);
+  ASSERT_EQ(boneGroup.bones->at(0), 1);
+  ASSERT_EQ(boneGroup.bones->at(1), 2);
+  ASSERT_EQ(boneGroup.bones->at(2), 3);
+  ASSERT_EQ(boneGroup.colliderGroups->size(), 1);
+  ASSERT_EQ(boneGroup.colliderGroups->at(0), 0);
+
+  auto &colliderGroup = secondaryAnimation->colliderGroups->at(0);
+  ASSERT_EQ(colliderGroup.node, 0);
+  ASSERT_EQ(colliderGroup.colliders->size(), 1);
+
+  auto &collider = colliderGroup.colliders->at(0);
+  ASSERT_EQ(collider.offset->x.value(), 0.0f);
+  ASSERT_EQ(collider.offset->y.value(), 0.0f);
+  ASSERT_EQ(collider.offset->z.value(), 0.0f);
+  ASSERT_EQ(collider.radius.value(), 0.5f);
+
+  auto &material = vrm.materialProperties->at(0);
+  ASSERT_EQ(material.name, "exampleMaterial");
+  ASSERT_EQ(material.shader, "VRM/MToon");
+  ASSERT_EQ(material.renderQueue.value(), 2000);
+
+  ASSERT_EQ(material.floatProperties->size(), 2);
+  ASSERT_EQ(material.floatProperties->at("_Cutoff"), 0.5f);
+  ASSERT_EQ(material.floatProperties->at("_BumpScale"), 1.0f);
+
+  ASSERT_EQ(material.vectorProperties->size(), 2);
+  ASSERT_EQ(material.vectorProperties->at("_MainTex").size(), 4);
+  ASSERT_EQ(material.vectorProperties->at("_MainTex")[0], 1.0f);
+  ASSERT_EQ(material.vectorProperties->at("_MainTex")[1], 1.0f);
+  ASSERT_EQ(material.vectorProperties->at("_MainTex")[2], 0.0f);
+  ASSERT_EQ(material.vectorProperties->at("_MainTex")[3], 0.0f);
+  ASSERT_EQ(material.vectorProperties->at("_Color").size(), 4);
+  ASSERT_EQ(material.vectorProperties->at("_Color")[0], 1.0f);
+  ASSERT_EQ(material.vectorProperties->at("_Color")[1], 0.5f);
+  ASSERT_EQ(material.vectorProperties->at("_Color")[2], 0.5f);
+  ASSERT_EQ(material.vectorProperties->at("_Color")[3], 1.0f);
+
+  ASSERT_EQ(material.textureProperties->size(), 2);
+  ASSERT_EQ(material.textureProperties->at("_MainTex"), 0);
+  ASSERT_EQ(material.textureProperties->at("_BumpMap"), 1);
+
+  ASSERT_EQ(material.keywordMap->size(), 2);
+  ASSERT_TRUE(material.keywordMap->at("_ALPHABLEND_ON"));
+  ASSERT_FALSE(material.keywordMap->at("_ALPHATEST_ON"));
+
+  ASSERT_EQ(material.tagMap->size(), 1);
+  ASSERT_EQ(material.tagMap->at("RenderType"), "Transparent");
 }

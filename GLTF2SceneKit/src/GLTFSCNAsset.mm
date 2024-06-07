@@ -1430,9 +1430,7 @@ CAAnimationCalculationModeFromGLTFAnimationSamplerInterpolation(
   assert(inputAccessor.type == gltf2::GLTFAccessor::Type::SCALAR &&
          inputAccessor.componentType ==
              gltf2::GLTFAccessor::ComponentType::FLOAT);
-  const auto &inputData =
-      data.accessorBufferAt(sampler.input)
-          .buffer; // data.binaryForAccessor(inputAccessor, nil);
+  const auto &inputData = data.accessorBufferAt(sampler.input).buffer;
   NSArray<NSNumber *> *array = NSArrayFromPackedFloatData(inputData);
   float max = inputAccessor.max.has_value() ? inputAccessor.max.value()[0]
                                             : array.lastObject.floatValue;

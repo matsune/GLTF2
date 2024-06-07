@@ -812,65 +812,65 @@ public:
 
 class VRMCMeta {
 public:
-  enum class AvatarPermissionType {
+  enum class AvatarPermission {
     ONLY_AUTHOR,
-    ONLY_SEPARATELY_LICENSED_PERSION,
+    ONLY_SEPARATELY_LICENSED_PERSON,
     EVERYONE
   };
 
-  enum class CommercialUsageType {
+  enum class CommercialUsage {
     PERSONAL_NON_PROFIT,
     PERSONAL_PROFIT,
     CORPORATION
   };
 
-  enum class CreditNotationType { REQUIRED, UNNECESSARY };
+  enum class CreditNotation { REQUIRED, UNNECESSARY };
 
-  enum class ModificationType {
+  enum class Modification {
     PROHIBITED,
     ALLOW_MODIFICATION,
     ALLOW_MODIFICATION_REDISTRIBUTION
   };
 
-  static std::optional<AvatarPermissionType>
+  static std::optional<AvatarPermission>
   AvatarPermissionFromString(const std::string &value) {
     if (value == "onlyAuthor")
-      return AvatarPermissionType::ONLY_AUTHOR;
+      return AvatarPermission::ONLY_AUTHOR;
     if (value == "onlySeparatelyLicensedPerson")
-      return AvatarPermissionType::ONLY_SEPARATELY_LICENSED_PERSION;
+      return AvatarPermission::ONLY_SEPARATELY_LICENSED_PERSON;
     if (value == "everyone")
-      return AvatarPermissionType::EVERYONE;
+      return AvatarPermission::EVERYONE;
     return std::nullopt;
   }
 
-  static std::optional<CommercialUsageType>
+  static std::optional<CommercialUsage>
   CommercialUsageFromString(const std::string &value) {
     if (value == "personalNonProfit")
-      return CommercialUsageType::PERSONAL_NON_PROFIT;
+      return CommercialUsage::PERSONAL_NON_PROFIT;
     if (value == "personalProfit")
-      return CommercialUsageType::PERSONAL_PROFIT;
+      return CommercialUsage::PERSONAL_PROFIT;
     if (value == "corporation")
-      return CommercialUsageType::CORPORATION;
+      return CommercialUsage::CORPORATION;
     return std::nullopt;
   }
 
-  static std::optional<CreditNotationType>
+  static std::optional<CreditNotation>
   CreditNotationFromString(const std::string &value) {
     if (value == "required")
-      return CreditNotationType::REQUIRED;
+      return CreditNotation::REQUIRED;
     if (value == "unnecessary")
-      return CreditNotationType::UNNECESSARY;
+      return CreditNotation::UNNECESSARY;
     return std::nullopt;
   }
 
-  static std::optional<ModificationType>
+  static std::optional<Modification>
   ModificationFromString(const std::string &value) {
     if (value == "prohibited")
-      return ModificationType::PROHIBITED;
+      return Modification::PROHIBITED;
     if (value == "allowModification")
-      return ModificationType::ALLOW_MODIFICATION;
+      return Modification::ALLOW_MODIFICATION;
     if (value == "allowModificationRedistribution")
-      return ModificationType::ALLOW_MODIFICATION_REDISTRIBUTION;
+      return Modification::ALLOW_MODIFICATION_REDISTRIBUTION;
     return std::nullopt;
   }
 
@@ -883,19 +883,19 @@ public:
   std::optional<std::string> thirdPartyLicenses;
   std::optional<uint32_t> thumbnailImage;
   std::string licenseUrl;
-  std::optional<AvatarPermissionType> avatarPermission;
+  std::optional<AvatarPermission> avatarPermission;
   std::optional<bool> allowExcessivelyViolentUsage;
   std::optional<bool> allowExcessivelySexualUsage;
-  std::optional<CommercialUsageType> commercialUsage;
+  std::optional<CommercialUsage> commercialUsage;
   std::optional<bool> allowPoliticalOrReligiousUsage;
   std::optional<bool> allowAntisocialOrHateUsage;
-  std::optional<CreditNotationType> creditNotation;
+  std::optional<CreditNotation> creditNotation;
   std::optional<bool> allowRedistribution;
-  std::optional<ModificationType> modification;
+  std::optional<Modification> modification;
   std::optional<std::string> otherLicenseUrl;
 
-  AvatarPermissionType avatarPermissionValue() const {
-    return avatarPermission.value_or(AvatarPermissionType::ONLY_AUTHOR);
+  AvatarPermission avatarPermissionValue() const {
+    return avatarPermission.value_or(AvatarPermission::ONLY_AUTHOR);
   }
 
   bool allowExcessivelyViolentUsageValue() const {
@@ -906,8 +906,8 @@ public:
     return allowExcessivelySexualUsage.value_or(false);
   }
 
-  CommercialUsageType commercialUsageValue() const {
-    return commercialUsage.value_or(CommercialUsageType::PERSONAL_NON_PROFIT);
+  CommercialUsage commercialUsageValue() const {
+    return commercialUsage.value_or(CommercialUsage::PERSONAL_NON_PROFIT);
   }
 
   bool allowPoliticalOrReligiousUsageValue() const {
@@ -918,12 +918,12 @@ public:
     return allowAntisocialOrHateUsage.value_or(false);
   }
 
-  CreditNotationType creditNotationValue() const {
-    return creditNotation.value_or(CreditNotationType::REQUIRED);
+  CreditNotation creditNotationValue() const {
+    return creditNotation.value_or(CreditNotation::REQUIRED);
   }
 
-  ModificationType modificationValue() const {
-    return modification.value_or(ModificationType::PROHIBITED);
+  Modification modificationValue() const {
+    return modification.value_or(Modification::PROHIBITED);
   }
 };
 
@@ -1106,16 +1106,15 @@ public:
 
 class VRMCExpression {
 public:
-  enum class OverrideType { NONE, BLOCK, BLEND };
+  enum class Override { NONE, BLOCK, BLEND };
 
-  static std::optional<OverrideType>
-  OverrideTypeFromString(const std::string &value) {
+  static std::optional<Override> OverrideFromString(const std::string &value) {
     if (value == "none")
-      return OverrideType::NONE;
+      return Override::NONE;
     else if (value == "block")
-      return OverrideType::BLOCK;
+      return Override::BLOCK;
     else if (value == "blend")
-      return OverrideType::BLEND;
+      return Override::BLEND;
     else
       return std::nullopt;
   }
@@ -1126,22 +1125,22 @@ public:
   std::optional<std::vector<VRMCExpressionTextureTransformBind>>
       textureTransformBinds;
   std::optional<bool> isBinary;
-  std::optional<OverrideType> overrideBlink;
-  std::optional<OverrideType> overrideLookAt;
-  std::optional<OverrideType> overrideMouth;
+  std::optional<Override> overrideBlink;
+  std::optional<Override> overrideLookAt;
+  std::optional<Override> overrideMouth;
 
   bool isBinaryValue() const { return isBinary.value_or(false); }
 
-  OverrideType overrideBlinkValue() const {
-    return overrideBlink.value_or(OverrideType::NONE);
+  Override overrideBlinkValue() const {
+    return overrideBlink.value_or(Override::NONE);
   }
 
-  OverrideType overrideLookAtValue() const {
-    return overrideLookAt.value_or(OverrideType::NONE);
+  Override overrideLookAtValue() const {
+    return overrideLookAt.value_or(Override::NONE);
   }
 
-  OverrideType overrideMouthValue() const {
-    return overrideMouth.value_or(OverrideType::NONE);
+  Override overrideMouthValue() const {
+    return overrideMouth.value_or(Override::NONE);
   }
 };
 
@@ -1183,6 +1182,480 @@ public:
   std::optional<VRMCExpressions> expressions;
 };
 
+// VRM0
+
+struct VRMVec3 {
+  std::optional<float> x;
+  std::optional<float> y;
+  std::optional<float> z;
+};
+
+class VRMHumanoidBone {
+public:
+  enum class Bone {
+    HIPS,
+    LEFT_UPPER_LEG,
+    RIGHT_UPPER_LEG,
+    LEFT_LOWER_LEG,
+    RIGHT_LOWER_LEG,
+    LEFT_FOOT,
+    RIGHT_FOOT,
+    SPINE,
+    CHEST,
+    NECK,
+    HEAD,
+    LEFT_SHOULDER,
+    RIGHT_SHOULDER,
+    LEFT_UPPER_ARM,
+    RIGHT_UPPER_ARM,
+    LEFT_LOWER_ARM,
+    RIGHT_LOWER_ARM,
+    LEFT_HAND,
+    RIGHT_HAND,
+    LEFT_TOES,
+    RIGHT_TOES,
+    LEFT_EYE,
+    RIGHT_EYE,
+    JAW,
+    LEFT_THUMB_PROXIMAL,
+    LEFT_THUMB_INTERMEDIATE,
+    LEFT_THUMB_DISTAL,
+    LEFT_INDEX_PROXIMAL,
+    LEFT_INDEX_INTERMEDIATE,
+    LEFT_INDEX_DISTAL,
+    LEFT_MIDDLE_PROXIMAL,
+    LEFT_MIDDLE_INTERMEDIATE,
+    LEFT_MIDDLE_DISTAL,
+    LEFT_RING_PROXIMAL,
+    LEFT_RING_INTERMEDIATE,
+    LEFT_RING_DISTAL,
+    LEFT_LITTLE_PROXIMAL,
+    LEFT_LITTLE_INTERMEDIATE,
+    LEFT_LITTLE_DISTAL,
+    RIGHT_THUMB_PROXIMAL,
+    RIGHT_THUMB_INTERMEDIATE,
+    RIGHT_THUMB_DISTAL,
+    RIGHT_INDEX_PROXIMAL,
+    RIGHT_INDEX_INTERMEDIATE,
+    RIGHT_INDEX_DISTAL,
+    RIGHT_MIDDLE_PROXIMAL,
+    RIGHT_MIDDLE_INTERMEDIATE,
+    RIGHT_MIDDLE_DISTAL,
+    RIGHT_RING_PROXIMAL,
+    RIGHT_RING_INTERMEDIATE,
+    RIGHT_RING_DISTAL,
+    RIGHT_LITTLE_PROXIMAL,
+    RIGHT_LITTLE_INTERMEDIATE,
+    RIGHT_LITTLE_DISTAL,
+    UPPER_CHEST
+  };
+
+  static std::optional<Bone> BoneFromString(const std::string &value) {
+    if (value == "hips")
+      return Bone::HIPS;
+    if (value == "leftUpperLeg")
+      return Bone::LEFT_UPPER_LEG;
+    if (value == "rightUpperLeg")
+      return Bone::RIGHT_UPPER_LEG;
+    if (value == "leftLowerLeg")
+      return Bone::LEFT_LOWER_LEG;
+    if (value == "rightLowerLeg")
+      return Bone::RIGHT_LOWER_LEG;
+    if (value == "leftFoot")
+      return Bone::LEFT_FOOT;
+    if (value == "rightFoot")
+      return Bone::RIGHT_FOOT;
+    if (value == "spine")
+      return Bone::SPINE;
+    if (value == "chest")
+      return Bone::CHEST;
+    if (value == "neck")
+      return Bone::NECK;
+    if (value == "head")
+      return Bone::HEAD;
+    if (value == "leftShoulder")
+      return Bone::LEFT_SHOULDER;
+    if (value == "rightShoulder")
+      return Bone::RIGHT_SHOULDER;
+    if (value == "leftUpperArm")
+      return Bone::LEFT_UPPER_ARM;
+    if (value == "rightUpperArm")
+      return Bone::RIGHT_UPPER_ARM;
+    if (value == "leftLowerArm")
+      return Bone::LEFT_LOWER_ARM;
+    if (value == "rightLowerArm")
+      return Bone::RIGHT_LOWER_ARM;
+    if (value == "leftHand")
+      return Bone::LEFT_HAND;
+    if (value == "rightHand")
+      return Bone::RIGHT_HAND;
+    if (value == "leftToes")
+      return Bone::LEFT_TOES;
+    if (value == "rightToes")
+      return Bone::RIGHT_TOES;
+    if (value == "leftEye")
+      return Bone::LEFT_EYE;
+    if (value == "rightEye")
+      return Bone::RIGHT_EYE;
+    if (value == "jaw")
+      return Bone::JAW;
+    if (value == "leftThumbProximal")
+      return Bone::LEFT_THUMB_PROXIMAL;
+    if (value == "leftThumbIntermediate")
+      return Bone::LEFT_THUMB_INTERMEDIATE;
+    if (value == "leftThumbDistal")
+      return Bone::LEFT_THUMB_DISTAL;
+    if (value == "leftIndexProximal")
+      return Bone::LEFT_INDEX_PROXIMAL;
+    if (value == "leftIndexIntermediate")
+      return Bone::LEFT_INDEX_INTERMEDIATE;
+    if (value == "leftIndexDistal")
+      return Bone::LEFT_INDEX_DISTAL;
+    if (value == "leftMiddleProximal")
+      return Bone::LEFT_MIDDLE_PROXIMAL;
+    if (value == "leftMiddleIntermediate")
+      return Bone::LEFT_MIDDLE_INTERMEDIATE;
+    if (value == "leftMiddleDistal")
+      return Bone::LEFT_MIDDLE_DISTAL;
+    if (value == "leftRingProximal")
+      return Bone::LEFT_RING_PROXIMAL;
+    if (value == "leftRingIntermediate")
+      return Bone::LEFT_RING_INTERMEDIATE;
+    if (value == "leftRingDistal")
+      return Bone::LEFT_RING_DISTAL;
+    if (value == "leftLittleProximal")
+      return Bone::LEFT_LITTLE_PROXIMAL;
+    if (value == "leftLittleIntermediate")
+      return Bone::LEFT_LITTLE_INTERMEDIATE;
+    if (value == "leftLittleDistal")
+      return Bone::LEFT_LITTLE_DISTAL;
+    if (value == "rightThumbProximal")
+      return Bone::RIGHT_THUMB_PROXIMAL;
+    if (value == "rightThumbIntermediate")
+      return Bone::RIGHT_THUMB_INTERMEDIATE;
+    if (value == "rightThumbDistal")
+      return Bone::RIGHT_THUMB_DISTAL;
+    if (value == "rightIndexProximal")
+      return Bone::RIGHT_INDEX_PROXIMAL;
+    if (value == "rightIndexIntermediate")
+      return Bone::RIGHT_INDEX_INTERMEDIATE;
+    if (value == "rightIndexDistal")
+      return Bone::RIGHT_INDEX_DISTAL;
+    if (value == "rightMiddleProximal")
+      return Bone::RIGHT_MIDDLE_PROXIMAL;
+    if (value == "rightMiddleIntermediate")
+      return Bone::RIGHT_MIDDLE_INTERMEDIATE;
+    if (value == "rightMiddleDistal")
+      return Bone::RIGHT_MIDDLE_DISTAL;
+    if (value == "rightRingProximal")
+      return Bone::RIGHT_RING_PROXIMAL;
+    if (value == "rightRingIntermediate")
+      return Bone::RIGHT_RING_INTERMEDIATE;
+    if (value == "rightRingDistal")
+      return Bone::RIGHT_RING_DISTAL;
+    if (value == "rightLittleProximal")
+      return Bone::RIGHT_LITTLE_PROXIMAL;
+    if (value == "rightLittleIntermediate")
+      return Bone::RIGHT_LITTLE_INTERMEDIATE;
+    if (value == "rightLittleDistal")
+      return Bone::RIGHT_LITTLE_DISTAL;
+    if (value == "upperChest")
+      return Bone::UPPER_CHEST;
+    return std::nullopt;
+  }
+
+  std::optional<Bone> bone;
+  std::optional<uint32_t> node;
+  std::optional<bool> useDefaultValues;
+  std::optional<VRMVec3> min;
+  std::optional<VRMVec3> max;
+  std::optional<VRMVec3> center;
+  std::optional<float> axisLength;
+};
+
+class VRMHumanoid {
+public:
+  std::optional<std::vector<VRMHumanoidBone>> humanBones;
+  std::optional<float> armStretch;
+  std::optional<float> legStretch;
+  std::optional<float> upperArmTwist;
+  std::optional<float> lowerArmTwist;
+  std::optional<float> upperLegTwist;
+  std::optional<float> lowerLegTwist;
+  std::optional<float> feetSpacing;
+  std::optional<bool> hasTranslationDoF;
+};
+
+class VRMMeta {
+public:
+  enum class AllowedUserName {
+    ONLY_AUTHOR,
+    EXPLICITLY_LICENSED_PERSON,
+    EVERYONE
+  };
+
+  enum class UsagePermission { DISALLOW, ALLOW };
+
+  enum class LicenseName {
+    REDISTRIBUTION_PROHIBITED,
+    CC0,
+    CC_BY,
+    CC_BY_NC,
+    CC_BY_SA,
+    CC_BY_NC_SA,
+    CC_BY_ND,
+    CC_BY_NC_ND,
+    OTHER
+  };
+
+  static std::optional<AllowedUserName>
+  AllowedUserNameFromString(const std::string &value) {
+    if (value == "OnlyAuthor")
+      return AllowedUserName::ONLY_AUTHOR;
+    if (value == "ExplicitlyLicensedPerson")
+      return AllowedUserName::EXPLICITLY_LICENSED_PERSON;
+    if (value == "Everyone")
+      return AllowedUserName::EVERYONE;
+    return std::nullopt;
+  }
+
+  static std::optional<UsagePermission>
+  UsagePermissionFromString(const std::string &value) {
+    if (value == "Disallow")
+      return UsagePermission::DISALLOW;
+    if (value == "Allow")
+      return UsagePermission::ALLOW;
+    return std::nullopt;
+  }
+
+  static std::optional<LicenseName>
+  LicenseNameFromString(const std::string &value) {
+    if (value == "Redistribution_Prohibited")
+      return LicenseName::REDISTRIBUTION_PROHIBITED;
+    if (value == "CC0")
+      return LicenseName::CC0;
+    if (value == "CC_BY")
+      return LicenseName::CC_BY;
+    if (value == "CC_BY_NC")
+      return LicenseName::CC_BY_NC;
+    if (value == "CC_BY_SA")
+      return LicenseName::CC_BY_SA;
+    if (value == "CC_BY_NC_SA")
+      return LicenseName::CC_BY_NC_SA;
+    if (value == "CC_BY_ND")
+      return LicenseName::CC_BY_ND;
+    if (value == "CC_BY_NC_ND")
+      return LicenseName::CC_BY_NC_ND;
+    if (value == "Other")
+      return LicenseName::OTHER;
+    return std::nullopt;
+  }
+
+  std::optional<std::string> title;
+  std::optional<std::string> version;
+  std::optional<std::string> author;
+  std::optional<std::string> contactInformation;
+  std::optional<std::string> reference;
+  std::optional<uint32_t> texture;
+  std::optional<AllowedUserName> allowedUserName;
+  std::optional<UsagePermission> violentUsage;
+  std::optional<UsagePermission> sexualUsage;
+  std::optional<UsagePermission> commercialUsage;
+  std::optional<std::string> otherPermissionUrl;
+  std::optional<LicenseName> licenseName;
+  std::optional<std::string> otherLicenseUrl;
+
+  AllowedUserName allowedUserNameValue() const {
+    return allowedUserName.value_or(AllowedUserName::ONLY_AUTHOR);
+  }
+
+  UsagePermission violentUsageValue() const {
+    return violentUsage.value_or(UsagePermission::DISALLOW);
+  }
+
+  UsagePermission sexualUsageValue() const {
+    return sexualUsage.value_or(UsagePermission::DISALLOW);
+  }
+
+  UsagePermission commercialUsageValue() const {
+    return commercialUsage.value_or(UsagePermission::DISALLOW);
+  }
+
+  LicenseName licenseNameValue() const {
+    return licenseName.value_or(LicenseName::REDISTRIBUTION_PROHIBITED);
+  }
+};
+
+class VRMMeshAnnotation {
+public:
+  std::optional<uint32_t> mesh;
+  std::optional<std::string> firstPersonFlag;
+};
+
+class VRMDegreeMap {
+public:
+  std::optional<std::vector<float>> curve;
+  std::optional<float> xRange;
+  std::optional<float> yRange;
+};
+
+class VRMFirstPerson {
+public:
+  std::optional<uint32_t> firstPersonBone;
+  std::optional<VRMVec3> firstPersonBoneOffset;
+  std::optional<std::vector<VRMMeshAnnotation>> meshAnnotations;
+  std::optional<std::string> lookAtTypeName;
+  std::optional<VRMDegreeMap> lookAtHorizontalInner;
+  std::optional<VRMDegreeMap> lookAtHorizontalOuter;
+  std::optional<VRMDegreeMap> lookAtVerticalDown;
+  std::optional<VRMDegreeMap> lookAtVerticalUp;
+};
+
+class VRMBlendShapeBind {
+public:
+  std::optional<uint32_t> mesh;
+  std::optional<uint32_t> index;
+  std::optional<float> weight;
+};
+
+class VRMBlendShapeMaterialBind {
+public:
+  std::optional<std::string> materialName;
+  std::optional<std::string> propertyName;
+  std::optional<std::vector<float>> targetValue;
+};
+
+class VRMBlendShapeGroup {
+public:
+  enum class PresetName {
+    UNKNOWN,
+    NEUTRAL,
+    A,
+    I,
+    U,
+    E,
+    O,
+    BLINK,
+    JOY,
+    ANGRY,
+    SORROW,
+    FUN,
+    LOOKUP,
+    LOOKDOWN,
+    LOOKLEFT,
+    LOOKRIGHT,
+    BLINK_L,
+    BLINK_R
+  };
+
+  static std::optional<PresetName>
+  PresetNameFromString(const std::string &value) {
+    if (value == "unknown")
+      return PresetName::UNKNOWN;
+    if (value == "neutral")
+      return PresetName::NEUTRAL;
+    if (value == "a")
+      return PresetName::A;
+    if (value == "i")
+      return PresetName::I;
+    if (value == "u")
+      return PresetName::U;
+    if (value == "e")
+      return PresetName::E;
+    if (value == "o")
+      return PresetName::O;
+    if (value == "blink")
+      return PresetName::BLINK;
+    if (value == "joy")
+      return PresetName::JOY;
+    if (value == "angry")
+      return PresetName::ANGRY;
+    if (value == "sorrow")
+      return PresetName::SORROW;
+    if (value == "fun")
+      return PresetName::FUN;
+    if (value == "lookup")
+      return PresetName::LOOKUP;
+    if (value == "lookdown")
+      return PresetName::LOOKDOWN;
+    if (value == "lookleft")
+      return PresetName::LOOKLEFT;
+    if (value == "lookright")
+      return PresetName::LOOKRIGHT;
+    if (value == "blink_l")
+      return PresetName::BLINK_L;
+    if (value == "blink_r")
+      return PresetName::BLINK_R;
+    return std::nullopt;
+  }
+
+  std::optional<std::string> name;
+  std::optional<PresetName> presetName;
+  std::optional<std::vector<VRMBlendShapeBind>> binds;
+  std::optional<std::vector<VRMBlendShapeMaterialBind>> materialValues;
+  std::optional<bool> isBinary;
+};
+
+class VRMBlendShape {
+public:
+  std::optional<std::vector<VRMBlendShapeGroup>> blendShapeGroups;
+};
+
+class VRMSecondaryAnimationCollider {
+public:
+  std::optional<VRMVec3> offset;
+  std::optional<float> radius;
+};
+
+class VRMSecondaryAnimationColliderGroup {
+public:
+  std::optional<uint32_t> node;
+  std::optional<std::vector<VRMSecondaryAnimationCollider>> colliders;
+};
+
+class VRMSecondaryAnimationSpring {
+public:
+  std::optional<std::string> comment;
+  std::optional<float> stiffiness;
+  std::optional<float> gravityPower;
+  std::optional<VRMVec3> gravityDir;
+  std::optional<float> dragForce;
+  std::optional<uint32_t> center;
+  std::optional<float> hitRadius;
+  std::optional<std::vector<uint32_t>> bones;
+  std::optional<std::vector<uint32_t>> colliderGroups;
+};
+
+class VRMSecondaryAnimation {
+public:
+  std::optional<std::vector<VRMSecondaryAnimationSpring>> boneGroups;
+  std::optional<std::vector<VRMSecondaryAnimationColliderGroup>> colliderGroups;
+};
+
+class VRMMaterial {
+public:
+  std::optional<std::string> name;
+  std::optional<std::string> shader;
+  std::optional<uint32_t> renderQueue;
+  std::optional<std::map<std::string, float>> floatProperties;
+  std::optional<std::map<std::string, std::vector<float>>> vectorProperties;
+  std::optional<std::map<std::string, uint32_t>> textureProperties;
+  std::optional<std::map<std::string, bool>> keywordMap;
+  std::optional<std::map<std::string, std::string>> tagMap;
+};
+
+class VRMVrm {
+public:
+  std::optional<std::string> exporterVersion;
+  std::optional<std::string> specVersion;
+  std::optional<VRMMeta> meta;
+  std::optional<VRMHumanoid> humanoid;
+  std::optional<VRMFirstPerson> firstPerson;
+  std::optional<VRMBlendShape> blendShapeMaster;
+  std::optional<VRMSecondaryAnimation> secondaryAnimation;
+  std::optional<std::vector<VRMMaterial>> materialProperties;
+};
+
 // Json
 
 class GLTFJson {
@@ -1205,7 +1678,8 @@ public:
   std::optional<std::vector<GLTFSkin>> skins;
   std::optional<std::vector<GLTFTexture>> textures;
   std::optional<std::vector<KHRLight>> lights;
-  std::optional<VRMCVrm> vrm;
+  std::optional<VRMVrm> vrm0;
+  std::optional<VRMCVrm> vrm1;
 };
 
 }; // namespace gltf2

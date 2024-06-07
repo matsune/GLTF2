@@ -21,6 +21,7 @@ extern const std::string GLTFExtensionKHRMaterialsUnlit;
 extern const std::string GLTFExtensionKHRMaterialsVolume;
 extern const std::string GLTFExtensionKHRTextureTransform;
 
+extern const std::string GLTFExtensionVRM;
 extern const std::string GLTFExtensionVRMCvrm;
 
 } // namespace gltf2

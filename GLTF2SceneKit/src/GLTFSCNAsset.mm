@@ -4,6 +4,44 @@
 #include <memory>
 #include <unordered_map>
 
+const NSString *VRM0BlendShapePresetUnknown = @"unknown";
+const NSString *VRM0BlendShapePresetNeutral = @"neutral";
+const NSString *VRM0BlendShapePresetA = @"a";
+const NSString *VRM0BlendShapePresetI = @"i";
+const NSString *VRM0BlendShapePresetU = @"u";
+const NSString *VRM0BlendShapePresetE = @"e";
+const NSString *VRM0BlendShapePresetO = @"o";
+const NSString *VRM0BlendShapePresetBlink = @"blink";
+const NSString *VRM0BlendShapePresetJoy = @"joy";
+const NSString *VRM0BlendShapePresetAngry = @"angry";
+const NSString *VRM0BlendShapePresetSorrow = @"sorrow";
+const NSString *VRM0BlendShapePresetFun = @"fun";
+const NSString *VRM0BlendShapePresetLookup = @"lookup";
+const NSString *VRM0BlendShapePresetLookdown = @"lookdown";
+const NSString *VRM0BlendShapePresetLookleft = @"lookleft";
+const NSString *VRM0BlendShapePresetLookright = @"lookright";
+const NSString *VRM0BlendShapePresetBlinkL = @"blink_l";
+const NSString *VRM0BlendShapePresetBlinkR = @"blink_r";
+
+const NSString *VRM1BlendShapePresetHappy = @"happy";
+const NSString *VRM1BlendShapePresetAngry = @"angry";
+const NSString *VRM1BlendShapePresetSad = @"sad";
+const NSString *VRM1BlendShapePresetRelaxed = @"relaxed";
+const NSString *VRM1BlendShapePresetSurprised = @"surprised";
+const NSString *VRM1BlendShapePresetAa = @"aa";
+const NSString *VRM1BlendShapePresetIh = @"ih";
+const NSString *VRM1BlendShapePresetOu = @"ou";
+const NSString *VRM1BlendShapePresetEe = @"ee";
+const NSString *VRM1BlendShapePresetOh = @"oh";
+const NSString *VRM1BlendShapePresetBlink = @"blink";
+const NSString *VRM1BlendShapePresetBlinkLeft = @"blinkLeft";
+const NSString *VRM1BlendShapePresetBlinkRight = @"blinkRight";
+const NSString *VRM1BlendShapePresetLookUp = @"lookUp";
+const NSString *VRM1BlendShapePresetLookDown = @"lookDown";
+const NSString *VRM1BlendShapePresetLookLeft = @"lookLeft";
+const NSString *VRM1BlendShapePresetLookRight = @"lookRight";
+const NSString *VRM1BlendShapePresetNeutral = @"neutral";
+
 NSError *NSErrorFromInputException(gltf2::InputException e) {
   return [NSError errorWithDomain:GLTFErrorDomainInput
                              code:GLTFInputError
@@ -39,6 +77,7 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
 }
 
 @property(nonatomic, strong) NSArray<SCNMaterial *> *scnMaterials;
+@property(nonatomic, strong) NSDictionary<NSNumber *, SCNNode *> *meshNodeDict;
 
 @end
 
@@ -138,11 +177,14 @@ static simd_float4x4 simdTransformOfNode(const gltf2::GLTFNode &node) {
   // load nodes
   NSMutableArray<SCNNode *> *scnNodes;
   NSMutableArray<SCNNode *> *cameraNodes = [NSMutableArray array];
+  NSMutableDictionary<NSNumber *, SCNNode *> *meshNodeDict =
+      [NSMutableDictionary dictionary];
 
   if (data.json().nodes.has_value()) {
-    scnNodes = [NSMutableArray arrayWithCapacity:data.json().nodes->size()];
+    const auto &nodes = *data.json().nodes;
+    scnNodes = [NSMutableArray arrayWithCapacity:nodes.size()];
 
-    for (const auto &node : *data.json().nodes) {
+    for (const auto &node : nodes) {
       SCNNode *scnNode = [SCNNode node];
       scnNode.name = [[NSUUID UUID] UUIDString];
       scnNode.simdTransform = simdTransformOfNode(node);
@@ -153,7 +195,7 @@ static simd_float4x4 simdTransformOfNode(const gltf2::GLTFNode &node) {
       }
 
       if (node.mesh.has_value()) {
-        const auto meshIndex = *node.mesh;
+        const uint32_t meshIndex = *node.mesh;
         const auto &mesh = data.json().meshes->at(meshIndex);
 
         for (uint32_t primitiveIndex = 0;
@@ -173,8 +215,7 @@ static simd_float4x4 simdTransformOfNode(const gltf2::GLTFNode &node) {
           }
 
           if (primitive.material.has_value()) {
-            SCNMaterial *scnMaterial = self.scnMaterials[*primitive.material];
-            geometry.materials = @[ scnMaterial ];
+            geometry.firstMaterial = self.scnMaterials[*primitive.material];
           }
 
           SCNMorpher *morpher;
@@ -183,7 +224,6 @@ static simd_float4x4 simdTransformOfNode(const gltf2::GLTFNode &node) {
 
             NSMutableArray<SCNGeometry *> *morphTargets =
                 [NSMutableArray arrayWithCapacity:primitive.targets->size()];
-            //            for (const auto &target : *primitive.targets) {
             for (uint32_t targetIndex = 0;
                  targetIndex < primitive.targets->size(); targetIndex++) {
               const auto primitiveSources = meshPrimitive.targets[targetIndex];
@@ -208,23 +248,21 @@ static simd_float4x4 simdTransformOfNode(const gltf2::GLTFNode &node) {
             }
           }
 
-          if (mesh.primitives.size() > 1) {
-            SCNNode *geometryNode = [SCNNode nodeWithGeometry:geometry];
-            geometryNode.name = [[NSUUID UUID] UUIDString];
-            geometryNode.morpher = morpher;
-            [scnNode addChildNode:geometryNode];
-          } else {
-            scnNode.geometry = geometry;
-            scnNode.morpher = morpher;
-          }
+          SCNNode *geometryNode = [SCNNode nodeWithGeometry:geometry];
+          geometryNode.name = [[NSUUID UUID] UUIDString];
+          geometryNode.morpher = morpher;
+          [scnNode addChildNode:geometryNode];
         }
+
+        meshNodeDict[[NSNumber numberWithUnsignedInt:meshIndex]] = scnNode;
       }
 
       [scnNodes addObject:scnNode];
     }
+    _meshNodeDict = [meshNodeDict copy];
 
-    for (int i = 0; i < data.json().nodes->size(); i++) {
-      const auto &node = data.json().nodes->at(i);
+    for (int i = 0; i < nodes.size(); i++) {
+      const auto &node = nodes.at(i);
       SCNNode *scnNode = scnNodes[i];
 
       if (node.children.has_value()) {
@@ -270,12 +308,7 @@ static simd_float4x4 simdTransformOfNode(const gltf2::GLTFNode &node) {
           const auto &meshPrimitive =
               data.meshPrimitiveAt(meshIndex, primitiveIndex);
 
-          SCNNode *geometryNode;
-          if (mesh.primitives.size() > 1) {
-            geometryNode = scnNode.childNodes[primitiveIndex];
-          } else {
-            geometryNode = scnNode;
-          }
+          SCNNode *geometryNode = scnNode.childNodes[primitiveIndex];
           SCNGeometry *geometry = geometryNode.geometry;
 
           SCNGeometrySource *boneWeights;
@@ -353,12 +386,7 @@ static simd_float4x4 simdTransformOfNode(const gltf2::GLTFNode &node) {
           for (NSInteger i = 0; i < mesh.primitives.size(); i++) {
             const auto &primitive = mesh.primitives[i];
 
-            SCNNode *geometryNode;
-            if (mesh.primitives.size() > 1) {
-              geometryNode = scnNode.childNodes[i];
-            } else {
-              geometryNode = scnNode;
-            }
+            SCNNode *geometryNode = scnNode.childNodes[i];
 
             if (!primitive.targets.has_value() || geometryNode.morpher == nil)
               continue;
@@ -1566,6 +1594,31 @@ SCNVec3ArrayFromPackedFloatDataWithAccessor(const gltf2::Buffer &buffer,
     [values addObject:[NSValue valueWithSCNVector3:vec]];
   }
   return [values copy];
+}
+
+static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
+
+- (void)setBlendShapeWeight:(float)weight forKey:(NSString *)key {
+  if (_json.vrm0.has_value()) {
+    const auto group = _json.vrm0->blendShapeGroupByPreset(key.UTF8String);
+    if (group.has_value() && group->binds.has_value()) {
+      float value = group->isBinaryValue() ? roundValue(weight) : weight;
+      for (const auto &bind : *group->binds) {
+        float bindWeight = (bind.weight.value_or(100.0f) / 100.0f) * weight;
+        auto meshIndex = bind.mesh.value_or(0);
+        SCNNode *meshNode =
+            _meshNodeDict[[NSNumber numberWithUnsignedInt:meshIndex]];
+        for (SCNNode *childNode in meshNode.childNodes) {
+          if (childNode.morpher) {
+            [childNode.morpher setWeight:bindWeight
+                        forTargetAtIndex:bind.index.value_or(0)];
+          }
+        }
+      }
+    }
+  } else if (_json.vrm1.has_value()) {
+    const auto expression = _json.vrm1->expressionByName(key.UTF8String);
+  }
 }
 
 @end

@@ -21,6 +21,10 @@ template <> bool isValueType<uint32_t>(const nlohmann::json &j) {
   return j.is_number_unsigned();
 }
 
+template <> bool isValueType<int>(const nlohmann::json &j) {
+  return j.is_number_integer();
+}
+
 template <> bool isValueType<float>(const nlohmann::json &j) {
   return j.is_number_float() || j.is_number_integer();
 }

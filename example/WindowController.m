@@ -45,4 +45,10 @@
   self.scnViewController.lightNode.position = pos;
 }
 
+- (void)sidebarViewController:(SidebarViewController *)sidebarViewController
+              didChangeWeight:(float)weight
+             forBlendShapeKey:(NSString *)key {
+  [self.scnViewController.asset setBlendShapeWeight:weight forKey:key];
+}
+
 @end

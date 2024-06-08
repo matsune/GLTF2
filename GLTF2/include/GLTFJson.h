@@ -1170,6 +1170,52 @@ class VRMCExpressions {
 public:
   std::optional<VRMCExpressionsPreset> preset;
   std::optional<std::map<std::string, VRMCExpression>> custom;
+
+  std::optional<VRMCExpression> expressionByName(const std::string &name) {
+    if (preset) {
+      if (name == "happy") {
+        return preset->happy;
+      } else if (name == "angry") {
+        return preset->angry;
+      } else if (name == "sad") {
+        return preset->sad;
+      } else if (name == "relaxed") {
+        return preset->relaxed;
+      } else if (name == "surprised") {
+        return preset->surprised;
+      } else if (name == "aa") {
+        return preset->aa;
+      } else if (name == "ih") {
+        return preset->ih;
+      } else if (name == "ou") {
+        return preset->ou;
+      } else if (name == "ee") {
+        return preset->ee;
+      } else if (name == "oh") {
+        return preset->oh;
+      } else if (name == "blink") {
+        return preset->blink;
+      } else if (name == "blinkLeft") {
+        return preset->blinkLeft;
+      } else if (name == "blinkRight") {
+        return preset->blinkRight;
+      } else if (name == "lookUp") {
+        return preset->lookUp;
+      } else if (name == "lookDown") {
+        return preset->lookDown;
+      } else if (name == "lookLeft") {
+        return preset->lookLeft;
+      } else if (name == "lookRight") {
+        return preset->lookRight;
+      } else if (name == "neutral") {
+        return preset->neutral;
+      }
+    }
+    if (custom && custom->find(name) != custom->end()) {
+      return custom->at(name);
+    }
+    return std::nullopt;
+  }
 };
 
 class VRMCVrm {
@@ -1180,6 +1226,12 @@ public:
   std::optional<VRMCFirstPerson> firstPerson;
   std::optional<VRMCLookAt> lookAt;
   std::optional<VRMCExpressions> expressions;
+
+  std::optional<VRMCExpression> expressionByName(const std::string &name) {
+    if (!expressions.has_value())
+      return std::nullopt;
+    return expressions->expressionByName(name);
+  }
 };
 
 // VRM0
@@ -1589,16 +1641,81 @@ public:
     return std::nullopt;
   }
 
+  static std::string PresetNameToString(PresetName presetName) {
+    switch (presetName) {
+    case PresetName::UNKNOWN:
+      return "unknown";
+    case PresetName::NEUTRAL:
+      return "neutral";
+    case PresetName::A:
+      return "a";
+    case PresetName::I:
+      return "i";
+    case PresetName::U:
+      return "u";
+    case PresetName::E:
+      return "e";
+    case PresetName::O:
+      return "o";
+    case PresetName::BLINK:
+      return "blink";
+    case PresetName::JOY:
+      return "joy";
+    case PresetName::ANGRY:
+      return "angry";
+    case PresetName::SORROW:
+      return "sorrow";
+    case PresetName::FUN:
+      return "fun";
+    case PresetName::LOOKUP:
+      return "lookup";
+    case PresetName::LOOKDOWN:
+      return "lookdown";
+    case PresetName::LOOKLEFT:
+      return "lookleft";
+    case PresetName::LOOKRIGHT:
+      return "lookright";
+    case PresetName::BLINK_L:
+      return "blink_l";
+    case PresetName::BLINK_R:
+      return "blink_r";
+    default:
+      return "";
+    }
+  }
+
   std::optional<std::string> name;
   std::optional<PresetName> presetName;
   std::optional<std::vector<VRMBlendShapeBind>> binds;
   std::optional<std::vector<VRMBlendShapeMaterialBind>> materialValues;
   std::optional<bool> isBinary;
+
+  std::string groupName() const {
+    if (presetName.has_value()) {
+      return PresetNameToString(*presetName);
+    } else {
+      return name.value_or("");
+    }
+  }
+
+  bool isBinaryValue() const { return isBinary.value_or(false); }
 };
 
 class VRMBlendShape {
 public:
   std::optional<std::vector<VRMBlendShapeGroup>> blendShapeGroups;
+
+  std::optional<VRMBlendShapeGroup>
+  blendShapeGroupByPreset(const std::string &preset) const {
+    if (!blendShapeGroups.has_value())
+      return std::nullopt;
+    for (const auto &group : *blendShapeGroups) {
+      if (group.groupName() == preset) {
+        return group;
+      }
+    }
+    return std::nullopt;
+  }
 };
 
 class VRMSecondaryAnimationCollider {
@@ -1620,7 +1737,7 @@ public:
   std::optional<float> gravityPower;
   std::optional<VRMVec3> gravityDir;
   std::optional<float> dragForce;
-  std::optional<uint32_t> center;
+  std::optional<int> center;
   std::optional<float> hitRadius;
   std::optional<std::vector<uint32_t>> bones;
   std::optional<std::vector<uint32_t>> colliderGroups;
@@ -1654,6 +1771,13 @@ public:
   std::optional<VRMBlendShape> blendShapeMaster;
   std::optional<VRMSecondaryAnimation> secondaryAnimation;
   std::optional<std::vector<VRMMaterial>> materialProperties;
+
+  std::optional<VRMBlendShapeGroup>
+  blendShapeGroupByPreset(const std::string &preset) const {
+    if (!blendShapeMaster.has_value())
+      return std::nullopt;
+    return blendShapeMaster->blendShapeGroupByPreset(preset);
+  }
 };
 
 // Json

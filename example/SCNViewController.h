@@ -1,17 +1,10 @@
 #import "GLTF2SceneKit.h"
+#import "SCNViewControllerDelegate.h"
+#import "SidebarViewControllerDelegate.h"
 #import <Cocoa/Cocoa.h>
 #import <SceneKit/SceneKit.h>
 
-@class SCNViewController;
-
-@protocol SCNViewControllerDelegate <NSObject>
-
-- (void)scnViewController:(SCNViewController *)scnViewController
-             didLoadAsset:(GLTFSCNAsset *)asset;
-
-@end
-
-@interface SCNViewController : NSViewController
+@interface SCNViewController : NSViewController <SidebarViewControllerDelegate>
 
 @property(weak) IBOutlet SCNView *scnView;
 @property(nonatomic) GLTFSCNAsset *asset;

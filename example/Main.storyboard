@@ -686,7 +686,7 @@
         <!--Window Controller-->
         <scene sceneID="cgM-Ln-Iby">
             <objects>
-                <windowController storyboardIdentifier="MainWindowController" id="FS0-Iw-Jqv" customClass="WindowController" sceneMemberID="viewController">
+                <windowController storyboardIdentifier="MainWindowController" id="FS0-Iw-Jqv" sceneMemberID="viewController">
                     <window key="window" title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" titlebarAppearsTransparent="YES" titleVisibility="hidden" id="2r9-Sa-ciq">
                         <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" fullSizeContentView="YES"/>
                         <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>

@@ -1,23 +1,11 @@
 #import "GLTFSCNAsset.h"
+#import "SCNViewControllerDelegate.h"
+#import "SidebarViewControllerDelegate.h"
 #import <Cocoa/Cocoa.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
-@class SidebarViewController;
-
-@protocol SidebarViewControllerDelegate <NSObject>
-
-- (void)sidebarViewController:(SidebarViewController *)sidebarViewController
-       didSelectCameraAtIndex:(NSInteger)index;
-- (void)sidebarViewController:(SidebarViewController *)sidebarViewController
-              didChangeLightX:(float)x;
-- (void)sidebarViewController:(SidebarViewController *)sidebarViewController
-              didChangeWeight:(float)weight
-             forBlendShapeKey:(NSString *)key;
-
-@end
-
-@interface SidebarViewController : NSViewController
+@interface SidebarViewController : NSViewController <SCNViewControllerDelegate>
 
 @property(weak) IBOutlet NSPopUpButton *animationsPopUpButton;
 @property(weak) IBOutlet NSButton *playButton;

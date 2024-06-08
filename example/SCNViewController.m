@@ -49,4 +49,23 @@
   self.scnView.scene.lightingEnvironment.contents = hdr;
 }
 
+- (void)sidebarViewController:(SidebarViewController *)sidebarViewController
+       didSelectCameraAtIndex:(NSInteger)index {
+  SCNNode *cameraNode = self.asset.cameraNodes[index];
+  self.scnView.pointOfView = cameraNode;
+}
+
+- (void)sidebarViewController:(SidebarViewController *)sidebarViewController
+              didChangeLightX:(float)x {
+  SCNVector3 pos = self.lightNode.position;
+  pos.x = x;
+  self.lightNode.position = pos;
+}
+
+- (void)sidebarViewController:(SidebarViewController *)sidebarViewController
+              didChangeWeight:(float)weight
+             forBlendShapeKey:(NSString *)key {
+  [self.asset setBlendShapeWeight:weight forKey:key];
+}
+
 @end

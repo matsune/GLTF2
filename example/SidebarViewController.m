@@ -18,8 +18,10 @@
 }
 
 - (IBAction)animationsPopUpButtonAction:(NSPopUpButton *)sender {
-  if (self.currentAnimationPlayer) [self.currentAnimationPlayer stop];
-  self.currentAnimationPlayer = self.animationPlayers[sender.indexOfSelectedItem];
+  if (self.currentAnimationPlayer)
+    [self.currentAnimationPlayer stop];
+  self.currentAnimationPlayer =
+      self.animationPlayers[sender.indexOfSelectedItem];
 }
 
 - (IBAction)playButtonAction:(NSButton *)sender {
@@ -41,20 +43,23 @@
 
   for (int i = 0; i < self.animationPlayers.count; i++) {
     SCNAnimationPlayer *animationPlayer = self.animationPlayers[i];
-    [self.animationsPopUpButton addItemWithTitle:[NSString stringWithFormat:@"Animation %d", i]];
+    [self.animationsPopUpButton
+        addItemWithTitle:[NSString stringWithFormat:@"Animation %d", i]];
   }
 
   self.currentAnimationPlayer = self.animationPlayers.firstObject;
 
   for (int i = 0; i < asset.cameraNodes.count; i++) {
-    [self.camerasPopUpButton addItemWithTitle:[NSString stringWithFormat:@"Camera %d", i]];
+    [self.camerasPopUpButton
+        addItemWithTitle:[NSString stringWithFormat:@"Camera %d", i]];
   }
   self.camerasPopUpButton.enabled = asset.cameraNodes.count > 0;
 }
 
 - (IBAction)onChangeBlendShapeA:(NSSlider *)sender {
-  if ([self.delegate respondsToSelector:@selector(sidebarViewController:
-                                                        didChangeWeight:forBlendShapeKey:)]) {
+  if ([self.delegate respondsToSelector:@selector
+                     (sidebarViewController:
+                            didChangeWeight:forBlendShapeKey:)]) {
     [self.delegate sidebarViewController:self
                          didChangeWeight:sender.floatValue
                         forBlendShapeKey:@"a"];
@@ -62,15 +67,24 @@
 }
 
 - (IBAction)lightXAction:(NSTextField *)sender {
-  if ([self.delegate respondsToSelector:@selector(sidebarViewController:didChangeLightX:)]) {
-    [self.delegate sidebarViewController:self didChangeLightX:sender.floatValue];
+  if ([self.delegate respondsToSelector:@selector(sidebarViewController:
+                                                        didChangeLightX:)]) {
+    [self.delegate sidebarViewController:self
+                         didChangeLightX:sender.floatValue];
   }
 }
 
 - (IBAction)camerasPopUpButtonAction:(NSPopUpButton *)sender {
-  if ([self.delegate respondsToSelector:@selector(sidebarViewController:didSelectCameraAtIndex:)]) {
-    [self.delegate sidebarViewController:self didSelectCameraAtIndex:sender.indexOfSelectedItem];
+  if ([self.delegate respondsToSelector:@selector(sidebarViewController:
+                                                 didSelectCameraAtIndex:)]) {
+    [self.delegate sidebarViewController:self
+                  didSelectCameraAtIndex:sender.indexOfSelectedItem];
   }
+}
+
+- (void)scnViewController:(SCNViewController *)scnViewController
+             didLoadAsset:(GLTFSCNAsset *)asset {
+  [self setupAsset:asset];
 }
 
 @end

@@ -1,13 +1,12 @@
 #import "AppDelegate.h"
 #import "SCNViewController.h"
 #import "SidebarViewController.h"
-#import "WindowController.h"
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 @interface AppDelegate ()
 
 @property(strong, nonatomic)
-    NSMutableArray<WindowController *> *windowControllers;
+    NSMutableArray<NSWindowController *> *windowControllers;
 @end
 
 @implementation AppDelegate
@@ -39,17 +38,16 @@
   [openPanel beginWithCompletionHandler:^(NSInteger result) {
     if (result == NSModalResponseOK) {
       NSURL *fileURL = [[openPanel URLs] firstObject];
-      WindowController *windowController =
-          (WindowController *)[[NSStoryboard mainStoryboard]
-              instantiateControllerWithIdentifier:@"MainWindowController"];
+      NSWindowController *windowController = [[NSStoryboard mainStoryboard]
+          instantiateControllerWithIdentifier:@"MainWindowController"];
       NSSplitViewController *splitVC =
           (NSSplitViewController *)windowController.contentViewController;
       SidebarViewController *sidebarViewController =
           (SidebarViewController *)splitVC.splitViewItems[0].viewController;
       SCNViewController *scnViewController =
           (SCNViewController *)splitVC.splitViewItems[1].viewController;
-      sidebarViewController.delegate = windowController;
-      scnViewController.delegate = windowController;
+      sidebarViewController.delegate = scnViewController;
+      scnViewController.delegate = sidebarViewController;
       [scnViewController loadModelURL:fileURL];
       [windowController showWindow:nil];
 
@@ -61,7 +59,7 @@
 
 - (void)windowWillClose:(NSNotification *)notification {
   NSWindow *closedWindow = notification.object;
-  for (WindowController *wc in self.windowControllers) {
+  for (NSWindowController *wc in self.windowControllers) {
     if ([wc.window isEqual:closedWindow]) {
       [self.windowControllers removeObject:wc];
       break;

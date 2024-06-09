@@ -53,7 +53,9 @@ GLTF_EXPORT @interface GLTFSCNAsset : NSObject
 
 - (nullable SCNScene *)defaultScene;
 
-- (void)setBlendShapeWeight:(float)weight forKey:(NSString *)key;
+- (NSArray<NSString *> *)blendShapeKeys;
+- (CGFloat)weightForBlendShapeKey:(NSString *)key;
+- (void)setBlendShapeWeight:(CGFloat)weight forKey:(NSString *)key;
 
 @end
 

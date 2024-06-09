@@ -744,11 +744,11 @@
             <objects>
                 <viewController id="CQq-M7-SsL" customClass="SidebarViewController" sceneMemberID="viewController">
                     <view key="view" id="ZUs-Qg-BZ3">
-                        <rect key="frame" x="0.0" y="0.0" width="240" height="316"/>
+                        <rect key="frame" x="0.0" y="0.0" width="338" height="316"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <stackView distribution="fill" orientation="vertical" alignment="leading" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="yle-ea-tIS">
-                                <rect key="frame" x="20" y="16" width="200" height="228"/>
+                                <rect key="frame" x="20" y="16" width="298" height="228"/>
                                 <subviews>
                                     <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="4pZ-WC-0j2">
                                         <rect key="frame" x="-2" y="212" width="70" height="16"/>
@@ -759,10 +759,10 @@
                                         </textFieldCell>
                                     </textField>
                                     <stackView distribution="fill" orientation="horizontal" alignment="top" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="XhN-U0-rWH">
-                                        <rect key="frame" x="0.0" y="184" width="200" height="20"/>
+                                        <rect key="frame" x="0.0" y="184" width="298" height="20"/>
                                         <subviews>
                                             <popUpButton wantsLayer="YES" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="7G7-an-i50">
-                                                <rect key="frame" x="-3" y="-4" width="167" height="25"/>
+                                                <rect key="frame" x="-3" y="-4" width="265" height="25"/>
                                                 <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="gAL-yg-I7D">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                                     <font key="font" metaFont="menu"/>
@@ -776,7 +776,7 @@
                                                 </connections>
                                             </popUpButton>
                                             <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="BI2-bc-ReJ">
-                                                <rect key="frame" x="161" y="-7" width="46" height="32"/>
+                                                <rect key="frame" x="259" y="-7" width="46" height="32"/>
                                                 <buttonCell key="cell" type="push" bezelStyle="rounded" image="playpause" catalog="system" imagePosition="overlaps" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="UYC-Ef-2Mo">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                     <font key="font" metaFont="system"/>
@@ -799,7 +799,7 @@
                                         </customSpacing>
                                     </stackView>
                                     <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="xIK-ro-EqR">
-                                        <rect key="frame" x="0.0" y="173" width="200" height="5"/>
+                                        <rect key="frame" x="0.0" y="173" width="298" height="5"/>
                                     </box>
                                     <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Xug-To-5jQ">
                                         <rect key="frame" x="-2" y="151" width="54" height="16"/>
@@ -890,26 +890,29 @@
                                         </textFieldCell>
                                     </textField>
                                     <stackView distribution="fill" orientation="horizontal" alignment="centerY" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="a06-gy-2L4">
-                                        <rect key="frame" x="0.0" y="0.0" width="200" height="20"/>
+                                        <rect key="frame" x="0.0" y="0.0" width="298" height="20"/>
                                         <subviews>
-                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="QzV-3z-Ijd">
-                                                <rect key="frame" x="-2" y="2" width="44" height="16"/>
+                                            <popUpButton wantsLayer="YES" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Rmg-2y-8t2">
+                                                <rect key="frame" x="-3" y="-4" width="97" height="25"/>
+                                                <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="Yjj-e5-vXe">
+                                                    <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                                    <font key="font" metaFont="menu"/>
+                                                    <menu key="menu" id="m08-hT-EW6"/>
+                                                </popUpButtonCell>
                                                 <constraints>
-                                                    <constraint firstAttribute="width" constant="40" id="n6W-mz-Srr"/>
+                                                    <constraint firstAttribute="width" constant="90" id="oLj-Pe-un8"/>
                                                 </constraints>
-                                                <textFieldCell key="cell" lineBreakMode="clipping" title="a" id="Grf-Yz-iM0">
-                                                    <font key="font" usesAppearanceFont="YES"/>
-                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                                </textFieldCell>
-                                            </textField>
+                                                <connections>
+                                                    <action selector="onChangeBlendShapeKey:" target="CQq-M7-SsL" id="dHS-qh-Afj"/>
+                                                </connections>
+                                            </popUpButton>
                                             <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="tvK-ye-R1S">
-                                                <rect key="frame" x="46" y="-6" width="156" height="28"/>
+                                                <rect key="frame" x="96" y="-6" width="204" height="28"/>
                                                 <sliderCell key="cell" state="on" alignment="left" maxValue="1" doubleValue="0.5" tickMarkPosition="above" sliderType="linear" id="ugb-Ow-oiH">
                                                     <font key="font" size="12" name="Helvetica"/>
                                                 </sliderCell>
                                                 <connections>
-                                                    <action selector="onChangeBlendShapeA:" target="CQq-M7-SsL" id="YwJ-LE-aBg"/>
+                                                    <action selector="onChangeBlendShapeValue:" target="CQq-M7-SsL" id="tjs-WU-U65"/>
                                                 </connections>
                                             </slider>
                                         </subviews>
@@ -969,6 +972,8 @@
                     </view>
                     <connections>
                         <outlet property="animationsPopUpButton" destination="7G7-an-i50" id="BQE-Zs-MFh"/>
+                        <outlet property="blendShapePopUpButton" destination="Rmg-2y-8t2" id="Zpz-NG-9aA"/>
+                        <outlet property="blendShapeValueSlider" destination="tvK-ye-R1S" id="Fcp-2l-CDm"/>
                         <outlet property="camerasPopUpButton" destination="a9N-Xe-lt5" id="VmA-tu-xDb"/>
                         <outlet property="lightXTextField" destination="w3z-LQ-afo" id="nli-Ki-rmx"/>
                         <outlet property="playButton" destination="BI2-bc-ReJ" id="GyT-Iv-r12"/>

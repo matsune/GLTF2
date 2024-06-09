@@ -1598,7 +1598,48 @@ SCNVec3ArrayFromPackedFloatDataWithAccessor(const gltf2::Buffer &buffer,
 
 static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
 
-- (void)setBlendShapeWeight:(float)weight forKey:(NSString *)key {
+- (NSArray<NSString *> *)blendShapeKeys {
+  if (_json.vrm0.has_value()) {
+    if (_json.vrm0->blendShapeMaster.has_value() &&
+        _json.vrm0->blendShapeMaster->blendShapeGroups.has_value()) {
+      NSMutableArray<NSString *> *keys =
+          [NSMutableArray arrayWithCapacity:_json.vrm0->blendShapeMaster
+                                                ->blendShapeGroups->size()];
+      for (const auto &group :
+           *_json.vrm0->blendShapeMaster->blendShapeGroups) {
+        [keys
+            addObject:[NSString
+                          stringWithCString:group.groupName().c_str()
+                                   encoding:[NSString defaultCStringEncoding]]];
+      }
+      return [keys copy];
+    }
+  } else if (_json.vrm1.has_value()) {
+  }
+  return @[];
+}
+
+- (CGFloat)weightForBlendShapeKey:(NSString *)key {
+  if (_json.vrm0.has_value()) {
+    const auto group = _json.vrm0->blendShapeGroupByPreset(key.UTF8String);
+    if (group.has_value() && group->binds.has_value()) {
+      for (const auto &bind : *group->binds) {
+        auto meshIndex = bind.mesh.value_or(0);
+        SCNNode *meshNode =
+            _meshNodeDict[[NSNumber numberWithUnsignedInt:meshIndex]];
+        for (SCNNode *childNode in meshNode.childNodes) {
+          if (childNode.morpher) {
+            return [childNode.morpher
+                weightForTargetAtIndex:bind.index.value_or(0)];
+          }
+        }
+      }
+    }
+  }
+  return 0.0f;
+}
+
+- (void)setBlendShapeWeight:(CGFloat)weight forKey:(NSString *)key {
   if (_json.vrm0.has_value()) {
     const auto group = _json.vrm0->blendShapeGroupByPreset(key.UTF8String);
     if (group.has_value() && group->binds.has_value()) {

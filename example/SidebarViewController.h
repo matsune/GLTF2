@@ -12,14 +12,16 @@ NS_ASSUME_NONNULL_BEGIN
 @property(weak) IBOutlet NSPopUpButton *camerasPopUpButton;
 @property(nonatomic, weak) id<SidebarViewControllerDelegate> delegate;
 @property(weak) IBOutlet NSTextField *lightXTextField;
+@property(weak) IBOutlet NSPopUpButton *blendShapePopUpButton;
+@property(weak) IBOutlet NSSlider *blendShapeValueSlider;
 
 - (IBAction)animationsPopUpButtonAction:(NSPopUpButton *)sender;
 - (IBAction)playButtonAction:(NSButton *)sender;
 - (IBAction)camerasPopUpButtonAction:(NSPopUpButton *)sender;
 - (IBAction)lightXAction:(NSTextField *)sender;
-- (IBAction)onChangeBlendShapeA:(NSSlider *)sender;
+- (IBAction)onChangeBlendShapeKey:(NSPopUpButton *)sender;
+- (IBAction)onChangeBlendShapeValue:(NSSlider *)sender;
 
-- (void)setupAsset:(GLTFSCNAsset *)asset;
 @end
 
 NS_ASSUME_NONNULL_END

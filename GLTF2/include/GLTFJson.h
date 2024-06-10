@@ -1164,6 +1164,65 @@ public:
   std::optional<VRMCExpression> lookLeft;
   std::optional<VRMCExpression> lookRight;
   std::optional<VRMCExpression> neutral;
+
+  std::vector<std::string> expressionNames() const {
+    std::vector<std::string> names;
+    if (happy.has_value()) {
+      names.push_back("happy");
+    }
+    if (angry.has_value()) {
+      names.push_back("angry");
+    }
+    if (sad.has_value()) {
+      names.push_back("sad");
+    }
+    if (relaxed.has_value()) {
+      names.push_back("relaxed");
+    }
+    if (surprised.has_value()) {
+      names.push_back("surprised");
+    }
+    if (aa.has_value()) {
+      names.push_back("aa");
+    }
+    if (ih.has_value()) {
+      names.push_back("ih");
+    }
+    if (ou.has_value()) {
+      names.push_back("ou");
+    }
+    if (ee.has_value()) {
+      names.push_back("ee");
+    }
+    if (oh.has_value()) {
+      names.push_back("oh");
+    }
+    if (blink.has_value()) {
+      names.push_back("blink");
+    }
+    if (blinkLeft.has_value()) {
+      names.push_back("blinkLeft");
+    }
+    if (blinkRight.has_value()) {
+      names.push_back("blinkRight");
+    }
+    if (lookUp.has_value()) {
+      names.push_back("lookUp");
+    }
+    if (lookDown.has_value()) {
+      names.push_back("lookDown");
+    }
+    if (lookLeft.has_value()) {
+      names.push_back("lookLeft");
+    }
+    if (lookRight.has_value()) {
+      names.push_back("lookRight");
+    }
+    if (neutral.has_value()) {
+      names.push_back("neutral");
+    }
+    return names;
+  }
 };
 
 class VRMCExpressions {
@@ -1215,6 +1274,19 @@ public:
       return custom->at(name);
     }
     return std::nullopt;
+  }
+
+  std::vector<std::string> expressionNames() const {
+    std::vector<std::string> names;
+    if (preset.has_value()) {
+      names = preset->expressionNames();
+    }
+    if (custom.has_value()) {
+      for (const auto &pair : *custom) {
+        names.push_back(pair.first);
+      }
+    }
+    return names;
   }
 };
 

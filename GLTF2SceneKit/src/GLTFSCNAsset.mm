@@ -77,7 +77,10 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
 }
 
 @property(nonatomic, strong) NSArray<SCNMaterial *> *scnMaterials;
+// get node by mesh index
 @property(nonatomic, strong) NSDictionary<NSNumber *, SCNNode *> *meshNodeDict;
+// get node by node index
+@property(nonatomic, strong) NSDictionary<NSNumber *, SCNNode *> *nodeDict;
 
 @end
 
@@ -179,12 +182,15 @@ static simd_float4x4 simdTransformOfNode(const gltf2::GLTFNode &node) {
   NSMutableArray<SCNNode *> *cameraNodes = [NSMutableArray array];
   NSMutableDictionary<NSNumber *, SCNNode *> *meshNodeDict =
       [NSMutableDictionary dictionary];
+  NSMutableDictionary<NSNumber *, SCNNode *> *nodeDict =
+      [NSMutableDictionary dictionary];
 
   if (data.json().nodes.has_value()) {
     const auto &nodes = *data.json().nodes;
     scnNodes = [NSMutableArray arrayWithCapacity:nodes.size()];
 
-    for (const auto &node : nodes) {
+    for (NSInteger nodeIndex = 0; nodeIndex < nodes.size(); nodeIndex++) {
+      const auto &node = nodes[nodeIndex];
       SCNNode *scnNode = [SCNNode node];
       scnNode.name = [[NSUUID UUID] UUIDString];
       scnNode.simdTransform = simdTransformOfNode(node);
@@ -258,8 +264,10 @@ static simd_float4x4 simdTransformOfNode(const gltf2::GLTFNode &node) {
       }
 
       [scnNodes addObject:scnNode];
+      nodeDict[@(nodeIndex)] = scnNode;
     }
     _meshNodeDict = [meshNodeDict copy];
+    _nodeDict = [nodeDict copy];
 
     for (int i = 0; i < nodes.size(); i++) {
       const auto &node = nodes.at(i);
@@ -1602,11 +1610,10 @@ static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
   if (_json.vrm0.has_value()) {
     if (_json.vrm0->blendShapeMaster.has_value() &&
         _json.vrm0->blendShapeMaster->blendShapeGroups.has_value()) {
+      const auto groups = _json.vrm0->blendShapeMaster->blendShapeGroups;
       NSMutableArray<NSString *> *keys =
-          [NSMutableArray arrayWithCapacity:_json.vrm0->blendShapeMaster
-                                                ->blendShapeGroups->size()];
-      for (const auto &group :
-           *_json.vrm0->blendShapeMaster->blendShapeGroups) {
+          [NSMutableArray arrayWithCapacity:groups->size()];
+      for (const auto &group : *groups) {
         [keys
             addObject:[NSString
                           stringWithCString:group.groupName().c_str()
@@ -1615,6 +1622,18 @@ static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
       return [keys copy];
     }
   } else if (_json.vrm1.has_value()) {
+    if (_json.vrm1->expressions.has_value()) {
+      const auto names = _json.vrm1->expressions->expressionNames();
+      NSMutableArray<NSString *> *keys =
+          [NSMutableArray arrayWithCapacity:names.size()];
+      for (const auto &name : names) {
+        [keys
+            addObject:[NSString
+                          stringWithCString:name.c_str()
+                                   encoding:[NSString defaultCStringEncoding]]];
+      }
+      return [keys copy];
+    }
   }
   return @[];
 }
@@ -1625,8 +1644,7 @@ static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
     if (group.has_value() && group->binds.has_value()) {
       for (const auto &bind : *group->binds) {
         auto meshIndex = bind.mesh.value_or(0);
-        SCNNode *meshNode =
-            _meshNodeDict[[NSNumber numberWithUnsignedInt:meshIndex]];
+        SCNNode *meshNode = _meshNodeDict[@(meshIndex)];
         for (SCNNode *childNode in meshNode.childNodes) {
           if (childNode.morpher) {
             return [childNode.morpher
@@ -1635,8 +1653,30 @@ static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
         }
       }
     }
+  } else if (_json.vrm1.has_value()) {
+    const auto expression = _json.vrm1->expressionByName(key.UTF8String);
+    if (expression.has_value() && expression->morphTargetBinds.has_value()) {
+      for (const auto &bind : *expression->morphTargetBinds) {
+        SCNNode *meshNode = _nodeDict[@(bind.node)];
+        for (SCNNode *childNode in meshNode.childNodes) {
+          if (childNode.morpher) {
+            return [childNode.morpher weightForTargetAtIndex:bind.index];
+          }
+        }
+      }
+    }
   }
   return 0.0f;
+}
+
+- (void)setBlendShapeWeight:(CGFloat)weight
+                   meshNode:(SCNNode *)meshNode
+                  bindIndex:(uint32_t)bindIndex {
+  for (SCNNode *childNode in meshNode.childNodes) {
+    if (childNode.morpher) {
+      [childNode.morpher setWeight:weight forTargetAtIndex:bindIndex];
+    }
+  }
 }
 
 - (void)setBlendShapeWeight:(CGFloat)weight forKey:(NSString *)key {
@@ -1647,18 +1687,22 @@ static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
       for (const auto &bind : *group->binds) {
         float bindWeight = (bind.weight.value_or(100.0f) / 100.0f) * weight;
         auto meshIndex = bind.mesh.value_or(0);
-        SCNNode *meshNode =
-            _meshNodeDict[[NSNumber numberWithUnsignedInt:meshIndex]];
-        for (SCNNode *childNode in meshNode.childNodes) {
-          if (childNode.morpher) {
-            [childNode.morpher setWeight:bindWeight
-                        forTargetAtIndex:bind.index.value_or(0)];
-          }
-        }
+        auto bindIndex = bind.index.value_or(0);
+        SCNNode *meshNode = _meshNodeDict[@(meshIndex)];
+        [self setBlendShapeWeight:bindWeight
+                         meshNode:meshNode
+                        bindIndex:bindIndex];
       }
     }
   } else if (_json.vrm1.has_value()) {
     const auto expression = _json.vrm1->expressionByName(key.UTF8String);
+    if (expression.has_value() && expression->morphTargetBinds.has_value()) {
+      float value = expression->isBinaryValue() ? roundValue(weight) : weight;
+      for (const auto &bind : *expression->morphTargetBinds) {
+        SCNNode *node = _nodeDict[@(bind.node)];
+        [self setBlendShapeWeight:value meshNode:node bindIndex:bind.index];
+      }
+    }
   }
 }
 

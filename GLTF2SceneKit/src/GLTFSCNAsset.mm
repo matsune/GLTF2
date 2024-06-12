@@ -1,6 +1,7 @@
 #import "GLTFSCNAsset.h"
 #include "GLTF2.h"
 #include "GLTFError.h"
+#import "JsonConverter.h"
 #include <memory>
 #include <unordered_map>
 
@@ -72,9 +73,7 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
                          }];
 }
 
-@interface GLTFSCNAsset () {
-  gltf2::GLTFJson _json;
-}
+@interface GLTFSCNAsset ()
 
 @property(nonatomic, strong) NSArray<SCNMaterial *> *scnMaterials;
 // get node by mesh index
@@ -103,7 +102,8 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
     const auto file = gltf2::GLTFFile::parseFile([path UTF8String]);
     const auto data = gltf2::GLTFData::load(std::move(file));
     [self loadScenesWithData:data];
-    _json = data.moveJson();
+    const auto json = data.moveJson();
+    _json = [JsonConverter convertGLTFJson:json];
   } catch (gltf2::InputException e) {
     if (error)
       *error = NSErrorFromInputException(e);
@@ -124,14 +124,14 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
 #pragma mark SCNScene
 
 - (nullable SCNScene *)defaultScene {
-  if (_json.scene.has_value()) {
-    return self.scenes[*_json.scene];
+  if (self.json.scene) {
+    return self.scenes[self.json.scene.integerValue];
   } else {
     return self.scenes.firstObject;
   }
 }
 
-static simd_float4x4 simdTransformOfNode(const gltf2::GLTFNode &node) {
+static simd_float4x4 simdTransformOfNode(const gltf2::json::Node &node) {
   if (node.matrix.has_value()) {
     auto matrixValue = node.matrixValue();
     simd_float4x4 matrix;
@@ -212,7 +212,8 @@ static simd_float4x4 simdTransformOfNode(const gltf2::GLTFNode &node) {
 
           SCNGeometry *geometry =
               [self scnGeometryFromMeshPrimitive:meshPrimitive];
-          if (primitive.modeValue() == gltf2::GLTFMeshPrimitive::Mode::POINTS &&
+          if (primitive.modeValue() ==
+                  gltf2::json::MeshPrimitive::Mode::POINTS &&
               geometry.geometryElementCount > 0) {
             geometry.geometryElements.firstObject
                 .minimumPointScreenSpaceRadius = 1.0;
@@ -295,9 +296,9 @@ static simd_float4x4 simdTransformOfNode(const gltf2::GLTFNode &node) {
           const auto accessorIndex = *skin.inverseBindMatrices;
           const auto &accessor = data.json().accessors->at(accessorIndex);
           const auto &buffer = data.accessorBufferAt(accessorIndex).buffer;
-          assert(accessor.type == gltf2::GLTFAccessor::Type::MAT4 &&
+          assert(accessor.type == gltf2::json::Accessor::Type::MAT4 &&
                  accessor.componentType ==
-                     gltf2::GLTFAccessor::ComponentType::FLOAT);
+                     gltf2::json::Accessor::ComponentType::FLOAT);
           boneInverseBindTransforms = SCNMat4ArrayFromPackedFloatData(buffer);
         } else {
           NSMutableArray<NSValue *> *arr =
@@ -385,7 +386,7 @@ static simd_float4x4 simdTransformOfNode(const gltf2::GLTFNode &node) {
         const auto &outputData = accessorBuffer.buffer;
 
         if (channel.target.path ==
-            gltf2::GLTFAnimationChannelTarget::Path::WEIGHTS) {
+            gltf2::json::AnimationChannelTarget::Path::WEIGHTS) {
           // Weights animation
           NSArray<NSNumber *> *numbers = NSArrayFromPackedFloatData(outputData);
 
@@ -434,13 +435,13 @@ static simd_float4x4 simdTransformOfNode(const gltf2::GLTFNode &node) {
 
           // component type should be float
           if (outputAccessor.componentType !=
-                  gltf2::GLTFAccessor::ComponentType::FLOAT &&
+                  gltf2::json::Accessor::ComponentType::FLOAT &&
               !normalized)
             continue;
           // only supports vec types
-          if (outputAccessor.type != gltf2::GLTFAccessor::Type::VEC2 &&
-              outputAccessor.type != gltf2::GLTFAccessor::Type::VEC3 &&
-              outputAccessor.type != gltf2::GLTFAccessor::Type::VEC4)
+          if (outputAccessor.type != gltf2::json::Accessor::Type::VEC2 &&
+              outputAccessor.type != gltf2::json::Accessor::Type::VEC3 &&
+              outputAccessor.type != gltf2::json::Accessor::Type::VEC4)
             continue;
 
           CAAnimationCalculationMode calculationMode =
@@ -451,18 +452,18 @@ static simd_float4x4 simdTransformOfNode(const gltf2::GLTFNode &node) {
           NSArray<NSValue *> *values;
           NSString *keyPath;
           if (channel.target.path ==
-              gltf2::GLTFAnimationChannelTarget::Path::TRANSLATION) {
+              gltf2::json::AnimationChannelTarget::Path::TRANSLATION) {
             values = SCNVec3ArrayFromPackedFloatDataWithAccessor(
                 outputData, outputAccessor, isCubisSpline);
             keyPath = [NSString stringWithFormat:@"/%@.position", scnNode.name];
           } else if (channel.target.path ==
-                     gltf2::GLTFAnimationChannelTarget::Path::ROTATION) {
+                     gltf2::json::AnimationChannelTarget::Path::ROTATION) {
             values = SCNVec4ArrayFromPackedFloatDataWithAccessor(
                 outputData, outputAccessor, isCubisSpline);
             keyPath =
                 [NSString stringWithFormat:@"/%@.orientation", scnNode.name];
           } else if (channel.target.path ==
-                     gltf2::GLTFAnimationChannelTarget::Path::SCALE) {
+                     gltf2::json::AnimationChannelTarget::Path::SCALE) {
             values = SCNVec3ArrayFromPackedFloatDataWithAccessor(
                 outputData, outputAccessor, isCubisSpline);
             keyPath = [NSString stringWithFormat:@"/%@.scale", scnNode.name];
@@ -801,7 +802,7 @@ public:
 };
 
 - (SCNMatrix4)contentsTransformFromKHRTextureTransform:
-    (const gltf2::KHRTextureTransform &)transform {
+    (const gltf2::json::KHRTextureTransform &)transform {
   auto scale = transform.scaleValue();
   auto rotation = transform.rotationValue();
   auto offset = transform.offsetValue();
@@ -811,7 +812,8 @@ public:
   return SCNMatrix4Mult(SCNMatrix4Mult(s, r), t);
 }
 
-- (void)applyKHRTextureTransform:(const gltf2::KHRTextureTransform &)transform
+- (void)applyKHRTextureTransform:
+            (const gltf2::json::KHRTextureTransform &)transform
                       toProperty:(SCNMaterialProperty *)property {
   if (transform.texCoord.has_value()) {
     property.mappingChannel = *transform.texCoord;
@@ -858,7 +860,7 @@ public:
     float ior = 1.5f;
 
     auto pbrMetallicRoughness = material.pbrMetallicRoughness.value_or(
-        gltf2::GLTFMaterialPBRMetallicRoughness());
+        gltf2::json::MaterialPBRMetallicRoughness());
 
     // baseColor
     if (pbrMetallicRoughness.baseColorTexture.has_value()) {
@@ -931,16 +933,16 @@ public:
       emissiveStrength = material.emissiveStrength->emissiveStrengthValue();
     }
 
-    if (material.alphaModeValue() == gltf2::GLTFMaterial::AlphaMode::OPAQUE) {
+    if (material.alphaModeValue() == gltf2::json::Material::AlphaMode::OPAQUE) {
       scnMaterial.blendMode = SCNBlendModeReplace;
       builder.isDiffuseOpaque = true;
     } else if (material.alphaModeValue() ==
-               gltf2::GLTFMaterial::AlphaMode::MASK) {
+               gltf2::json::Material::AlphaMode::MASK) {
       scnMaterial.blendMode = SCNBlendModeReplace;
       diffuseAlphaCutoff = material.alphaCutoffValue();
       builder.enableDiffuseAlphaCutoff = true;
     } else if (material.alphaModeValue() ==
-               gltf2::GLTFMaterial::AlphaMode::BLEND) {
+               gltf2::json::Material::AlphaMode::BLEND) {
       scnMaterial.blendMode = SCNBlendModeAlpha;
       scnMaterial.transparencyMode = SCNTransparencyModeDualLayer;
     }
@@ -1082,7 +1084,7 @@ static void applyColorContentsToProperty(float r, float g, float b, float a,
   CGColorSpaceRelease(colorSpace);
 }
 
-- (void)applyTextureInfo:(const gltf2::GLTFTextureInfo &)textureInfo
+- (void)applyTextureInfo:(const gltf2::json::TextureInfo &)textureInfo
            withIntensity:(CGFloat)intensity
               toProperty:(SCNMaterialProperty *)property
                     data:(const gltf2::GLTFData &)data {
@@ -1112,7 +1114,7 @@ static void applyColorContentsToProperty(float r, float g, float b, float a,
                                                     length:buffer.size()]];
 }
 
-- (void)applyTexture:(const gltf2::GLTFTexture &)texture
+- (void)applyTexture:(const gltf2::json::Texture &)texture
           toProperty:(SCNMaterialProperty *)property
                 data:(const gltf2::GLTFData &)data {
   property.wrapS = SCNWrapModeRepeat;
@@ -1132,14 +1134,14 @@ static void applyColorContentsToProperty(float r, float g, float b, float a,
   }
 }
 
-- (void)applyTextureSampler:(const gltf2::GLTFSampler &)sampler
+- (void)applyTextureSampler:(const gltf2::json::Sampler &)sampler
                  toProperty:(SCNMaterialProperty *)property {
   if (sampler.magFilter.has_value()) {
     switch (*sampler.magFilter) {
-    case gltf2::GLTFSampler::MagFilter::NEAREST:
+    case gltf2::json::Sampler::MagFilter::NEAREST:
       property.magnificationFilter = SCNFilterModeNearest;
       break;
-    case gltf2::GLTFSampler::MagFilter::LINEAR:
+    case gltf2::json::Sampler::MagFilter::LINEAR:
       property.magnificationFilter = SCNFilterModeLinear;
       break;
     default:
@@ -1148,25 +1150,25 @@ static void applyColorContentsToProperty(float r, float g, float b, float a,
   }
   if (sampler.minFilter.has_value()) {
     switch (*sampler.minFilter) {
-    case gltf2::GLTFSampler::MinFilter::LINEAR:
+    case gltf2::json::Sampler::MinFilter::LINEAR:
       property.minificationFilter = SCNFilterModeLinear;
       break;
-    case gltf2::GLTFSampler::MinFilter::LINEAR_MIPMAP_NEAREST:
+    case gltf2::json::Sampler::MinFilter::LINEAR_MIPMAP_NEAREST:
       property.minificationFilter = SCNFilterModeLinear;
       property.mipFilter = SCNFilterModeNearest;
       break;
-    case gltf2::GLTFSampler::MinFilter::LINEAR_MIPMAP_LINEAR:
+    case gltf2::json::Sampler::MinFilter::LINEAR_MIPMAP_LINEAR:
       property.minificationFilter = SCNFilterModeLinear;
       property.mipFilter = SCNFilterModeLinear;
       break;
-    case gltf2::GLTFSampler::MinFilter::NEAREST:
+    case gltf2::json::Sampler::MinFilter::NEAREST:
       property.minificationFilter = SCNFilterModeNearest;
       break;
-    case gltf2::GLTFSampler::MinFilter::NEAREST_MIPMAP_NEAREST:
+    case gltf2::json::Sampler::MinFilter::NEAREST_MIPMAP_NEAREST:
       property.minificationFilter = SCNFilterModeNearest;
       property.mipFilter = SCNFilterModeNearest;
       break;
-    case gltf2::GLTFSampler::MinFilter::NEAREST_MIPMAP_LINEAR:
+    case gltf2::json::Sampler::MinFilter::NEAREST_MIPMAP_LINEAR:
       property.minificationFilter = SCNFilterModeNearest;
       property.mipFilter = SCNFilterModeLinear;
       break;
@@ -1179,13 +1181,13 @@ static void applyColorContentsToProperty(float r, float g, float b, float a,
 }
 
 static SCNWrapMode
-SCNWrapModeFromGLTFSamplerWrapMode(gltf2::GLTFSampler::WrapMode mode) {
+SCNWrapModeFromGLTFSamplerWrapMode(gltf2::json::Sampler::WrapMode mode) {
   switch (mode) {
-  case gltf2::GLTFSampler::WrapMode::CLAMP_TO_EDGE:
+  case gltf2::json::Sampler::WrapMode::CLAMP_TO_EDGE:
     return SCNWrapModeClamp;
-  case gltf2::GLTFSampler::WrapMode::MIRRORED_REPEAT:
+  case gltf2::json::Sampler::WrapMode::MIRRORED_REPEAT:
     return SCNWrapModeMirror;
-  case gltf2::GLTFSampler::WrapMode::REPEAT:
+  case gltf2::json::Sampler::WrapMode::REPEAT:
     return SCNWrapModeRepeat;
   }
 }
@@ -1214,7 +1216,7 @@ SCNWrapModeFromGLTFSamplerWrapMode(gltf2::GLTFSampler::WrapMode mode) {
 }
 
 - (void)applyOrthographicCamera:
-            (const gltf2::GLTFCameraOrthographic &)orthographic
+            (const gltf2::json::CameraOrthographic &)orthographic
                     toSCNCamera:(SCNCamera *)scnCamera {
   scnCamera.usesOrthographicProjection = YES;
   scnCamera.orthographicScale = MAX(orthographic.xmag, orthographic.ymag);
@@ -1222,7 +1224,8 @@ SCNWrapModeFromGLTFSamplerWrapMode(gltf2::GLTFSampler::WrapMode mode) {
   scnCamera.zNear = orthographic.znear;
 }
 
-- (void)applyPerspectiveCamera:(const gltf2::GLTFCameraPerspective &)perspective
+- (void)applyPerspectiveCamera:
+            (const gltf2::json::CameraPerspective &)perspective
                    toSCNCamera:(SCNCamera *)scnCamera {
   scnCamera.usesOrthographicProjection = NO;
   if (perspective.zfar.has_value()) {
@@ -1334,7 +1337,7 @@ SCNWrapModeFromGLTFSamplerWrapMode(gltf2::GLTFSampler::WrapMode mode) {
                                     semantic:
                                         (SCNGeometrySourceSemantic)semantic {
   auto bytesPerComponent =
-      gltf2::GLTFAccessor::sizeOfComponentType(source.componentType);
+      gltf2::json::Accessor::sizeOfComponentType(source.componentType);
   NSData *data = [NSData dataWithBytes:source.buffer.data()
                                 length:source.buffer.size()];
   return [SCNGeometrySource
@@ -1342,7 +1345,7 @@ SCNWrapModeFromGLTFSamplerWrapMode(gltf2::GLTFSampler::WrapMode mode) {
                     semantic:semantic
                  vectorCount:source.vectorCount
              floatComponents:source.componentType ==
-                             gltf2::GLTFAccessor::ComponentType::FLOAT
+                             gltf2::json::Accessor::ComponentType::FLOAT
          componentsPerVector:source.componentsPerVector
            bytesPerComponent:bytesPerComponent
                   dataOffset:0
@@ -1353,7 +1356,7 @@ SCNWrapModeFromGLTFSamplerWrapMode(gltf2::GLTFSampler::WrapMode mode) {
     (const gltf2::MeshPrimitiveElement &)element {
   SCNGeometryPrimitiveType primitiveType = SCNGeometryPrimitiveTypeTriangles;
   NSUInteger sizeOfComponent =
-      gltf2::GLTFAccessor::sizeOfComponentType(element.componentType);
+      gltf2::json::Accessor::sizeOfComponentType(element.componentType);
   NSUInteger primitiveCount = element.primitiveCount;
   NSData *data = convertDataToSCNGeometryPrimitiveType(
       element.buffer, sizeOfComponent, &primitiveCount, element.primitiveMode,
@@ -1367,16 +1370,16 @@ SCNWrapModeFromGLTFSamplerWrapMode(gltf2::GLTFSampler::WrapMode mode) {
 // convert indices data with SceneKit compatible primitive type
 static NSData *convertDataToSCNGeometryPrimitiveType(
     const gltf2::Buffer &bufferData, NSUInteger sizeOfComponent,
-    NSUInteger *primitiveCount, gltf2::GLTFMeshPrimitive::Mode mode,
+    NSUInteger *primitiveCount, gltf2::json::MeshPrimitive::Mode mode,
     SCNGeometryPrimitiveType *primitiveType) {
   switch (mode) {
-  case gltf2::GLTFMeshPrimitive::Mode::POINTS:
+  case gltf2::json::MeshPrimitive::Mode::POINTS:
     *primitiveType = SCNGeometryPrimitiveTypePoint;
     return [NSData dataWithBytes:bufferData.data() length:bufferData.size()];
-  case gltf2::GLTFMeshPrimitive::Mode::LINES:
+  case gltf2::json::MeshPrimitive::Mode::LINES:
     *primitiveType = SCNGeometryPrimitiveTypeLine;
     return [NSData dataWithBytes:bufferData.data() length:bufferData.size()];
-  case gltf2::GLTFMeshPrimitive::Mode::LINE_LOOP: {
+  case gltf2::json::MeshPrimitive::Mode::LINE_LOOP: {
     *primitiveType = SCNGeometryPrimitiveTypeLine;
     // convert to line
     NSUInteger indicesCount = bufferData.size() / sizeOfComponent;
@@ -1393,7 +1396,7 @@ static NSData *convertDataToSCNGeometryPrimitiveType(
     *primitiveCount = indicesCount;
     return [data copy];
   }
-  case gltf2::GLTFMeshPrimitive::Mode::LINE_STRIP: {
+  case gltf2::json::MeshPrimitive::Mode::LINE_STRIP: {
     *primitiveType = SCNGeometryPrimitiveTypeLine;
     // convert to line
     NSUInteger indicesCount = bufferData.size() / sizeOfComponent;
@@ -1410,13 +1413,13 @@ static NSData *convertDataToSCNGeometryPrimitiveType(
     *primitiveCount = indicesCount - 1;
     return [data copy];
   }
-  case gltf2::GLTFMeshPrimitive::Mode::TRIANGLES:
+  case gltf2::json::MeshPrimitive::Mode::TRIANGLES:
     *primitiveType = SCNGeometryPrimitiveTypeTriangles;
     return [NSData dataWithBytes:bufferData.data() length:bufferData.size()];
-  case gltf2::GLTFMeshPrimitive::Mode::TRIANGLE_STRIP:
+  case gltf2::json::MeshPrimitive::Mode::TRIANGLE_STRIP:
     *primitiveType = SCNGeometryPrimitiveTypeTriangleStrip;
     return [NSData dataWithBytes:bufferData.data() length:bufferData.size()];
-  case gltf2::GLTFMeshPrimitive::Mode::TRIANGLE_FAN: {
+  case gltf2::json::MeshPrimitive::Mode::TRIANGLE_FAN: {
     *primitiveType = SCNGeometryPrimitiveTypeTriangles;
     // convert to triangles
     NSUInteger indicesCount = bufferData.size() / sizeOfComponent;
@@ -1443,14 +1446,14 @@ static NSData *convertDataToSCNGeometryPrimitiveType(
 
 CAAnimationCalculationMode
 CAAnimationCalculationModeFromGLTFAnimationSamplerInterpolation(
-    gltf2::GLTFAnimationSampler::Interpolation interpolation) {
-  if (interpolation == gltf2::GLTFAnimationSampler::Interpolation::LINEAR) {
+    gltf2::json::AnimationSampler::Interpolation interpolation) {
+  if (interpolation == gltf2::json::AnimationSampler::Interpolation::LINEAR) {
     return kCAAnimationLinear;
   } else if (interpolation ==
-             gltf2::GLTFAnimationSampler::Interpolation::STEP) {
+             gltf2::json::AnimationSampler::Interpolation::STEP) {
     return kCAAnimationDiscrete;
   } else if (interpolation ==
-             gltf2::GLTFAnimationSampler::Interpolation::CUBICSPLINE) {
+             gltf2::json::AnimationSampler::Interpolation::CUBICSPLINE) {
     // TODO: tangent
     return kCAAnimationCubic;
   }
@@ -1458,14 +1461,14 @@ CAAnimationCalculationModeFromGLTFAnimationSamplerInterpolation(
 }
 
 - (NSArray<NSNumber *> *)
-    keyTimesFromAnimationSampler:(const gltf2::GLTFAnimationSampler &)sampler
+    keyTimesFromAnimationSampler:(const gltf2::json::AnimationSampler &)sampler
                       maxKeyTime:(float *)maxKeyTime
                             data:(const gltf2::GLTFData &)data {
   const auto &inputAccessor = data.json().accessors->at(sampler.input);
   // input must be scalar type with float
-  assert(inputAccessor.type == gltf2::GLTFAccessor::Type::SCALAR &&
+  assert(inputAccessor.type == gltf2::json::Accessor::Type::SCALAR &&
          inputAccessor.componentType ==
-             gltf2::GLTFAccessor::ComponentType::FLOAT);
+             gltf2::json::Accessor::ComponentType::FLOAT);
   const auto &inputData = data.accessorBufferAt(sampler.input).buffer;
   NSArray<NSNumber *> *array = NSArrayFromPackedFloatData(inputData);
   float max = inputAccessor.max.has_value() ? inputAccessor.max.value()[0]
@@ -1521,16 +1524,15 @@ SCNMat4ArrayFromPackedFloatData(const gltf2::Buffer &buffer) {
   return [arr copy];
 }
 
-NSArray<NSValue *> *
-SCNVec4ArrayFromPackedFloatDataWithAccessor(const gltf2::Buffer &buffer,
-                                            const gltf2::GLTFAccessor &accessor,
-                                            BOOL isCubisSpline) {
+NSArray<NSValue *> *SCNVec4ArrayFromPackedFloatDataWithAccessor(
+    const gltf2::Buffer &buffer, const gltf2::json::Accessor &accessor,
+    BOOL isCubisSpline) {
   NSInteger count = isCubisSpline ? accessor.count / 3 : accessor.count;
   NSMutableArray<NSValue *> *values = [NSMutableArray arrayWithCapacity:count];
   float *bytes = (float *)buffer.data();
   for (int i = 0; i < count; i++) {
     SCNVector4 vec = SCNVector4Zero;
-    if (accessor.type == gltf2::GLTFAccessor::Type::VEC2) {
+    if (accessor.type == gltf2::json::Accessor::Type::VEC2) {
       if (isCubisSpline)
         bytes += 2; // skip in-tangent
       vec.x = bytes[0];
@@ -1538,7 +1540,7 @@ SCNVec4ArrayFromPackedFloatDataWithAccessor(const gltf2::Buffer &buffer,
       bytes += 2;
       if (isCubisSpline)
         bytes += 2; // skip out-tangent
-    } else if (accessor.type == gltf2::GLTFAccessor::Type::VEC3) {
+    } else if (accessor.type == gltf2::json::Accessor::Type::VEC3) {
       if (isCubisSpline)
         bytes += 3; // skip in-tangent
       vec.x = bytes[0];
@@ -1547,7 +1549,7 @@ SCNVec4ArrayFromPackedFloatDataWithAccessor(const gltf2::Buffer &buffer,
       bytes += 3;
       if (isCubisSpline)
         bytes += 3; // skip out-tangent
-    } else if (accessor.type == gltf2::GLTFAccessor::Type::VEC4) {
+    } else if (accessor.type == gltf2::json::Accessor::Type::VEC4) {
       if (isCubisSpline)
         bytes += 4; // skip in-tangent
       vec.x = bytes[0];
@@ -1563,16 +1565,15 @@ SCNVec4ArrayFromPackedFloatDataWithAccessor(const gltf2::Buffer &buffer,
   return [values copy];
 }
 
-NSArray<NSValue *> *
-SCNVec3ArrayFromPackedFloatDataWithAccessor(const gltf2::Buffer &buffer,
-                                            const gltf2::GLTFAccessor &accessor,
-                                            BOOL isCubisSpline) {
+NSArray<NSValue *> *SCNVec3ArrayFromPackedFloatDataWithAccessor(
+    const gltf2::Buffer &buffer, const gltf2::json::Accessor &accessor,
+    BOOL isCubisSpline) {
   NSInteger count = isCubisSpline ? accessor.count / 3 : accessor.count;
   NSMutableArray<NSValue *> *values = [NSMutableArray arrayWithCapacity:count];
   float *bytes = (float *)buffer.data();
   for (int i = 0; i < count; i++) {
     SCNVector3 vec = SCNVector3Zero;
-    if (accessor.type == gltf2::GLTFAccessor::Type::VEC2) {
+    if (accessor.type == gltf2::json::Accessor::Type::VEC2) {
       if (isCubisSpline)
         bytes += 2; // skip in-tangent
       vec.x = bytes[0];
@@ -1580,7 +1581,7 @@ SCNVec3ArrayFromPackedFloatDataWithAccessor(const gltf2::Buffer &buffer,
       bytes += 2;
       if (isCubisSpline)
         bytes += 2; // skip out-tangent
-    } else if (accessor.type == gltf2::GLTFAccessor::Type::VEC3) {
+    } else if (accessor.type == gltf2::json::Accessor::Type::VEC3) {
       if (isCubisSpline)
         bytes += 3; // skip in-tangent
       vec.x = bytes[0];
@@ -1589,7 +1590,7 @@ SCNVec3ArrayFromPackedFloatDataWithAccessor(const gltf2::Buffer &buffer,
       bytes += 3;
       if (isCubisSpline)
         bytes += 3; // skip out-tangent
-    } else if (accessor.type == gltf2::GLTFAccessor::Type::VEC4) {
+    } else if (accessor.type == gltf2::json::Accessor::Type::VEC4) {
       if (isCubisSpline)
         bytes += 4; // skip in-tangent
       vec.x = bytes[0];
@@ -1607,56 +1608,43 @@ SCNVec3ArrayFromPackedFloatDataWithAccessor(const gltf2::Buffer &buffer,
 static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
 
 - (NSArray<NSString *> *)blendShapeKeys {
-  if (_json.vrm0.has_value()) {
-    if (_json.vrm0->blendShapeMaster.has_value() &&
-        _json.vrm0->blendShapeMaster->blendShapeGroups.has_value()) {
-      const auto groups = _json.vrm0->blendShapeMaster->blendShapeGroups;
-      NSMutableArray<NSString *> *keys =
-          [NSMutableArray arrayWithCapacity:groups->size()];
-      for (const auto &group : *groups) {
-        [keys
-            addObject:[NSString
-                          stringWithCString:group.groupName().c_str()
-                                   encoding:[NSString defaultCStringEncoding]]];
-      }
-      return [keys copy];
+  if (self.json.vrm0) {
+    if (self.json.vrm0.blendShapeMaster &&
+        self.json.vrm0.blendShapeMaster.blendShapeGroups) {
+      return self.json.vrm0.blendShapeMaster.groupNames;
     }
-  } else if (_json.vrm1.has_value()) {
-    if (_json.vrm1->expressions.has_value()) {
-      const auto names = _json.vrm1->expressions->expressionNames();
-      NSMutableArray<NSString *> *keys =
-          [NSMutableArray arrayWithCapacity:names.size()];
-      for (const auto &name : names) {
-        [keys
-            addObject:[NSString
-                          stringWithCString:name.c_str()
-                                   encoding:[NSString defaultCStringEncoding]]];
-      }
-      return [keys copy];
+  } else if (self.json.vrm1) {
+    if (self.json.vrm1.expressions) {
+      return self.json.vrm1.expressions.expressionNames;
     }
   }
   return @[];
 }
 
 - (CGFloat)weightForBlendShapeKey:(NSString *)key {
-  if (_json.vrm0.has_value()) {
-    const auto group = _json.vrm0->blendShapeGroupByPreset(key.UTF8String);
-    if (group.has_value() && group->binds.has_value()) {
-      for (const auto &bind : *group->binds) {
-        auto meshIndex = bind.mesh.value_or(0);
+  if (self.json.vrm0) {
+    VRMBlendShapeGroup *group = [self.json.vrm0 blendShapeGroupByPreset:key];
+    if (group && group.binds) {
+      for (VRMBlendShapeBind *bind in group.binds) {
+        NSInteger meshIndex = 0;
+        if (bind.mesh)
+          meshIndex = bind.mesh.integerValue;
+        NSInteger bindIndex = 0;
+        if (bind.index)
+          bindIndex = bind.index.integerValue;
+
         SCNNode *meshNode = _meshNodeDict[@(meshIndex)];
         for (SCNNode *childNode in meshNode.childNodes) {
           if (childNode.morpher) {
-            return [childNode.morpher
-                weightForTargetAtIndex:bind.index.value_or(0)];
+            return [childNode.morpher weightForTargetAtIndex:bindIndex];
           }
         }
       }
     }
-  } else if (_json.vrm1.has_value()) {
-    const auto expression = _json.vrm1->expressionByName(key.UTF8String);
-    if (expression.has_value() && expression->morphTargetBinds.has_value()) {
-      for (const auto &bind : *expression->morphTargetBinds) {
+  } else if (self.json.vrm1) {
+    VRMCExpression *expression = [self.json.vrm1 expressionByName:key];
+    if (expression && expression.morphTargetBinds) {
+      for (VRMCExpressionMorphTargetBind *bind in expression.morphTargetBinds) {
         SCNNode *meshNode = _nodeDict[@(bind.node)];
         for (SCNNode *childNode in meshNode.childNodes) {
           if (childNode.morpher) {
@@ -1671,7 +1659,7 @@ static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
 
 - (void)setBlendShapeWeight:(CGFloat)weight
                    meshNode:(SCNNode *)meshNode
-                  bindIndex:(uint32_t)bindIndex {
+                  bindIndex:(NSInteger)bindIndex {
   for (SCNNode *childNode in meshNode.childNodes) {
     if (childNode.morpher) {
       [childNode.morpher setWeight:weight forTargetAtIndex:bindIndex];
@@ -1680,28 +1668,36 @@ static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
 }
 
 - (void)setBlendShapeWeight:(CGFloat)weight forKey:(NSString *)key {
-  if (_json.vrm0.has_value()) {
-    const auto group = _json.vrm0->blendShapeGroupByPreset(key.UTF8String);
-    if (group.has_value() && group->binds.has_value()) {
-      float value = group->isBinaryValue() ? roundValue(weight) : weight;
-      for (const auto &bind : *group->binds) {
-        float bindWeight = (bind.weight.value_or(100.0f) / 100.0f) * weight;
-        auto meshIndex = bind.mesh.value_or(0);
-        auto bindIndex = bind.index.value_or(0);
+  if (self.json.vrm0) {
+    const auto group = [self.json.vrm0 blendShapeGroupByPreset:key];
+    if (group && group.binds) {
+      float value = group.isBinary ? roundValue(weight) : weight;
+      for (VRMBlendShapeBind *bind in group.binds) {
+        float bindWeight = weight;
+        if (bind.weight) {
+          bindWeight = (bind.weight.floatValue / 100.0f) * weight;
+        }
+        NSInteger meshIndex = 0;
+        if (bind.mesh)
+          meshIndex = bind.mesh.integerValue;
+        NSInteger bindIndex = 0;
+        if (bind.index)
+          bindIndex = bind.index.integerValue;
         SCNNode *meshNode = _meshNodeDict[@(meshIndex)];
         [self setBlendShapeWeight:bindWeight
                          meshNode:meshNode
                         bindIndex:bindIndex];
       }
     }
-  } else if (_json.vrm1.has_value()) {
-    const auto expression = _json.vrm1->expressionByName(key.UTF8String);
-    if (expression.has_value() && expression->morphTargetBinds.has_value()) {
-      float value = expression->isBinaryValue() ? roundValue(weight) : weight;
-      for (const auto &bind : *expression->morphTargetBinds) {
+  } else if (self.json.vrm1) {
+    VRMCExpression *expression = [self.json.vrm1 expressionByName:key];
+    if (expression && expression.morphTargetBinds) {
+      float value = expression.isBinary ? roundValue(weight) : weight;
+      for (VRMCExpressionMorphTargetBind *bind in expression.morphTargetBinds) {
         SCNNode *node = _nodeDict[@(bind.node)];
         [self setBlendShapeWeight:value meshNode:node bindIndex:bind.index];
       }
+      // TODO: materialColorBinds, textureTransform, overrides
     }
   }
 }

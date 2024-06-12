@@ -1,7 +1,7 @@
 #include "GLTFData.h"
 #include "GLTFException.h"
 #include "GLTFExtension.h"
-#include "GLTFJsonDecoder.h"
+#include "JsonDecoder.h"
 #include "boost/url.hpp"
 #include "cppcodec/base64_rfc4648.hpp"
 #include "draco/compression/decode.h"
@@ -21,42 +21,42 @@ static void waitFutures(std::vector<std::future<void>> &futures) {
 }
 
 static float normalize(const void *bytes, int index,
-                       GLTFAccessor::ComponentType compType) {
+                       json::Accessor::ComponentType compType) {
   switch (compType) {
-  case GLTFAccessor::ComponentType::BYTE: {
+  case json::Accessor::ComponentType::BYTE: {
     int8_t value = *((int8_t *)bytes + index);
     float f = (float)value;
     return f > 0 ? f / (float)INT8_MAX : f / (float)INT8_MIN;
   }
-  case GLTFAccessor::ComponentType::UNSIGNED_BYTE: {
+  case json::Accessor::ComponentType::UNSIGNED_BYTE: {
     uint8_t value = *((uint8_t *)bytes + index);
     float f = (float)value;
     return f / (float)UINT8_MAX;
   }
-  case GLTFAccessor::ComponentType::SHORT: {
+  case json::Accessor::ComponentType::SHORT: {
     int16_t value = *((int16_t *)bytes + index);
     float f = (float)value;
     return f > 0 ? f / (float)INT16_MAX : f / (float)INT16_MIN;
   }
-  case GLTFAccessor::ComponentType::UNSIGNED_SHORT: {
+  case json::Accessor::ComponentType::UNSIGNED_SHORT: {
     uint16_t value = *((uint16_t *)bytes + index);
     float f = (float)value;
     return f / (float)UINT16_MAX;
   }
-  case GLTFAccessor::ComponentType::UNSIGNED_INT: {
+  case json::Accessor::ComponentType::UNSIGNED_INT: {
     uint32_t value = *((uint32_t *)bytes + index);
     float f = (float)value;
     return f / (float)UINT32_MAX;
   }
-  case GLTFAccessor::ComponentType::FLOAT: {
+  case json::Accessor::ComponentType::FLOAT: {
     return *((float *)bytes + index);
   }
   }
 }
 
 static Buffer normalizeBuffer(const Buffer &binary,
-                              const GLTFAccessor &accessor) {
-  auto compCount = GLTFAccessor::componentsCountOfType(accessor.type);
+                              const json::Accessor &accessor) {
+  auto compCount = json::Accessor::componentsCountOfType(accessor.type);
   auto length = sizeof(float) * compCount * accessor.count;
   std::vector<float> values(compCount * accessor.count);
   for (int i = 0; i < accessor.count; i++) {
@@ -169,8 +169,8 @@ std::future<void> GLTFData::loadAccessorBufferAt(uint32_t index) {
   const auto &accessor = json().accessors->at(index);
   return std::async(std::launch::async, [this, index, &accessor] {
     auto compTypeSize =
-        GLTFAccessor::sizeOfComponentType(accessor.componentType);
-    auto compCount = GLTFAccessor::componentsCountOfType(accessor.type);
+        json::Accessor::sizeOfComponentType(accessor.componentType);
+    auto compCount = json::Accessor::componentsCountOfType(accessor.type);
     auto typeSize = compTypeSize * compCount;
     auto length = typeSize * accessor.count;
     Buffer binary(length);
@@ -215,8 +215,8 @@ std::future<void> GLTFData::loadAccessorBufferAt(uint32_t index) {
 
     // normalize
     if (accessor.normalized.value_or(false) &&
-        accessor.componentType != GLTFAccessor::ComponentType::FLOAT &&
-        accessor.componentType != GLTFAccessor::ComponentType::UNSIGNED_INT) {
+        accessor.componentType != json::Accessor::ComponentType::FLOAT &&
+        accessor.componentType != json::Accessor::ComponentType::UNSIGNED_INT) {
       binary = normalizeBuffer(binary, accessor);
       normalized = true;
     }
@@ -258,23 +258,23 @@ std::future<void> GLTFData::loadImageBufferAt(uint32_t index) {
 }
 
 std::vector<uint32_t>
-GLTFData::indicesForAccessorSparse(const GLTFAccessorSparse &sparse) const {
+GLTFData::indicesForAccessorSparse(const json::AccessorSparse &sparse) const {
   std::vector<uint32_t> data(sparse.count);
   const uint8_t *ptr = _bufferViews[sparse.indices.bufferView]->data +
                        sparse.indices.byteOffset.value_or(0);
   for (int i = 0; i < sparse.count; i++) {
     switch (sparse.indices.componentType) {
-    case GLTFAccessorSparseIndices::ComponentType::UNSIGNED_BYTE:
+    case json::AccessorSparseIndices::ComponentType::UNSIGNED_BYTE:
       data.push_back(*ptr);
       ptr += sizeof(uint8_t);
       break;
 
-    case GLTFAccessorSparseIndices::ComponentType::UNSIGNED_SHORT:
+    case json::AccessorSparseIndices::ComponentType::UNSIGNED_SHORT:
       data.push_back(*reinterpret_cast<const uint16_t *>(ptr));
       ptr += sizeof(uint16_t);
       break;
 
-    case GLTFAccessorSparseIndices::ComponentType::UNSIGNED_INT:
+    case json::AccessorSparseIndices::ComponentType::UNSIGNED_INT:
       data.push_back(*reinterpret_cast<const uint32_t *>(ptr));
       ptr += sizeof(uint32_t);
       break;
@@ -397,25 +397,25 @@ std::future<void> GLTFData::loadMeshPrimitiveAt(uint32_t meshIndex,
               element.primitiveMode = primitive.modeValue();
               auto indicesCount = accessor.count;
               switch (primitive.modeValue()) {
-              case GLTFMeshPrimitive::Mode::POINTS:
+              case json::MeshPrimitive::Mode::POINTS:
                 element.primitiveCount = indicesCount;
                 break;
-              case GLTFMeshPrimitive::Mode::LINES:
+              case json::MeshPrimitive::Mode::LINES:
                 element.primitiveCount = indicesCount / 2;
                 break;
-              case GLTFMeshPrimitive::Mode::LINE_LOOP:
+              case json::MeshPrimitive::Mode::LINE_LOOP:
                 element.primitiveCount = indicesCount;
                 break;
-              case GLTFMeshPrimitive::Mode::LINE_STRIP:
+              case json::MeshPrimitive::Mode::LINE_STRIP:
                 element.primitiveCount = indicesCount - 1;
                 break;
-              case GLTFMeshPrimitive::Mode::TRIANGLES:
+              case json::MeshPrimitive::Mode::TRIANGLES:
                 element.primitiveCount = indicesCount / 3;
                 break;
-              case GLTFMeshPrimitive::Mode::TRIANGLE_STRIP:
+              case json::MeshPrimitive::Mode::TRIANGLE_STRIP:
                 element.primitiveCount = indicesCount - 2;
                 break;
-              case GLTFMeshPrimitive::Mode::TRIANGLE_FAN:
+              case json::MeshPrimitive::Mode::TRIANGLE_FAN:
                 element.primitiveCount = indicesCount - 2;
                 break;
               }
@@ -444,21 +444,22 @@ GLTFData::meshPrimitiveSourceFromAccessor(uint32_t index) const {
 
   const auto &accessor = json().accessors->at(index);
   const auto &accessorBuffer = accessorBufferAt(index);
-  bool isFloat = accessor.componentType == GLTFAccessor::ComponentType::FLOAT ||
-                 accessorBuffer.normalized;
-  GLTFAccessor::ComponentType componentType =
-      isFloat ? GLTFAccessor::ComponentType::FLOAT : accessor.componentType;
+  bool isFloat =
+      accessor.componentType == json::Accessor::ComponentType::FLOAT ||
+      accessorBuffer.normalized;
+  json::Accessor::ComponentType componentType =
+      isFloat ? json::Accessor::ComponentType::FLOAT : accessor.componentType;
 
   source.buffer = accessorBuffer.buffer;
   source.vectorCount = accessor.count;
   source.componentsPerVector =
-      GLTFAccessor::componentsCountOfType(accessor.type);
+      json::Accessor::componentsCountOfType(accessor.type);
   source.componentType = componentType;
   return source;
 }
 
 MeshPrimitiveSources GLTFData::meshPrimitiveSourcesFromTarget(
-    const GLTFMeshPrimitiveTarget &target) const {
+    const json::MeshPrimitiveTarget &target) const {
   MeshPrimitiveSources sources;
   std::vector<std::future<void>> futures;
 
@@ -497,21 +498,21 @@ decodeDracoMesh(const BufferView &bufferView) {
   return std::move(status_or_mesh).value();
 }
 
-static GLTFAccessor::ComponentType
+static json::Accessor::ComponentType
 convertDracoDataTypeToGLTFComponentType(draco::DataType dracoType) {
   switch (dracoType) {
   case draco::DT_INT8:
-    return GLTFAccessor::ComponentType::BYTE;
+    return json::Accessor::ComponentType::BYTE;
   case draco::DT_UINT8:
-    return GLTFAccessor::ComponentType::UNSIGNED_BYTE;
+    return json::Accessor::ComponentType::UNSIGNED_BYTE;
   case draco::DT_INT16:
-    return GLTFAccessor::ComponentType::SHORT;
+    return json::Accessor::ComponentType::SHORT;
   case draco::DT_UINT16:
-    return GLTFAccessor::ComponentType::UNSIGNED_SHORT;
+    return json::Accessor::ComponentType::UNSIGNED_SHORT;
   case draco::DT_INT32:
-    return GLTFAccessor::ComponentType::UNSIGNED_INT;
+    return json::Accessor::ComponentType::UNSIGNED_INT;
   case draco::DT_FLOAT32:
-    return GLTFAccessor::ComponentType::FLOAT;
+    return json::Accessor::ComponentType::FLOAT;
   default:
     throw std::runtime_error("Unsupported Draco data type");
   }
@@ -541,7 +542,7 @@ processDracoMeshPrimitiveSource(const std::unique_ptr<draco::Mesh> &dracoMesh,
 }
 
 std::future<MeshPrimitive> GLTFData::meshPrimitiveFromDracoExtension(
-    const GLTFMeshPrimitiveDracoExtension &extension) const {
+    const json::MeshPrimitiveDracoExtension &extension) const {
   return std::async(std::launch::async, [this, &extension] {
     auto dracoMesh = decodeDracoMesh(bufferViewAt(extension.bufferView));
     auto primitiveCount = dracoMesh->num_faces();
@@ -555,9 +556,9 @@ std::future<MeshPrimitive> GLTFData::meshPrimitiveFromDracoExtension(
     }
     MeshPrimitiveElement element;
     element.buffer = indicesData;
-    element.primitiveMode = GLTFMeshPrimitive::Mode::TRIANGLES;
+    element.primitiveMode = json::MeshPrimitive::Mode::TRIANGLES;
     element.primitiveCount = primitiveCount;
-    element.componentType = GLTFAccessor::ComponentType::UNSIGNED_INT;
+    element.componentType = json::Accessor::ComponentType::UNSIGNED_INT;
 
     MeshPrimitiveSources sources;
     for (int i = 0; i < dracoMesh->num_attributes(); i++) {

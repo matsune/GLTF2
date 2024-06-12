@@ -1,7 +1,7 @@
 #ifndef GLTFFile_h
 #define GLTFFile_h
 
-#include "GLTFJson.h"
+#include "Json.h"
 #include <filesystem>
 #include <fstream>
 #include <future>
@@ -40,9 +40,9 @@ public:
 
   GLTFFile() = delete;
 
-  const GLTFJson &json() const { return _json; }
+  const json::Json &json() const { return _json; }
 
-  const GLTFJson &&moveJson() const { return std::move(_json); }
+  const json::Json &&moveJson() const { return std::move(_json); }
 
   const std::optional<std::filesystem::path> &path() const { return _path; }
 
@@ -50,16 +50,16 @@ public:
 
   Buffer bufferFromUri(const std::string &uri) const;
 
-  Buffer getBuffer(const GLTFBuffer &buffer) const;
+  Buffer getBuffer(const json::Buffer &buffer) const;
   Buffer getBuffer(uint32_t index) const;
 
 private:
-  GLTFFile(GLTFJson json,
+  GLTFFile(json::Json json,
            std::optional<std::filesystem::path> path = std::nullopt,
            std::optional<Buffer> bin = std::nullopt)
       : _json(json), _path(path), _bin(bin){};
 
-  GLTFJson _json;
+  json::Json _json;
   std::optional<std::filesystem::path> _path;
   std::optional<Buffer> _bin;
 };

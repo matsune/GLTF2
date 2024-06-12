@@ -2,7 +2,7 @@
 #define GLTFData_h
 
 #include "GLTFFile.h"
-#include "GLTFJson.h"
+#include "Json.h"
 #include <filesystem>
 #include <fstream>
 #include <future>
@@ -33,7 +33,7 @@ struct MeshPrimitiveSource {
   Buffer buffer;
   uint32_t vectorCount;
   uint8_t componentsPerVector;
-  GLTFAccessor::ComponentType componentType;
+  json::Accessor::ComponentType componentType;
 };
 
 struct MeshPrimitiveSources {
@@ -48,9 +48,9 @@ struct MeshPrimitiveSources {
 
 struct MeshPrimitiveElement {
   Buffer buffer;
-  GLTFMeshPrimitive::Mode primitiveMode;
+  json::MeshPrimitive::Mode primitiveMode;
   uint32_t primitiveCount;
-  GLTFAccessor::ComponentType componentType;
+  json::Accessor::ComponentType componentType;
 };
 
 struct MeshPrimitive {
@@ -71,9 +71,9 @@ public:
     return std::move(data);
   }
 
-  const GLTFJson &json() const { return _file.json(); }
+  const json::Json &json() const { return _file.json(); }
 
-  const GLTFJson &&moveJson() const { return _file.moveJson(); }
+  const json::Json &&moveJson() const { return _file.moveJson(); }
 
   const std::vector<std::unique_ptr<Buffer>> &buffers() const {
     return _buffers;
@@ -143,13 +143,13 @@ private:
                                         uint32_t primitiveIndex);
 
   std::vector<uint32_t>
-  indicesForAccessorSparse(const GLTFAccessorSparse &sparse) const;
+  indicesForAccessorSparse(const json::AccessorSparse &sparse) const;
 
   MeshPrimitiveSource meshPrimitiveSourceFromAccessor(uint32_t index) const;
   std::future<MeshPrimitive> meshPrimitiveFromDracoExtension(
-      const GLTFMeshPrimitiveDracoExtension &extension) const;
+      const json::MeshPrimitiveDracoExtension &extension) const;
   MeshPrimitiveSources
-  meshPrimitiveSourcesFromTarget(const GLTFMeshPrimitiveTarget &target) const;
+  meshPrimitiveSourcesFromTarget(const json::MeshPrimitiveTarget &target) const;
 };
 
 } // namespace gltf2

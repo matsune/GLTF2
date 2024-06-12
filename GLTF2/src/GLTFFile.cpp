@@ -1,7 +1,7 @@
 #include "GLTFData.h"
 #include "GLTFException.h"
 #include "GLTFExtension.h"
-#include "GLTFJsonDecoder.h"
+#include "JsonDecoder.h"
 #include "boost/url.hpp"
 #include "cppcodec/base64_rfc4648.hpp"
 #include "draco/compression/decode.h"
@@ -58,7 +58,7 @@ static uint32_t readGLBJsonLength(std::istream &fs) {
   return chunkHead0.length;
 }
 
-static GLTFJson readGLBJson(std::istream &fs) {
+static json::Json readGLBJson(std::istream &fs) {
   auto jsonLength = readGLBJsonLength(fs);
 
   std::string jsonBuf(jsonLength, '\0');
@@ -67,7 +67,7 @@ static GLTFJson readGLBJson(std::istream &fs) {
     throw InputException("Failed to read json data");
   }
   auto data = nlohmann::json::parse(jsonBuf);
-  return GLTFJsonDecoder::decode(data);
+  return JsonDecoder::decode(data);
 }
 
 static std::optional<Buffer> readGLBBin(std::istream &fs) {
@@ -113,7 +113,7 @@ GLTFFile GLTFFile::parseStream(std::istream &&fs,
                     std::istreambuf_iterator<char>());
     try {
       auto data = nlohmann::json::parse(raw);
-      auto json = GLTFJsonDecoder::decode(data);
+      auto json = JsonDecoder::decode(data);
       return GLTFFile(json, path, bin);
     } catch (nlohmann::json::exception e) {
       throw InputException(e.what());
@@ -152,7 +152,7 @@ Buffer GLTFFile::bufferFromUri(const std::string &uri) const {
   }
 }
 
-Buffer GLTFFile::getBuffer(const GLTFBuffer &buffer) const {
+Buffer GLTFFile::getBuffer(const json::Buffer &buffer) const {
   if (buffer.uri) {
     return bufferFromUri(*buffer.uri);
   } else {

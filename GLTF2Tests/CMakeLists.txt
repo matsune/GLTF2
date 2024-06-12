@@ -11,7 +11,7 @@ FetchContent_MakeAvailable(googletest)
 enable_testing()
 
 file(GLOB_RECURSE SOURCES "*.cpp")
-add_executable(GLTF2Tests ${CONFIG_H} ${SOURCES})
+add_executable(GLTF2Tests ${SOURCES})
 target_include_directories(GLTF2Tests PRIVATE ${CMAKE_BINARY_DIR} ${cppcodec_SOURCE_DIR})
 
 target_link_libraries(GLTF2Tests GLTF2 GTest::gtest_main)

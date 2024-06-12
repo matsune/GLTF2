@@ -1,6 +1,7 @@
-#ifndef GLTFJson_h
-#define GLTFJson_h
+#ifndef Json_h
+#define Json_h
 
+#include <algorithm>
 #include <map>
 #include <optional>
 #include <stdint.h>
@@ -8,10 +9,11 @@
 #include <vector>
 
 namespace gltf2 {
+namespace json {
 
 // Accessor
 
-class GLTFAccessorSparseIndices {
+class AccessorSparseIndices {
 public:
   enum class ComponentType {
     UNSIGNED_BYTE = 5121,
@@ -37,20 +39,20 @@ public:
   ComponentType componentType;
 };
 
-class GLTFAccessorSparseValues {
+class AccessorSparseValues {
 public:
   uint32_t bufferView;
   std::optional<uint32_t> byteOffset;
 };
 
-class GLTFAccessorSparse {
+class AccessorSparse {
 public:
   uint32_t count;
-  GLTFAccessorSparseIndices indices;
-  GLTFAccessorSparseValues values;
+  AccessorSparseIndices indices;
+  AccessorSparseValues values;
 };
 
-class GLTFAccessor {
+class Accessor {
 public:
   enum class ComponentType {
     BYTE = 5120,
@@ -142,13 +144,13 @@ public:
   Type type;
   std::optional<std::vector<float>> max;
   std::optional<std::vector<float>> min;
-  std::optional<GLTFAccessorSparse> sparse;
+  std::optional<AccessorSparse> sparse;
   std::optional<std::string> name;
 };
 
 // Animation
 
-class GLTFAnimationChannelTarget {
+class AnimationChannelTarget {
 public:
   enum class Path { TRANSLATION, ROTATION, SCALE, WEIGHTS };
 
@@ -169,13 +171,13 @@ public:
   Path path;
 };
 
-class GLTFAnimationChannel {
+class AnimationChannel {
 public:
   uint32_t sampler;
-  GLTFAnimationChannelTarget target;
+  AnimationChannelTarget target;
 };
 
-class GLTFAnimationSampler {
+class AnimationSampler {
 public:
   enum class Interpolation { LINEAR, STEP, CUBICSPLINE };
 
@@ -200,16 +202,16 @@ public:
   }
 };
 
-class GLTFAnimation {
+class Animation {
 public:
-  std::vector<GLTFAnimationChannel> channels;
-  std::vector<GLTFAnimationSampler> samplers;
+  std::vector<AnimationChannel> channels;
+  std::vector<AnimationSampler> samplers;
   std::optional<std::string> name;
 };
 
 // Asset
 
-class GLTFAsset {
+class Asset {
 public:
   std::optional<std::string> copyright;
   std::optional<std::string> generator;
@@ -219,14 +221,14 @@ public:
 
 // Buffer
 
-class GLTFBuffer {
+class Buffer {
 public:
   std::optional<std::string> uri;
   uint32_t byteLength;
   std::optional<std::string> name;
 };
 
-class GLTFBufferView {
+class BufferView {
 public:
   uint32_t buffer;
   std::optional<uint32_t> byteOffset;
@@ -238,7 +240,7 @@ public:
 
 // Camera
 
-class GLTFCameraOrthographic {
+class CameraOrthographic {
 public:
   float xmag;
   float ymag;
@@ -246,7 +248,7 @@ public:
   float znear;
 };
 
-class GLTFCameraPerspective {
+class CameraPerspective {
 public:
   std::optional<float> aspectRatio;
   float yfov;
@@ -254,7 +256,7 @@ public:
   float znear;
 };
 
-class GLTFCamera {
+class Camera {
 public:
   enum class Type { PERSPECTIVE, ORTHOGRAPHIC };
 
@@ -267,15 +269,15 @@ public:
       return std::nullopt;
   }
 
-  std::optional<GLTFCameraOrthographic> orthographic;
-  std::optional<GLTFCameraPerspective> perspective;
+  std::optional<CameraOrthographic> orthographic;
+  std::optional<CameraPerspective> perspective;
   Type type;
   std::optional<std::string> name;
 };
 
 // Image
 
-class GLTFImage {
+class Image {
 public:
   enum class MimeType { JPEG, PNG };
 
@@ -296,7 +298,7 @@ public:
 
 // Texture
 
-class GLTFTexture {
+class Texture {
 public:
   std::optional<uint32_t> sampler;
   std::optional<uint32_t> source;
@@ -321,7 +323,7 @@ public:
   }
 };
 
-class GLTFTextureInfo {
+class TextureInfo {
 public:
   uint32_t index;
   std::optional<uint32_t> texCoord;
@@ -332,13 +334,13 @@ public:
 
 // Material
 
-class GLTFMaterialPBRMetallicRoughness {
+class MaterialPBRMetallicRoughness {
 public:
   std::optional<std::array<float, 4>> baseColorFactor;
-  std::optional<GLTFTextureInfo> baseColorTexture;
+  std::optional<TextureInfo> baseColorTexture;
   std::optional<float> metallicFactor;
   std::optional<float> roughnessFactor;
-  std::optional<GLTFTextureInfo> metallicRoughnessTexture;
+  std::optional<TextureInfo> metallicRoughnessTexture;
 
   std::array<float, 4> baseColorFactorValue() const {
     return baseColorFactor.value_or(
@@ -350,14 +352,14 @@ public:
   float roughnessFactorValue() const { return roughnessFactor.value_or(1.0f); }
 };
 
-class GLTFMaterialNormalTextureInfo : public GLTFTextureInfo {
+class MaterialNormalTextureInfo : public TextureInfo {
 public:
   std::optional<float> scale;
 
   float scaleValue() const { return scale.value_or(1.0f); }
 };
 
-class GLTFMaterialOcclusionTextureInfo : public GLTFTextureInfo {
+class MaterialOcclusionTextureInfo : public TextureInfo {
 public:
   std::optional<float> strength;
 
@@ -368,7 +370,7 @@ class KHRMaterialAnisotropy {
 public:
   std::optional<float> anisotropyStrength;
   std::optional<float> anisotropyRotation;
-  std::optional<GLTFTextureInfo> anisotropyTexture;
+  std::optional<TextureInfo> anisotropyTexture;
 
   float anisotropyStrengthValue() const {
     return anisotropyStrength.value_or(0.0f);
@@ -382,9 +384,9 @@ public:
 class KHRMaterialSheen {
 public:
   std::optional<std::array<float, 3>> sheenColorFactor;
-  std::optional<GLTFTextureInfo> sheenColorTexture;
+  std::optional<TextureInfo> sheenColorTexture;
   std::optional<float> sheenRoughnessFactor;
-  std::optional<GLTFTextureInfo> sheenRoughnessTexture;
+  std::optional<TextureInfo> sheenRoughnessTexture;
 
   std::array<float, 3> sheenColorFactorValue() const {
     return sheenColorFactor.value_or(std::array<float, 3>({0.0f, 0.0f, 0.0f}));
@@ -398,9 +400,9 @@ public:
 class KHRMaterialSpecular {
 public:
   std::optional<float> specularFactor;
-  std::optional<GLTFTextureInfo> specularTexture;
+  std::optional<TextureInfo> specularTexture;
   std::optional<std::array<float, 3>> specularColorFactor;
-  std::optional<GLTFTextureInfo> specularColorTexture;
+  std::optional<TextureInfo> specularColorTexture;
 
   float specularFactorValue() const { return specularFactor.value_or(1.0f); }
 
@@ -420,10 +422,10 @@ public:
 class KHRMaterialClearcoat {
 public:
   std::optional<float> clearcoatFactor;
-  std::optional<GLTFTextureInfo> clearcoatTexture;
+  std::optional<TextureInfo> clearcoatTexture;
   std::optional<float> clearcoatRoughnessFactor;
-  std::optional<GLTFTextureInfo> clearcoatRoughnessTexture;
-  std::optional<GLTFMaterialNormalTextureInfo> clearcoatNormalTexture;
+  std::optional<TextureInfo> clearcoatRoughnessTexture;
+  std::optional<MaterialNormalTextureInfo> clearcoatNormalTexture;
 
   float clearcoatFactorValue() const { return clearcoatFactor.value_or(0.0f); }
 
@@ -451,11 +453,11 @@ public:
 class KHRMaterialIridescence {
 public:
   std::optional<float> iridescenceFactor;
-  std::optional<GLTFTextureInfo> iridescenceTexture;
+  std::optional<TextureInfo> iridescenceTexture;
   std::optional<float> iridescenceIor;
   std::optional<float> iridescenceThicknessMinimum;
   std::optional<float> iridescenceThicknessMaximum;
-  std::optional<GLTFTextureInfo> iridescenceThicknessTexture;
+  std::optional<TextureInfo> iridescenceThicknessTexture;
 
   float iridescenceFactorValue() const {
     return iridescenceFactor.value_or(0.0f);
@@ -475,7 +477,7 @@ public:
 class KHRMaterialVolume {
 public:
   std::optional<float> thicknessFactor;
-  std::optional<GLTFTextureInfo> thicknessTexture;
+  std::optional<TextureInfo> thicknessTexture;
   std::optional<float> attenuationDistance;
   std::optional<std::array<float, 3>> attenuationColor;
 
@@ -493,14 +495,14 @@ public:
 class KHRMaterialTransmission {
 public:
   std::optional<float> transmissionFactor;
-  std::optional<GLTFTextureInfo> transmissionTexture;
+  std::optional<TextureInfo> transmissionTexture;
 
   float transmissionFactorValue() const {
     return transmissionFactor.value_or(0.0f);
   }
 };
 
-class GLTFMaterial {
+class Material {
 public:
   enum class AlphaMode { OPAQUE, MASK, BLEND };
 
@@ -517,10 +519,10 @@ public:
   }
 
   std::optional<std::string> name;
-  std::optional<GLTFMaterialPBRMetallicRoughness> pbrMetallicRoughness;
-  std::optional<GLTFMaterialNormalTextureInfo> normalTexture;
-  std::optional<GLTFMaterialOcclusionTextureInfo> occlusionTexture;
-  std::optional<GLTFTextureInfo> emissiveTexture;
+  std::optional<MaterialPBRMetallicRoughness> pbrMetallicRoughness;
+  std::optional<MaterialNormalTextureInfo> normalTexture;
+  std::optional<MaterialOcclusionTextureInfo> occlusionTexture;
+  std::optional<TextureInfo> emissiveTexture;
   std::optional<std::array<float, 3>> emissiveFactor;
   std::optional<AlphaMode> alphaMode;
   std::optional<float> alphaCutoff;
@@ -554,14 +556,14 @@ public:
 
 // Mesh
 
-class GLTFMeshPrimitiveTarget {
+class MeshPrimitiveTarget {
 public:
   std::optional<uint32_t> position;
   std::optional<uint32_t> normal;
   std::optional<uint32_t> tangent;
 };
 
-class GLTFMeshPrimitiveAttributes : public GLTFMeshPrimitiveTarget {
+class MeshPrimitiveAttributes : public MeshPrimitiveTarget {
 public:
   std::optional<std::vector<uint32_t>> texcoords;
   std::optional<std::vector<uint32_t>> colors;
@@ -569,13 +571,13 @@ public:
   std::optional<std::vector<uint32_t>> weights;
 };
 
-class GLTFMeshPrimitiveDracoExtension {
+class MeshPrimitiveDracoExtension {
 public:
   uint32_t bufferView;
-  GLTFMeshPrimitiveAttributes attributes;
+  MeshPrimitiveAttributes attributes;
 };
 
-class GLTFMeshPrimitive {
+class MeshPrimitive {
 public:
   enum class Mode {
     POINTS = 0,
@@ -608,27 +610,26 @@ public:
       return std::nullopt;
     }
   }
-
-  GLTFMeshPrimitiveAttributes attributes;
+  MeshPrimitiveAttributes attributes;
   std::optional<uint32_t> indices;
   std::optional<uint32_t> material;
   std::optional<Mode> mode;
-  std::optional<std::vector<GLTFMeshPrimitiveTarget>> targets;
-  std::optional<GLTFMeshPrimitiveDracoExtension> dracoExtension;
+  std::optional<std::vector<MeshPrimitiveTarget>> targets;
+  std::optional<MeshPrimitiveDracoExtension> dracoExtension;
 
   Mode modeValue() const { return mode.value_or(Mode::TRIANGLES); }
 };
 
-class GLTFMesh {
+class Mesh {
 public:
-  std::vector<GLTFMeshPrimitive> primitives;
+  std::vector<MeshPrimitive> primitives;
   std::optional<std::vector<float>> weights;
   std::optional<std::string> name;
 };
 
 // Node
 
-class GLTFNode {
+class Node {
 public:
   std::optional<uint32_t> camera;
   std::optional<std::vector<uint32_t>> children;
@@ -677,7 +678,7 @@ public:
 
 // Sampler
 
-class GLTFSampler {
+class Sampler {
 public:
   enum class MagFilter { NEAREST = 9728, LINEAR = 9729 };
 
@@ -752,7 +753,7 @@ public:
 
 // Scene
 
-class GLTFScene {
+class Scene {
 public:
   std::optional<std::vector<uint32_t>> nodes;
   std::optional<std::string> name;
@@ -760,7 +761,7 @@ public:
 
 // Skin
 
-class GLTFSkin {
+class Skin {
 public:
   std::optional<uint32_t> inverseBindMatrices;
   std::optional<uint32_t> skeleton;
@@ -1230,50 +1231,61 @@ public:
   std::optional<VRMCExpressionsPreset> preset;
   std::optional<std::map<std::string, VRMCExpression>> custom;
 
-  std::optional<VRMCExpression> expressionByName(const std::string &name) {
+  const VRMCExpression *expressionByName(std::string name) const {
+    std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+
     if (preset) {
       if (name == "happy") {
-        return preset->happy;
+        return preset->happy.has_value() ? &(*preset->happy) : nullptr;
       } else if (name == "angry") {
-        return preset->angry;
+        return preset->angry.has_value() ? &(*preset->angry) : nullptr;
       } else if (name == "sad") {
-        return preset->sad;
+        return preset->sad.has_value() ? &(*preset->sad) : nullptr;
       } else if (name == "relaxed") {
-        return preset->relaxed;
+        return preset->relaxed.has_value() ? &(*preset->relaxed) : nullptr;
       } else if (name == "surprised") {
-        return preset->surprised;
+        return preset->surprised.has_value() ? &(*preset->surprised) : nullptr;
       } else if (name == "aa") {
-        return preset->aa;
+        return preset->aa.has_value() ? &(*preset->aa) : nullptr;
       } else if (name == "ih") {
-        return preset->ih;
+        return preset->ih.has_value() ? &(*preset->ih) : nullptr;
       } else if (name == "ou") {
-        return preset->ou;
+        return preset->ou.has_value() ? &(*preset->ou) : nullptr;
       } else if (name == "ee") {
-        return preset->ee;
+        return preset->ee.has_value() ? &(*preset->ee) : nullptr;
       } else if (name == "oh") {
-        return preset->oh;
+        return preset->oh.has_value() ? &(*preset->oh) : nullptr;
       } else if (name == "blink") {
-        return preset->blink;
-      } else if (name == "blinkLeft") {
-        return preset->blinkLeft;
-      } else if (name == "blinkRight") {
-        return preset->blinkRight;
-      } else if (name == "lookUp") {
-        return preset->lookUp;
-      } else if (name == "lookDown") {
-        return preset->lookDown;
-      } else if (name == "lookLeft") {
-        return preset->lookLeft;
-      } else if (name == "lookRight") {
-        return preset->lookRight;
+        return preset->blink.has_value() ? &(*preset->blink) : nullptr;
+      } else if (name == "blinkleft") {
+        return preset->blinkLeft.has_value() ? &(*preset->blinkLeft) : nullptr;
+      } else if (name == "blinkright") {
+        return preset->blinkRight.has_value() ? &(*preset->blinkRight)
+                                              : nullptr;
+      } else if (name == "lookup") {
+        return preset->lookUp.has_value() ? &(*preset->lookUp) : nullptr;
+      } else if (name == "lookdown") {
+        return preset->lookDown.has_value() ? &(*preset->lookDown) : nullptr;
+      } else if (name == "lookleft") {
+        return preset->lookLeft.has_value() ? &(*preset->lookLeft) : nullptr;
+      } else if (name == "lookright") {
+        return preset->lookRight.has_value() ? &(*preset->lookRight) : nullptr;
       } else if (name == "neutral") {
-        return preset->neutral;
+        return preset->neutral.has_value() ? &(*preset->neutral) : nullptr;
       }
     }
-    if (custom && custom->find(name) != custom->end()) {
-      return custom->at(name);
+
+    if (custom) {
+      for (const auto &pair : *custom) {
+        std::string key = pair.first;
+        std::transform(key.begin(), key.end(), key.begin(), ::tolower);
+        if (key == name) {
+          return &pair.second;
+        }
+      }
     }
-    return std::nullopt;
+
+    return nullptr;
   }
 
   std::vector<std::string> expressionNames() const {
@@ -1299,9 +1311,9 @@ public:
   std::optional<VRMCLookAt> lookAt;
   std::optional<VRMCExpressions> expressions;
 
-  std::optional<VRMCExpression> expressionByName(const std::string &name) {
+  const VRMCExpression *expressionByName(const std::string &name) const {
     if (!expressions.has_value())
-      return std::nullopt;
+      return nullptr;
     return expressions->expressionByName(name);
   }
 };
@@ -1777,16 +1789,21 @@ class VRMBlendShape {
 public:
   std::optional<std::vector<VRMBlendShapeGroup>> blendShapeGroups;
 
-  std::optional<VRMBlendShapeGroup>
-  blendShapeGroupByPreset(const std::string &preset) const {
+  const VRMBlendShapeGroup *
+  blendShapeGroupByPreset(std::string presetName) const {
     if (!blendShapeGroups.has_value())
-      return std::nullopt;
+      return nullptr;
+    std::transform(presetName.begin(), presetName.end(), presetName.begin(),
+                   ::tolower);
     for (const auto &group : *blendShapeGroups) {
-      if (group.groupName() == preset) {
-        return group;
+      std::string groupName = group.groupName();
+      std::transform(groupName.begin(), groupName.end(), groupName.begin(),
+                     ::tolower);
+      if (groupName == presetName) {
+        return &group;
       }
     }
-    return std::nullopt;
+    return nullptr;
   }
 };
 
@@ -1844,40 +1861,41 @@ public:
   std::optional<VRMSecondaryAnimation> secondaryAnimation;
   std::optional<std::vector<VRMMaterial>> materialProperties;
 
-  std::optional<VRMBlendShapeGroup>
+  const VRMBlendShapeGroup *
   blendShapeGroupByPreset(const std::string &preset) const {
     if (!blendShapeMaster.has_value())
-      return std::nullopt;
+      return nullptr;
     return blendShapeMaster->blendShapeGroupByPreset(preset);
   }
 };
 
 // Json
 
-class GLTFJson {
+class Json {
 public:
   std::optional<std::vector<std::string>> extensionsUsed;
   std::optional<std::vector<std::string>> extensionsRequired;
-  std::optional<std::vector<GLTFAccessor>> accessors;
-  std::optional<std::vector<GLTFAnimation>> animations;
-  GLTFAsset asset;
-  std::optional<std::vector<GLTFBuffer>> buffers;
-  std::optional<std::vector<GLTFBufferView>> bufferViews;
-  std::optional<std::vector<GLTFCamera>> cameras;
-  std::optional<std::vector<GLTFImage>> images;
-  std::optional<std::vector<GLTFMaterial>> materials;
-  std::optional<std::vector<GLTFMesh>> meshes;
-  std::optional<std::vector<GLTFNode>> nodes;
-  std::optional<std::vector<GLTFSampler>> samplers;
+  std::optional<std::vector<Accessor>> accessors;
+  std::optional<std::vector<Animation>> animations;
+  Asset asset;
+  std::optional<std::vector<Buffer>> buffers;
+  std::optional<std::vector<BufferView>> bufferViews;
+  std::optional<std::vector<Camera>> cameras;
+  std::optional<std::vector<Image>> images;
+  std::optional<std::vector<Material>> materials;
+  std::optional<std::vector<Mesh>> meshes;
+  std::optional<std::vector<Node>> nodes;
+  std::optional<std::vector<Sampler>> samplers;
   std::optional<uint32_t> scene;
-  std::optional<std::vector<GLTFScene>> scenes;
-  std::optional<std::vector<GLTFSkin>> skins;
-  std::optional<std::vector<GLTFTexture>> textures;
+  std::optional<std::vector<Scene>> scenes;
+  std::optional<std::vector<Skin>> skins;
+  std::optional<std::vector<Texture>> textures;
   std::optional<std::vector<KHRLight>> lights;
   std::optional<VRMVrm> vrm0;
   std::optional<VRMCVrm> vrm1;
 };
 
+} // namespace json
 }; // namespace gltf2
 
-#endif /* GLTFJson_h */
+#endif /* Json_h */

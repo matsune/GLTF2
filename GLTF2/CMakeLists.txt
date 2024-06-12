@@ -12,10 +12,10 @@ target_include_directories(${LIB_NAME} PRIVATE ${json_SOURCE_DIR}/include ${cppc
 
 target_link_libraries(${LIB_NAME} PUBLIC ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY} PRIVATE Boost::url draco::draco)
 
-set(PUBLIC_HEADER include/GLTF2.h include/GLTFJson.h include/GLTFData.h include/GLTFFile.h)
+set(PUBLIC_HEADERS include/GLTF2.h include/Json.h include/GLTFData.h include/GLTFFile.h)
 set_target_properties(${LIB_NAME} PROPERTIES
     VERSION 1.0
-    PUBLIC_HEADER "${PUBLIC_HEADER}"
+    PUBLIC_HEADER "${PUBLIC_HEADERS}"
 )
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES

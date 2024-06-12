@@ -4,6 +4,6 @@
 #include "GLTFData.h"
 #include "GLTFException.h"
 #include "GLTFFile.h"
-#include "GLTFJson.h"
+#include "Json.h"
 
 #endif /* GLTF2_h */

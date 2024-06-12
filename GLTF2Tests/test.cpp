@@ -328,7 +328,7 @@ TEST(TestGLTFData, parseStream) {
       }
     }
   )";
-  auto data = gltf2::GLTFFile::parseStream(std::istringstream(rawJson));
+  auto data = GLTFFile::parseStream(std::istringstream(rawJson));
 
   EXPECT_EQ(data.json().extensionsUsed->size(), 2);
   EXPECT_EQ(data.json().extensionsUsed.value()[0], "ext1");
@@ -341,47 +341,48 @@ TEST(TestGLTFData, parseStream) {
   EXPECT_EQ(accessor1.bufferView, 0);
   EXPECT_EQ(accessor1.byteOffset, 0);
   EXPECT_EQ(accessor1.componentType,
-            GLTFAccessor::ComponentType::UNSIGNED_SHORT);
+            json::Accessor::ComponentType::UNSIGNED_SHORT);
   EXPECT_EQ(accessor1.normalized, false);
   EXPECT_EQ(accessor1.count, 3);
-  EXPECT_EQ(accessor1.type, GLTFAccessor::Type::VEC3);
+  EXPECT_EQ(accessor1.type, json::Accessor::Type::VEC3);
   EXPECT_EQ(accessor1.max.value(), std::vector<float>({1, 1, 1}));
   EXPECT_EQ(accessor1.min.value(), std::vector<float>({-1, -1, -1}));
   auto &accessor2 = data.json().accessors.value()[1];
   EXPECT_EQ(accessor2.bufferView, 1);
   EXPECT_EQ(accessor2.byteOffset, 24);
-  EXPECT_EQ(accessor2.componentType, GLTFAccessor::ComponentType::UNSIGNED_INT);
+  EXPECT_EQ(accessor2.componentType,
+            json::Accessor::ComponentType::UNSIGNED_INT);
   EXPECT_EQ(accessor2.normalized, true);
   EXPECT_EQ(accessor2.count, 3);
-  EXPECT_EQ(accessor2.type, GLTFAccessor::Type::SCALAR);
+  EXPECT_EQ(accessor2.type, json::Accessor::Type::SCALAR);
   EXPECT_TRUE(accessor2.sparse.has_value());
   auto &sparse = accessor2.sparse.value();
   EXPECT_EQ(sparse.count, 2);
   EXPECT_EQ(sparse.indices.bufferView, 3);
   EXPECT_EQ(sparse.indices.byteOffset, 0);
   EXPECT_EQ(sparse.indices.componentType,
-            GLTFAccessorSparseIndices::ComponentType::UNSIGNED_SHORT);
+            json::AccessorSparseIndices::ComponentType::UNSIGNED_SHORT);
   EXPECT_EQ(sparse.values.bufferView, 4);
   EXPECT_EQ(sparse.values.byteOffset, 8);
 
   auto &channel1 = data.json().animations.value()[0].channels[0];
   EXPECT_EQ(channel1.sampler, 0);
   EXPECT_EQ(channel1.target.node.value(), 2);
-  EXPECT_EQ(channel1.target.path, GLTFAnimationChannelTarget::Path::ROTATION);
+  EXPECT_EQ(channel1.target.path, json::AnimationChannelTarget::Path::ROTATION);
   auto &channel2 = data.json().animations.value()[0].channels[1];
   EXPECT_EQ(channel2.sampler, 1);
   EXPECT_EQ(channel2.target.node.value(), 3);
   EXPECT_EQ(channel2.target.path,
-            GLTFAnimationChannelTarget::Path::TRANSLATION);
+            json::AnimationChannelTarget::Path::TRANSLATION);
   auto &sampler1 = data.json().animations.value()[0].samplers[0];
   EXPECT_EQ(sampler1.input, 0);
   EXPECT_EQ(sampler1.interpolation,
-            GLTFAnimationSampler::Interpolation::LINEAR);
+            json::AnimationSampler::Interpolation::LINEAR);
   EXPECT_EQ(sampler1.output, 1);
   auto &sampler2 = data.json().animations.value()[0].samplers[1];
   EXPECT_EQ(sampler2.input, 2);
   EXPECT_EQ(sampler2.interpolation,
-            GLTFAnimationSampler::Interpolation::CUBICSPLINE);
+            json::AnimationSampler::Interpolation::CUBICSPLINE);
   EXPECT_EQ(sampler2.output, 3);
 
   EXPECT_EQ(data.json().buffers.value().size(), 1);
@@ -407,14 +408,15 @@ TEST(TestGLTFData, parseStream) {
   EXPECT_EQ(data.json().asset.minVersion, "0.1");
 
   EXPECT_EQ(data.json().cameras.value().size(), 2);
-  EXPECT_EQ(data.json().cameras.value()[0].type, GLTFCamera::Type::PERSPECTIVE);
+  EXPECT_EQ(data.json().cameras.value()[0].type,
+            json::Camera::Type::PERSPECTIVE);
   EXPECT_EQ(data.json().cameras.value()[0].perspective.value().aspectRatio,
             1.333f);
   EXPECT_EQ(data.json().cameras.value()[0].perspective.value().yfov, 1.0f);
   EXPECT_EQ(data.json().cameras.value()[0].perspective.value().zfar, 100.0f);
   EXPECT_EQ(data.json().cameras.value()[0].perspective.value().znear, 0.1f);
   EXPECT_EQ(data.json().cameras.value()[1].type,
-            GLTFCamera::Type::ORTHOGRAPHIC);
+            json::Camera::Type::ORTHOGRAPHIC);
   EXPECT_EQ(data.json().cameras.value()[1].orthographic.value().xmag, 2.0f);
   EXPECT_EQ(data.json().cameras.value()[1].orthographic.value().ymag, 2.0f);
   EXPECT_EQ(data.json().cameras.value()[1].orthographic.value().zfar, 50.0f);
@@ -423,10 +425,10 @@ TEST(TestGLTFData, parseStream) {
   EXPECT_EQ(data.json().images.value().size(), 2);
   EXPECT_EQ(data.json().images.value()[0].uri.value(), "image1.png");
   EXPECT_EQ(data.json().images.value()[0].mimeType.value(),
-            GLTFImage::MimeType::PNG);
+            json::Image::MimeType::PNG);
   EXPECT_EQ(data.json().images.value()[1].uri.value(), "image2.jpeg");
   EXPECT_EQ(data.json().images.value()[1].mimeType.value(),
-            GLTFImage::MimeType::JPEG);
+            json::Image::MimeType::JPEG);
 
   EXPECT_EQ(data.json().materials.value().size(), 2);
   EXPECT_EQ(data.json().materials.value()[0].name, "MaterialOne");
@@ -440,7 +442,7 @@ TEST(TestGLTFData, parseStream) {
                 .pbrMetallicRoughness->metallicFactor.value(),
             0.1f);
   EXPECT_EQ(data.json().materials.value()[0].alphaMode,
-            GLTFMaterial::AlphaMode::BLEND);
+            json::Material::AlphaMode::BLEND);
   EXPECT_EQ(data.json().materials.value()[0].doubleSided, true);
   EXPECT_EQ(data.json().materials.value()[0].isUnlit(), true);
   EXPECT_EQ(data.json().materials.value()[1].name, "MaterialTwo");
@@ -569,12 +571,12 @@ TEST(TestGLTFData, parseStream) {
   EXPECT_EQ(data.json().meshes.value()[0].name, "MeshOne");
   EXPECT_EQ(data.json().meshes.value()[0].primitives.size(), 2);
   EXPECT_EQ(data.json().meshes.value()[0].primitives[0].mode,
-            GLTFMeshPrimitive::ModeFromInt(4));
+            json::MeshPrimitive::ModeFromInt(4));
   EXPECT_EQ(data.json().meshes.value()[0].primitives[0].indices, 1);
   EXPECT_EQ(data.json().meshes.value()[0].primitives[0].attributes.position, 0);
   EXPECT_EQ(data.json().meshes.value()[0].primitives[0].attributes.normal, 2);
   EXPECT_EQ(data.json().meshes.value()[0].primitives[0].mode,
-            GLTFMeshPrimitive::ModeFromInt(4));
+            json::MeshPrimitive::ModeFromInt(4));
   EXPECT_EQ(data.json().meshes.value()[0].primitives[1].indices, 2);
   EXPECT_EQ(data.json().meshes.value()[0].primitives[1].attributes.position, 1);
   EXPECT_EQ(
@@ -591,7 +593,7 @@ TEST(TestGLTFData, parseStream) {
                 .attributes.texcoords.value()[1],
             4);
   EXPECT_EQ(data.json().meshes.value()[0].primitives[1].mode,
-            GLTFMeshPrimitive::ModeFromInt(3));
+            json::MeshPrimitive::ModeFromInt(3));
 
   EXPECT_EQ(data.json().nodes.value().size(), 1);
   EXPECT_EQ(data.json().nodes.value()[0].name, "Node 1");
@@ -633,7 +635,7 @@ TEST(TestGLTFData, parseStream) {
   EXPECT_EQ(data.json().skins.value()[0].name, "Skin1");
 
   EXPECT_EQ(data.json().lights->size(), 1);
-  EXPECT_EQ(data.json().lights->at(0).type, KHRLight::Type::SPOT);
+  EXPECT_EQ(data.json().lights->at(0).type, json::KHRLight::Type::SPOT);
   EXPECT_EQ(data.json().lights->at(0).colorValue(),
             (std::array<float, 3>{0.0f, 0.5f, 1.0f}));
   EXPECT_EQ(data.json().lights->at(0).spot->innerConeAngleValue(), 0.78f);
@@ -671,9 +673,9 @@ TEST(TestGLTFData, parseStream) {
 //       ]
 //     }
 //   )";
-//   auto gltf = gltf2::GLTFFile::parseStream( std::istringstream(rawJson));
+//   auto gltf = GLTF2::GLTFFile::parseStream( std::istringstream(rawJson));
 //   bool normalized = false;
-//   auto data = gltf.binaryForAccessor(gltf.json().accessors->at(0),
+//   auto data = json::.binaryForAccessor(gltf.json().accessors->at(0),
 //   &normalized); EXPECT_FALSE(normalized); EXPECT_EQ(data.size(), 2);
 //   EXPECT_EQ(data[0], 'a');
 //   EXPECT_EQ(data[1], 'b');
@@ -709,9 +711,9 @@ TEST(TestGLTFData, parseStream) {
 //       ]
 //     }
 //   )";
-//   auto gltf = gltf2::GLTFFile::parseStream( std::istringstream(rawJson));
+//   auto gltf = GLTF2::GLTFFile::parseStream( std::istringstream(rawJson));
 //   bool normalized = false;
-//   auto data = gltf.binaryForAccessor(gltf.json().accessors->at(0),
+//   auto data = json::.binaryForAccessor(gltf.json().accessors->at(0),
 //   &normalized); EXPECT_TRUE(normalized); EXPECT_EQ(data.size(), sizeof(float)
 //   * 2); EXPECT_EQ(((float *)data.data())[0], (float)'a' / (float)UINT8_MAX);
 //   EXPECT_EQ(((float *)data.data())[1], (float)'b' / (float)UINT8_MAX);
@@ -761,9 +763,9 @@ TEST(TestGLTFData, parseStream) {
 //       ]
 //     }
 //   )";
-//   auto gltf = gltf2::GLTFFile::parseStream( std::istringstream(rawJson));
+//   auto gltf = GLTF2::GLTFFile::parseStream( std::istringstream(rawJson));
 //   bool normalized = false;
-//   auto data = gltf.binaryForAccessor(gltf.json().accessors->at(0),
+//   auto data = json::.binaryForAccessor(gltf.json().accessors->at(0),
 //   &normalized); EXPECT_FALSE(normalized); EXPECT_EQ(data.size(), 1);
 //   EXPECT_EQ(data[0], 0x20);
 // }
@@ -806,9 +808,9 @@ TEST(TestGLTFData, parseStream) {
 //       ]
 //     }
 //   )";
-//   auto gltf = gltf2::GLTFFile::parseStream( std::istringstream(rawJson));
+//   auto gltf = GLTF2::GLTFFile::parseStream( std::istringstream(rawJson));
 //   bool normalized = false;
-//   auto data = gltf.binaryForAccessor(gltf.json().accessors->at(0),
+//   auto data = json::.binaryForAccessor(gltf.json().accessors->at(0),
 //   &normalized); EXPECT_FALSE(normalized); EXPECT_EQ(data.size(), 4 * 3 * 10);
 //   float *floatArray = (float *)data.data();
 //   for (int i = 0; i < 10; ++i) {
@@ -912,11 +914,11 @@ TEST(TestGLTFData, parseStream) {
 //       ]
 //     }
 //   )";
-//   auto gltf = gltf2::GLTFFile::parseStream( std::istringstream(rawJson),
+//   auto gltf = GLTF2::GLTFFile::parseStream( std::istringstream(rawJson),
 //   std::nullopt, bin);
 //
-//   auto meshPrimitive = gltf.meshPrimitiveFromPrimitive(
-//       gltf.json().meshes->at(0).primitives.at(0));
+//   auto meshPrimitive = json::.meshPrimitiveFromPrimitive(
+//       json::.json().meshes->at(0).primitives.at(0));
 //
 //   // position
 //   EXPECT_EQ(((float *)meshPrimitive.sources.position->binary.data())[0],
@@ -927,7 +929,7 @@ TEST(TestGLTFData, parseStream) {
 //             bufs[2]);
 //   EXPECT_EQ(meshPrimitive.sources.position->vectorCount, 1);
 //   EXPECT_EQ(meshPrimitive.sources.position->componentType,
-//             GLTFAccessor::ComponentType::FLOAT);
+//             json::Accessor::ComponentType::FLOAT);
 //   EXPECT_EQ(meshPrimitive.sources.position->componentsPerVector, 3);
 //
 //   // normal
@@ -937,7 +939,7 @@ TEST(TestGLTFData, parseStream) {
 //   EXPECT_EQ(((float *)meshPrimitive.sources.normal->binary.data())[2],
 //   bufs[5]); EXPECT_EQ(meshPrimitive.sources.normal->vectorCount, 1);
 //   EXPECT_EQ(meshPrimitive.sources.normal->componentType,
-//             GLTFAccessor::ComponentType::FLOAT);
+//             json::Accessor::ComponentType::FLOAT);
 //   EXPECT_EQ(meshPrimitive.sources.normal->componentsPerVector, 3);
 //
 //   // texcoord
@@ -947,15 +949,15 @@ TEST(TestGLTFData, parseStream) {
 //             bufs[7]);
 //   EXPECT_EQ(meshPrimitive.sources.texcoords[0].vectorCount, 1);
 //   EXPECT_EQ(meshPrimitive.sources.texcoords[0].componentType,
-//             GLTFAccessor::ComponentType::FLOAT);
+//             json::Accessor::ComponentType::FLOAT);
 //   EXPECT_EQ(meshPrimitive.sources.texcoords[0].componentsPerVector, 2);
 //
 //   // indices
 //   EXPECT_EQ(((uint16_t *)meshPrimitive.element->binary.data())[0], b3);
 //   EXPECT_EQ(meshPrimitive.element->primitiveMode,
-//             GLTFMeshPrimitive::Mode::TRIANGLES);
+//             json::MeshPrimitive::Mode::TRIANGLES);
 //   EXPECT_EQ(meshPrimitive.element->componentType,
-//             GLTFAccessor::ComponentType::UNSIGNED_SHORT);
+//             json::Accessor::ComponentType::UNSIGNED_SHORT);
 // }
 
 TEST(TestGLTFData, validVRM1) {
@@ -1215,7 +1217,7 @@ TEST(TestGLTFData, validVRM1) {
       }
     }
   )";
-  auto gltf = gltf2::GLTFFile::parseStream(std::istringstream(rawJson));
+  auto gltf = GLTFFile::parseStream(std::istringstream(rawJson));
   ASSERT_TRUE(gltf.json().vrm1.has_value());
   auto vrm = *gltf.json().vrm1;
 
@@ -1231,16 +1233,17 @@ TEST(TestGLTFData, validVRM1) {
   ASSERT_EQ(meta.thirdPartyLicenses, "thirdPartyLicenses");
   ASSERT_EQ(meta.licenseUrl, "https://vrm.dev/licenses/1.0");
   ASSERT_EQ(meta.avatarPermission,
-            VRMCMeta::AvatarPermission::ONLY_SEPARATELY_LICENSED_PERSON);
+            json::VRMCMeta::AvatarPermission::ONLY_SEPARATELY_LICENSED_PERSON);
   ASSERT_TRUE(meta.allowExcessivelyViolentUsage);
   ASSERT_TRUE(meta.allowExcessivelySexualUsage);
-  ASSERT_EQ(meta.commercialUsage, VRMCMeta::CommercialUsage::PERSONAL_PROFIT);
+  ASSERT_EQ(meta.commercialUsage,
+            json::VRMCMeta::CommercialUsage::PERSONAL_PROFIT);
   ASSERT_TRUE(meta.allowPoliticalOrReligiousUsage);
   ASSERT_TRUE(meta.allowAntisocialOrHateUsage);
-  ASSERT_EQ(meta.creditNotation, VRMCMeta::CreditNotation::UNNECESSARY);
+  ASSERT_EQ(meta.creditNotation, json::VRMCMeta::CreditNotation::UNNECESSARY);
   ASSERT_TRUE(meta.allowRedistribution);
   ASSERT_EQ(meta.modification,
-            VRMCMeta::Modification::ALLOW_MODIFICATION_REDISTRIBUTION);
+            json::VRMCMeta::Modification::ALLOW_MODIFICATION_REDISTRIBUTION);
   ASSERT_EQ(meta.otherLicenseUrl, "otherLicenseUrl");
 
   auto &humanBones = vrm.humanoid.humanBones;
@@ -1303,13 +1306,13 @@ TEST(TestGLTFData, validVRM1) {
   auto &meshAnnotation = firstPerson.meshAnnotations->at(0);
   ASSERT_EQ(meshAnnotation.node, 1);
   ASSERT_EQ(meshAnnotation.type,
-            VRMCFirstPersonMeshAnnotation::Type::FIRST_PERSON_ONLY);
+            json::VRMCFirstPersonMeshAnnotation::Type::FIRST_PERSON_ONLY);
 
-  VRMCLookAt &lookAt = *vrm.lookAt;
+  json::VRMCLookAt &lookAt = *vrm.lookAt;
   ASSERT_EQ(lookAt.offsetFromHeadBone->at(0), 1.0f);
   ASSERT_EQ(lookAt.offsetFromHeadBone->at(1), 2.0f);
   ASSERT_EQ(lookAt.offsetFromHeadBone->at(2), 3.0f);
-  ASSERT_EQ(lookAt.type, VRMCLookAt::Type::EXPRESSION);
+  ASSERT_EQ(lookAt.type, json::VRMCLookAt::Type::EXPRESSION);
   ASSERT_EQ(lookAt.rangeMapHorizontalInner->inputMaxValue, 1.0f);
   ASSERT_EQ(lookAt.rangeMapHorizontalInner->outputScale, 2.0f);
   ASSERT_EQ(lookAt.rangeMapHorizontalOuter->inputMaxValue, 3.0f);
@@ -1319,13 +1322,13 @@ TEST(TestGLTFData, validVRM1) {
   ASSERT_EQ(lookAt.rangeMapVerticalUp->inputMaxValue, 7.0f);
   ASSERT_EQ(lookAt.rangeMapVerticalUp->outputScale, 8.0f);
 
-  VRMCExpression &happy = *vrm.expressions->preset->happy;
+  json::VRMCExpression &happy = *vrm.expressions->preset->happy;
   ASSERT_EQ(happy.morphTargetBinds->at(0).node, 1);
   ASSERT_EQ(happy.morphTargetBinds->at(0).index, 2);
   ASSERT_EQ(happy.morphTargetBinds->at(0).weight, 3.0f);
   ASSERT_EQ(happy.materialColorBinds->at(0).material, 1);
   ASSERT_EQ(happy.materialColorBinds->at(0).type,
-            VRMCExpressionMaterialColorBind::Type::OUTLINE_COLOR);
+            json::VRMCExpressionMaterialColorBind::Type::OUTLINE_COLOR);
   ASSERT_EQ(happy.materialColorBinds->at(0).targetValue.at(0), 0.0f);
   ASSERT_EQ(happy.materialColorBinds->at(0).targetValue.at(1), 1.0f);
   ASSERT_EQ(happy.materialColorBinds->at(0).targetValue.at(2), 2.0f);
@@ -1336,9 +1339,9 @@ TEST(TestGLTFData, validVRM1) {
   ASSERT_EQ(happy.textureTransformBinds->at(0).offset->at(0), 1.0f);
   ASSERT_EQ(happy.textureTransformBinds->at(0).offset->at(1), 2.0f);
   ASSERT_EQ(happy.isBinary, true);
-  ASSERT_EQ(happy.overrideBlink, VRMCExpression::Override::NONE);
-  ASSERT_EQ(happy.overrideLookAt, VRMCExpression::Override::BLOCK);
-  ASSERT_EQ(happy.overrideMouth, VRMCExpression::Override::BLEND);
+  ASSERT_EQ(happy.overrideBlink, json::VRMCExpression::Override::NONE);
+  ASSERT_EQ(happy.overrideLookAt, json::VRMCExpression::Override::BLOCK);
+  ASSERT_EQ(happy.overrideMouth, json::VRMCExpression::Override::BLEND);
 }
 
 TEST(TestGLTFData, validVRM0) {
@@ -1351,7 +1354,7 @@ TEST(TestGLTFData, validVRM0) {
           "exporterVersion": "UniVRM-0.46",
           "specVersion": "0.0",
           "meta": {
-            "title": "Sample VRM Model",
+            "title": "Sample json::VRM Model",
             "version": "1.0",
             "author": "John Doe",
             "contactInformation": "john.doe@example.com",
@@ -1509,7 +1512,7 @@ TEST(TestGLTFData, validVRM0) {
       }
     }
   )";
-  auto gltf = gltf2::GLTFFile::parseStream(std::istringstream(rawJson));
+  auto gltf = GLTFFile::parseStream(std::istringstream(rawJson));
   ASSERT_TRUE(gltf.json().vrm0.has_value());
   auto vrm = *gltf.json().vrm0;
 
@@ -1517,18 +1520,20 @@ TEST(TestGLTFData, validVRM0) {
   ASSERT_EQ(vrm.specVersion, "0.0");
 
   auto &meta = vrm.meta;
-  ASSERT_EQ(meta->title, "Sample VRM Model");
+  ASSERT_EQ(meta->title, "Sample json::VRM Model");
   ASSERT_EQ(meta->version, "1.0");
   ASSERT_EQ(meta->author, "John Doe");
   ASSERT_EQ(meta->contactInformation, "john.doe@example.com");
   ASSERT_EQ(meta->reference, "https://example.com/reference");
   ASSERT_EQ(meta->texture, 1);
-  ASSERT_EQ(meta->allowedUserNameValue(), VRMMeta::AllowedUserName::EVERYONE);
-  ASSERT_EQ(meta->violentUsageValue(), VRMMeta::UsagePermission::ALLOW);
-  ASSERT_EQ(meta->sexualUsageValue(), VRMMeta::UsagePermission::DISALLOW);
-  ASSERT_EQ(meta->commercialUsageValue(), VRMMeta::UsagePermission::ALLOW);
+  ASSERT_EQ(meta->allowedUserNameValue(),
+            json::VRMMeta::AllowedUserName::EVERYONE);
+  ASSERT_EQ(meta->violentUsageValue(), json::VRMMeta::UsagePermission::ALLOW);
+  ASSERT_EQ(meta->sexualUsageValue(), json::VRMMeta::UsagePermission::DISALLOW);
+  ASSERT_EQ(meta->commercialUsageValue(),
+            json::VRMMeta::UsagePermission::ALLOW);
   ASSERT_EQ(meta->otherPermissionUrl, "https://example.com/permissions");
-  ASSERT_EQ(meta->licenseNameValue(), VRMMeta::LicenseName::CC_BY);
+  ASSERT_EQ(meta->licenseNameValue(), json::VRMMeta::LicenseName::CC_BY);
   ASSERT_EQ(meta->otherLicenseUrl, "https://example.com/other-license");
 
   auto &humanoid = vrm.humanoid;
@@ -1545,7 +1550,7 @@ TEST(TestGLTFData, validVRM0) {
   ASSERT_EQ(humanBones->size(), 2);
 
   auto &bone1 = humanBones->at(0);
-  ASSERT_EQ(bone1.bone, VRMHumanoidBone::Bone::HIPS);
+  ASSERT_EQ(bone1.bone, json::VRMHumanoidBone::Bone::HIPS);
   ASSERT_EQ(bone1.node, 0);
   ASSERT_TRUE(bone1.useDefaultValues.value());
   ASSERT_EQ(bone1.min->x.value(), -0.5f);
@@ -1560,7 +1565,7 @@ TEST(TestGLTFData, validVRM0) {
   ASSERT_EQ(bone1.axisLength.value(), 1.0f);
 
   auto &bone2 = humanBones->at(1);
-  ASSERT_EQ(bone2.bone, VRMHumanoidBone::Bone::LEFT_UPPER_LEG);
+  ASSERT_EQ(bone2.bone, json::VRMHumanoidBone::Bone::LEFT_UPPER_LEG);
   ASSERT_EQ(bone2.node, 1);
   ASSERT_FALSE(bone2.useDefaultValues.value());
   ASSERT_EQ(bone2.min->x.value(), -0.3f);
@@ -1628,7 +1633,7 @@ TEST(TestGLTFData, validVRM0) {
   auto &blendShapeGroup = blendShape->blendShapeGroups->at(0);
   ASSERT_EQ(blendShapeGroup.name, "smile");
   ASSERT_EQ(blendShapeGroup.presetName.value(),
-            VRMBlendShapeGroup::PresetName::JOY);
+            json::VRMBlendShapeGroup::PresetName::JOY);
   ASSERT_EQ(blendShapeGroup.binds->size(), 1);
   ASSERT_EQ(blendShapeGroup.materialValues->size(), 1);
   ASSERT_TRUE(blendShapeGroup.isBinary.value());

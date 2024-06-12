@@ -1,4 +1,5 @@
 #import "GLTF2Availability.h"
+#import "GLTFJson.h"
 #import <Cocoa/Cocoa.h>
 #import <SceneKit/SceneKit.h>
 
@@ -47,6 +48,7 @@ GLTF_EXPORT @interface GLTFSCNAsset : NSObject
 @property(nonatomic, strong) NSArray<SCNScene *> *scenes;
 @property(nonatomic, strong, readonly) NSArray<SCNNode *> *cameraNodes;
 @property(nonatomic, strong) NSArray<SCNAnimationPlayer *> *animationPlayers;
+@property(nonatomic, strong, nullable) GLTFJson *json;
 
 - (BOOL)loadFile:(const NSString *)path
            error:(NSError *_Nullable *_Nullable)error;

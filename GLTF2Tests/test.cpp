@@ -1589,41 +1589,42 @@ TEST(TestGLTFData, validVRM0) {
   ASSERT_EQ(firstPerson->meshAnnotations->at(0).mesh, 0);
   ASSERT_EQ(firstPerson->meshAnnotations->at(0).firstPersonFlag, "Auto");
 
-  ASSERT_EQ(firstPerson->lookAtTypeName.value(), "Bone");
+  ASSERT_EQ(firstPerson->lookAtTypeName.value(),
+            json::VRMFirstPerson::LookAtType::BONE);
 
   auto &horizontalInner = firstPerson->lookAtHorizontalInner.value();
-  ASSERT_EQ(horizontalInner.curve->size(), 4);
-  ASSERT_EQ(horizontalInner.curve->at(0), 0.0f);
-  ASSERT_EQ(horizontalInner.curve->at(1), 0.5f);
-  ASSERT_EQ(horizontalInner.curve->at(2), 1.0f);
-  ASSERT_EQ(horizontalInner.curve->at(3), 1.5f);
+  ASSERT_EQ(horizontalInner.curve->size(), 1);
+  ASSERT_EQ(horizontalInner.curve->at(0).time, 0.0f);
+  ASSERT_EQ(horizontalInner.curve->at(0).value, 0.5f);
+  ASSERT_EQ(horizontalInner.curve->at(0).inTangent, 1.0f);
+  ASSERT_EQ(horizontalInner.curve->at(0).outTangent, 1.5f);
   ASSERT_EQ(horizontalInner.xRange.value(), 90.0f);
   ASSERT_EQ(horizontalInner.yRange.value(), 10.0f);
 
   auto &horizontalOuter = firstPerson->lookAtHorizontalOuter.value();
-  ASSERT_EQ(horizontalOuter.curve->size(), 4);
-  ASSERT_EQ(horizontalOuter.curve->at(0), 0.0f);
-  ASSERT_EQ(horizontalOuter.curve->at(1), 0.5f);
-  ASSERT_EQ(horizontalOuter.curve->at(2), 1.0f);
-  ASSERT_EQ(horizontalOuter.curve->at(3), 1.5f);
+  ASSERT_EQ(horizontalOuter.curve->size(), 1);
+  ASSERT_EQ(horizontalOuter.curve->at(0).time, 0.0f);
+  ASSERT_EQ(horizontalOuter.curve->at(0).value, 0.5f);
+  ASSERT_EQ(horizontalOuter.curve->at(0).inTangent, 1.0f);
+  ASSERT_EQ(horizontalOuter.curve->at(0).outTangent, 1.5f);
   ASSERT_EQ(horizontalOuter.xRange.value(), 90.0f);
   ASSERT_EQ(horizontalOuter.yRange.value(), 10.0f);
 
   auto &verticalDown = firstPerson->lookAtVerticalDown.value();
-  ASSERT_EQ(verticalDown.curve->size(), 4);
-  ASSERT_EQ(verticalDown.curve->at(0), 0.0f);
-  ASSERT_EQ(verticalDown.curve->at(1), 0.5f);
-  ASSERT_EQ(verticalDown.curve->at(2), 1.0f);
-  ASSERT_EQ(verticalDown.curve->at(3), 1.5f);
+  ASSERT_EQ(verticalDown.curve->size(), 1);
+  ASSERT_EQ(verticalDown.curve->at(0).time, 0.0f);
+  ASSERT_EQ(verticalDown.curve->at(0).value, 0.5f);
+  ASSERT_EQ(verticalDown.curve->at(0).inTangent, 1.0f);
+  ASSERT_EQ(verticalDown.curve->at(0).outTangent, 1.5f);
   ASSERT_EQ(verticalDown.xRange.value(), 90.0f);
   ASSERT_EQ(verticalDown.yRange.value(), 10.0f);
 
   auto &verticalUp = firstPerson->lookAtVerticalUp.value();
-  ASSERT_EQ(verticalUp.curve->size(), 4);
-  ASSERT_EQ(verticalUp.curve->at(0), 0.0f);
-  ASSERT_EQ(verticalUp.curve->at(1), 0.5f);
-  ASSERT_EQ(verticalUp.curve->at(2), 1.0f);
-  ASSERT_EQ(verticalUp.curve->at(3), 1.5f);
+  ASSERT_EQ(verticalUp.curve->size(), 1);
+  ASSERT_EQ(verticalUp.curve->at(0).time, 0.0f);
+  ASSERT_EQ(verticalUp.curve->at(0).value, 0.5f);
+  ASSERT_EQ(verticalUp.curve->at(0).inTangent, 1.0f);
+  ASSERT_EQ(verticalUp.curve->at(0).outTangent, 1.5f);
   ASSERT_EQ(verticalUp.xRange.value(), 90.0f);
   ASSERT_EQ(verticalUp.yRange.value(), 10.0f);
 

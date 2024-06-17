@@ -516,7 +516,7 @@ extern NSString *const VRMCMetaModificationAllowModificationRedistribution;
 
 @interface VRMCHumanBone : NSObject
 
-@property(nonatomic, assign) uint32_t node;
+@property(nonatomic, strong) NSNumber *node;
 
 @end
 
@@ -612,12 +612,22 @@ extern NSString *const VRMCFirstPersonMeshAnnotationTypeFirstPersonOnly;
 
 @end
 
+@interface Vec3 : NSObject
+
+@property(nonatomic, assign) float x;
+@property(nonatomic, assign) float y;
+@property(nonatomic, assign) float z;
+
+- (instancetype)initWithX:(float)x Y:(float)y Z:(float)z;
+
+@end
+
 extern NSString *const VRMCLookAtTypeBone;
 extern NSString *const VRMCLookAtTypeExpression;
 
 @interface VRMCLookAt : NSObject
 
-@property(nonatomic, strong, nullable) NSArray<NSNumber *> *offsetFromHeadBone;
+@property(nonatomic, strong, nullable) Vec3 *offsetFromHeadBone;
 @property(nonatomic, copy, nullable) NSString *type;
 @property(nonatomic, strong, nullable)
     VRMCLookAtRangeMap *rangeMapHorizontalInner;
@@ -625,6 +635,9 @@ extern NSString *const VRMCLookAtTypeExpression;
     VRMCLookAtRangeMap *rangeMapHorizontalOuter;
 @property(nonatomic, strong, nullable) VRMCLookAtRangeMap *rangeMapVerticalDown;
 @property(nonatomic, strong, nullable) VRMCLookAtRangeMap *rangeMapVerticalUp;
+
+- (BOOL)isTypeBone;
+- (BOOL)isTypeExpression;
 
 @end
 
@@ -727,14 +740,6 @@ extern NSString *const VRMCExpressionOverrideBlend;
 
 @end
 
-@interface VRMVec3 : NSObject
-
-@property(nonatomic, strong, nullable) NSNumber *x;
-@property(nonatomic, strong, nullable) NSNumber *y;
-@property(nonatomic, strong, nullable) NSNumber *z;
-
-@end
-
 extern NSString *const VRMHumanoidBoneTypeHips;
 extern NSString *const VRMHumanoidBoneTypeLeftUpperLeg;
 extern NSString *const VRMHumanoidBoneTypeRightUpperLeg;
@@ -796,9 +801,9 @@ extern NSString *const VRMHumanoidBoneTypeUpperChest;
 @property(nonatomic, copy, nullable) NSString *bone;
 @property(nonatomic, strong, nullable) NSNumber *node;
 @property(nonatomic, strong, nullable) NSNumber *useDefaultValues;
-@property(nonatomic, strong, nullable) VRMVec3 *min;
-@property(nonatomic, strong, nullable) VRMVec3 *max;
-@property(nonatomic, strong, nullable) VRMVec3 *center;
+@property(nonatomic, strong, nullable) Vec3 *min;
+@property(nonatomic, strong, nullable) Vec3 *max;
+@property(nonatomic, strong, nullable) Vec3 *center;
 @property(nonatomic, strong, nullable) NSNumber *axisLength;
 
 @end
@@ -814,6 +819,8 @@ extern NSString *const VRMHumanoidBoneTypeUpperChest;
 @property(nonatomic, strong, nullable) NSNumber *lowerLegTwist;
 @property(nonatomic, strong, nullable) NSNumber *feetSpacing;
 @property(nonatomic, strong, nullable) NSNumber *hasTranslationDoF;
+
+- (nullable VRMHumanoidBone *)humanBoneByName:(NSString *)name;
 
 @end
 
@@ -859,18 +866,31 @@ extern NSString *const VRMMetaLicenseNameOther;
 
 @end
 
+@interface VRMDegreeMapCurveMapping : NSObject
+
+@property(nonatomic, assign) float time;
+@property(nonatomic, assign) float value;
+@property(nonatomic, assign) float inTangent;
+@property(nonatomic, assign) float outTangent;
+
+@end
+
 @interface VRMDegreeMap : NSObject
 
-@property(nonatomic, strong, nullable) NSArray<NSNumber *> *curve;
+@property(nonatomic, strong, nullable)
+    NSArray<VRMDegreeMapCurveMapping *> *curve;
 @property(nonatomic, strong, nullable) NSNumber *xRange;
 @property(nonatomic, strong, nullable) NSNumber *yRange;
 
 @end
 
+extern NSString *const VRMFirstPersonLookAtTypeBone;
+extern NSString *const VRMFirstPersonLookAtTypeBlendShape;
+
 @interface VRMFirstPerson : NSObject
 
 @property(nonatomic, strong, nullable) NSNumber *firstPersonBone;
-@property(nonatomic, strong, nullable) VRMVec3 *firstPersonBoneOffset;
+@property(nonatomic, strong, nullable) Vec3 *firstPersonBoneOffset;
 @property(nonatomic, strong, nullable)
     NSArray<VRMMeshAnnotation *> *meshAnnotations;
 @property(nonatomic, copy, nullable) NSString *lookAtTypeName;
@@ -878,6 +898,9 @@ extern NSString *const VRMMetaLicenseNameOther;
 @property(nonatomic, strong, nullable) VRMDegreeMap *lookAtHorizontalOuter;
 @property(nonatomic, strong, nullable) VRMDegreeMap *lookAtVerticalDown;
 @property(nonatomic, strong, nullable) VRMDegreeMap *lookAtVerticalUp;
+
+- (BOOL)isLookAtTypeBone;
+- (BOOL)isLookAtTypeBlendShape;
 
 @end
 
@@ -941,7 +964,7 @@ extern NSString *const VRMBlendShapeGroupPresetNameBlinkR;
 
 @interface VRMSecondaryAnimationCollider : NSObject
 
-@property(nonatomic, strong, nullable) VRMVec3 *offset;
+@property(nonatomic, strong, nullable) Vec3 *offset;
 @property(nonatomic, strong, nullable) NSNumber *radius;
 
 @end
@@ -959,7 +982,7 @@ extern NSString *const VRMBlendShapeGroupPresetNameBlinkR;
 @property(nonatomic, copy, nullable) NSString *comment;
 @property(nonatomic, strong, nullable) NSNumber *stiffiness;
 @property(nonatomic, strong, nullable) NSNumber *gravityPower;
-@property(nonatomic, strong, nullable) VRMVec3 *gravityDir;
+@property(nonatomic, strong, nullable) Vec3 *gravityDir;
 @property(nonatomic, strong, nullable) NSNumber *dragForce;
 @property(nonatomic, strong, nullable) NSNumber *center;
 @property(nonatomic, strong, nullable) NSNumber *hitRadius;

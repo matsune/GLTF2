@@ -14,6 +14,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property(weak) IBOutlet NSTextField *lightXTextField;
 @property(weak) IBOutlet NSPopUpButton *blendShapePopUpButton;
 @property(weak) IBOutlet NSSlider *blendShapeValueSlider;
+@property(weak) IBOutlet NSTextField *lookAtXTextField;
+@property(weak) IBOutlet NSTextField *lookAtYTextField;
+@property(weak) IBOutlet NSTextField *lookAtZTextField;
 
 - (IBAction)animationsPopUpButtonAction:(NSPopUpButton *)sender;
 - (IBAction)playButtonAction:(NSButton *)sender;
@@ -21,6 +24,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (IBAction)lightXAction:(NSTextField *)sender;
 - (IBAction)onChangeBlendShapeKey:(NSPopUpButton *)sender;
 - (IBAction)onChangeBlendShapeValue:(NSSlider *)sender;
+- (IBAction)lookAtXAction:(NSTextField *)sender;
+- (IBAction)lookAtYAction:(NSTextField *)sender;
+- (IBAction)lookAtZAction:(NSTextField *)sender;
 
 @end
 

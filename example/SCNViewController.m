@@ -3,16 +3,19 @@
 
 @interface SCNViewController ()
 
+@property(nonatomic, strong) SCNNode *lookAtTargetSphere;
+
 @end
 
 @implementation SCNViewController
 
 - (void)viewDidLoad {
   [super viewDidLoad];
-  //  self.scnView.autoenablesDefaultLighting = YES;
+  self.scnView.autoenablesDefaultLighting = YES;
   self.scnView.allowsCameraControl = YES;
   self.scnView.backgroundColor = [NSColor grayColor];
   self.scnView.showsStatistics = YES;
+  //  self.scnView.debugOptions = SCNDebugOptionShowWireframe;
 
   self.light = [SCNLight light];
   self.light.type = SCNLightTypeOmni;
@@ -38,15 +41,24 @@
 
   //  [self.scnView.scene.rootNode addChildNode:self.lightNode];
 
+  self.lookAtTargetSphere =
+      [SCNNode nodeWithGeometry:[SCNSphere sphereWithRadius:0.03]];
+  self.lookAtTargetSphere.position = SCNVector3Make(0, 0, 0);
+  self.lookAtTargetSphere.geometry.firstMaterial.diffuse.contents =
+      [NSColor blueColor];
+  [self.scnView.scene.rootNode addChildNode:self.lookAtTargetSphere];
+
   if ([self.delegate respondsToSelector:@selector(scnViewController:
                                                        didLoadAsset:)]) {
     [self.delegate scnViewController:self didLoadAsset:self.asset];
   }
 
-  NSString *path = [[NSBundle mainBundle] pathForResource:@"Cannon_Exterior"
-                                                   ofType:@"hdr"];
-  NSImage *hdr = [[NSImage alloc] initWithContentsOfFile:path];
-  self.scnView.scene.lightingEnvironment.contents = hdr;
+  //  NSString *path = [[NSBundle mainBundle] pathForResource:@"Cannon_Exterior"
+  //                                                   ofType:@"hdr"];
+  //  NSImage *hdr = [[NSImage alloc] initWithContentsOfFile:path];
+  //  self.scnView.scene.lightingEnvironment.contents = hdr;
+
+  [self lookAt:SCNVector3Make(0, 1.5, 1.0)];
 }
 
 - (void)sidebarViewController:(SidebarViewController *)sidebarViewController
@@ -66,6 +78,32 @@
               didChangeWeight:(float)weight
              forBlendShapeKey:(NSString *)key {
   [self.asset setBlendShapeWeight:weight forKey:key];
+}
+
+- (void)sidebarViewController:(SidebarViewController *)sidebarViewController
+             didChangeLookAtX:(float)value {
+  SCNVector3 position = self.lookAtTargetSphere.position;
+  position.x = value;
+  [self lookAt:position];
+}
+
+- (void)sidebarViewController:(SidebarViewController *)sidebarViewController
+             didChangeLookAtY:(float)value {
+  SCNVector3 position = self.lookAtTargetSphere.position;
+  position.y = value;
+  [self lookAt:position];
+}
+
+- (void)sidebarViewController:(SidebarViewController *)sidebarViewController
+             didChangeLookAtZ:(float)value {
+  SCNVector3 position = self.lookAtTargetSphere.position;
+  position.z = value;
+  [self lookAt:position];
+}
+
+- (void)lookAt:(SCNVector3)value {
+  self.lookAtTargetSphere.position = value;
+  [self.asset lookAtTarget:value];
 }
 
 @end

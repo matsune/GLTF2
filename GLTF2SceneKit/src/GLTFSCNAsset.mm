@@ -5,44 +5,6 @@
 #include <memory>
 #include <unordered_map>
 
-const NSString *VRM0BlendShapePresetUnknown = @"unknown";
-const NSString *VRM0BlendShapePresetNeutral = @"neutral";
-const NSString *VRM0BlendShapePresetA = @"a";
-const NSString *VRM0BlendShapePresetI = @"i";
-const NSString *VRM0BlendShapePresetU = @"u";
-const NSString *VRM0BlendShapePresetE = @"e";
-const NSString *VRM0BlendShapePresetO = @"o";
-const NSString *VRM0BlendShapePresetBlink = @"blink";
-const NSString *VRM0BlendShapePresetJoy = @"joy";
-const NSString *VRM0BlendShapePresetAngry = @"angry";
-const NSString *VRM0BlendShapePresetSorrow = @"sorrow";
-const NSString *VRM0BlendShapePresetFun = @"fun";
-const NSString *VRM0BlendShapePresetLookup = @"lookup";
-const NSString *VRM0BlendShapePresetLookdown = @"lookdown";
-const NSString *VRM0BlendShapePresetLookleft = @"lookleft";
-const NSString *VRM0BlendShapePresetLookright = @"lookright";
-const NSString *VRM0BlendShapePresetBlinkL = @"blink_l";
-const NSString *VRM0BlendShapePresetBlinkR = @"blink_r";
-
-const NSString *VRM1BlendShapePresetHappy = @"happy";
-const NSString *VRM1BlendShapePresetAngry = @"angry";
-const NSString *VRM1BlendShapePresetSad = @"sad";
-const NSString *VRM1BlendShapePresetRelaxed = @"relaxed";
-const NSString *VRM1BlendShapePresetSurprised = @"surprised";
-const NSString *VRM1BlendShapePresetAa = @"aa";
-const NSString *VRM1BlendShapePresetIh = @"ih";
-const NSString *VRM1BlendShapePresetOu = @"ou";
-const NSString *VRM1BlendShapePresetEe = @"ee";
-const NSString *VRM1BlendShapePresetOh = @"oh";
-const NSString *VRM1BlendShapePresetBlink = @"blink";
-const NSString *VRM1BlendShapePresetBlinkLeft = @"blinkLeft";
-const NSString *VRM1BlendShapePresetBlinkRight = @"blinkRight";
-const NSString *VRM1BlendShapePresetLookUp = @"lookUp";
-const NSString *VRM1BlendShapePresetLookDown = @"lookDown";
-const NSString *VRM1BlendShapePresetLookLeft = @"lookLeft";
-const NSString *VRM1BlendShapePresetLookRight = @"lookRight";
-const NSString *VRM1BlendShapePresetNeutral = @"neutral";
-
 NSError *NSErrorFromInputException(gltf2::InputException e) {
   return [NSError errorWithDomain:GLTFErrorDomainInput
                              code:GLTFInputError
@@ -76,10 +38,12 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
 @interface GLTFSCNAsset ()
 
 @property(nonatomic, strong) NSArray<SCNMaterial *> *scnMaterials;
-// get node by mesh index
 @property(nonatomic, strong) NSDictionary<NSNumber *, SCNNode *> *meshNodeDict;
-// get node by node index
 @property(nonatomic, strong) NSDictionary<NSNumber *, SCNNode *> *nodeDict;
+
+@property(nonatomic, assign) SCNMatrix4 lookAtMatrix;
+@property(nonatomic, assign) SCNVector3 initialLeftEyeAngles;
+@property(nonatomic, assign) SCNVector3 initialRightEyeAngles;
 
 @end
 
@@ -96,6 +60,58 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
   return self;
 }
 
+SCNMatrix4 LookAtMatrix(SCNNode *headBone, SCNVector3 offsetFromHeadBone) {
+  SCNVector3 headPosition = headBone.worldPosition;
+  SCNQuaternion headRotation = headBone.worldOrientation;
+
+  SCNMatrix4 headPositionMatrix =
+      SCNMatrix4MakeTranslation(headPosition.x, headPosition.y, headPosition.z);
+  SCNMatrix4 headRotationMatrix =
+      SCNMatrix4RotationFromQuaternion(headRotation);
+  SCNMatrix4 inverseHeadRotationMatrix = SCNMatrix4Invert(headRotationMatrix);
+
+  SCNMatrix4 offsetFromHeadBoneMatrix = SCNMatrix4MakeTranslation(
+      offsetFromHeadBone.x, offsetFromHeadBone.y, offsetFromHeadBone.z);
+
+  SCNMatrix4 headMatrix =
+      SCNMatrix4Mult(headPositionMatrix, headRotationMatrix);
+  SCNMatrix4 offsetMatrix =
+      SCNMatrix4Mult(headMatrix, offsetFromHeadBoneMatrix);
+  return SCNMatrix4Mult(offsetMatrix, inverseHeadRotationMatrix);
+}
+
+SCNMatrix4 SCNMatrix4RotationFromQuaternion(const SCNQuaternion &q) {
+  CGFloat w = q.w;
+  CGFloat x = q.x;
+  CGFloat y = q.y;
+  CGFloat z = q.z;
+
+  CGFloat angle = 2 * acos(w);
+  CGFloat sinHalfAngle = sqrt(1 - w * w);
+
+  CGFloat ux, uy, uz;
+  if (sinHalfAngle < 0.0001) {
+    ux = 1;
+    uy = 0;
+    uz = 0;
+  } else {
+    ux = x / sinHalfAngle;
+    uy = y / sinHalfAngle;
+    uz = z / sinHalfAngle;
+  }
+  return SCNMatrix4MakeRotation(angle, ux, uy, uz);
+}
+
+SCNVector3 SCNVector3ApplyTransform(SCNVector3 vector, SCNMatrix4 transform) {
+  float x = transform.m11 * vector.x + transform.m21 * vector.y +
+            transform.m31 * vector.z + transform.m41;
+  float y = transform.m12 * vector.x + transform.m22 * vector.y +
+            transform.m32 * vector.z + transform.m42;
+  float z = transform.m13 * vector.x + transform.m23 * vector.y +
+            transform.m33 * vector.z + transform.m43;
+  return SCNVector3Make(x, y, z);
+}
+
 - (BOOL)loadFile:(const NSString *)path
            error:(NSError *_Nullable *_Nullable)error {
   try {
@@ -104,6 +120,21 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
     [self loadScenesWithData:data];
     const auto json = data.moveJson();
     _json = [JsonConverter convertGLTFJson:json];
+
+    if (self.isLookAtTypeBone) {
+      // Bone
+      _lookAtMatrix = LookAtMatrix(self.vrmHeadBone, self.offsetFromHeadBone);
+      _initialLeftEyeAngles = self.leftEyeBone.eulerAngles;
+      _initialRightEyeAngles = self.rightEyeBone.eulerAngles;
+    }
+
+    if (self.json.vrm0) {
+      if (self.defaultScene &&
+          self.defaultScene.rootNode.childNodes.firstObject) {
+        self.defaultScene.rootNode.childNodes.firstObject.rotation =
+            SCNVector4Make(0, 1, 0, M_PI);
+      }
+    }
   } catch (gltf2::InputException e) {
     if (error)
       *error = NSErrorFromInputException(e);
@@ -499,12 +530,14 @@ static simd_float4x4 simdTransformOfNode(const gltf2::json::Node &node) {
   if (data.json().scenes.has_value()) {
     for (const auto &scene : *data.json().scenes) {
       SCNScene *scnScene = [SCNScene scene];
+      SCNNode *sceneNode = [SCNNode node];
       if (scene.nodes.has_value()) {
         for (auto nodeIndex : *scene.nodes) {
           SCNNode *node = scnNodes[nodeIndex];
-          [scnScene.rootNode addChildNode:node];
+          [sceneNode addChildNode:node];
         }
       }
+      [scnScene.rootNode addChildNode:sceneNode];
       [scnScenes addObject:scnScene];
     }
   }
@@ -1700,6 +1733,251 @@ static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
       // TODO: materialColorBinds, textureTransform, overrides
     }
   }
+}
+
+- (BOOL)isLookAtTypeBone {
+  if (self.json.vrm0 && self.json.vrm0.firstPerson) {
+    return self.json.vrm0.firstPerson.isLookAtTypeBone;
+  } else if (self.json.vrm1 && self.json.vrm1.lookAt) {
+    return self.json.vrm1.lookAt.isTypeBone;
+  }
+  return NO;
+}
+
+- (nullable SCNNode *)vrmHeadBone {
+  if (self.json.vrm0) {
+    if (self.json.vrm0.firstPerson &&
+        self.json.vrm0.firstPerson.firstPersonBone) {
+      return self.nodeDict[self.json.vrm0.firstPerson.firstPersonBone];
+    } else if (self.json.vrm0.humanoid) {
+      return self.nodeDict[
+          [self.json.vrm0.humanoid humanBoneByName:VRMHumanoidBoneTypeHead]
+              .node];
+    }
+  } else if (self.json.vrm1 && self.json.vrm1.humanoid &&
+             self.json.vrm1.humanoid.humanBones &&
+             self.json.vrm1.humanoid.humanBones.head) {
+    return self.nodeDict[self.json.vrm1.humanoid.humanBones.head.node];
+  }
+  return nil;
+}
+
+SCNVector3 SCNVector3FromVec3(Vec3 *v) { return SCNVector3Make(v.x, v.y, v.z); }
+
+- (SCNVector3)offsetFromHeadBone {
+  if (self.json.vrm0 && self.json.vrm0.firstPerson &&
+      self.json.vrm0.firstPerson.firstPersonBoneOffset) {
+    return SCNVector3FromVec3(self.json.vrm0.firstPerson.firstPersonBoneOffset);
+  }
+  if (self.json.vrm1 && self.json.vrm1.lookAt &&
+      self.json.vrm1.lookAt.offsetFromHeadBone) {
+    return SCNVector3FromVec3(self.json.vrm1.lookAt.offsetFromHeadBone);
+  }
+  return SCNVector3Make(0, 0, 0);
+}
+
+- (nullable SCNNode *)leftEyeBone {
+  if (self.json.vrm0 && self.json.vrm0.humanoid && self.json.vrm0.humanoid) {
+    return self.nodeDict[
+        [self.json.vrm0.humanoid humanBoneByName:VRMHumanoidBoneTypeLeftEye]
+            .node];
+  } else if (self.json.vrm1 && self.json.vrm1.humanoid &&
+             self.json.vrm1.humanoid.humanBones &&
+             self.json.vrm1.humanoid.humanBones.leftEye) {
+    return self.nodeDict[self.json.vrm1.humanoid.humanBones.leftEye.node];
+  }
+  return nil;
+}
+
+- (nullable SCNNode *)rightEyeBone {
+  if (self.json.vrm0 && self.json.vrm0.humanoid && self.json.vrm0.humanoid) {
+    return self.nodeDict[
+        [self.json.vrm0.humanoid humanBoneByName:VRMHumanoidBoneTypeRightEye]
+            .node];
+  } else if (self.json.vrm1 && self.json.vrm1.humanoid &&
+             self.json.vrm1.humanoid.humanBones &&
+             self.json.vrm1.humanoid.humanBones.rightEye) {
+    return self.nodeDict[self.json.vrm1.humanoid.humanBones.rightEye.node];
+  }
+  return nil;
+}
+
+- (void)calcYawPitchDegreesForTarget:(SCNVector3)target
+                                 yaw:(CGFloat *)yaw
+                               pitch:(CGFloat *)pitch {
+  SCNMatrix4 lookAtSpace = self.lookAtMatrix;
+  SCNMatrix4 inverseLookAtSpace = SCNMatrix4Invert(lookAtSpace);
+
+  SCNVector3 localTarget = SCNVector3Make(
+      inverseLookAtSpace.m11 * target.x + inverseLookAtSpace.m21 * target.y +
+          inverseLookAtSpace.m31 * target.z + inverseLookAtSpace.m41,
+      inverseLookAtSpace.m12 * target.x + inverseLookAtSpace.m22 * target.y +
+          inverseLookAtSpace.m32 * target.z + inverseLookAtSpace.m42,
+      inverseLookAtSpace.m13 * target.x + inverseLookAtSpace.m23 * target.y +
+          inverseLookAtSpace.m33 * target.z + inverseLookAtSpace.m43);
+
+  CGFloat z = localTarget.z;
+  CGFloat x = localTarget.x;
+  *yaw = atan2(x, z) * (180.0 / M_PI);
+
+  CGFloat xz = sqrt(x * x + z * z);
+  CGFloat y = localTarget.y;
+  *pitch = atan2(-y, xz) * (180.0 / M_PI);
+}
+
+- (void)lookAtTarget:(SCNVector3)target {
+  CGFloat yaw, pitch;
+  [self calcYawPitchDegreesForTarget:target yaw:&yaw pitch:&pitch];
+  [self applyLeftEyeBoneWithYaw:yaw pitch:pitch];
+  [self applyRightEyeBoneWithYaw:yaw pitch:pitch];
+}
+
+- (CGFloat)clampHorizontalInner:(CGFloat)degree {
+  if (self.json.vrm0 && self.json.vrm0.firstPerson) {
+    VRMDegreeMap *horizontalInner =
+        self.json.vrm0.firstPerson.lookAtHorizontalInner;
+    if (horizontalInner && horizontalInner.xRange) {
+      CGFloat inputMaxValue = horizontalInner.xRange.floatValue;
+      return fmin(fabs(degree), inputMaxValue);
+    }
+  } else if (self.json.vrm1 && self.json.vrm1.lookAt &&
+             self.json.vrm1.lookAt.rangeMapHorizontalInner) {
+    CGFloat inputMaxValue = 90.0;
+    if (self.json.vrm1.lookAt.rangeMapHorizontalInner.inputMaxValue) {
+      inputMaxValue = self.json.vrm1.lookAt.rangeMapHorizontalInner
+                          .inputMaxValue.floatValue;
+    }
+    CGFloat outputScale = 1.0;
+    if (self.json.vrm1.lookAt.rangeMapHorizontalInner.outputScale) {
+      outputScale =
+          self.json.vrm1.lookAt.rangeMapHorizontalInner.outputScale.floatValue;
+    }
+    return fmin(fabs(degree), inputMaxValue) / inputMaxValue * outputScale;
+  }
+  return degree;
+}
+
+- (CGFloat)clampHorizontalOuter:(CGFloat)degree {
+  if (self.json.vrm0 && self.json.vrm0.firstPerson) {
+    VRMDegreeMap *horizontalOuter =
+        self.json.vrm0.firstPerson.lookAtHorizontalOuter;
+    if (horizontalOuter && horizontalOuter.xRange) {
+      CGFloat inputMaxValue = horizontalOuter.xRange.floatValue;
+      return fmin(fabs(degree), inputMaxValue);
+    }
+  } else if (self.json.vrm1 && self.json.vrm1.lookAt &&
+             self.json.vrm1.lookAt.rangeMapHorizontalOuter) {
+    CGFloat inputMaxValue = 90.0;
+    if (self.json.vrm1.lookAt.rangeMapHorizontalOuter.inputMaxValue) {
+      inputMaxValue = self.json.vrm1.lookAt.rangeMapHorizontalOuter
+                          .inputMaxValue.floatValue;
+    }
+    CGFloat outputScale = 1.0;
+    if (self.json.vrm1.lookAt.rangeMapHorizontalOuter.outputScale) {
+      outputScale =
+          self.json.vrm1.lookAt.rangeMapHorizontalOuter.outputScale.floatValue;
+    }
+    return fmin(fabs(degree), inputMaxValue) / inputMaxValue * outputScale;
+  }
+  return degree;
+}
+
+- (CGFloat)clampVerticalUp:(CGFloat)degree {
+  if (self.json.vrm0 && self.json.vrm0.firstPerson) {
+    VRMDegreeMap *verticalUp = self.json.vrm0.firstPerson.lookAtVerticalUp;
+    if (verticalUp && verticalUp.yRange) {
+      CGFloat inputMaxValue = verticalUp.yRange.floatValue;
+      return fmin(fabs(degree), inputMaxValue);
+    }
+  } else if (self.json.vrm1 && self.json.vrm1.lookAt &&
+             self.json.vrm1.lookAt.rangeMapVerticalUp) {
+    CGFloat inputMaxValue = 90.0;
+    if (self.json.vrm1.lookAt.rangeMapVerticalUp.inputMaxValue) {
+      inputMaxValue =
+          self.json.vrm1.lookAt.rangeMapVerticalUp.inputMaxValue.floatValue;
+    }
+    CGFloat outputScale = 1.0;
+    if (self.json.vrm1.lookAt.rangeMapVerticalUp.outputScale) {
+      outputScale =
+          self.json.vrm1.lookAt.rangeMapVerticalUp.outputScale.floatValue;
+    }
+    return fmin(fabs(degree), inputMaxValue) / inputMaxValue * outputScale;
+  }
+  return degree;
+}
+
+- (CGFloat)clampVerticalDown:(CGFloat)degree {
+  if (self.json.vrm0 && self.json.vrm0.firstPerson) {
+    VRMDegreeMap *verticalDown = self.json.vrm0.firstPerson.lookAtVerticalDown;
+    if (verticalDown && verticalDown.yRange) {
+      CGFloat inputMaxValue = verticalDown.yRange.floatValue;
+      return fmin(fabs(degree), inputMaxValue);
+    }
+  } else if (self.json.vrm1 && self.json.vrm1.lookAt &&
+             self.json.vrm1.lookAt.rangeMapVerticalDown) {
+    CGFloat inputMaxValue = 90.0;
+    if (self.json.vrm1.lookAt.rangeMapVerticalDown.inputMaxValue) {
+      inputMaxValue =
+          self.json.vrm1.lookAt.rangeMapVerticalDown.inputMaxValue.floatValue;
+    }
+    CGFloat outputScale = 1.0;
+    if (self.json.vrm1.lookAt.rangeMapVerticalDown.outputScale) {
+      outputScale =
+          self.json.vrm1.lookAt.rangeMapVerticalDown.outputScale.floatValue;
+    }
+    return fmin(fabs(degree), inputMaxValue) / inputMaxValue * outputScale;
+  }
+  return degree;
+}
+
+- (void)applyLeftEyeBoneWithYaw:(CGFloat)yawDegrees
+                          pitch:(CGFloat)pitchDegrees {
+  CGFloat yaw = 0;
+  if (yawDegrees > 0) {
+    yaw = [self clampHorizontalOuter:yawDegrees];
+  } else {
+    yaw = -[self clampHorizontalInner:yawDegrees];
+  }
+
+  CGFloat pitch = 0;
+  if (pitchDegrees > 0) {
+    pitch = [self clampVerticalDown:pitchDegrees];
+  } else {
+    pitch = -[self clampVerticalUp:pitchDegrees];
+  }
+  if (self.json.vrm0) {
+    pitch *= -1;
+  }
+
+  SCNVector3 angles = self.initialLeftEyeAngles;
+  angles.x += pitch * M_PI / 180.0f;
+  angles.y += yaw * M_PI / 180.0f;
+  self.leftEyeBone.eulerAngles = angles;
+}
+
+- (void)applyRightEyeBoneWithYaw:(CGFloat)yawDegrees
+                           pitch:(CGFloat)pitchDegrees {
+  CGFloat yaw = 0;
+  if (yawDegrees > 0) {
+    yaw = [self clampHorizontalInner:yawDegrees];
+  } else {
+    yaw = -[self clampHorizontalOuter:yawDegrees];
+  }
+
+  CGFloat pitch = 0;
+  if (pitchDegrees > 0) {
+    pitch = [self clampVerticalDown:pitchDegrees];
+  } else {
+    pitch = -[self clampVerticalUp:pitchDegrees];
+  }
+  if (self.json.vrm0) {
+    pitch *= -1;
+  }
+
+  SCNVector3 angles = self.initialRightEyeAngles;
+  angles.x += pitch * M_PI / 180.0f;
+  angles.y += yaw * M_PI / 180.0f;
+  self.rightEyeBone.eulerAngles = angles;
 }
 
 @end

@@ -1300,7 +1300,7 @@
 + (VRMCHumanBone *)convertVRMCHumanBone:
     (const gltf2::json::VRMCHumanBone &)cppBone {
   VRMCHumanBone *objcBone = [[VRMCHumanBone alloc] init];
-  objcBone.node = cppBone.node;
+  objcBone.node = @(cppBone.node);
   return objcBone;
 }
 
@@ -1562,11 +1562,10 @@
   VRMCLookAt *objcLookAt = [[VRMCLookAt alloc] init];
 
   if (cppLookAt.offsetFromHeadBone.has_value()) {
-    objcLookAt.offsetFromHeadBone = @[
-      @(cppLookAt.offsetFromHeadBone->at(0)),
-      @(cppLookAt.offsetFromHeadBone->at(1)),
-      @(cppLookAt.offsetFromHeadBone->at(2))
-    ];
+    objcLookAt.offsetFromHeadBone =
+        [[Vec3 alloc] initWithX:cppLookAt.offsetFromHeadBone->at(0)
+                              Y:cppLookAt.offsetFromHeadBone->at(1)
+                              Z:cppLookAt.offsetFromHeadBone->at(2)];
   }
   if (cppLookAt.type.has_value()) {
     objcLookAt.type = [self convertVRMCLookAtType:cppLookAt.type.value()];
@@ -1824,20 +1823,10 @@
   return objcVrm;
 }
 
-+ (VRMVec3 *)convertVRMVec3:(const gltf2::json::VRMVec3 &)cppVec3 {
-  VRMVec3 *objcVec3 = [[VRMVec3 alloc] init];
-
-  if (cppVec3.x.has_value()) {
-    objcVec3.x = @(cppVec3.x.value());
-  }
-  if (cppVec3.y.has_value()) {
-    objcVec3.y = @(cppVec3.y.value());
-  }
-  if (cppVec3.z.has_value()) {
-    objcVec3.z = @(cppVec3.z.value());
-  }
-
-  return objcVec3;
++ (Vec3 *)convertVec3:(const gltf2::json::VRMVec3 &)cppVec3 {
+  return [[Vec3 alloc] initWithX:cppVec3.x.value_or(0)
+                               Y:cppVec3.y.value_or(0)
+                               Z:cppVec3.z.value_or(0)];
 }
 
 + (NSString *)convertVRMHumanoidBoneType:
@@ -1972,13 +1961,13 @@
     objcBone.useDefaultValues = @(cppBone.useDefaultValues.value());
   }
   if (cppBone.min.has_value()) {
-    objcBone.min = [self convertVRMVec3:cppBone.min.value()];
+    objcBone.min = [self convertVec3:cppBone.min.value()];
   }
   if (cppBone.max.has_value()) {
-    objcBone.max = [self convertVRMVec3:cppBone.max.value()];
+    objcBone.max = [self convertVec3:cppBone.max.value()];
   }
   if (cppBone.center.has_value()) {
-    objcBone.center = [self convertVRMVec3:cppBone.center.value()];
+    objcBone.center = [self convertVec3:cppBone.center.value()];
   }
   if (cppBone.axisLength.has_value()) {
     objcBone.axisLength = @(cppBone.axisLength.value());
@@ -2149,17 +2138,28 @@
   return objcAnnotation;
 }
 
++ (VRMDegreeMapCurveMapping *)convertVRMDegreeMapCurveMapping:
+    (const gltf2::json::VRMDegreeMapCurveMapping &)cppMapping {
+  VRMDegreeMapCurveMapping *objcMapping =
+      [[VRMDegreeMapCurveMapping alloc] init];
+  objcMapping.time = cppMapping.time;
+  objcMapping.value = cppMapping.value;
+  objcMapping.inTangent = cppMapping.inTangent;
+  objcMapping.outTangent = cppMapping.outTangent;
+  return objcMapping;
+}
+
 + (VRMDegreeMap *)convertVRMDegreeMap:
     (const gltf2::json::VRMDegreeMap &)cppDegreeMap {
   VRMDegreeMap *objcDegreeMap = [[VRMDegreeMap alloc] init];
 
   if (cppDegreeMap.curve.has_value()) {
-    NSMutableArray<NSNumber *> *curveArray =
-        [NSMutableArray arrayWithCapacity:cppDegreeMap.curve->size()];
-    for (const auto &value : cppDegreeMap.curve.value()) {
-      [curveArray addObject:@(value)];
+    NSMutableArray<VRMDegreeMapCurveMapping *> *mappings =
+        [NSMutableArray array];
+    for (const auto &cppMapping : *cppDegreeMap.curve) {
+      [mappings addObject:[self convertVRMDegreeMapCurveMapping:cppMapping]];
     }
-    objcDegreeMap.curve = [curveArray copy];
+    objcDegreeMap.curve = [mappings copy];
   }
   if (cppDegreeMap.xRange.has_value()) {
     objcDegreeMap.xRange = @(cppDegreeMap.xRange.value());
@@ -2171,6 +2171,18 @@
   return objcDegreeMap;
 }
 
++ (NSString *)convertVRMFirstPersonLookAtType:
+    (gltf2::json::VRMFirstPerson::LookAtType)lookAtType {
+  switch (lookAtType) {
+  case gltf2::json::VRMFirstPerson::LookAtType::BONE:
+    return VRMFirstPersonLookAtTypeBone;
+  case gltf2::json::VRMFirstPerson::LookAtType::BLEND_SHAPE:
+    return VRMFirstPersonLookAtTypeBlendShape;
+  default:
+    return @"";
+  }
+}
+
 + (VRMFirstPerson *)convertVRMFirstPerson:
     (const gltf2::json::VRMFirstPerson &)cppFirstPerson {
   VRMFirstPerson *objcFirstPerson = [[VRMFirstPerson alloc] init];
@@ -2180,7 +2192,7 @@
   }
   if (cppFirstPerson.firstPersonBoneOffset.has_value()) {
     objcFirstPerson.firstPersonBoneOffset =
-        [self convertVRMVec3:cppFirstPerson.firstPersonBoneOffset.value()];
+        [self convertVec3:cppFirstPerson.firstPersonBoneOffset.value()];
   }
   if (cppFirstPerson.meshAnnotations.has_value()) {
     NSMutableArray<VRMMeshAnnotation *> *annotationsArray = [NSMutableArray
@@ -2192,7 +2204,7 @@
   }
   if (cppFirstPerson.lookAtTypeName.has_value()) {
     objcFirstPerson.lookAtTypeName =
-        [NSString stringWithUTF8String:cppFirstPerson.lookAtTypeName->c_str()];
+        [self convertVRMFirstPersonLookAtType:*cppFirstPerson.lookAtTypeName];
   }
   if (cppFirstPerson.lookAtHorizontalInner.has_value()) {
     objcFirstPerson.lookAtHorizontalInner =
@@ -2357,7 +2369,7 @@
       [[VRMSecondaryAnimationCollider alloc] init];
 
   if (cppCollider.offset.has_value()) {
-    objcCollider.offset = [self convertVRMVec3:cppCollider.offset.value()];
+    objcCollider.offset = [self convertVec3:cppCollider.offset.value()];
   }
   if (cppCollider.radius.has_value()) {
     objcCollider.radius = @(cppCollider.radius.value());
@@ -2405,7 +2417,7 @@
     objcSpring.gravityPower = @(cppSpring.gravityPower.value());
   }
   if (cppSpring.gravityDir.has_value()) {
-    objcSpring.gravityDir = [self convertVRMVec3:cppSpring.gravityDir.value()];
+    objcSpring.gravityDir = [self convertVec3:cppSpring.gravityDir.value()];
   }
   if (cppSpring.dragForce.has_value()) {
     objcSpring.dragForce = @(cppSpring.dragForce.value());

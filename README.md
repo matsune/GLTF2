@@ -1,8 +1,8 @@
 # GLTF2
 
-GLTF2 library is a C++ decoder for glTF 2.0 format .gltf and .glb files.
+Decoder library for glTF 2.0 format files written in C++
 
-## Supported Extensions (Khronos)
+## Supported Extensions
 
 - [x] KHR_draco_mesh_compression
 - [x] KHR_lights_punctual
@@ -18,12 +18,15 @@ GLTF2 library is a C++ decoder for glTF 2.0 format .gltf and .glb files.
 - [x] KHR_materials_unlit
 - [x] KHR_texture_transform
 - [x] KHR_texture_volume
+- [x] VRM (0.0, 1.0)
 
 TODO: other extensions
 
 # GLTF2SceneKit
 
-GLTF2SceneKit framework provides a bridge to display glTF models using SceneKit on macOS.
+GLTF2SceneKit framework provides a bridge to display glTF models using SceneKit.
+
+TODO: iOS
 
 ## Supported Extensions (Khronos)
 
@@ -36,6 +39,7 @@ GLTF2SceneKit framework provides a bridge to display glTF models using SceneKit 
 - [x] KHR_materials_transmission
 - [x] KHR_materials_unlit
 - [x] KHR_texture_transform
+- [x] VRM
 
 ## Requirements
 

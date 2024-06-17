@@ -2070,7 +2070,19 @@ private:
   }
   json::VRMDegreeMap decodeVRMDegreeMap(const nlohmann::json &j) {
     json::VRMDegreeMap degreeMap;
-    decodeValue(j, "curve", degreeMap.curve);
+    const auto curveArray = decodeOptionalArray(j, "curve");
+    if (curveArray) {
+      std::vector<json::VRMDegreeMapCurveMapping> curve;
+      for (int i = 0; i < curveArray->size() / 4; i++) {
+        json::VRMDegreeMapCurveMapping mapping;
+        mapping.time = curveArray->at(i * 4 + 0);
+        mapping.value = curveArray->at(i * 4 + 1);
+        mapping.inTangent = curveArray->at(i * 4 + 2);
+        mapping.outTangent = curveArray->at(i * 4 + 3);
+        curve.push_back(mapping);
+      }
+      degreeMap.curve = curve;
+    }
     decodeValue(j, "xRange", degreeMap.xRange);
     decodeValue(j, "yRange", degreeMap.yRange);
     return degreeMap;
@@ -2086,7 +2098,9 @@ private:
         [this](const nlohmann::json &item) {
           return decodeVRMMeshAnnotation(item);
         });
-    decodeValue(j, "lookAtTypeName", firstPerson.lookAtTypeName);
+    decodeEnumValue<json::VRMFirstPerson::LookAtType>(
+        j, "lookAtTypeName", firstPerson.lookAtTypeName,
+        json::VRMFirstPerson::LookAtTypeFromString);
     decodeObjWithMap<json::VRMDegreeMap>(j, "lookAtHorizontalInner",
                                          firstPerson.lookAtHorizontalInner,
                                          [this](const nlohmann::json &item) {

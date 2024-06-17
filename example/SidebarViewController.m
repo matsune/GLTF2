@@ -62,6 +62,10 @@
   self.blendShapePopUpButton.enabled = keys.count > 0;
   [self.blendShapePopUpButton addItemsWithTitles:keys];
   self.blendShapeKey = keys.firstObject;
+
+  self.lookAtXTextField.floatValue = 0.0f;
+  self.lookAtYTextField.floatValue = 1.5f;
+  self.lookAtZTextField.floatValue = 1.0f;
 }
 
 - (IBAction)onChangeBlendShapeValue:(NSSlider *)sender {
@@ -99,6 +103,30 @@
                                                  didSelectCameraAtIndex:)]) {
     [self.delegate sidebarViewController:self
                   didSelectCameraAtIndex:sender.indexOfSelectedItem];
+  }
+}
+
+- (IBAction)lookAtXAction:(NSTextField *)sender {
+  if ([self.delegate respondsToSelector:@selector(sidebarViewController:
+                                                       didChangeLookAtX:)]) {
+    [self.delegate sidebarViewController:self
+                        didChangeLookAtX:sender.floatValue];
+  }
+}
+
+- (IBAction)lookAtYAction:(NSTextField *)sender {
+  if ([self.delegate respondsToSelector:@selector(sidebarViewController:
+                                                       didChangeLookAtY:)]) {
+    [self.delegate sidebarViewController:self
+                        didChangeLookAtY:sender.floatValue];
+  }
+}
+
+- (IBAction)lookAtZAction:(NSTextField *)sender {
+  if ([self.delegate respondsToSelector:@selector(sidebarViewController:
+                                                       didChangeLookAtZ:)]) {
+    [self.delegate sidebarViewController:self
+                        didChangeLookAtZ:sender.floatValue];
   }
 }
 

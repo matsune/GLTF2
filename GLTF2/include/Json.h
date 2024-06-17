@@ -1628,19 +1628,39 @@ public:
   std::optional<std::string> firstPersonFlag;
 };
 
+class VRMDegreeMapCurveMapping {
+public:
+  float time;
+  float value;
+  float inTangent;
+  float outTangent;
+};
+
 class VRMDegreeMap {
 public:
-  std::optional<std::vector<float>> curve;
+  std::optional<std::vector<VRMDegreeMapCurveMapping>> curve;
   std::optional<float> xRange;
   std::optional<float> yRange;
 };
 
 class VRMFirstPerson {
 public:
+  enum class LookAtType { BONE, BLEND_SHAPE };
+
+  static std::optional<LookAtType>
+  LookAtTypeFromString(const std::string &value) {
+    if (value == "Bone")
+      return LookAtType::BONE;
+    else if (value == "BlendShape")
+      return LookAtType::BLEND_SHAPE;
+    else
+      return std::nullopt;
+  }
+
   std::optional<uint32_t> firstPersonBone;
   std::optional<VRMVec3> firstPersonBoneOffset;
   std::optional<std::vector<VRMMeshAnnotation>> meshAnnotations;
-  std::optional<std::string> lookAtTypeName;
+  std::optional<LookAtType> lookAtTypeName;
   std::optional<VRMDegreeMap> lookAtHorizontalInner;
   std::optional<VRMDegreeMap> lookAtHorizontalOuter;
   std::optional<VRMDegreeMap> lookAtVerticalDown;

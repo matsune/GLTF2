@@ -260,6 +260,18 @@ NSString *const VRMCLookAtTypeExpression = @"expression";
 
 @implementation VRMCLookAt
 
+- (BOOL)isTypeBone {
+  if (self.type)
+    return [self.type isEqualToString:VRMCLookAtTypeBone];
+  return NO;
+}
+
+- (BOOL)isTypeExpression {
+  if (self.type)
+    return [self.type isEqualToString:VRMCLookAtTypeExpression];
+  return NO;
+}
+
 @end
 
 NSString *const VRMCExpressionMaterialColorBindTypeColor = @"color";
@@ -429,7 +441,17 @@ NSString *const VRMCExpressionOverrideBlend = @"blend";
 
 @end
 
-@implementation VRMVec3
+@implementation Vec3
+
+- (instancetype)initWithX:(float)x Y:(float)y Z:(float)z {
+  self = [super init];
+  if (self) {
+    self.x = x;
+    self.y = y;
+    self.z = z;
+  }
+  return self;
+}
 
 @end
 
@@ -505,6 +527,17 @@ NSString *const VRMHumanoidBoneTypeUpperChest = @"upperChest";
 
 @implementation VRMHumanoid
 
+- (nullable VRMHumanoidBone *)humanBoneByName:(NSString *)name {
+  if (self.humanBones) {
+    for (VRMHumanoidBone *bone in self.humanBones) {
+      if (bone.bone && [bone.bone isEqualToString:name]) {
+        return bone;
+      }
+    }
+  }
+  return nil;
+}
+
 @end
 
 NSString *const VRMMetaAllowedUserNameOnlyAuthor = @"OnlyAuthor";
@@ -534,11 +567,33 @@ NSString *const VRMMetaLicenseNameOther = @"Other";
 
 @end
 
+@implementation VRMDegreeMapCurveMapping
+
+@end
+
 @implementation VRMDegreeMap
 
 @end
 
+NSString *const VRMFirstPersonLookAtTypeBone = @"Bone";
+NSString *const VRMFirstPersonLookAtTypeBlendShape = @"BlendShape";
+
 @implementation VRMFirstPerson
+
+- (BOOL)isLookAtTypeBone {
+  if (self.lookAtTypeName)
+    return [self.lookAtTypeName isEqualToString:VRMFirstPersonLookAtTypeBone];
+  if (self.firstPersonBone != nil && self.firstPersonBoneOffset != nil)
+    return YES;
+  return NO;
+}
+
+- (BOOL)isLookAtTypeBlendShape {
+  if (self.lookAtTypeName)
+    return [self.lookAtTypeName
+        isEqualToString:VRMFirstPersonLookAtTypeBlendShape];
+  return NO;
+}
 
 @end
 

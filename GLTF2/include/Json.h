@@ -1889,6 +1889,91 @@ public:
   }
 };
 
+class VRMCSpringBoneColliderGroup {
+public:
+  std::optional<std::string> name;
+  std::vector<uint32_t> colliders;
+};
+
+class VRMCSpringBoneJoint {
+public:
+  uint32_t node;
+  std::optional<float> hitRadius;
+  std::optional<float> stiffness;
+  std::optional<float> gravityPower;
+  std::optional<std::array<float, 3>> gravityDir;
+  std::optional<float> dragForce;
+
+  float hitRadiusValue() const { return hitRadius.value_or(0); }
+
+  float stffnessValue() const { return stiffness.value_or(1.0f); }
+
+  float gravityPowerValue() const { return gravityPower.value_or(0); }
+
+  std::array<float, 3> gravityDirValue() const {
+    return gravityDir.value_or(std::array<float, 3>({0, -1.0f, 0}));
+  }
+
+  float dragForceValue() const { return dragForce.value_or(0.5f); }
+};
+
+class VRMCSpringBoneShapeSphere {
+public:
+  std::optional<std::array<float, 3>> offset;
+  std::optional<float> radius;
+
+  std::array<float, 3> offsetValue() const {
+    return offset.value_or(std::array<float, 3>({0, 0, 0}));
+  }
+
+  float radiusValue() const { return radius.value_or(0); }
+};
+
+class VRMCSpringBoneShapeCapsule {
+public:
+  std::optional<std::array<float, 3>> offset;
+  std::optional<float> radius;
+  std::optional<std::array<float, 3>> tail;
+
+  std::array<float, 3> offsetValue() const {
+    return offset.value_or(std::array<float, 3>({0, 0, 0}));
+  }
+
+  float radiusValue() const { return radius.value_or(0); }
+
+  std::array<float, 3> tailValue() const {
+    return tail.value_or(std::array<float, 3>({0, 0, 0}));
+  }
+};
+
+class VRMCSpringBoneShape {
+public:
+  std::optional<VRMCSpringBoneShapeSphere> sphere;
+  std::optional<VRMCSpringBoneShapeCapsule> capsule;
+};
+
+class VRMCSpringBoneCollider {
+public:
+  uint32_t node;
+  VRMCSpringBoneShape shape;
+};
+
+class VRMCSpringBoneSpring {
+public:
+  std::optional<std::string> name;
+  std::vector<VRMCSpringBoneJoint> joints;
+  std::vector<uint32_t> colliderGroups;
+  std::optional<uint32_t> center;
+};
+
+class VRMCSpringBone {
+public:
+  std::string specVersion;
+  std::optional<std::vector<VRMCSpringBoneCollider>> colliders;
+  std::optional<std::vector<VRMCSpringBoneColliderGroup>> colliderGroups;
+  std::optional<std::vector<VRMCSpringBoneSpring>> springs;
+};
+
 // Json
 
 class Json {
@@ -1913,6 +1998,7 @@ public:
   std::optional<std::vector<KHRLight>> lights;
   std::optional<VRMVrm> vrm0;
   std::optional<VRMCVrm> vrm1;
+  std::optional<VRMCSpringBone> springBone;
 };
 
 } // namespace json

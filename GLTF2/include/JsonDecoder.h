@@ -1175,6 +1175,12 @@ private:
       decodeObjWithMap<json::VRMCVrm>(
           *extensionsObj, GLTFExtensionVRMCvrm, data.vrm1,
           [this](const nlohmann::json &item) { return decodeVRMCVrm(item); });
+
+      decodeObjWithMap<json::VRMCSpringBone>(
+          *extensionsObj, GLTFExtensionVRMCSpringBone, data.springBone,
+          [this](const nlohmann::json &item) {
+            return decodeVRMCSpringBone(item);
+          });
     }
 
     popStack();
@@ -2256,6 +2262,119 @@ private:
           return decodeKeyedMapValue<std::string>(obj);
         });
     return material;
+  }
+
+  json::VRMCSpringBoneColliderGroup
+  decodeVRMCSpringBoneColliderGroup(const nlohmann::json &j) {
+    json::VRMCSpringBoneColliderGroup colliderGroup;
+    decodeValue(j, "name", colliderGroup.name);
+    decodeValue(j, "colliders", colliderGroup.colliders);
+    return colliderGroup;
+  }
+
+  json::VRMCSpringBoneJoint decodeVRMCSpringBoneJoint(const nlohmann::json &j) {
+    json::VRMCSpringBoneJoint joint;
+    decodeValue(j, "node", joint.node);
+    decodeValue(j, "hitRadius", joint.hitRadius);
+    decodeValue(j, "stiffness", joint.stiffness);
+    decodeValue(j, "gravityPower", joint.gravityPower);
+    decodeValueWithMap<std::array<float, 3>>(
+        j, "gravityDir", joint.gravityDir, [this](const nlohmann::json &value) {
+          if (!value.is_array())
+            throw InvalidFormatException(context());
+          return value.get<std::array<float, 3>>();
+        });
+    decodeValue(j, "dragForce", joint.dragForce);
+    return joint;
+  }
+
+  json::VRMCSpringBoneShapeSphere
+  decodeVRMCSpringBoneShapeSphere(const nlohmann::json &j) {
+    json::VRMCSpringBoneShapeSphere sphere;
+    decodeValueWithMap<std::array<float, 3>>(
+        j, "offset", sphere.offset, [this](const nlohmann::json &value) {
+          if (!value.is_array())
+            throw InvalidFormatException(context());
+          return value.get<std::array<float, 3>>();
+        });
+    decodeValue(j, "radius", sphere.radius);
+    return sphere;
+  }
+
+  json::VRMCSpringBoneShapeCapsule
+  decodeVRMCSpringBoneShapeCapsule(const nlohmann::json &j) {
+    json::VRMCSpringBoneShapeCapsule capsule;
+    decodeValueWithMap<std::array<float, 3>>(
+        j, "offset", capsule.offset, [this](const nlohmann::json &value) {
+          if (!value.is_array())
+            throw InvalidFormatException(context());
+          return value.get<std::array<float, 3>>();
+        });
+    decodeValue(j, "radius", capsule.radius);
+    decodeValueWithMap<std::array<float, 3>>(
+        j, "tail", capsule.tail, [this](const nlohmann::json &value) {
+          if (!value.is_array())
+            throw InvalidFormatException(context());
+          return value.get<std::array<float, 3>>();
+        });
+    return capsule;
+  }
+
+  json::VRMCSpringBoneShape decodeVRMCSpringBoneShape(const nlohmann::json &j) {
+    json::VRMCSpringBoneShape shape;
+    decodeObjWithMap<json::VRMCSpringBoneShapeSphere>(
+        j, "sphere", shape.sphere, [this](nlohmann::json value) {
+          return decodeVRMCSpringBoneShapeSphere(value);
+        });
+    decodeObjWithMap<json::VRMCSpringBoneShapeCapsule>(
+        j, "capsule", shape.capsule, [this](nlohmann::json value) {
+          return decodeVRMCSpringBoneShapeCapsule(value);
+        });
+    return shape;
+  }
+
+  json::VRMCSpringBoneCollider
+  decodeVRMCSpringBoneCollider(const nlohmann::json &j) {
+    json::VRMCSpringBoneCollider collider;
+    decodeValue(j, "node", collider.node);
+    decodeObjWithMap<json::VRMCSpringBoneShape>(
+        j, "shape", collider.shape, [this](nlohmann::json value) {
+          return decodeVRMCSpringBoneShape(value);
+        });
+    return collider;
+  }
+
+  json::VRMCSpringBoneSpring
+  decodeVRMCSpringBoneSpring(const nlohmann::json &j) {
+    json::VRMCSpringBoneSpring spring;
+    decodeValue(j, "name", spring.name);
+    decodeArrayWithMapElem<json::VRMCSpringBoneJoint>(
+        j, "joints", spring.joints, [this](const nlohmann::json &item) {
+          return decodeVRMCSpringBoneJoint(item);
+        });
+    decodeValue(j, "colliderGroups", spring.colliderGroups);
+    decodeValue(j, "center", spring.center);
+    return spring;
+  }
+
+  json::VRMCSpringBone decodeVRMCSpringBone(const nlohmann::json &j) {
+    json::VRMCSpringBone springBone;
+    decodeValue(j, "specVersion", springBone.specVersion);
+    decodeArrayWithMapElem<json::VRMCSpringBoneCollider>(
+        j, "colliders", springBone.colliders,
+        [this](const nlohmann::json &item) {
+          return decodeVRMCSpringBoneCollider(item);
+        });
+    decodeArrayWithMapElem<json::VRMCSpringBoneColliderGroup>(
+        j, "colliderGroups", springBone.colliderGroups,
+        [this](const nlohmann::json &item) {
+          return decodeVRMCSpringBoneColliderGroup(item);
+        });
+    decodeArrayWithMapElem<json::VRMCSpringBoneSpring>(
+        j, "springs", springBone.springs, [this](const nlohmann::json &item) {
+          return decodeVRMCSpringBoneSpring(item);
+        });
+    return springBone;
   }
 };
 

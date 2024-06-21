@@ -26,5 +26,6 @@ const std::string GLTFExtensionKHRTextureTransform = "KHR_texture_transform";
 
 const std::string GLTFExtensionVRM = "VRM";
 const std::string GLTFExtensionVRMCvrm = "VRMC_vrm";
+const std::string GLTFExtensionVRMCSpringBone = "VRMC_springBone";
 
 } // namespace gltf2

@@ -1716,3 +1716,91 @@ TEST(TestGLTFData, validVRM0) {
   ASSERT_EQ(material.tagMap->size(), 1);
   ASSERT_EQ(material.tagMap->at("RenderType"), "Transparent");
 }
+
+TEST(TestGLTFData, SpringBone) {
+  auto rawJson = R"(
+    {
+      "asset": { "version": "1.0" },
+      "extensionsUsed": ["VRMC_springBone"],
+      "extensions": {
+        "VRMC_springBone": {
+          "specVersion": "1.0",
+          "colliders": [
+            {
+              "node": 0,
+              "shape": {
+                "sphere": {
+                  "offset": [0.0, 0.1, 0.2],
+                  "radius": 0.3
+                }
+              }
+            }
+          ],
+          "colliderGroups": [
+            {
+              "name": "Group1",
+              "colliders": [0]
+            }
+          ],
+          "springs": [
+            {
+              "name": "Spring1",
+              "joints": [
+                {
+                  "node": 1,
+                  "hitRadius": 0.2,
+                  "stiffness": 0.5,
+                  "gravityPower": 1.0,
+                  "gravityDir": [0.0, -1.0, 0.0],
+                  "dragForce": 0.3
+                }
+              ],
+              "colliderGroups": [0],
+              "center": 1
+            }
+          ]
+        }
+      }
+    }
+  )";
+  auto gltf = GLTFFile::parseStream(std::istringstream(rawJson));
+  ASSERT_TRUE(gltf.json().springBone.has_value());
+  auto springBone = *gltf.json().springBone;
+
+  ASSERT_EQ(springBone.specVersion, "1.0");
+
+  ASSERT_TRUE(springBone.colliders.has_value());
+  ASSERT_EQ(springBone.colliders->size(), 1);
+  auto &collider = springBone.colliders->at(0);
+  ASSERT_EQ(collider.node, 0);
+  ASSERT_TRUE(collider.shape.sphere.has_value());
+  ASSERT_EQ(collider.shape.sphere->offsetValue().at(0), 0.0f);
+  ASSERT_EQ(collider.shape.sphere->offsetValue().at(1), 0.1f);
+  ASSERT_EQ(collider.shape.sphere->offsetValue().at(2), 0.2f);
+  ASSERT_EQ(collider.shape.sphere->radiusValue(), 0.3f);
+
+  ASSERT_TRUE(springBone.colliderGroups.has_value());
+  ASSERT_EQ(springBone.colliderGroups->size(), 1);
+  auto &colliderGroup = springBone.colliderGroups->at(0);
+  ASSERT_EQ(colliderGroup.name.value(), "Group1");
+  ASSERT_EQ(colliderGroup.colliders.size(), 1);
+  ASSERT_EQ(colliderGroup.colliders.at(0), 0);
+
+  ASSERT_TRUE(springBone.springs.has_value());
+  ASSERT_EQ(springBone.springs->size(), 1);
+  auto &spring = springBone.springs->at(0);
+  ASSERT_EQ(spring.name.value(), "Spring1");
+  ASSERT_EQ(spring.joints.size(), 1);
+  auto &joint = spring.joints.at(0);
+  ASSERT_EQ(joint.node, 1);
+  ASSERT_EQ(joint.hitRadius.value(), 0.2f);
+  ASSERT_EQ(joint.stffnessValue(), 0.5f);
+  ASSERT_EQ(joint.gravityPowerValue(), 1.0f);
+  ASSERT_EQ(joint.gravityDirValue().at(0), 0.0f);
+  ASSERT_EQ(joint.gravityDirValue().at(1), -1.0f);
+  ASSERT_EQ(joint.gravityDirValue().at(2), 0.0f);
+  ASSERT_EQ(joint.dragForceValue(), 0.3f);
+  ASSERT_EQ(spring.colliderGroups.size(), 1);
+  ASSERT_EQ(spring.colliderGroups.at(0), 0);
+  ASSERT_EQ(spring.center.value(), 1);
+}

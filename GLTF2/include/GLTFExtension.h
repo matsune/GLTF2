@@ -23,6 +23,7 @@ extern const std::string GLTFExtensionKHRTextureTransform;
 
 extern const std::string GLTFExtensionVRM;
 extern const std::string GLTFExtensionVRMCvrm;
+extern const std::string GLTFExtensionVRMCSpringBone;
 
 } // namespace gltf2
 

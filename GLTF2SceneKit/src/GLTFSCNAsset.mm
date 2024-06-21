@@ -129,11 +129,9 @@ SCNVector3 SCNVector3ApplyTransform(SCNVector3 vector, SCNMatrix4 transform) {
     }
 
     if (self.json.vrm0) {
-      if (self.defaultScene &&
-          self.defaultScene.rootNode.childNodes.firstObject) {
-        self.defaultScene.rootNode.childNodes.firstObject.rotation =
-            SCNVector4Make(0, 1, 0, M_PI);
-      }
+      VRMHumanoidBone *bone =
+          [self.json.vrm0.humanoid humanBoneByName:VRMHumanoidBoneTypeHips];
+      self.nodeDict[bone.node].rotation = SCNVector4Make(0, 1, 0, M_PI);
     }
   } catch (gltf2::InputException e) {
     if (error)
@@ -530,14 +528,12 @@ static simd_float4x4 simdTransformOfNode(const gltf2::json::Node &node) {
   if (data.json().scenes.has_value()) {
     for (const auto &scene : *data.json().scenes) {
       SCNScene *scnScene = [SCNScene scene];
-      SCNNode *sceneNode = [SCNNode node];
       if (scene.nodes.has_value()) {
         for (auto nodeIndex : *scene.nodes) {
           SCNNode *node = scnNodes[nodeIndex];
-          [sceneNode addChildNode:node];
+          [scnScene.rootNode addChildNode:node];
         }
       }
-      [scnScene.rootNode addChildNode:sceneNode];
       [scnScenes addObject:scnScene];
     }
   }

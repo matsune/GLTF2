@@ -595,50 +595,29 @@ float angleBetweenVectors(SCNVector3 v1, SCNVector3 v2) {
         [colliderNodes addObject:colliderNode];
       }
     }
-    NSMutableArray<NSArray<SCNNode *> *> *colliderGroups =
-        [NSMutableArray array];
-    if (springBone.colliderGroups.has_value()) {
-      for (const auto &colliderGroup : *springBone.colliderGroups) {
-        NSMutableArray<SCNNode *> *groupColliders = [NSMutableArray array];
-        for (auto colliderIndex : colliderGroup.colliders) {
-          SCNNode *colliderNode = colliderNodes[colliderIndex];
-          [groupColliders addObject:colliderNode];
-        }
-        [colliderGroups addObject:[groupColliders copy]];
-      }
-    }
+  }
 
-    if (springBone.springs.has_value()) {
-      for (const auto &spring : *springBone.springs) {
-        for (int i = 0; i < spring.joints.size() - 1; i++) {
-          SCNNode *head = nodeDict[@(spring.joints[i].node)];
-          if (head.physicsBody == nil) {
-            head.physicsBody =
-                [SCNPhysicsBody bodyWithType:SCNPhysicsBodyTypeKinematic
-                                       shape:nil];
-          }
-          SCNNode *tail = nodeDict[@(spring.joints[i + 1].node)];
-          if (tail.physicsBody == nil) {
-            tail.physicsBody =
-                [SCNPhysicsBody bodyWithType:SCNPhysicsBodyTypeKinematic
-                                       shape:nil];
-          }
-          if (spring.colliderGroups.has_value()) {
-            for (uint32_t colliderGroupIndex : *spring.colliderGroups) {
-              NSArray<SCNNode *> *groupColliders =
-                  colliderGroups[colliderGroupIndex];
-              for (SCNNode *colliderNode in groupColliders) {
-                SCNPhysicsBallSocketJoint *joint =
-                    [SCNPhysicsBallSocketJoint jointWithBodyA:head.physicsBody
-                                                      anchorA:head.position
-                                                        bodyB:tail.physicsBody
-                                                      anchorB:tail.position];
-                for (SCNScene *scene in self.scenes) {
-                  [scene.physicsWorld addBehavior:joint];
-                }
-              }
-            }
-          }
+  if (data.json().vrm0.has_value() &&
+      data.json().vrm0->secondaryAnimation.has_value() &&
+      data.json().vrm0->secondaryAnimation->colliderGroups.has_value()) {
+    for (const auto &colliderGroup :
+         *data.json().vrm0->secondaryAnimation->colliderGroups) {
+      if (colliderGroup.node.has_value() &&
+          colliderGroup.colliders.has_value()) {
+        SCNNode *node = nodeDict[@(*colliderGroup.node)];
+        for (const auto &collider : *colliderGroup.colliders) {
+          SCNNode *colliderNode = [SCNNode node];
+          colliderNode.geometry =
+              [SCNSphere sphereWithRadius:collider.radiusValue()];
+          const auto offset = collider.offsetValue();
+          colliderNode.position = SCNVector3Make(
+              offset.x.value_or(0), offset.y.value_or(0), offset.z.value_or(0));
+          colliderNode.geometry.firstMaterial.transparency = 0.0;
+          colliderNode.physicsBody = [SCNPhysicsBody
+              bodyWithType:SCNPhysicsBodyTypeKinematic
+                     shape:[SCNPhysicsShape shapeWithNode:colliderNode
+                                                  options:nil]];
+          [node addChildNode:colliderNode];
         }
       }
     }

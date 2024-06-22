@@ -1324,6 +1324,14 @@ struct VRMVec3 {
   std::optional<float> x;
   std::optional<float> y;
   std::optional<float> z;
+
+  static VRMVec3 zero() {
+    VRMVec3 v;
+    v.x = 0;
+    v.y = 0;
+    v.z = 0;
+    return v;
+  }
 };
 
 class VRMHumanoidBone {
@@ -1831,6 +1839,10 @@ class VRMSecondaryAnimationCollider {
 public:
   std::optional<VRMVec3> offset;
   std::optional<float> radius;
+
+  VRMVec3 offsetValue() const { return offset.value_or(VRMVec3::zero()); }
+
+  float radiusValue() const { return radius.value_or(0); }
 };
 
 class VRMSecondaryAnimationColliderGroup {

@@ -690,6 +690,30 @@ NSString *const VRMBlendShapeGroupPresetNameBlinkR = @"blink_r";
 
 @end
 
+@implementation VRMCSpringBoneShapeSphere
+@end
+
+@implementation VRMCSpringBoneShapeCapsule
+@end
+
+@implementation VRMCSpringBoneShape
+@end
+
+@implementation VRMCSpringBoneCollider
+@end
+
+@implementation VRMCSpringBoneJoint
+@end
+
+@implementation VRMCSpringBoneColliderGroup
+@end
+
+@implementation VRMCSpringBoneSpring
+@end
+
+@implementation VRMCSpringBone
+@end
+
 @implementation GLTFJson
 
 @end

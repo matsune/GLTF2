@@ -57,8 +57,25 @@
   //                                                   ofType:@"hdr"];
   //  NSImage *hdr = [[NSImage alloc] initWithContentsOfFile:path];
   //  self.scnView.scene.lightingEnvironment.contents = hdr;
+  if (self.asset.json.vrm0 || self.asset.json.vrm1) {
+    SCNFloor *floor = [SCNFloor floor];
+    SCNNode *floorNode = [SCNNode nodeWithGeometry:floor];
+    floorNode.physicsBody = [SCNPhysicsBody
+        bodyWithType:SCNPhysicsBodyTypeStatic
+               shape:[SCNPhysicsShape shapeWithGeometry:floor options:nil]];
+    [self.scnView.scene.rootNode addChildNode:floorNode];
+  }
 
   [self lookAt:SCNVector3Make(0, 1.5, 1.0)];
+
+  // test collision
+  SCNBox *box = [SCNBox boxWithWidth:0.1 height:0.1 length:0.1 chamferRadius:0];
+  SCNNode *b = [SCNNode nodeWithGeometry:box];
+  b.position = SCNVector3Make(0, 12.0, 0);
+  b.physicsBody = [SCNPhysicsBody
+      bodyWithType:SCNPhysicsBodyTypeDynamic
+             shape:[SCNPhysicsShape shapeWithGeometry:box options:nil]];
+  [self.scnView.scene.rootNode addChildNode:b];
 }
 
 - (void)sidebarViewController:(SidebarViewController *)sidebarViewController

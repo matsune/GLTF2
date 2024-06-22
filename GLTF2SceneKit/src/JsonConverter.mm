@@ -2590,6 +2590,173 @@
   return objcVrm;
 }
 
++ (VRMCSpringBone *)convertVRMCSpringBone:
+    (const gltf2::json::VRMCSpringBone &)cppSpringBone {
+  VRMCSpringBone *objcSpringBone = [[VRMCSpringBone alloc] init];
+  objcSpringBone.specVersion =
+      [NSString stringWithUTF8String:cppSpringBone.specVersion.c_str()];
+
+  // Convert colliders if present
+  if (cppSpringBone.colliders.has_value()) {
+    NSMutableArray<VRMCSpringBoneCollider *> *collidersArray =
+        [NSMutableArray array];
+    for (const auto &collider : cppSpringBone.colliders.value()) {
+      VRMCSpringBoneCollider *objcCollider =
+          [JsonConverter convertVRMCSpringBoneCollider:collider];
+      [collidersArray addObject:objcCollider];
+    }
+    objcSpringBone.colliders = collidersArray;
+  }
+
+  if (cppSpringBone.colliderGroups.has_value()) {
+    NSMutableArray<VRMCSpringBoneColliderGroup *> *colliderGroupsArray =
+        [NSMutableArray array];
+    for (const auto &colliderGroup : cppSpringBone.colliderGroups.value()) {
+      VRMCSpringBoneColliderGroup *objcColliderGroup =
+          [JsonConverter convertVRMCSpringBoneColliderGroup:colliderGroup];
+      [colliderGroupsArray addObject:objcColliderGroup];
+    }
+    objcSpringBone.colliderGroups = colliderGroupsArray;
+  }
+
+  if (cppSpringBone.springs.has_value()) {
+    NSMutableArray<VRMCSpringBoneSpring *> *springsArray =
+        [NSMutableArray array];
+    for (const auto &spring : cppSpringBone.springs.value()) {
+      VRMCSpringBoneSpring *objcSpring =
+          [JsonConverter convertVRMCSpringBoneSpring:spring];
+      [springsArray addObject:objcSpring];
+    }
+    objcSpringBone.springs = springsArray;
+  }
+
+  return objcSpringBone;
+}
+
++ (VRMCSpringBoneCollider *)convertVRMCSpringBoneCollider:
+    (const gltf2::json::VRMCSpringBoneCollider &)cppCollider {
+  VRMCSpringBoneCollider *objcCollider = [[VRMCSpringBoneCollider alloc] init];
+  objcCollider.node = cppCollider.node;
+  objcCollider.shape =
+      [JsonConverter convertVRMCSpringBoneShape:cppCollider.shape];
+  return objcCollider;
+}
+
++ (VRMCSpringBoneShape *)convertVRMCSpringBoneShape:
+    (const gltf2::json::VRMCSpringBoneShape &)cppShape {
+  VRMCSpringBoneShape *objcShape = [[VRMCSpringBoneShape alloc] init];
+  if (cppShape.sphere.has_value()) {
+    objcShape.sphere = [JsonConverter
+        convertVRMCSpringBoneShapeSphere:cppShape.sphere.value()];
+  }
+  if (cppShape.capsule.has_value()) {
+    objcShape.capsule = [JsonConverter
+        convertVRMCSpringBoneShapeCapsule:cppShape.capsule.value()];
+  }
+  return objcShape;
+}
+
++ (VRMCSpringBoneShapeSphere *)convertVRMCSpringBoneShapeSphere:
+    (const gltf2::json::VRMCSpringBoneShapeSphere &)cppSphere {
+  VRMCSpringBoneShapeSphere *objcSphere =
+      [[VRMCSpringBoneShapeSphere alloc] init];
+  if (cppSphere.offset.has_value()) {
+    objcSphere.offset = [[Vec3 alloc] initWithX:cppSphere.offset->at(0)
+                                              Y:cppSphere.offset->at(1)
+                                              Z:cppSphere.offset->at(2)];
+  }
+  if (cppSphere.radius.has_value()) {
+    objcSphere.radius = @(cppSphere.radius.value());
+  }
+  return objcSphere;
+}
+
++ (VRMCSpringBoneShapeCapsule *)convertVRMCSpringBoneShapeCapsule:
+    (const gltf2::json::VRMCSpringBoneShapeCapsule &)cppCapsule {
+  VRMCSpringBoneShapeCapsule *objcCapsule =
+      [[VRMCSpringBoneShapeCapsule alloc] init];
+  if (cppCapsule.offset.has_value()) {
+    objcCapsule.offset = [[Vec3 alloc] initWithX:cppCapsule.offset->at(0)
+                                               Y:cppCapsule.offset->at(1)
+                                               Z:cppCapsule.offset->at(2)];
+  }
+  if (cppCapsule.radius.has_value()) {
+    objcCapsule.radius = @(cppCapsule.radius.value());
+  }
+  if (cppCapsule.tail.has_value()) {
+    objcCapsule.tail = [[Vec3 alloc] initWithX:cppCapsule.tail->at(0)
+                                             Y:cppCapsule.tail->at(1)
+                                             Z:cppCapsule.tail->at(2)];
+  }
+  return objcCapsule;
+}
+
++ (VRMCSpringBoneColliderGroup *)convertVRMCSpringBoneColliderGroup:
+    (const gltf2::json::VRMCSpringBoneColliderGroup &)cppColliderGroup {
+  VRMCSpringBoneColliderGroup *objcColliderGroup =
+      [[VRMCSpringBoneColliderGroup alloc] init];
+  if (cppColliderGroup.name.has_value()) {
+    objcColliderGroup.name =
+        [NSString stringWithUTF8String:cppColliderGroup.name->c_str()];
+  }
+  NSMutableArray<NSNumber *> *colliders = [NSMutableArray array];
+  for (auto collider : cppColliderGroup.colliders) {
+    [colliders addObject:@(collider)];
+  }
+  objcColliderGroup.colliders = colliders;
+  return objcColliderGroup;
+}
+
++ (VRMCSpringBoneSpring *)convertVRMCSpringBoneSpring:
+    (const gltf2::json::VRMCSpringBoneSpring &)cppSpring {
+  VRMCSpringBoneSpring *objcSpring = [[VRMCSpringBoneSpring alloc] init];
+  if (cppSpring.name.has_value()) {
+    objcSpring.name = [NSString stringWithUTF8String:cppSpring.name->c_str()];
+  }
+  NSMutableArray<VRMCSpringBoneJoint *> *joints = [NSMutableArray array];
+  for (const auto &joint : cppSpring.joints) {
+    [joints addObject:[JsonConverter convertVRMCSpringBoneJoint:joint]];
+  }
+  objcSpring.joints = joints;
+
+  if (cppSpring.colliderGroups.has_value()) {
+    NSMutableArray<NSNumber *> *colliderGroups = [NSMutableArray array];
+    for (auto group : *cppSpring.colliderGroups) {
+      [colliderGroups addObject:@(group)];
+    }
+    objcSpring.colliderGroups = colliderGroups;
+  }
+
+  if (cppSpring.center.has_value()) {
+    objcSpring.center = @(cppSpring.center.value());
+  }
+  return objcSpring;
+}
+
++ (VRMCSpringBoneJoint *)convertVRMCSpringBoneJoint:
+    (const gltf2::json::VRMCSpringBoneJoint &)cppJoint {
+  VRMCSpringBoneJoint *objcJoint = [[VRMCSpringBoneJoint alloc] init];
+  objcJoint.node = cppJoint.node;
+  if (cppJoint.hitRadius.has_value()) {
+    objcJoint.hitRadius = @(cppJoint.hitRadius.value());
+  }
+  if (cppJoint.stiffness.has_value()) {
+    objcJoint.stiffness = @(cppJoint.stiffness.value());
+  }
+  if (cppJoint.gravityPower.has_value()) {
+    objcJoint.gravityPower = @(cppJoint.gravityPower.value());
+  }
+  if (cppJoint.gravityDir.has_value()) {
+    objcJoint.gravityDir = [[Vec3 alloc] initWithX:cppJoint.gravityDir->at(0)
+                                                 Y:cppJoint.gravityDir->at(1)
+                                                 Z:cppJoint.gravityDir->at(2)];
+  }
+  if (cppJoint.dragForce.has_value()) {
+    objcJoint.dragForce = @(cppJoint.dragForce.value());
+  }
+  return objcJoint;
+}
+
 + (GLTFJson *)convertGLTFJson:(const gltf2::json::Json &)cppJson {
   GLTFJson *objcJson = [[GLTFJson alloc] init];
 
@@ -2738,6 +2905,10 @@
   }
   if (cppJson.vrm1.has_value()) {
     objcJson.vrm1 = [JsonConverter convertVRMCVrm:cppJson.vrm1.value()];
+  }
+  if (cppJson.springBone.has_value()) {
+    objcJson.springBone =
+        [JsonConverter convertVRMCSpringBone:cppJson.springBone.value()];
   }
 
   return objcJson;

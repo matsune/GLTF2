@@ -1035,6 +1035,73 @@ extern NSString *const VRMBlendShapeGroupPresetNameBlinkR;
 
 @end
 
+@interface VRMCSpringBoneShapeSphere : NSObject
+
+@property(nonatomic, strong, nullable) Vec3 *offset;
+@property(nonatomic, strong, nullable) NSNumber *radius;
+
+@end
+
+@interface VRMCSpringBoneShapeCapsule : NSObject
+
+@property(nonatomic, strong, nullable) Vec3 *offset;
+@property(nonatomic, strong, nullable) NSNumber *radius;
+@property(nonatomic, strong, nullable) Vec3 *tail;
+
+@end
+
+@interface VRMCSpringBoneShape : NSObject
+
+@property(nonatomic, strong, nullable) VRMCSpringBoneShapeSphere *sphere;
+@property(nonatomic, strong, nullable) VRMCSpringBoneShapeCapsule *capsule;
+
+@end
+
+@interface VRMCSpringBoneCollider : NSObject
+
+@property(nonatomic, assign) NSUInteger node;
+@property(nonatomic, strong) VRMCSpringBoneShape *shape;
+
+@end
+
+@interface VRMCSpringBoneJoint : NSObject
+
+@property(nonatomic, assign) NSUInteger node;
+@property(nonatomic, strong, nullable) NSNumber *hitRadius;
+@property(nonatomic, strong, nullable) NSNumber *stiffness;
+@property(nonatomic, strong, nullable) NSNumber *gravityPower;
+@property(nonatomic, strong, nullable) Vec3 *gravityDir;
+@property(nonatomic, strong, nullable) NSNumber *dragForce;
+
+@end
+
+@interface VRMCSpringBoneColliderGroup : NSObject
+
+@property(nonatomic, copy, nullable) NSString *name;
+@property(nonatomic, strong) NSArray<NSNumber *> *colliders;
+
+@end
+
+@interface VRMCSpringBoneSpring : NSObject
+
+@property(nonatomic, copy, nullable) NSString *name;
+@property(nonatomic, strong) NSArray<VRMCSpringBoneJoint *> *joints;
+@property(nonatomic, strong, nullable) NSArray<NSNumber *> *colliderGroups;
+@property(nonatomic, strong, nullable) NSNumber *center;
+
+@end
+
+@interface VRMCSpringBone : NSObject
+
+@property(nonatomic, copy) NSString *specVersion;
+@property(nonatomic, strong, nullable)
+    NSArray<VRMCSpringBoneCollider *> *colliders;
+@property(nonatomic, strong, nullable)
+    NSArray<VRMCSpringBoneColliderGroup *> *colliderGroups;
+@property(nonatomic, strong, nullable) NSArray<VRMCSpringBoneSpring *> *springs;
+
+@end
+
 @interface GLTFJson : NSObject
 
 @property(nonatomic, strong, nullable) NSArray<NSString *> *extensionsUsed;
@@ -1057,6 +1124,7 @@ extern NSString *const VRMBlendShapeGroupPresetNameBlinkR;
 @property(nonatomic, strong, nullable) NSArray<KHRLight *> *lights;
 @property(nonatomic, strong, nullable) VRMVrm *vrm0;
 @property(nonatomic, strong, nullable) VRMCVrm *vrm1;
+@property(nonatomic, strong, nullable) VRMCSpringBone *springBone;
 
 @end
 

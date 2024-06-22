@@ -1962,7 +1962,7 @@ class VRMCSpringBoneSpring {
 public:
   std::optional<std::string> name;
   std::vector<VRMCSpringBoneJoint> joints;
-  std::vector<uint32_t> colliderGroups;
+  std::optional<std::vector<uint32_t>> colliderGroups;
   std::optional<uint32_t> center;
 };
 

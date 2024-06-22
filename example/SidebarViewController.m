@@ -66,6 +66,10 @@
   self.lookAtXTextField.floatValue = 0.0f;
   self.lookAtYTextField.floatValue = 1.5f;
   self.lookAtZTextField.floatValue = 1.0f;
+
+  self.vrmPositionXTextField.floatValue = 0.0f;
+  self.vrmPositionYTextField.floatValue = 0.0f;
+  self.vrmPositionZTextField.floatValue = 0.0f;
 }
 
 - (IBAction)onChangeBlendShapeValue:(NSSlider *)sender {
@@ -127,6 +131,30 @@
                                                        didChangeLookAtZ:)]) {
     [self.delegate sidebarViewController:self
                         didChangeLookAtZ:sender.floatValue];
+  }
+}
+
+- (IBAction)vrmPositionXAction:(NSTextField *)sender {
+  if ([self.delegate respondsToSelector:@selector(sidebarViewController:
+                                                  didChangeVrmPositionX:)]) {
+    [self.delegate sidebarViewController:self
+                   didChangeVrmPositionX:sender.floatValue];
+  }
+}
+
+- (IBAction)vrmPositionYAction:(NSTextField *)sender {
+  if ([self.delegate respondsToSelector:@selector(sidebarViewController:
+                                                  didChangeVrmPositionY:)]) {
+    [self.delegate sidebarViewController:self
+                   didChangeVrmPositionY:sender.floatValue];
+  }
+}
+
+- (IBAction)vrmPositionZAction:(NSTextField *)sender {
+  if ([self.delegate respondsToSelector:@selector(sidebarViewController:
+                                                  didChangeVrmPositionZ:)]) {
+    [self.delegate sidebarViewController:self
+                   didChangeVrmPositionZ:sender.floatValue];
   }
 }
 

@@ -21,7 +21,9 @@ GLTF_EXPORT @interface GLTFSCNAsset : NSObject
 - (CGFloat)weightForBlendShapeKey:(NSString *)key;
 - (void)setBlendShapeWeight:(CGFloat)weight forKey:(NSString *)key;
 
+- (nullable SCNNode *)vrmRootNode;
 - (void)lookAtTarget:(SCNVector3)target;
+- (void)updateAtTime:(NSTimeInterval)time;
 
 @end
 

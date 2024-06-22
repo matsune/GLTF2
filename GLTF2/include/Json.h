@@ -1918,7 +1918,7 @@ public:
 
   float hitRadiusValue() const { return hitRadius.value_or(0); }
 
-  float stffnessValue() const { return stiffness.value_or(1.0f); }
+  float stiffnessValue() const { return stiffness.value_or(1.0f); }
 
   float gravityPowerValue() const { return gravityPower.value_or(0); }
 

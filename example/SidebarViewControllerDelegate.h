@@ -21,6 +21,14 @@
              didChangeLookAtY:(float)value;
 - (void)sidebarViewController:(SidebarViewController *)sidebarViewController
              didChangeLookAtZ:(float)value;
+
+- (void)sidebarViewController:(SidebarViewController *)sidebarViewController
+        didChangeVrmPositionX:(float)value;
+- (void)sidebarViewController:(SidebarViewController *)sidebarViewController
+        didChangeVrmPositionY:(float)value;
+- (void)sidebarViewController:(SidebarViewController *)sidebarViewController
+        didChangeVrmPositionZ:(float)value;
+
 @end
 
 #endif /* SidebarViewControllerDelegate_h */

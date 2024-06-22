@@ -4,7 +4,7 @@
 @interface SCNViewController ()
 
 @property(nonatomic, strong) SCNNode *lookAtTargetSphere;
-
+@property(nonatomic, strong) SCNNode *boxNode;
 @end
 
 @implementation SCNViewController
@@ -33,6 +33,7 @@
     [[NSAlert alertWithError:error] runModal];
     return;
   }
+  self.scnView.delegate = self;
 
   self.scnView.scene = self.asset.defaultScene;
   for (SCNAnimationPlayer *player in self.asset.animationPlayers) {
@@ -70,12 +71,12 @@
 
   // test collision
   SCNBox *box = [SCNBox boxWithWidth:0.1 height:0.1 length:0.1 chamferRadius:0];
-  SCNNode *b = [SCNNode nodeWithGeometry:box];
-  b.position = SCNVector3Make(0, 12.0, 0);
-  b.physicsBody = [SCNPhysicsBody
+  self.boxNode = [SCNNode nodeWithGeometry:box];
+  self.boxNode.position = SCNVector3Make(0, 12.0, 0);
+  self.boxNode.physicsBody = [SCNPhysicsBody
       bodyWithType:SCNPhysicsBodyTypeDynamic
              shape:[SCNPhysicsShape shapeWithGeometry:box options:nil]];
-  [self.scnView.scene.rootNode addChildNode:b];
+  [self.scnView.scene.rootNode addChildNode:self.boxNode];
 }
 
 - (void)sidebarViewController:(SidebarViewController *)sidebarViewController
@@ -118,9 +119,47 @@
   [self lookAt:position];
 }
 
+- (void)sidebarViewController:(SidebarViewController *)sidebarViewController
+        didChangeVrmPositionX:(float)value {
+  SCNVector3 position = self.asset.vrmRootNode.position;
+  position.x = value;
+  self.asset.vrmRootNode.position = position;
+
+  //  SCNVector3 position = self.boxNode.position;
+  //  position.x = value;
+  //  self.boxNode.position = position;
+}
+
+- (void)sidebarViewController:(SidebarViewController *)sidebarViewController
+        didChangeVrmPositionY:(float)value {
+  SCNVector3 position = self.boxNode.position;
+  position.y = value;
+  self.asset.vrmRootNode.position = position;
+
+  //  SCNVector3 position = self.boxNode.position;
+  //  position.y = value;
+  //  self.boxNode.position = position;
+}
+
+- (void)sidebarViewController:(SidebarViewController *)sidebarViewController
+        didChangeVrmPositionZ:(float)value {
+  SCNVector3 position = self.boxNode.position;
+  position.z = value;
+  self.asset.vrmRootNode.position = position;
+
+  //  SCNVector3 position = self.boxNode.position;
+  //  position.z = value;
+  //  self.boxNode.position = position;
+}
+
 - (void)lookAt:(SCNVector3)value {
   self.lookAtTargetSphere.position = value;
   [self.asset lookAtTarget:value];
+}
+
+- (void)renderer:(id<SCNSceneRenderer>)renderer
+    updateAtTime:(NSTimeInterval)time {
+  [self.asset updateAtTime:time];
 }
 
 @end

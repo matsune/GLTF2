@@ -17,6 +17,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property(weak) IBOutlet NSTextField *lookAtXTextField;
 @property(weak) IBOutlet NSTextField *lookAtYTextField;
 @property(weak) IBOutlet NSTextField *lookAtZTextField;
+@property(weak) IBOutlet NSTextField *vrmPositionXTextField;
+@property(weak) IBOutlet NSTextField *vrmPositionYTextField;
+@property(weak) IBOutlet NSTextField *vrmPositionZTextField;
 
 - (IBAction)animationsPopUpButtonAction:(NSPopUpButton *)sender;
 - (IBAction)playButtonAction:(NSButton *)sender;
@@ -27,6 +30,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (IBAction)lookAtXAction:(NSTextField *)sender;
 - (IBAction)lookAtYAction:(NSTextField *)sender;
 - (IBAction)lookAtZAction:(NSTextField *)sender;
+- (IBAction)vrmPositionXAction:(NSTextField *)sender;
+- (IBAction)vrmPositionYAction:(NSTextField *)sender;
+- (IBAction)vrmPositionZAction:(NSTextField *)sender;
 
 @end
 

@@ -4,7 +4,8 @@
 #import <Cocoa/Cocoa.h>
 #import <SceneKit/SceneKit.h>
 
-@interface SCNViewController : NSViewController <SidebarViewControllerDelegate>
+@interface SCNViewController
+    : NSViewController <SidebarViewControllerDelegate, SCNSceneRendererDelegate>
 
 @property(weak) IBOutlet SCNView *scnView;
 @property(nonatomic) GLTFSCNAsset *asset;

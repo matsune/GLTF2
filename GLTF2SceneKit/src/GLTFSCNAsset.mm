@@ -35,6 +35,28 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
                          }];
 }
 
+@interface SpringBoneJointState : NSObject
+
+@property(nonatomic, nonnull, strong) SCNNode *node;
+@property(nonatomic, assign) SCNVector3 prevTail;
+@property(nonatomic, assign) SCNVector3 currentTail;
+@property(nonatomic, assign) SCNVector3 boneAxis;
+@property(nonatomic, assign) CGFloat boneLength;
+@property(nonatomic, assign) SCNMatrix4 initialLocalMatrix;
+@property(nonatomic, assign) SCNQuaternion quaternion;
+
+@property(nonatomic, assign) float stiffness;
+@property(nonatomic, assign) float gravityPower;
+@property(nonatomic, assign) SCNVector3 gravityDir;
+@property(nonatomic, assign) float dragForce;
+@property(nonatomic, assign) float hitRadius;
+
+@end
+
+@implementation SpringBoneJointState
+
+@end
+
 @interface GLTFSCNAsset ()
 
 @property(nonatomic, strong) NSArray<SCNMaterial *> *scnMaterials;
@@ -44,6 +66,9 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
 @property(nonatomic, assign) SCNMatrix4 lookAtMatrix;
 @property(nonatomic, assign) SCNVector3 initialLeftEyeAngles;
 @property(nonatomic, assign) SCNVector3 initialRightEyeAngles;
+
+@property(nonatomic, strong) NSArray<SpringBoneJointState *> *jointStates;
+@property(nonatomic, assign) NSTimeInterval lastTime;
 
 @end
 
@@ -56,6 +81,7 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
     _cameraNodes = [NSArray array];
     _animationPlayers = [NSArray array];
     _scnMaterials = [NSArray array];
+    _lastTime = 0;
   }
   return self;
 }
@@ -129,9 +155,7 @@ SCNVector3 SCNVector3ApplyTransform(SCNVector3 vector, SCNMatrix4 transform) {
     }
 
     if (self.json.vrm0) {
-      VRMHumanoidBone *bone =
-          [self.json.vrm0.humanoid humanBoneByName:VRMHumanoidBoneTypeHips];
-      self.nodeDict[bone.node].rotation = SCNVector4Make(0, 1, 0, M_PI);
+      self.vrmRootNode.rotation = SCNVector4Make(0, 1, 0, M_PI);
     }
   } catch (gltf2::InputException e) {
     if (error)
@@ -148,6 +172,17 @@ SCNVector3 SCNVector3ApplyTransform(SCNVector3 vector, SCNMatrix4 transform) {
   }
 
   return YES;
+}
+
+- (nullable SCNNode *)vrmRootNode {
+  if (self.json.vrm0) {
+    VRMHumanoidBone *bone =
+        [self.json.vrm0.humanoid humanBoneByName:VRMHumanoidBoneTypeHips];
+    return self.nodeDict[bone.node];
+  } else if (self.json.vrm1) {
+    return self.nodeDict[self.json.vrm1.humanoid.humanBones.hips.node];
+  }
+  return nil;
 }
 
 #pragma mark SCNScene
@@ -594,6 +629,59 @@ float angleBetweenVectors(SCNVector3 v1, SCNVector3 v2) {
 
         [colliderNodes addObject:colliderNode];
       }
+    }
+
+    NSMutableArray<NSArray<SCNNode *> *> *colliderGroups =
+        [NSMutableArray array];
+    if (springBone.colliderGroups.has_value()) {
+      for (const auto &colliderGroup : *springBone.colliderGroups) {
+        NSMutableArray<SCNNode *> *groupColliders = [NSMutableArray array];
+        for (auto colliderIndex : colliderGroup.colliders) {
+          SCNNode *colliderNode = colliderNodes[colliderIndex];
+          [groupColliders addObject:colliderNode];
+        }
+        [colliderGroups addObject:[groupColliders copy]];
+      }
+    }
+
+    if (springBone.springs.has_value()) {
+      NSMutableArray<SpringBoneJointState *> *jointStates =
+          [NSMutableArray array];
+      for (const auto &spring : *springBone.springs) {
+        for (int i = 0; i < spring.joints.size() - 1; i++) {
+          uint32_t headIndex = spring.joints[i].node;
+          uint32_t tailIndex = spring.joints[i + 1].node;
+          NSLog(@"head: %d, tail: %d", headIndex, tailIndex);
+          SCNNode *head = nodeDict[@(spring.joints[i].node)];
+          SCNNode *tail = nodeDict[@(spring.joints[i + 1].node)];
+          assert(head == tail.parentNode);
+
+          SpringBoneJointState *state = [[SpringBoneJointState alloc] init];
+          state.node = tail;
+          state.prevTail = tail.worldPosition;
+          state.currentTail = tail.worldPosition;
+          state.boneAxis = SCNVector3Make(tail.position.x - head.position.x,
+                                          tail.position.y - head.position.y,
+                                          tail.position.z - head.position.z);
+          state.boneLength = sqrtf(state.boneAxis.x * state.boneAxis.x +
+                                   state.boneAxis.y * state.boneAxis.y +
+                                   state.boneAxis.z * state.boneAxis.z);
+          state.initialLocalMatrix = head.transform;
+          state.quaternion = head.orientation;
+
+          state.stiffness = spring.joints[i].stiffnessValue();
+          state.gravityPower = spring.joints[i].gravityPowerValue();
+          state.gravityDir =
+              SCNVector3Make(spring.joints[i].gravityDirValue().at(0),
+                             spring.joints[i].gravityDirValue().at(1),
+                             spring.joints[i].gravityDirValue().at(2));
+          state.dragForce = spring.joints[i].dragForceValue();
+          state.hitRadius = spring.joints[i].hitRadiusValue();
+
+          [jointStates addObject:state];
+        }
+      }
+      self.jointStates = [jointStates copy];
     }
   }
 
@@ -2058,6 +2146,89 @@ SCNVector3 SCNVector3FromVec3(Vec3 *v) { return SCNVector3Make(v.x, v.y, v.z); }
   angles.x += pitch * M_PI / 180.0f;
   angles.y += yaw * M_PI / 180.0f;
   self.rightEyeBone.eulerAngles = angles;
+}
+
+- (void)updateAtTime:(NSTimeInterval)time {
+  if (self.lastTime == 0) {
+    self.lastTime = time;
+    return;
+  }
+
+  float deltaTime = time - self.lastTime;
+  //  if (deltaTime < 1.0) {
+  //    return;
+  //  }
+  self.lastTime = time;
+
+  for (SpringBoneJointState *state in self.jointStates) {
+    SCNNode *tail = state.node;
+    SCNNode *head = tail.parentNode;
+    if (!head)
+      continue;
+
+    SCNVector3 currentTail = state.currentTail;
+    SCNVector3 prevTail = state.prevTail;
+    SCNQuaternion initialLocalRotation = state.quaternion;
+    SCNVector3 boneAxis = state.boneAxis;
+    CGFloat boneLength = state.boneLength;
+
+    CGFloat dragForce = state.dragForce;
+    CGFloat stiffnessForce = state.stiffness;
+    SCNVector3 gravityDir = state.gravityDir;
+    CGFloat gravityPower = 0.1f; // state.gravityPower;
+
+    SCNVector3 worldPosition = head.worldPosition;
+    SCNQuaternion parentWorldRotation = head.orientation;
+
+    // 慣性の計算
+    SCNVector3 inertia =
+        SCNVector3Make((currentTail.x - prevTail.x) * (1.0 - dragForce),
+                       (currentTail.y - prevTail.y) * (1.0 - dragForce),
+                       (currentTail.z - prevTail.z) * (1.0 - dragForce));
+
+    // 剛性の計算
+    SCNVector3 stiffness = SCNVector3Make(
+        deltaTime * stiffnessForce *
+            (parentWorldRotation.x * initialLocalRotation.x) * boneAxis.x,
+        deltaTime * stiffnessForce *
+            (parentWorldRotation.y * initialLocalRotation.y) * boneAxis.y,
+        deltaTime * stiffnessForce *
+            (parentWorldRotation.z * initialLocalRotation.z) * boneAxis.z);
+
+    // 重力の計算
+    SCNVector3 external =
+        SCNVector3Make(deltaTime * gravityDir.x * gravityPower,
+                       deltaTime * gravityDir.y * gravityPower,
+                       deltaTime * gravityDir.z * gravityPower);
+
+    // 次のテール位置の計算
+    SCNVector3 nextTail =
+        SCNVector3Make(currentTail.x + inertia.x + stiffness.x + external.x,
+                       currentTail.y + inertia.y + stiffness.y + external.y,
+                       currentTail.z + inertia.z + stiffness.z + external.z);
+
+    // 長さの制約を適用
+    SCNVector3 direction = SCNVector3Make(nextTail.x - worldPosition.x,
+                                          nextTail.y - worldPosition.y,
+                                          nextTail.z - worldPosition.z);
+
+    float length = sqrtf(direction.x * direction.x + direction.y * direction.y +
+                         direction.z * direction.z);
+    if (length > boneLength) {
+      direction.x = (direction.x / length) * boneLength;
+      direction.y = (direction.y / length) * boneLength;
+      direction.z = (direction.z / length) * boneLength;
+
+      nextTail = SCNVector3Make(worldPosition.x + direction.x,
+                                worldPosition.y + direction.y,
+                                worldPosition.z + direction.z);
+    }
+
+    tail.worldPosition = nextTail;
+
+    state.prevTail = currentTail;
+    state.currentTail = nextTail;
+  }
 }
 
 @end

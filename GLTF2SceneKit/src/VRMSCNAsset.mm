@@ -107,10 +107,10 @@ static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
     return NO;
 
   if (self.json.springBone) {
-    VRMCSpringBone *springBone = self.json.springBone;
+    VRMSpringBone *springBone = self.json.springBone;
     NSMutableArray<SCNNode *> *colliderNodes = [NSMutableArray array];
     if (springBone.colliders) {
-      for (VRMCSpringBoneCollider *collider in springBone.colliders) {
+      for (VRMSpringBoneCollider *collider in springBone.colliders) {
         SCNNode *node = self.scnNodes[collider.node];
         SCNNode *colliderNode = [SCNNode node];
         if (collider.shape.sphere) {
@@ -152,7 +152,7 @@ static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
     NSMutableArray<NSArray<SCNNode *> *> *colliderGroups =
         [NSMutableArray array];
     if (springBone.colliderGroups) {
-      for (VRMCSpringBoneColliderGroup *colliderGroup in springBone
+      for (VRMSpringBoneColliderGroup *colliderGroup in springBone
                .colliderGroups) {
         NSMutableArray<SCNNode *> *groupColliders = [NSMutableArray array];
         for (NSNumber *colliderIndex in colliderGroup.colliders) {
@@ -166,7 +166,7 @@ static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
     if (springBone.springs) {
       NSMutableArray<SpringBoneJointState *> *jointStates =
           [NSMutableArray array];
-      for (VRMCSpringBoneSpring *spring in springBone.springs) {
+      for (VRMSpringBoneSpring *spring in springBone.springs) {
         for (int i = 0; i < spring.joints.count - 1; i++) {
           NSUInteger headIndex = spring.joints[i].node;
           NSUInteger tailIndex = spring.joints[i + 1].node;
@@ -202,11 +202,11 @@ static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
 
   if (self.json.vrm0 && self.json.vrm0.secondaryAnimation &&
       self.json.vrm0.secondaryAnimation.colliderGroups) {
-    for (VRMSecondaryAnimationColliderGroup *colliderGroup in self.json.vrm0
+    for (VRM0SecondaryAnimationColliderGroup *colliderGroup in self.json.vrm0
              .secondaryAnimation.colliderGroups) {
       if (colliderGroup.node && colliderGroup.colliders) {
         SCNNode *node = self.scnNodes[colliderGroup.node.unsignedIntValue];
-        for (VRMSecondaryAnimationCollider *collider in colliderGroup
+        for (VRM0SecondaryAnimationCollider *collider in colliderGroup
                  .colliders) {
           SCNNode *colliderNode = [SCNNode node];
           colliderNode.geometry =
@@ -255,7 +255,7 @@ static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
                                .unsignedIntValue];
     } else if (self.json.vrm0.humanoid) {
       return self.scnNodes[
-          [self.json.vrm0.humanoid humanBoneByName:VRMHumanoidBoneTypeHead]
+          [self.json.vrm0.humanoid humanBoneByName:VRM0HumanoidBoneNameHead]
               .node.unsignedIntValue];
     }
   } else if (self.json.vrm1 && self.json.vrm1.humanoid &&
@@ -269,8 +269,8 @@ static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
 
 - (nullable SCNNode *)vrmRootNode {
   if (self.json.vrm0) {
-    VRMHumanoidBone *bone =
-        [self.json.vrm0.humanoid humanBoneByName:VRMHumanoidBoneTypeHips];
+    VRM0HumanoidBone *bone =
+        [self.json.vrm0.humanoid humanBoneByName:VRM0HumanoidBoneNameHips];
     return self.scnNodes[bone.node.unsignedIntValue];
   } else if (self.json.vrm1) {
     return self.scnNodes[self.json.vrm1.humanoid.humanBones.hips.node
@@ -295,9 +295,9 @@ static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
 
 - (CGFloat)weightForBlendShapeKey:(NSString *)key {
   if (self.json.vrm0) {
-    VRMBlendShapeGroup *group = [self.json.vrm0 blendShapeGroupByPreset:key];
+    VRM0BlendShapeGroup *group = [self.json.vrm0 blendShapeGroupByPreset:key];
     if (group && group.binds) {
-      for (VRMBlendShapeBind *bind in group.binds) {
+      for (VRM0BlendShapeBind *bind in group.binds) {
         NSInteger meshIndex = 0;
         if (bind.mesh)
           meshIndex = bind.mesh.integerValue;
@@ -314,9 +314,9 @@ static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
       }
     }
   } else if (self.json.vrm1) {
-    VRMCExpression *expression = [self.json.vrm1 expressionByName:key];
+    VRM1Expression *expression = [self.json.vrm1 expressionByName:key];
     if (expression && expression.morphTargetBinds) {
-      for (VRMCExpressionMorphTargetBind *bind in expression.morphTargetBinds) {
+      for (VRM1ExpressionMorphTargetBind *bind in expression.morphTargetBinds) {
         SCNNode *meshNode = self.meshNodes[bind.node];
         for (SCNNode *childNode in meshNode.childNodes) {
           if (childNode.morpher) {
@@ -344,7 +344,7 @@ static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
     const auto group = [self.json.vrm0 blendShapeGroupByPreset:key];
     if (group && group.binds) {
       float value = group.isBinary ? roundValue(weight) : weight;
-      for (VRMBlendShapeBind *bind in group.binds) {
+      for (VRM0BlendShapeBind *bind in group.binds) {
         float bindWeight = weight;
         if (bind.weight) {
           bindWeight = (bind.weight.floatValue / 100.0f) * weight;
@@ -362,10 +362,10 @@ static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
       }
     }
   } else if (self.json.vrm1) {
-    VRMCExpression *expression = [self.json.vrm1 expressionByName:key];
+    VRM1Expression *expression = [self.json.vrm1 expressionByName:key];
     if (expression && expression.morphTargetBinds) {
       float value = expression.isBinary ? roundValue(weight) : weight;
-      for (VRMCExpressionMorphTargetBind *bind in expression.morphTargetBinds) {
+      for (VRM1ExpressionMorphTargetBind *bind in expression.morphTargetBinds) {
         SCNNode *node = self.meshNodes[bind.node];
         [self setBlendShapeWeight:value meshNode:node bindIndex:bind.index];
       }
@@ -389,7 +389,7 @@ static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
 - (nullable SCNNode *)leftEyeBone {
   if (self.json.vrm0 && self.json.vrm0.humanoid && self.json.vrm0.humanoid) {
     return self.scnNodes[
-        [self.json.vrm0.humanoid humanBoneByName:VRMHumanoidBoneTypeLeftEye]
+        [self.json.vrm0.humanoid humanBoneByName:VRM0HumanoidBoneNameLeftEye]
             .node.unsignedIntValue];
   } else if (self.json.vrm1 && self.json.vrm1.humanoid &&
              self.json.vrm1.humanoid.humanBones &&
@@ -403,7 +403,7 @@ static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
 - (nullable SCNNode *)rightEyeBone {
   if (self.json.vrm0 && self.json.vrm0.humanoid && self.json.vrm0.humanoid) {
     return self.scnNodes[
-        [self.json.vrm0.humanoid humanBoneByName:VRMHumanoidBoneTypeRightEye]
+        [self.json.vrm0.humanoid humanBoneByName:VRM0HumanoidBoneNameRightEye]
             .node.unsignedIntValue];
   } else if (self.json.vrm1 && self.json.vrm1.humanoid &&
              self.json.vrm1.humanoid.humanBones &&
@@ -446,7 +446,7 @@ static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
 
 - (CGFloat)clampHorizontalInner:(CGFloat)degree {
   if (self.json.vrm0 && self.json.vrm0.firstPerson) {
-    VRMDegreeMap *horizontalInner =
+    VRM0FirstPersonDegreeMap *horizontalInner =
         self.json.vrm0.firstPerson.lookAtHorizontalInner;
     if (horizontalInner && horizontalInner.xRange) {
       CGFloat inputMaxValue = horizontalInner.xRange.floatValue;
@@ -471,7 +471,7 @@ static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
 
 - (CGFloat)clampHorizontalOuter:(CGFloat)degree {
   if (self.json.vrm0 && self.json.vrm0.firstPerson) {
-    VRMDegreeMap *horizontalOuter =
+    VRM0FirstPersonDegreeMap *horizontalOuter =
         self.json.vrm0.firstPerson.lookAtHorizontalOuter;
     if (horizontalOuter && horizontalOuter.xRange) {
       CGFloat inputMaxValue = horizontalOuter.xRange.floatValue;
@@ -496,7 +496,8 @@ static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
 
 - (CGFloat)clampVerticalUp:(CGFloat)degree {
   if (self.json.vrm0 && self.json.vrm0.firstPerson) {
-    VRMDegreeMap *verticalUp = self.json.vrm0.firstPerson.lookAtVerticalUp;
+    VRM0FirstPersonDegreeMap *verticalUp =
+        self.json.vrm0.firstPerson.lookAtVerticalUp;
     if (verticalUp && verticalUp.yRange) {
       CGFloat inputMaxValue = verticalUp.yRange.floatValue;
       return fmin(fabs(degree), inputMaxValue);
@@ -520,7 +521,8 @@ static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
 
 - (CGFloat)clampVerticalDown:(CGFloat)degree {
   if (self.json.vrm0 && self.json.vrm0.firstPerson) {
-    VRMDegreeMap *verticalDown = self.json.vrm0.firstPerson.lookAtVerticalDown;
+    VRM0FirstPersonDegreeMap *verticalDown =
+        self.json.vrm0.firstPerson.lookAtVerticalDown;
     if (verticalDown && verticalDown.yRange) {
       CGFloat inputMaxValue = verticalDown.yRange.floatValue;
       return fmin(fabs(degree), inputMaxValue);

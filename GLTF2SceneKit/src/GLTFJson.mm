@@ -203,107 +203,107 @@ NSString *const KHRLightTypeDirectional = @"directional";
 
 @end
 
-NSString *const VRMCMetaAvatarPermissionOnlyAuthor = @"onlyAuthor";
-NSString *const VRMCMetaAvatarPermissionOnlySeparatelyLicensedPerson =
+NSString *const VRM1MetaAvatarPermissionOnlyAuthor = @"onlyAuthor";
+NSString *const VRM1MetaAvatarPermissionOnlySeparatelyLicensedPerson =
     @"onlySeparatelyLicensedPerson";
-NSString *const VRMCMetaAvatarPermissionEveryone = @"everyone";
+NSString *const VRM1MetaAvatarPermissionEveryone = @"everyone";
 
-NSString *const VRMCMetaCommercialUsagePersonalNonProfit = @"personalNonProfit";
-NSString *const VRMCMetaCommercialUsagePersonalProfit = @"personalProfit";
-NSString *const VRMCMetaCommercialUsageCorporation = @"corporation";
+NSString *const VRM1MetaCommercialUsagePersonalNonProfit = @"personalNonProfit";
+NSString *const VRM1MetaCommercialUsagePersonalProfit = @"personalProfit";
+NSString *const VRM1MetaCommercialUsageCorporation = @"corporation";
 
-NSString *const VRMCMetaCreditNotationRequired = @"required";
-NSString *const VRMCMetaCreditNotationUnnecessary = @"unnecessary";
+NSString *const VRM1MetaCreditNotationRequired = @"required";
+NSString *const VRM1MetaCreditNotationUnnecessary = @"unnecessary";
 
-NSString *const VRMCMetaModificationProhibited = @"prohibited";
-NSString *const VRMCMetaModificationAllowModification = @"allowModification";
-NSString *const VRMCMetaModificationAllowModificationRedistribution =
+NSString *const VRM1MetaModificationProhibited = @"prohibited";
+NSString *const VRM1MetaModificationAllowModification = @"allowModification";
+NSString *const VRM1MetaModificationAllowModificationRedistribution =
     @"allowModificationRedistribution";
 
-@implementation VRMCMeta
+@implementation VRM1Meta
 
 @end
 
-@implementation VRMCHumanBone
+@implementation VRM1HumanBone
 
 @end
 
-@implementation VRMCHumanBones
+@implementation VRM1HumanBones
 
 @end
 
-@implementation VRMCHumanoid
+@implementation VRM1Humanoid
 
 @end
 
-NSString *const VRMCFirstPersonMeshAnnotationTypeAuto = @"auto";
-NSString *const VRMCFirstPersonMeshAnnotationTypeBoth = @"both";
-NSString *const VRMCFirstPersonMeshAnnotationTypeThirdPersonOnly =
+NSString *const VRM1FirstPersonMeshAnnotationTypeAuto = @"auto";
+NSString *const VRM1FirstPersonMeshAnnotationTypeBoth = @"both";
+NSString *const VRM1FirstPersonMeshAnnotationTypeThirdPersonOnly =
     @"thirdPersonOnly";
-NSString *const VRMCFirstPersonMeshAnnotationTypeFirstPersonOnly =
+NSString *const VRM1FirstPersonMeshAnnotationTypeFirstPersonOnly =
     @"firstPersonOnly";
 
-@implementation VRMCFirstPersonMeshAnnotation
+@implementation VRM1FirstPersonMeshAnnotation
 
 @end
 
-@implementation VRMCFirstPerson
+@implementation VRM1FirstPerson
 
 @end
 
-@implementation VRMCLookAtRangeMap
+@implementation VRM1LookAtRangeMap
 
 @end
 
-NSString *const VRMCLookAtTypeBone = @"bone";
-NSString *const VRMCLookAtTypeExpression = @"expression";
+NSString *const VRM1LookAtTypeBone = @"bone";
+NSString *const VRM1LookAtTypeExpression = @"expression";
 
-@implementation VRMCLookAt
+@implementation VRM1LookAt
 
 - (BOOL)isTypeBone {
   if (self.type)
-    return [self.type isEqualToString:VRMCLookAtTypeBone];
+    return [self.type isEqualToString:VRM1LookAtTypeBone];
   return NO;
 }
 
 - (BOOL)isTypeExpression {
   if (self.type)
-    return [self.type isEqualToString:VRMCLookAtTypeExpression];
+    return [self.type isEqualToString:VRM1LookAtTypeExpression];
   return NO;
 }
 
 @end
 
-NSString *const VRMCExpressionMaterialColorBindTypeColor = @"color";
-NSString *const VRMCExpressionMaterialColorBindTypeEmissionColor =
+NSString *const VRM1ExpressionMaterialColorBindTypeColor = @"color";
+NSString *const VRM1ExpressionMaterialColorBindTypeEmissionColor =
     @"emissionColor";
-NSString *const VRMCExpressionMaterialColorBindTypeShadeColor = @"shadeColor";
-NSString *const VRMCExpressionMaterialColorBindTypeMatcapColor = @"matcapColor";
-NSString *const VRMCExpressionMaterialColorBindTypeRimColor = @"rimColor";
-NSString *const VRMCExpressionMaterialColorBindTypeOutlineColor =
+NSString *const VRM1ExpressionMaterialColorBindTypeShadeColor = @"shadeColor";
+NSString *const VRM1ExpressionMaterialColorBindTypeMatcapColor = @"matcapColor";
+NSString *const VRM1ExpressionMaterialColorBindTypeRimColor = @"rimColor";
+NSString *const VRM1ExpressionMaterialColorBindTypeOutlineColor =
     @"outlineColor";
 
-@implementation VRMCExpressionMaterialColorBind
+@implementation VRM1ExpressionMaterialColorBind
 
 @end
 
-@implementation VRMCExpressionMorphTargetBind
+@implementation VRM1ExpressionMorphTargetBind
 
 @end
 
-@implementation VRMCExpressionTextureTransformBind
+@implementation VRM1ExpressionTextureTransformBind
 
 @end
 
-NSString *const VRMCExpressionOverrideNone = @"none";
-NSString *const VRMCExpressionOverrideBlock = @"block";
-NSString *const VRMCExpressionOverrideBlend = @"blend";
+NSString *const VRM1ExpressionOverrideNone = @"none";
+NSString *const VRM1ExpressionOverrideBlock = @"block";
+NSString *const VRM1ExpressionOverrideBlend = @"blend";
 
-@implementation VRMCExpression
+@implementation VRM1Expression
 
 @end
 
-@implementation VRMCExpressionsPreset
+@implementation VRM1ExpressionsPreset
 
 - (NSArray<NSString *> *)expressionNames {
   NSMutableArray<NSString *> *names = [NSMutableArray array];
@@ -365,9 +365,9 @@ NSString *const VRMCExpressionOverrideBlend = @"blend";
 }
 @end
 
-@implementation VRMCExpressions
+@implementation VRM1Expressions
 
-- (nullable VRMCExpression *)expressionByName:(NSString *)name {
+- (nullable VRM1Expression *)expressionByName:(NSString *)name {
   NSString *lower = name.lowercaseString;
   if (self.preset) {
     if ([lower isEqualToString:@"happy"]) {
@@ -431,9 +431,9 @@ NSString *const VRMCExpressionOverrideBlend = @"blend";
 
 @end
 
-@implementation VRMCVrm
+@implementation VRM1VRM
 
-- (nullable VRMCExpression *)expressionByName:(NSString *)name {
+- (nullable VRM1Expression *)expressionByName:(NSString *)name {
   if (!self.expressions)
     return nil;
   return [self.expressions expressionByName:name];
@@ -458,81 +458,83 @@ NSString *const VRMCExpressionOverrideBlend = @"blend";
 
 @end
 
-NSString *const VRMHumanoidBoneTypeHips = @"hips";
-NSString *const VRMHumanoidBoneTypeLeftUpperLeg = @"leftUpperLeg";
-NSString *const VRMHumanoidBoneTypeRightUpperLeg = @"rightUpperLeg";
-NSString *const VRMHumanoidBoneTypeLeftLowerLeg = @"leftLowerLeg";
-NSString *const VRMHumanoidBoneTypeRightLowerLeg = @"rightLowerLeg";
-NSString *const VRMHumanoidBoneTypeLeftFoot = @"leftFoot";
-NSString *const VRMHumanoidBoneTypeRightFoot = @"rightFoot";
-NSString *const VRMHumanoidBoneTypeSpine = @"spine";
-NSString *const VRMHumanoidBoneTypeChest = @"chest";
-NSString *const VRMHumanoidBoneTypeNeck = @"neck";
-NSString *const VRMHumanoidBoneTypeHead = @"head";
-NSString *const VRMHumanoidBoneTypeLeftShoulder = @"leftShoulder";
-NSString *const VRMHumanoidBoneTypeRightShoulder = @"rightShoulder";
-NSString *const VRMHumanoidBoneTypeLeftUpperArm = @"leftUpperArm";
-NSString *const VRMHumanoidBoneTypeRightUpperArm = @"rightUpperArm";
-NSString *const VRMHumanoidBoneTypeLeftLowerArm = @"leftLowerArm";
-NSString *const VRMHumanoidBoneTypeRightLowerArm = @"rightLowerArm";
-NSString *const VRMHumanoidBoneTypeLeftHand = @"leftHand";
-NSString *const VRMHumanoidBoneTypeRightHand = @"rightHand";
-NSString *const VRMHumanoidBoneTypeLeftToes = @"leftToes";
-NSString *const VRMHumanoidBoneTypeRightToes = @"rightToes";
-NSString *const VRMHumanoidBoneTypeLeftEye = @"leftEye";
-NSString *const VRMHumanoidBoneTypeRightEye = @"rightEye";
-NSString *const VRMHumanoidBoneTypeJaw = @"jaw";
-NSString *const VRMHumanoidBoneTypeLeftThumbProximal = @"leftThumbProximal";
-NSString *const VRMHumanoidBoneTypeLeftThumbIntermediate =
+NSString *const VRM0HumanoidBoneNameHips = @"hips";
+NSString *const VRM0HumanoidBoneNameLeftUpperLeg = @"leftUpperLeg";
+NSString *const VRM0HumanoidBoneNameRightUpperLeg = @"rightUpperLeg";
+NSString *const VRM0HumanoidBoneNameLeftLowerLeg = @"leftLowerLeg";
+NSString *const VRM0HumanoidBoneNameRightLowerLeg = @"rightLowerLeg";
+NSString *const VRM0HumanoidBoneNameLeftFoot = @"leftFoot";
+NSString *const VRM0HumanoidBoneNameRightFoot = @"rightFoot";
+NSString *const VRM0HumanoidBoneNameSpine = @"spine";
+NSString *const VRM0HumanoidBoneNameChest = @"chest";
+NSString *const VRM0HumanoidBoneNameNeck = @"neck";
+NSString *const VRM0HumanoidBoneNameHead = @"head";
+NSString *const VRM0HumanoidBoneNameLeftShoulder = @"leftShoulder";
+NSString *const VRM0HumanoidBoneNameRightShoulder = @"rightShoulder";
+NSString *const VRM0HumanoidBoneNameLeftUpperArm = @"leftUpperArm";
+NSString *const VRM0HumanoidBoneNameRightUpperArm = @"rightUpperArm";
+NSString *const VRM0HumanoidBoneNameLeftLowerArm = @"leftLowerArm";
+NSString *const VRM0HumanoidBoneNameRightLowerArm = @"rightLowerArm";
+NSString *const VRM0HumanoidBoneNameLeftHand = @"leftHand";
+NSString *const VRM0HumanoidBoneNameRightHand = @"rightHand";
+NSString *const VRM0HumanoidBoneNameLeftToes = @"leftToes";
+NSString *const VRM0HumanoidBoneNameRightToes = @"rightToes";
+NSString *const VRM0HumanoidBoneNameLeftEye = @"leftEye";
+NSString *const VRM0HumanoidBoneNameRightEye = @"rightEye";
+NSString *const VRM0HumanoidBoneNameJaw = @"jaw";
+NSString *const VRM0HumanoidBoneNameLeftThumbProximal = @"leftThumbProximal";
+NSString *const VRM0HumanoidBoneNameLeftThumbIntermediate =
     @"leftThumbIntermediate";
-NSString *const VRMHumanoidBoneTypeLeftThumbDistal = @"leftThumbDistal";
-NSString *const VRMHumanoidBoneTypeLeftIndexProximal = @"leftIndexProximal";
-NSString *const VRMHumanoidBoneTypeLeftIndexIntermediate =
+NSString *const VRM0HumanoidBoneNameLeftThumbDistal = @"leftThumbDistal";
+NSString *const VRM0HumanoidBoneNameLeftIndexProximal = @"leftIndexProximal";
+NSString *const VRM0HumanoidBoneNameLeftIndexIntermediate =
     @"leftIndexIntermediate";
-NSString *const VRMHumanoidBoneTypeLeftIndexDistal = @"leftIndexDistal";
-NSString *const VRMHumanoidBoneTypeLeftMiddleProximal = @"leftMiddleProximal";
-NSString *const VRMHumanoidBoneTypeLeftMiddleIntermediate =
+NSString *const VRM0HumanoidBoneNameLeftIndexDistal = @"leftIndexDistal";
+NSString *const VRM0HumanoidBoneNameLeftMiddleProximal = @"leftMiddleProximal";
+NSString *const VRM0HumanoidBoneNameLeftMiddleIntermediate =
     @"leftMiddleIntermediate";
-NSString *const VRMHumanoidBoneTypeLeftMiddleDistal = @"leftMiddleDistal";
-NSString *const VRMHumanoidBoneTypeLeftRingProximal = @"leftRingProximal";
-NSString *const VRMHumanoidBoneTypeLeftRingIntermediate =
+NSString *const VRM0HumanoidBoneNameLeftMiddleDistal = @"leftMiddleDistal";
+NSString *const VRM0HumanoidBoneNameLeftRingProximal = @"leftRingProximal";
+NSString *const VRM0HumanoidBoneNameLeftRingIntermediate =
     @"leftRingIntermediate";
-NSString *const VRMHumanoidBoneTypeLeftRingDistal = @"leftRingDistal";
-NSString *const VRMHumanoidBoneTypeLeftLittleProximal = @"leftLittleProximal";
-NSString *const VRMHumanoidBoneTypeLeftLittleIntermediate =
+NSString *const VRM0HumanoidBoneNameLeftRingDistal = @"leftRingDistal";
+NSString *const VRM0HumanoidBoneNameLeftLittleProximal = @"leftLittleProximal";
+NSString *const VRM0HumanoidBoneNameLeftLittleIntermediate =
     @"leftLittleIntermediate";
-NSString *const VRMHumanoidBoneTypeLeftLittleDistal = @"leftLittleDistal";
-NSString *const VRMHumanoidBoneTypeRightThumbProximal = @"rightThumbProximal";
-NSString *const VRMHumanoidBoneTypeRightThumbIntermediate =
+NSString *const VRM0HumanoidBoneNameLeftLittleDistal = @"leftLittleDistal";
+NSString *const VRM0HumanoidBoneNameRightThumbProximal = @"rightThumbProximal";
+NSString *const VRM0HumanoidBoneNameRightThumbIntermediate =
     @"rightThumbIntermediate";
-NSString *const VRMHumanoidBoneTypeRightThumbDistal = @"rightThumbDistal";
-NSString *const VRMHumanoidBoneTypeRightIndexProximal = @"rightIndexProximal";
-NSString *const VRMHumanoidBoneTypeRightIndexIntermediate =
+NSString *const VRM0HumanoidBoneNameRightThumbDistal = @"rightThumbDistal";
+NSString *const VRM0HumanoidBoneNameRightIndexProximal = @"rightIndexProximal";
+NSString *const VRM0HumanoidBoneNameRightIndexIntermediate =
     @"rightIndexIntermediate";
-NSString *const VRMHumanoidBoneTypeRightIndexDistal = @"rightIndexDistal";
-NSString *const VRMHumanoidBoneTypeRightMiddleProximal = @"rightMiddleProximal";
-NSString *const VRMHumanoidBoneTypeRightMiddleIntermediate =
+NSString *const VRM0HumanoidBoneNameRightIndexDistal = @"rightIndexDistal";
+NSString *const VRM0HumanoidBoneNameRightMiddleProximal =
+    @"rightMiddleProximal";
+NSString *const VRM0HumanoidBoneNameRightMiddleIntermediate =
     @"rightMiddleIntermediate";
-NSString *const VRMHumanoidBoneTypeRightMiddleDistal = @"rightMiddleDistal";
-NSString *const VRMHumanoidBoneTypeRightRingProximal = @"rightRingProximal";
-NSString *const VRMHumanoidBoneTypeRightRingIntermediate =
+NSString *const VRM0HumanoidBoneNameRightMiddleDistal = @"rightMiddleDistal";
+NSString *const VRM0HumanoidBoneNameRightRingProximal = @"rightRingProximal";
+NSString *const VRM0HumanoidBoneNameRightRingIntermediate =
     @"rightRingIntermediate";
-NSString *const VRMHumanoidBoneTypeRightRingDistal = @"rightRingDistal";
-NSString *const VRMHumanoidBoneTypeRightLittleProximal = @"rightLittleProximal";
-NSString *const VRMHumanoidBoneTypeRightLittleIntermediate =
+NSString *const VRM0HumanoidBoneNameRightRingDistal = @"rightRingDistal";
+NSString *const VRM0HumanoidBoneNameRightLittleProximal =
+    @"rightLittleProximal";
+NSString *const VRM0HumanoidBoneNameRightLittleIntermediate =
     @"rightLittleIntermediate";
-NSString *const VRMHumanoidBoneTypeRightLittleDistal = @"rightLittleDistal";
-NSString *const VRMHumanoidBoneTypeUpperChest = @"upperChest";
+NSString *const VRM0HumanoidBoneNameRightLittleDistal = @"rightLittleDistal";
+NSString *const VRM0HumanoidBoneNameUpperChest = @"upperChest";
 
-@implementation VRMHumanoidBone
+@implementation VRM0HumanoidBone
 
 @end
 
-@implementation VRMHumanoid
+@implementation VRM0Humanoid
 
-- (nullable VRMHumanoidBone *)humanBoneByName:(NSString *)name {
+- (nullable VRM0HumanoidBone *)humanBoneByName:(NSString *)name {
   if (self.humanBones) {
-    for (VRMHumanoidBone *bone in self.humanBones) {
+    for (VRM0HumanoidBone *bone in self.humanBones) {
       if (bone.bone && [bone.bone isEqualToString:name]) {
         return bone;
       }
@@ -543,49 +545,49 @@ NSString *const VRMHumanoidBoneTypeUpperChest = @"upperChest";
 
 @end
 
-NSString *const VRMMetaAllowedUserNameOnlyAuthor = @"OnlyAuthor";
-NSString *const VRMMetaAllowedUserNameExplicitlyLicensedPerson =
+NSString *const VRM0MetaAllowedUserNameOnlyAuthor = @"OnlyAuthor";
+NSString *const VRM0MetaAllowedUserNameExplicitlyLicensedPerson =
     @"ExplicitlyLicensedPerson";
-NSString *const VRMMetaAllowedUserNameEveryone = @"Everyone";
+NSString *const VRM0MetaAllowedUserNameEveryone = @"Everyone";
 
-NSString *const VRMMetaUsagePermissionDisallow = @"Disallow";
-NSString *const VRMMetaUsagePermissionAllow = @"Allow";
+NSString *const VRM0MetaUsagePermissionDisallow = @"Disallow";
+NSString *const VRM0MetaUsagePermissionAllow = @"Allow";
 
-NSString *const VRMMetaLicenseNameRedistributionProhibited =
+NSString *const VRM0MetaLicenseNameRedistributionProhibited =
     @"Redistribution_Prohibited";
-NSString *const VRMMetaLicenseNameCC0 = @"CC0";
-NSString *const VRMMetaLicenseNameCCBY = @"CC_BY";
-NSString *const VRMMetaLicenseNameCCBYNC = @"CC_BY_NC";
-NSString *const VRMMetaLicenseNameCCBYSA = @"CC_BY_SA";
-NSString *const VRMMetaLicenseNameCCBYNCSA = @"CC_BY_NC_SA";
-NSString *const VRMMetaLicenseNameCCBYND = @"CC_BY_ND";
-NSString *const VRMMetaLicenseNameCCBYNCND = @"CC_BY_NC_ND";
-NSString *const VRMMetaLicenseNameOther = @"Other";
+NSString *const VRM0MetaLicenseNameCC0 = @"CC0";
+NSString *const VRM0MetaLicenseNameCCBY = @"CC_BY";
+NSString *const VRM0MetaLicenseNameCCBYNC = @"CC_BY_NC";
+NSString *const VRM0MetaLicenseNameCCBYSA = @"CC_BY_SA";
+NSString *const VRM0MetaLicenseNameCCBYNCSA = @"CC_BY_NC_SA";
+NSString *const VRM0MetaLicenseNameCCBYND = @"CC_BY_ND";
+NSString *const VRM0MetaLicenseNameCCBYNCND = @"CC_BY_NC_ND";
+NSString *const VRM0MetaLicenseNameOther = @"Other";
 
-@implementation VRMMeta
-
-@end
-
-@implementation VRMMeshAnnotation
+@implementation VRM0Meta
 
 @end
 
-@implementation VRMDegreeMapCurveMapping
+@implementation VRM0FirstPersonMeshAnnotation
 
 @end
 
-@implementation VRMDegreeMap
+@implementation VRM0FirstPersonDegreeMapCurve
 
 @end
 
-NSString *const VRMFirstPersonLookAtTypeBone = @"Bone";
-NSString *const VRMFirstPersonLookAtTypeBlendShape = @"BlendShape";
+@implementation VRM0FirstPersonDegreeMap
 
-@implementation VRMFirstPerson
+@end
+
+NSString *const VRM0FirstPersonLookAtTypeBone = @"Bone";
+NSString *const VRM0FirstPersonLookAtTypeBlendShape = @"BlendShape";
+
+@implementation VRM0FirstPerson
 
 - (BOOL)isLookAtTypeBone {
   if (self.lookAtTypeName)
-    return [self.lookAtTypeName isEqualToString:VRMFirstPersonLookAtTypeBone];
+    return [self.lookAtTypeName isEqualToString:VRM0FirstPersonLookAtTypeBone];
   if (self.firstPersonBone != nil && self.firstPersonBoneOffset != nil)
     return YES;
   return NO;
@@ -594,40 +596,40 @@ NSString *const VRMFirstPersonLookAtTypeBlendShape = @"BlendShape";
 - (BOOL)isLookAtTypeBlendShape {
   if (self.lookAtTypeName)
     return [self.lookAtTypeName
-        isEqualToString:VRMFirstPersonLookAtTypeBlendShape];
+        isEqualToString:VRM0FirstPersonLookAtTypeBlendShape];
   return NO;
 }
 
 @end
 
-@implementation VRMBlendShapeBind
+@implementation VRM0BlendShapeBind
 
 @end
 
-@implementation VRMBlendShapeMaterialBind
+@implementation VRM0BlendShapeMaterialBind
 
 @end
 
-NSString *const VRMBlendShapeGroupPresetNameUnknown = @"unknown";
-NSString *const VRMBlendShapeGroupPresetNameNeutral = @"neutral";
-NSString *const VRMBlendShapeGroupPresetNameA = @"a";
-NSString *const VRMBlendShapeGroupPresetNameI = @"i";
-NSString *const VRMBlendShapeGroupPresetNameU = @"u";
-NSString *const VRMBlendShapeGroupPresetNameE = @"e";
-NSString *const VRMBlendShapeGroupPresetNameO = @"o";
-NSString *const VRMBlendShapeGroupPresetNameBlink = @"blink";
-NSString *const VRMBlendShapeGroupPresetNameJoy = @"joy";
-NSString *const VRMBlendShapeGroupPresetNameAngry = @"angry";
-NSString *const VRMBlendShapeGroupPresetNameSorrow = @"sorrow";
-NSString *const VRMBlendShapeGroupPresetNameFun = @"fun";
-NSString *const VRMBlendShapeGroupPresetNameLookUp = @"lookup";
-NSString *const VRMBlendShapeGroupPresetNameLookDown = @"lookdown";
-NSString *const VRMBlendShapeGroupPresetNameLookLeft = @"lookleft";
-NSString *const VRMBlendShapeGroupPresetNameLookRight = @"lookright";
-NSString *const VRMBlendShapeGroupPresetNameBlinkL = @"blink_l";
-NSString *const VRMBlendShapeGroupPresetNameBlinkR = @"blink_r";
+NSString *const VRM0BlendShapeGroupPresetNameUnknown = @"unknown";
+NSString *const VRM0BlendShapeGroupPresetNameNeutral = @"neutral";
+NSString *const VRM0BlendShapeGroupPresetNameA = @"a";
+NSString *const VRM0BlendShapeGroupPresetNameI = @"i";
+NSString *const VRM0BlendShapeGroupPresetNameU = @"u";
+NSString *const VRM0BlendShapeGroupPresetNameE = @"e";
+NSString *const VRM0BlendShapeGroupPresetNameO = @"o";
+NSString *const VRM0BlendShapeGroupPresetNameBlink = @"blink";
+NSString *const VRM0BlendShapeGroupPresetNameJoy = @"joy";
+NSString *const VRM0BlendShapeGroupPresetNameAngry = @"angry";
+NSString *const VRM0BlendShapeGroupPresetNameSorrow = @"sorrow";
+NSString *const VRM0BlendShapeGroupPresetNameFun = @"fun";
+NSString *const VRM0BlendShapeGroupPresetNameLookUp = @"lookup";
+NSString *const VRM0BlendShapeGroupPresetNameLookDown = @"lookdown";
+NSString *const VRM0BlendShapeGroupPresetNameLookLeft = @"lookleft";
+NSString *const VRM0BlendShapeGroupPresetNameLookRight = @"lookright";
+NSString *const VRM0BlendShapeGroupPresetNameBlinkL = @"blink_l";
+NSString *const VRM0BlendShapeGroupPresetNameBlinkR = @"blink_r";
 
-@implementation VRMBlendShapeGroup
+@implementation VRM0BlendShapeGroup
 
 - (nullable NSString *)groupName {
   return self.presetName ?: self.name;
@@ -635,13 +637,13 @@ NSString *const VRMBlendShapeGroupPresetNameBlinkR = @"blink_r";
 
 @end
 
-@implementation VRMBlendShape
+@implementation VRM0BlendShape
 
-- (nullable VRMBlendShapeGroup *)blendShapeGroupByPreset:
+- (nullable VRM0BlendShapeGroup *)blendShapeGroupByPreset:
     (NSString *)presetName {
   if (!self.blendShapeGroups)
     return nil;
-  for (VRMBlendShapeGroup *group in self.blendShapeGroups) {
+  for (VRM0BlendShapeGroup *group in self.blendShapeGroups) {
     if ([group.groupName.lowercaseString
             isEqualToString:presetName.lowercaseString]) {
       return group;
@@ -653,7 +655,7 @@ NSString *const VRMBlendShapeGroupPresetNameBlinkR = @"blink_r";
 - (NSArray<NSString *> *)groupNames {
   NSMutableArray<NSString *> *names = [NSMutableArray array];
   if (self.blendShapeGroups) {
-    for (VRMBlendShapeGroup *group in self.blendShapeGroups) {
+    for (VRM0BlendShapeGroup *group in self.blendShapeGroups) {
       [names addObject:group.groupName];
     }
   }
@@ -662,7 +664,7 @@ NSString *const VRMBlendShapeGroupPresetNameBlinkR = @"blink_r";
 
 @end
 
-@implementation VRMSecondaryAnimationCollider
+@implementation VRM0SecondaryAnimationCollider
 
 - (SCNVector3)offsetValue {
   if (self.offset)
@@ -678,25 +680,25 @@ NSString *const VRMBlendShapeGroupPresetNameBlinkR = @"blink_r";
 
 @end
 
-@implementation VRMSecondaryAnimationColliderGroup
+@implementation VRM0SecondaryAnimationColliderGroup
 
 @end
 
-@implementation VRMSecondaryAnimationSpring
+@implementation VRM0SecondaryAnimationSpring
 
 @end
 
-@implementation VRMSecondaryAnimation
+@implementation VRM0SecondaryAnimation
 
 @end
 
-@implementation VRMMaterial
+@implementation VRM0Material
 
 @end
 
-@implementation VRMVrm
+@implementation VRM0VRM
 
-- (nullable VRMBlendShapeGroup *)blendShapeGroupByPreset:
+- (nullable VRM0BlendShapeGroup *)blendShapeGroupByPreset:
     (NSString *)presetName {
   if (!self.blendShapeMaster)
     return nil;
@@ -705,7 +707,7 @@ NSString *const VRMBlendShapeGroupPresetNameBlinkR = @"blink_r";
 
 @end
 
-@implementation VRMCSpringBoneShapeSphere
+@implementation VRMSpringBoneShapeSphere
 
 - (SCNVector3)offsetValue {
   if (self.offset)
@@ -721,7 +723,7 @@ NSString *const VRMBlendShapeGroupPresetNameBlinkR = @"blink_r";
 
 @end
 
-@implementation VRMCSpringBoneShapeCapsule
+@implementation VRMSpringBoneShapeCapsule
 
 - (SCNVector3)offsetValue {
   if (self.offset)
@@ -743,13 +745,13 @@ NSString *const VRMBlendShapeGroupPresetNameBlinkR = @"blink_r";
 
 @end
 
-@implementation VRMCSpringBoneShape
+@implementation VRMSpringBoneShape
 @end
 
-@implementation VRMCSpringBoneCollider
+@implementation VRMSpringBoneCollider
 @end
 
-@implementation VRMCSpringBoneJoint
+@implementation VRMSpringBoneJoint
 
 - (float)hitRadiusValue {
   if (self.hitRadius)
@@ -783,13 +785,13 @@ NSString *const VRMBlendShapeGroupPresetNameBlinkR = @"blink_r";
 
 @end
 
-@implementation VRMCSpringBoneColliderGroup
+@implementation VRMSpringBoneColliderGroup
 @end
 
-@implementation VRMCSpringBoneSpring
+@implementation VRMSpringBoneSpring
 @end
 
-@implementation VRMCSpringBone
+@implementation VRMSpringBone
 @end
 
 @implementation GLTFJson

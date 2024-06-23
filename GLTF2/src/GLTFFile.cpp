@@ -67,7 +67,7 @@ static json::Json readGLBJson(std::istream &fs) {
     throw InputException("Failed to read json data");
   }
   auto data = nlohmann::json::parse(jsonBuf);
-  return JsonDecoder::decode(data);
+  return json::JsonDecoder::decode(data);
 }
 
 static std::optional<Buffer> readGLBBin(std::istream &fs) {
@@ -113,7 +113,7 @@ GLTFFile GLTFFile::parseStream(std::istream &&fs,
                     std::istreambuf_iterator<char>());
     try {
       auto data = nlohmann::json::parse(raw);
-      auto json = JsonDecoder::decode(data);
+      auto json = json::JsonDecoder::decode(data);
       return GLTFFile(json, path, bin);
     } catch (nlohmann::json::exception e) {
       throw InputException(e.what());

@@ -476,22 +476,22 @@ extern NSString *const KHRLightTypeDirectional;
 
 @end
 
-extern NSString *const VRMCMetaAvatarPermissionOnlyAuthor;
-extern NSString *const VRMCMetaAvatarPermissionOnlySeparatelyLicensedPerson;
-extern NSString *const VRMCMetaAvatarPermissionEveryone;
+extern NSString *const VRM1MetaAvatarPermissionOnlyAuthor;
+extern NSString *const VRM1MetaAvatarPermissionOnlySeparatelyLicensedPerson;
+extern NSString *const VRM1MetaAvatarPermissionEveryone;
 
-extern NSString *const VRMCMetaCommercialUsagePersonalNonProfit;
-extern NSString *const VRMCMetaCommercialUsagePersonalProfit;
-extern NSString *const VRMCMetaCommercialUsageCorporation;
+extern NSString *const VRM1MetaCommercialUsagePersonalNonProfit;
+extern NSString *const VRM1MetaCommercialUsagePersonalProfit;
+extern NSString *const VRM1MetaCommercialUsageCorporation;
 
-extern NSString *const VRMCMetaCreditNotationRequired;
-extern NSString *const VRMCMetaCreditNotationUnnecessary;
+extern NSString *const VRM1MetaCreditNotationRequired;
+extern NSString *const VRM1MetaCreditNotationUnnecessary;
 
-extern NSString *const VRMCMetaModificationProhibited;
-extern NSString *const VRMCMetaModificationAllowModification;
-extern NSString *const VRMCMetaModificationAllowModificationRedistribution;
+extern NSString *const VRM1MetaModificationProhibited;
+extern NSString *const VRM1MetaModificationAllowModification;
+extern NSString *const VRM1MetaModificationAllowModificationRedistribution;
 
-@interface VRMCMeta : NSObject
+@interface VRM1Meta : NSObject
 
 @property(nonatomic, copy) NSString *name;
 @property(nonatomic, copy, nullable) NSString *version;
@@ -515,98 +515,98 @@ extern NSString *const VRMCMetaModificationAllowModificationRedistribution;
 
 @end
 
-@interface VRMCHumanBone : NSObject
+@interface VRM1HumanBone : NSObject
 
 @property(nonatomic, strong) NSNumber *node;
 
 @end
 
-@interface VRMCHumanBones : NSObject
+@interface VRM1HumanBones : NSObject
 
-@property(nonatomic, strong) VRMCHumanBone *hips;
-@property(nonatomic, strong) VRMCHumanBone *spine;
-@property(nonatomic, strong, nullable) VRMCHumanBone *chest;
-@property(nonatomic, strong, nullable) VRMCHumanBone *upperChest;
-@property(nonatomic, strong, nullable) VRMCHumanBone *neck;
-@property(nonatomic, strong) VRMCHumanBone *head;
-@property(nonatomic, strong, nullable) VRMCHumanBone *leftEye;
-@property(nonatomic, strong, nullable) VRMCHumanBone *rightEye;
-@property(nonatomic, strong, nullable) VRMCHumanBone *jaw;
-@property(nonatomic, strong) VRMCHumanBone *leftUpperLeg;
-@property(nonatomic, strong) VRMCHumanBone *leftLowerLeg;
-@property(nonatomic, strong) VRMCHumanBone *leftFoot;
-@property(nonatomic, strong, nullable) VRMCHumanBone *leftToes;
-@property(nonatomic, strong) VRMCHumanBone *rightUpperLeg;
-@property(nonatomic, strong) VRMCHumanBone *rightLowerLeg;
-@property(nonatomic, strong) VRMCHumanBone *rightFoot;
-@property(nonatomic, strong, nullable) VRMCHumanBone *rightToes;
-@property(nonatomic, strong, nullable) VRMCHumanBone *leftShoulder;
-@property(nonatomic, strong) VRMCHumanBone *leftUpperArm;
-@property(nonatomic, strong) VRMCHumanBone *leftLowerArm;
-@property(nonatomic, strong) VRMCHumanBone *leftHand;
-@property(nonatomic, strong, nullable) VRMCHumanBone *rightShoulder;
-@property(nonatomic, strong) VRMCHumanBone *rightUpperArm;
-@property(nonatomic, strong) VRMCHumanBone *rightLowerArm;
-@property(nonatomic, strong) VRMCHumanBone *rightHand;
-@property(nonatomic, strong, nullable) VRMCHumanBone *leftThumbMetacarpal;
-@property(nonatomic, strong, nullable) VRMCHumanBone *leftThumbProximal;
-@property(nonatomic, strong, nullable) VRMCHumanBone *leftThumbDistal;
-@property(nonatomic, strong, nullable) VRMCHumanBone *leftIndexProximal;
-@property(nonatomic, strong, nullable) VRMCHumanBone *leftIndexIntermediate;
-@property(nonatomic, strong, nullable) VRMCHumanBone *leftIndexDistal;
-@property(nonatomic, strong, nullable) VRMCHumanBone *leftMiddleProximal;
-@property(nonatomic, strong, nullable) VRMCHumanBone *leftMiddleIntermediate;
-@property(nonatomic, strong, nullable) VRMCHumanBone *leftMiddleDistal;
-@property(nonatomic, strong, nullable) VRMCHumanBone *leftRingProximal;
-@property(nonatomic, strong, nullable) VRMCHumanBone *leftRingIntermediate;
-@property(nonatomic, strong, nullable) VRMCHumanBone *leftRingDistal;
-@property(nonatomic, strong, nullable) VRMCHumanBone *leftLittleProximal;
-@property(nonatomic, strong, nullable) VRMCHumanBone *leftLittleIntermediate;
-@property(nonatomic, strong, nullable) VRMCHumanBone *leftLittleDistal;
-@property(nonatomic, strong, nullable) VRMCHumanBone *rightThumbMetacarpal;
-@property(nonatomic, strong, nullable) VRMCHumanBone *rightThumbProximal;
-@property(nonatomic, strong, nullable) VRMCHumanBone *rightThumbDistal;
-@property(nonatomic, strong, nullable) VRMCHumanBone *rightIndexProximal;
-@property(nonatomic, strong, nullable) VRMCHumanBone *rightIndexIntermediate;
-@property(nonatomic, strong, nullable) VRMCHumanBone *rightIndexDistal;
-@property(nonatomic, strong, nullable) VRMCHumanBone *rightMiddleProximal;
-@property(nonatomic, strong, nullable) VRMCHumanBone *rightMiddleIntermediate;
-@property(nonatomic, strong, nullable) VRMCHumanBone *rightMiddleDistal;
-@property(nonatomic, strong, nullable) VRMCHumanBone *rightRingProximal;
-@property(nonatomic, strong, nullable) VRMCHumanBone *rightRingIntermediate;
-@property(nonatomic, strong, nullable) VRMCHumanBone *rightRingDistal;
-@property(nonatomic, strong, nullable) VRMCHumanBone *rightLittleProximal;
-@property(nonatomic, strong, nullable) VRMCHumanBone *rightLittleIntermediate;
-@property(nonatomic, strong, nullable) VRMCHumanBone *rightLittleDistal;
-
-@end
-
-@interface VRMCHumanoid : NSObject
-
-@property(nonatomic, strong) VRMCHumanBones *humanBones;
+@property(nonatomic, strong) VRM1HumanBone *hips;
+@property(nonatomic, strong) VRM1HumanBone *spine;
+@property(nonatomic, strong, nullable) VRM1HumanBone *chest;
+@property(nonatomic, strong, nullable) VRM1HumanBone *upperChest;
+@property(nonatomic, strong, nullable) VRM1HumanBone *neck;
+@property(nonatomic, strong) VRM1HumanBone *head;
+@property(nonatomic, strong, nullable) VRM1HumanBone *leftEye;
+@property(nonatomic, strong, nullable) VRM1HumanBone *rightEye;
+@property(nonatomic, strong, nullable) VRM1HumanBone *jaw;
+@property(nonatomic, strong) VRM1HumanBone *leftUpperLeg;
+@property(nonatomic, strong) VRM1HumanBone *leftLowerLeg;
+@property(nonatomic, strong) VRM1HumanBone *leftFoot;
+@property(nonatomic, strong, nullable) VRM1HumanBone *leftToes;
+@property(nonatomic, strong) VRM1HumanBone *rightUpperLeg;
+@property(nonatomic, strong) VRM1HumanBone *rightLowerLeg;
+@property(nonatomic, strong) VRM1HumanBone *rightFoot;
+@property(nonatomic, strong, nullable) VRM1HumanBone *rightToes;
+@property(nonatomic, strong, nullable) VRM1HumanBone *leftShoulder;
+@property(nonatomic, strong) VRM1HumanBone *leftUpperArm;
+@property(nonatomic, strong) VRM1HumanBone *leftLowerArm;
+@property(nonatomic, strong) VRM1HumanBone *leftHand;
+@property(nonatomic, strong, nullable) VRM1HumanBone *rightShoulder;
+@property(nonatomic, strong) VRM1HumanBone *rightUpperArm;
+@property(nonatomic, strong) VRM1HumanBone *rightLowerArm;
+@property(nonatomic, strong) VRM1HumanBone *rightHand;
+@property(nonatomic, strong, nullable) VRM1HumanBone *leftThumbMetacarpal;
+@property(nonatomic, strong, nullable) VRM1HumanBone *leftThumbProximal;
+@property(nonatomic, strong, nullable) VRM1HumanBone *leftThumbDistal;
+@property(nonatomic, strong, nullable) VRM1HumanBone *leftIndexProximal;
+@property(nonatomic, strong, nullable) VRM1HumanBone *leftIndexIntermediate;
+@property(nonatomic, strong, nullable) VRM1HumanBone *leftIndexDistal;
+@property(nonatomic, strong, nullable) VRM1HumanBone *leftMiddleProximal;
+@property(nonatomic, strong, nullable) VRM1HumanBone *leftMiddleIntermediate;
+@property(nonatomic, strong, nullable) VRM1HumanBone *leftMiddleDistal;
+@property(nonatomic, strong, nullable) VRM1HumanBone *leftRingProximal;
+@property(nonatomic, strong, nullable) VRM1HumanBone *leftRingIntermediate;
+@property(nonatomic, strong, nullable) VRM1HumanBone *leftRingDistal;
+@property(nonatomic, strong, nullable) VRM1HumanBone *leftLittleProximal;
+@property(nonatomic, strong, nullable) VRM1HumanBone *leftLittleIntermediate;
+@property(nonatomic, strong, nullable) VRM1HumanBone *leftLittleDistal;
+@property(nonatomic, strong, nullable) VRM1HumanBone *rightThumbMetacarpal;
+@property(nonatomic, strong, nullable) VRM1HumanBone *rightThumbProximal;
+@property(nonatomic, strong, nullable) VRM1HumanBone *rightThumbDistal;
+@property(nonatomic, strong, nullable) VRM1HumanBone *rightIndexProximal;
+@property(nonatomic, strong, nullable) VRM1HumanBone *rightIndexIntermediate;
+@property(nonatomic, strong, nullable) VRM1HumanBone *rightIndexDistal;
+@property(nonatomic, strong, nullable) VRM1HumanBone *rightMiddleProximal;
+@property(nonatomic, strong, nullable) VRM1HumanBone *rightMiddleIntermediate;
+@property(nonatomic, strong, nullable) VRM1HumanBone *rightMiddleDistal;
+@property(nonatomic, strong, nullable) VRM1HumanBone *rightRingProximal;
+@property(nonatomic, strong, nullable) VRM1HumanBone *rightRingIntermediate;
+@property(nonatomic, strong, nullable) VRM1HumanBone *rightRingDistal;
+@property(nonatomic, strong, nullable) VRM1HumanBone *rightLittleProximal;
+@property(nonatomic, strong, nullable) VRM1HumanBone *rightLittleIntermediate;
+@property(nonatomic, strong, nullable) VRM1HumanBone *rightLittleDistal;
 
 @end
 
-extern NSString *const VRMCFirstPersonMeshAnnotationTypeAuto;
-extern NSString *const VRMCFirstPersonMeshAnnotationTypeBoth;
-extern NSString *const VRMCFirstPersonMeshAnnotationTypeThirdPersonOnly;
-extern NSString *const VRMCFirstPersonMeshAnnotationTypeFirstPersonOnly;
+@interface VRM1Humanoid : NSObject
 
-@interface VRMCFirstPersonMeshAnnotation : NSObject
+@property(nonatomic, strong) VRM1HumanBones *humanBones;
+
+@end
+
+extern NSString *const VRM1FirstPersonMeshAnnotationTypeAuto;
+extern NSString *const VRM1FirstPersonMeshAnnotationTypeBoth;
+extern NSString *const VRM1FirstPersonMeshAnnotationTypeThirdPersonOnly;
+extern NSString *const VRM1FirstPersonMeshAnnotationTypeFirstPersonOnly;
+
+@interface VRM1FirstPersonMeshAnnotation : NSObject
 
 @property(nonatomic, assign) uint32_t node;
 @property(nonatomic, copy) NSString *type;
 
 @end
 
-@interface VRMCFirstPerson : NSObject
+@interface VRM1FirstPerson : NSObject
 
 @property(nonatomic, strong, nullable)
-    NSArray<VRMCFirstPersonMeshAnnotation *> *meshAnnotations;
+    NSArray<VRM1FirstPersonMeshAnnotation *> *meshAnnotations;
 
 @end
 
-@interface VRMCLookAtRangeMap : NSObject
+@interface VRM1LookAtRangeMap : NSObject
 
 @property(nonatomic, strong, nullable) NSNumber *inputMaxValue;
 @property(nonatomic, strong, nullable) NSNumber *outputScale;
@@ -625,33 +625,33 @@ extern NSString *const VRMCFirstPersonMeshAnnotationTypeFirstPersonOnly;
 
 @end
 
-extern NSString *const VRMCLookAtTypeBone;
-extern NSString *const VRMCLookAtTypeExpression;
+extern NSString *const VRM1LookAtTypeBone;
+extern NSString *const VRM1LookAtTypeExpression;
 
-@interface VRMCLookAt : NSObject
+@interface VRM1LookAt : NSObject
 
 @property(nonatomic, strong, nullable) Vec3 *offsetFromHeadBone;
 @property(nonatomic, copy, nullable) NSString *type;
 @property(nonatomic, strong, nullable)
-    VRMCLookAtRangeMap *rangeMapHorizontalInner;
+    VRM1LookAtRangeMap *rangeMapHorizontalInner;
 @property(nonatomic, strong, nullable)
-    VRMCLookAtRangeMap *rangeMapHorizontalOuter;
-@property(nonatomic, strong, nullable) VRMCLookAtRangeMap *rangeMapVerticalDown;
-@property(nonatomic, strong, nullable) VRMCLookAtRangeMap *rangeMapVerticalUp;
+    VRM1LookAtRangeMap *rangeMapHorizontalOuter;
+@property(nonatomic, strong, nullable) VRM1LookAtRangeMap *rangeMapVerticalDown;
+@property(nonatomic, strong, nullable) VRM1LookAtRangeMap *rangeMapVerticalUp;
 
 - (BOOL)isTypeBone;
 - (BOOL)isTypeExpression;
 
 @end
 
-extern NSString *const VRMCExpressionMaterialColorBindTypeColor;
-extern NSString *const VRMCExpressionMaterialColorBindTypeEmissionColor;
-extern NSString *const VRMCExpressionMaterialColorBindTypeShadeColor;
-extern NSString *const VRMCExpressionMaterialColorBindTypeMatcapColor;
-extern NSString *const VRMCExpressionMaterialColorBindTypeRimColor;
-extern NSString *const VRMCExpressionMaterialColorBindTypeOutlineColor;
+extern NSString *const VRM1ExpressionMaterialColorBindTypeColor;
+extern NSString *const VRM1ExpressionMaterialColorBindTypeEmissionColor;
+extern NSString *const VRM1ExpressionMaterialColorBindTypeShadeColor;
+extern NSString *const VRM1ExpressionMaterialColorBindTypeMatcapColor;
+extern NSString *const VRM1ExpressionMaterialColorBindTypeRimColor;
+extern NSString *const VRM1ExpressionMaterialColorBindTypeOutlineColor;
 
-@interface VRMCExpressionMaterialColorBind : NSObject
+@interface VRM1ExpressionMaterialColorBind : NSObject
 
 @property(nonatomic, assign) uint32_t material;
 @property(nonatomic, copy) NSString *type;
@@ -659,7 +659,7 @@ extern NSString *const VRMCExpressionMaterialColorBindTypeOutlineColor;
 
 @end
 
-@interface VRMCExpressionMorphTargetBind : NSObject
+@interface VRM1ExpressionMorphTargetBind : NSObject
 
 @property(nonatomic, assign) uint32_t node;
 @property(nonatomic, assign) uint32_t index;
@@ -667,7 +667,7 @@ extern NSString *const VRMCExpressionMaterialColorBindTypeOutlineColor;
 
 @end
 
-@interface VRMCExpressionTextureTransformBind : NSObject
+@interface VRM1ExpressionTextureTransformBind : NSObject
 
 @property(nonatomic, assign) uint32_t material;
 @property(nonatomic, strong, nullable) NSArray<NSNumber *> *scale;
@@ -675,18 +675,18 @@ extern NSString *const VRMCExpressionMaterialColorBindTypeOutlineColor;
 
 @end
 
-extern NSString *const VRMCExpressionOverrideNone;
-extern NSString *const VRMCExpressionOverrideBlock;
-extern NSString *const VRMCExpressionOverrideBlend;
+extern NSString *const VRM1ExpressionOverrideNone;
+extern NSString *const VRM1ExpressionOverrideBlock;
+extern NSString *const VRM1ExpressionOverrideBlend;
 
-@interface VRMCExpression : NSObject
+@interface VRM1Expression : NSObject
 
 @property(nonatomic, strong, nullable)
-    NSArray<VRMCExpressionMorphTargetBind *> *morphTargetBinds;
+    NSArray<VRM1ExpressionMorphTargetBind *> *morphTargetBinds;
 @property(nonatomic, strong, nullable)
-    NSArray<VRMCExpressionMaterialColorBind *> *materialColorBinds;
+    NSArray<VRM1ExpressionMaterialColorBind *> *materialColorBinds;
 @property(nonatomic, strong, nullable)
-    NSArray<VRMCExpressionTextureTransformBind *> *textureTransformBinds;
+    NSArray<VRM1ExpressionTextureTransformBind *> *textureTransformBinds;
 @property(nonatomic, assign) BOOL isBinary;
 @property(nonatomic, copy, nullable) NSString *overrideBlink;
 @property(nonatomic, copy, nullable) NSString *overrideLookAt;
@@ -694,112 +694,112 @@ extern NSString *const VRMCExpressionOverrideBlend;
 
 @end
 
-@interface VRMCExpressionsPreset : NSObject
+@interface VRM1ExpressionsPreset : NSObject
 
-@property(nonatomic, strong, nullable) VRMCExpression *happy;
-@property(nonatomic, strong, nullable) VRMCExpression *angry;
-@property(nonatomic, strong, nullable) VRMCExpression *sad;
-@property(nonatomic, strong, nullable) VRMCExpression *relaxed;
-@property(nonatomic, strong, nullable) VRMCExpression *surprised;
-@property(nonatomic, strong, nullable) VRMCExpression *aa;
-@property(nonatomic, strong, nullable) VRMCExpression *ih;
-@property(nonatomic, strong, nullable) VRMCExpression *ou;
-@property(nonatomic, strong, nullable) VRMCExpression *ee;
-@property(nonatomic, strong, nullable) VRMCExpression *oh;
-@property(nonatomic, strong, nullable) VRMCExpression *blink;
-@property(nonatomic, strong, nullable) VRMCExpression *blinkLeft;
-@property(nonatomic, strong, nullable) VRMCExpression *blinkRight;
-@property(nonatomic, strong, nullable) VRMCExpression *lookUp;
-@property(nonatomic, strong, nullable) VRMCExpression *lookDown;
-@property(nonatomic, strong, nullable) VRMCExpression *lookLeft;
-@property(nonatomic, strong, nullable) VRMCExpression *lookRight;
-@property(nonatomic, strong, nullable) VRMCExpression *neutral;
+@property(nonatomic, strong, nullable) VRM1Expression *happy;
+@property(nonatomic, strong, nullable) VRM1Expression *angry;
+@property(nonatomic, strong, nullable) VRM1Expression *sad;
+@property(nonatomic, strong, nullable) VRM1Expression *relaxed;
+@property(nonatomic, strong, nullable) VRM1Expression *surprised;
+@property(nonatomic, strong, nullable) VRM1Expression *aa;
+@property(nonatomic, strong, nullable) VRM1Expression *ih;
+@property(nonatomic, strong, nullable) VRM1Expression *ou;
+@property(nonatomic, strong, nullable) VRM1Expression *ee;
+@property(nonatomic, strong, nullable) VRM1Expression *oh;
+@property(nonatomic, strong, nullable) VRM1Expression *blink;
+@property(nonatomic, strong, nullable) VRM1Expression *blinkLeft;
+@property(nonatomic, strong, nullable) VRM1Expression *blinkRight;
+@property(nonatomic, strong, nullable) VRM1Expression *lookUp;
+@property(nonatomic, strong, nullable) VRM1Expression *lookDown;
+@property(nonatomic, strong, nullable) VRM1Expression *lookLeft;
+@property(nonatomic, strong, nullable) VRM1Expression *lookRight;
+@property(nonatomic, strong, nullable) VRM1Expression *neutral;
 
 - (NSArray<NSString *> *)expressionNames;
 
 @end
 
-@interface VRMCExpressions : NSObject
+@interface VRM1Expressions : NSObject
 
-@property(nonatomic, strong, nullable) VRMCExpressionsPreset *preset;
+@property(nonatomic, strong, nullable) VRM1ExpressionsPreset *preset;
 @property(nonatomic, strong, nullable)
-    NSDictionary<NSString *, VRMCExpression *> *custom;
+    NSDictionary<NSString *, VRM1Expression *> *custom;
 
-- (nullable VRMCExpression *)expressionByName:(NSString *)name;
+- (nullable VRM1Expression *)expressionByName:(NSString *)name;
 - (NSArray<NSString *> *)expressionNames;
 
 @end
 
-@interface VRMCVrm : NSObject
+@interface VRM1VRM : NSObject
 
 @property(nonatomic, copy) NSString *specVersion;
-@property(nonatomic, strong) VRMCMeta *meta;
-@property(nonatomic, strong) VRMCHumanoid *humanoid;
-@property(nonatomic, strong, nullable) VRMCFirstPerson *firstPerson;
-@property(nonatomic, strong, nullable) VRMCLookAt *lookAt;
-@property(nonatomic, strong, nullable) VRMCExpressions *expressions;
+@property(nonatomic, strong) VRM1Meta *meta;
+@property(nonatomic, strong) VRM1Humanoid *humanoid;
+@property(nonatomic, strong, nullable) VRM1FirstPerson *firstPerson;
+@property(nonatomic, strong, nullable) VRM1LookAt *lookAt;
+@property(nonatomic, strong, nullable) VRM1Expressions *expressions;
 
-- (nullable VRMCExpression *)expressionByName:(NSString *)name;
+- (nullable VRM1Expression *)expressionByName:(NSString *)name;
 
 @end
 
-extern NSString *const VRMHumanoidBoneTypeHips;
-extern NSString *const VRMHumanoidBoneTypeLeftUpperLeg;
-extern NSString *const VRMHumanoidBoneTypeRightUpperLeg;
-extern NSString *const VRMHumanoidBoneTypeLeftLowerLeg;
-extern NSString *const VRMHumanoidBoneTypeRightLowerLeg;
-extern NSString *const VRMHumanoidBoneTypeLeftFoot;
-extern NSString *const VRMHumanoidBoneTypeRightFoot;
-extern NSString *const VRMHumanoidBoneTypeSpine;
-extern NSString *const VRMHumanoidBoneTypeChest;
-extern NSString *const VRMHumanoidBoneTypeNeck;
-extern NSString *const VRMHumanoidBoneTypeHead;
-extern NSString *const VRMHumanoidBoneTypeLeftShoulder;
-extern NSString *const VRMHumanoidBoneTypeRightShoulder;
-extern NSString *const VRMHumanoidBoneTypeLeftUpperArm;
-extern NSString *const VRMHumanoidBoneTypeRightUpperArm;
-extern NSString *const VRMHumanoidBoneTypeLeftLowerArm;
-extern NSString *const VRMHumanoidBoneTypeRightLowerArm;
-extern NSString *const VRMHumanoidBoneTypeLeftHand;
-extern NSString *const VRMHumanoidBoneTypeRightHand;
-extern NSString *const VRMHumanoidBoneTypeLeftToes;
-extern NSString *const VRMHumanoidBoneTypeRightToes;
-extern NSString *const VRMHumanoidBoneTypeLeftEye;
-extern NSString *const VRMHumanoidBoneTypeRightEye;
-extern NSString *const VRMHumanoidBoneTypeJaw;
-extern NSString *const VRMHumanoidBoneTypeLeftThumbProximal;
-extern NSString *const VRMHumanoidBoneTypeLeftThumbIntermediate;
-extern NSString *const VRMHumanoidBoneTypeLeftThumbDistal;
-extern NSString *const VRMHumanoidBoneTypeLeftIndexProximal;
-extern NSString *const VRMHumanoidBoneTypeLeftIndexIntermediate;
-extern NSString *const VRMHumanoidBoneTypeLeftIndexDistal;
-extern NSString *const VRMHumanoidBoneTypeLeftMiddleProximal;
-extern NSString *const VRMHumanoidBoneTypeLeftMiddleIntermediate;
-extern NSString *const VRMHumanoidBoneTypeLeftMiddleDistal;
-extern NSString *const VRMHumanoidBoneTypeLeftRingProximal;
-extern NSString *const VRMHumanoidBoneTypeLeftRingIntermediate;
-extern NSString *const VRMHumanoidBoneTypeLeftRingDistal;
-extern NSString *const VRMHumanoidBoneTypeLeftLittleProximal;
-extern NSString *const VRMHumanoidBoneTypeLeftLittleIntermediate;
-extern NSString *const VRMHumanoidBoneTypeLeftLittleDistal;
-extern NSString *const VRMHumanoidBoneTypeRightThumbProximal;
-extern NSString *const VRMHumanoidBoneTypeRightThumbIntermediate;
-extern NSString *const VRMHumanoidBoneTypeRightThumbDistal;
-extern NSString *const VRMHumanoidBoneTypeRightIndexProximal;
-extern NSString *const VRMHumanoidBoneTypeRightIndexIntermediate;
-extern NSString *const VRMHumanoidBoneTypeRightIndexDistal;
-extern NSString *const VRMHumanoidBoneTypeRightMiddleProximal;
-extern NSString *const VRMHumanoidBoneTypeRightMiddleIntermediate;
-extern NSString *const VRMHumanoidBoneTypeRightMiddleDistal;
-extern NSString *const VRMHumanoidBoneTypeRightRingProximal;
-extern NSString *const VRMHumanoidBoneTypeRightRingIntermediate;
-extern NSString *const VRMHumanoidBoneTypeRightRingDistal;
-extern NSString *const VRMHumanoidBoneTypeRightLittleProximal;
-extern NSString *const VRMHumanoidBoneTypeRightLittleIntermediate;
-extern NSString *const VRMHumanoidBoneTypeRightLittleDistal;
-extern NSString *const VRMHumanoidBoneTypeUpperChest;
+extern NSString *const VRM0HumanoidBoneNameHips;
+extern NSString *const VRM0HumanoidBoneNameLeftUpperLeg;
+extern NSString *const VRM0HumanoidBoneNameRightUpperLeg;
+extern NSString *const VRM0HumanoidBoneNameLeftLowerLeg;
+extern NSString *const VRM0HumanoidBoneNameRightLowerLeg;
+extern NSString *const VRM0HumanoidBoneNameLeftFoot;
+extern NSString *const VRM0HumanoidBoneNameRightFoot;
+extern NSString *const VRM0HumanoidBoneNameSpine;
+extern NSString *const VRM0HumanoidBoneNameChest;
+extern NSString *const VRM0HumanoidBoneNameNeck;
+extern NSString *const VRM0HumanoidBoneNameHead;
+extern NSString *const VRM0HumanoidBoneNameLeftShoulder;
+extern NSString *const VRM0HumanoidBoneNameRightShoulder;
+extern NSString *const VRM0HumanoidBoneNameLeftUpperArm;
+extern NSString *const VRM0HumanoidBoneNameRightUpperArm;
+extern NSString *const VRM0HumanoidBoneNameLeftLowerArm;
+extern NSString *const VRM0HumanoidBoneNameRightLowerArm;
+extern NSString *const VRM0HumanoidBoneNameLeftHand;
+extern NSString *const VRM0HumanoidBoneNameRightHand;
+extern NSString *const VRM0HumanoidBoneNameLeftToes;
+extern NSString *const VRM0HumanoidBoneNameRightToes;
+extern NSString *const VRM0HumanoidBoneNameLeftEye;
+extern NSString *const VRM0HumanoidBoneNameRightEye;
+extern NSString *const VRM0HumanoidBoneNameJaw;
+extern NSString *const VRM0HumanoidBoneNameLeftThumbProximal;
+extern NSString *const VRM0HumanoidBoneNameLeftThumbIntermediate;
+extern NSString *const VRM0HumanoidBoneNameLeftThumbDistal;
+extern NSString *const VRM0HumanoidBoneNameLeftIndexProximal;
+extern NSString *const VRM0HumanoidBoneNameLeftIndexIntermediate;
+extern NSString *const VRM0HumanoidBoneNameLeftIndexDistal;
+extern NSString *const VRM0HumanoidBoneNameLeftMiddleProximal;
+extern NSString *const VRM0HumanoidBoneNameLeftMiddleIntermediate;
+extern NSString *const VRM0HumanoidBoneNameLeftMiddleDistal;
+extern NSString *const VRM0HumanoidBoneNameLeftRingProximal;
+extern NSString *const VRM0HumanoidBoneNameLeftRingIntermediate;
+extern NSString *const VRM0HumanoidBoneNameLeftRingDistal;
+extern NSString *const VRM0HumanoidBoneNameLeftLittleProximal;
+extern NSString *const VRM0HumanoidBoneNameLeftLittleIntermediate;
+extern NSString *const VRM0HumanoidBoneNameLeftLittleDistal;
+extern NSString *const VRM0HumanoidBoneNameRightThumbProximal;
+extern NSString *const VRM0HumanoidBoneNameRightThumbIntermediate;
+extern NSString *const VRM0HumanoidBoneNameRightThumbDistal;
+extern NSString *const VRM0HumanoidBoneNameRightIndexProximal;
+extern NSString *const VRM0HumanoidBoneNameRightIndexIntermediate;
+extern NSString *const VRM0HumanoidBoneNameRightIndexDistal;
+extern NSString *const VRM0HumanoidBoneNameRightMiddleProximal;
+extern NSString *const VRM0HumanoidBoneNameRightMiddleIntermediate;
+extern NSString *const VRM0HumanoidBoneNameRightMiddleDistal;
+extern NSString *const VRM0HumanoidBoneNameRightRingProximal;
+extern NSString *const VRM0HumanoidBoneNameRightRingIntermediate;
+extern NSString *const VRM0HumanoidBoneNameRightRingDistal;
+extern NSString *const VRM0HumanoidBoneNameRightLittleProximal;
+extern NSString *const VRM0HumanoidBoneNameRightLittleIntermediate;
+extern NSString *const VRM0HumanoidBoneNameRightLittleDistal;
+extern NSString *const VRM0HumanoidBoneNameUpperChest;
 
-@interface VRMHumanoidBone : NSObject
+@interface VRM0HumanoidBone : NSObject
 
 @property(nonatomic, copy, nullable) NSString *bone;
 @property(nonatomic, strong, nullable) NSNumber *node;
@@ -811,9 +811,9 @@ extern NSString *const VRMHumanoidBoneTypeUpperChest;
 
 @end
 
-@interface VRMHumanoid : NSObject
+@interface VRM0Humanoid : NSObject
 
-@property(nonatomic, strong, nullable) NSArray<VRMHumanoidBone *> *humanBones;
+@property(nonatomic, strong, nullable) NSArray<VRM0HumanoidBone *> *humanBones;
 @property(nonatomic, strong, nullable) NSNumber *armStretch;
 @property(nonatomic, strong, nullable) NSNumber *legStretch;
 @property(nonatomic, strong, nullable) NSNumber *upperArmTwist;
@@ -823,28 +823,28 @@ extern NSString *const VRMHumanoidBoneTypeUpperChest;
 @property(nonatomic, strong, nullable) NSNumber *feetSpacing;
 @property(nonatomic, strong, nullable) NSNumber *hasTranslationDoF;
 
-- (nullable VRMHumanoidBone *)humanBoneByName:(NSString *)name;
+- (nullable VRM0HumanoidBone *)humanBoneByName:(NSString *)name;
 
 @end
 
-extern NSString *const VRMMetaAllowedUserNameOnlyAuthor;
-extern NSString *const VRMMetaAllowedUserNameExplicitlyLicensedPerson;
-extern NSString *const VRMMetaAllowedUserNameEveryone;
+extern NSString *const VRM0MetaAllowedUserNameOnlyAuthor;
+extern NSString *const VRM0MetaAllowedUserNameExplicitlyLicensedPerson;
+extern NSString *const VRM0MetaAllowedUserNameEveryone;
 
-extern NSString *const VRMMetaUsagePermissionDisallow;
-extern NSString *const VRMMetaUsagePermissionAllow;
+extern NSString *const VRM0MetaUsagePermissionDisallow;
+extern NSString *const VRM0MetaUsagePermissionAllow;
 
-extern NSString *const VRMMetaLicenseNameRedistributionProhibited;
-extern NSString *const VRMMetaLicenseNameCC0;
-extern NSString *const VRMMetaLicenseNameCCBY;
-extern NSString *const VRMMetaLicenseNameCCBYNC;
-extern NSString *const VRMMetaLicenseNameCCBYSA;
-extern NSString *const VRMMetaLicenseNameCCBYNCSA;
-extern NSString *const VRMMetaLicenseNameCCBYND;
-extern NSString *const VRMMetaLicenseNameCCBYNCND;
-extern NSString *const VRMMetaLicenseNameOther;
+extern NSString *const VRM0MetaLicenseNameRedistributionProhibited;
+extern NSString *const VRM0MetaLicenseNameCC0;
+extern NSString *const VRM0MetaLicenseNameCCBY;
+extern NSString *const VRM0MetaLicenseNameCCBYNC;
+extern NSString *const VRM0MetaLicenseNameCCBYSA;
+extern NSString *const VRM0MetaLicenseNameCCBYNCSA;
+extern NSString *const VRM0MetaLicenseNameCCBYND;
+extern NSString *const VRM0MetaLicenseNameCCBYNCND;
+extern NSString *const VRM0MetaLicenseNameOther;
 
-@interface VRMMeta : NSObject
+@interface VRM0Meta : NSObject
 
 @property(nonatomic, copy, nullable) NSString *title;
 @property(nonatomic, copy, nullable) NSString *version;
@@ -862,14 +862,14 @@ extern NSString *const VRMMetaLicenseNameOther;
 
 @end
 
-@interface VRMMeshAnnotation : NSObject
+@interface VRM0FirstPersonMeshAnnotation : NSObject
 
 @property(nonatomic, strong, nullable) NSNumber *mesh;
 @property(nonatomic, copy, nullable) NSString *firstPersonFlag;
 
 @end
 
-@interface VRMDegreeMapCurveMapping : NSObject
+@interface VRM0FirstPersonDegreeMapCurve : NSObject
 
 @property(nonatomic, assign) float time;
 @property(nonatomic, assign) float value;
@@ -878,36 +878,40 @@ extern NSString *const VRMMetaLicenseNameOther;
 
 @end
 
-@interface VRMDegreeMap : NSObject
+@interface VRM0FirstPersonDegreeMap : NSObject
 
 @property(nonatomic, strong, nullable)
-    NSArray<VRMDegreeMapCurveMapping *> *curve;
+    NSArray<VRM0FirstPersonDegreeMapCurve *> *curve;
 @property(nonatomic, strong, nullable) NSNumber *xRange;
 @property(nonatomic, strong, nullable) NSNumber *yRange;
 
 @end
 
-extern NSString *const VRMFirstPersonLookAtTypeBone;
-extern NSString *const VRMFirstPersonLookAtTypeBlendShape;
+extern NSString *const VRM0FirstPersonLookAtTypeBone;
+extern NSString *const VRM0FirstPersonLookAtTypeBlendShape;
 
-@interface VRMFirstPerson : NSObject
+@interface VRM0FirstPerson : NSObject
 
 @property(nonatomic, strong, nullable) NSNumber *firstPersonBone;
 @property(nonatomic, strong, nullable) Vec3 *firstPersonBoneOffset;
 @property(nonatomic, strong, nullable)
-    NSArray<VRMMeshAnnotation *> *meshAnnotations;
+    NSArray<VRM0FirstPersonMeshAnnotation *> *meshAnnotations;
 @property(nonatomic, copy, nullable) NSString *lookAtTypeName;
-@property(nonatomic, strong, nullable) VRMDegreeMap *lookAtHorizontalInner;
-@property(nonatomic, strong, nullable) VRMDegreeMap *lookAtHorizontalOuter;
-@property(nonatomic, strong, nullable) VRMDegreeMap *lookAtVerticalDown;
-@property(nonatomic, strong, nullable) VRMDegreeMap *lookAtVerticalUp;
+@property(nonatomic, strong, nullable)
+    VRM0FirstPersonDegreeMap *lookAtHorizontalInner;
+@property(nonatomic, strong, nullable)
+    VRM0FirstPersonDegreeMap *lookAtHorizontalOuter;
+@property(nonatomic, strong, nullable)
+    VRM0FirstPersonDegreeMap *lookAtVerticalDown;
+@property(nonatomic, strong, nullable)
+    VRM0FirstPersonDegreeMap *lookAtVerticalUp;
 
 - (BOOL)isLookAtTypeBone;
 - (BOOL)isLookAtTypeBlendShape;
 
 @end
 
-@interface VRMBlendShapeBind : NSObject
+@interface VRM0BlendShapeBind : NSObject
 
 @property(nonatomic, strong, nullable) NSNumber *mesh;
 @property(nonatomic, strong, nullable) NSNumber *index;
@@ -915,7 +919,7 @@ extern NSString *const VRMFirstPersonLookAtTypeBlendShape;
 
 @end
 
-@interface VRMBlendShapeMaterialBind : NSObject
+@interface VRM0BlendShapeMaterialBind : NSObject
 
 @property(nonatomic, copy, nullable) NSString *materialName;
 @property(nonatomic, copy, nullable) NSString *propertyName;
@@ -923,49 +927,50 @@ extern NSString *const VRMFirstPersonLookAtTypeBlendShape;
 
 @end
 
-extern NSString *const VRMBlendShapeGroupPresetNameUnknown;
-extern NSString *const VRMBlendShapeGroupPresetNameNeutral;
-extern NSString *const VRMBlendShapeGroupPresetNameA;
-extern NSString *const VRMBlendShapeGroupPresetNameI;
-extern NSString *const VRMBlendShapeGroupPresetNameU;
-extern NSString *const VRMBlendShapeGroupPresetNameE;
-extern NSString *const VRMBlendShapeGroupPresetNameO;
-extern NSString *const VRMBlendShapeGroupPresetNameBlink;
-extern NSString *const VRMBlendShapeGroupPresetNameJoy;
-extern NSString *const VRMBlendShapeGroupPresetNameAngry;
-extern NSString *const VRMBlendShapeGroupPresetNameSorrow;
-extern NSString *const VRMBlendShapeGroupPresetNameFun;
-extern NSString *const VRMBlendShapeGroupPresetNameLookUp;
-extern NSString *const VRMBlendShapeGroupPresetNameLookDown;
-extern NSString *const VRMBlendShapeGroupPresetNameLookLeft;
-extern NSString *const VRMBlendShapeGroupPresetNameLookRight;
-extern NSString *const VRMBlendShapeGroupPresetNameBlinkL;
-extern NSString *const VRMBlendShapeGroupPresetNameBlinkR;
+extern NSString *const VRM0BlendShapeGroupPresetNameUnknown;
+extern NSString *const VRM0BlendShapeGroupPresetNameNeutral;
+extern NSString *const VRM0BlendShapeGroupPresetNameA;
+extern NSString *const VRM0BlendShapeGroupPresetNameI;
+extern NSString *const VRM0BlendShapeGroupPresetNameU;
+extern NSString *const VRM0BlendShapeGroupPresetNameE;
+extern NSString *const VRM0BlendShapeGroupPresetNameO;
+extern NSString *const VRM0BlendShapeGroupPresetNameBlink;
+extern NSString *const VRM0BlendShapeGroupPresetNameJoy;
+extern NSString *const VRM0BlendShapeGroupPresetNameAngry;
+extern NSString *const VRM0BlendShapeGroupPresetNameSorrow;
+extern NSString *const VRM0BlendShapeGroupPresetNameFun;
+extern NSString *const VRM0BlendShapeGroupPresetNameLookUp;
+extern NSString *const VRM0BlendShapeGroupPresetNameLookDown;
+extern NSString *const VRM0BlendShapeGroupPresetNameLookLeft;
+extern NSString *const VRM0BlendShapeGroupPresetNameLookRight;
+extern NSString *const VRM0BlendShapeGroupPresetNameBlinkL;
+extern NSString *const VRM0BlendShapeGroupPresetNameBlinkR;
 
-@interface VRMBlendShapeGroup : NSObject
+@interface VRM0BlendShapeGroup : NSObject
 
 @property(nonatomic, copy, nullable) NSString *name;
 @property(nonatomic, copy, nullable) NSString *presetName;
-@property(nonatomic, strong, nullable) NSArray<VRMBlendShapeBind *> *binds;
+@property(nonatomic, strong, nullable) NSArray<VRM0BlendShapeBind *> *binds;
 @property(nonatomic, strong, nullable)
-    NSArray<VRMBlendShapeMaterialBind *> *materialValues;
+    NSArray<VRM0BlendShapeMaterialBind *> *materialValues;
 @property(nonatomic, assign) BOOL isBinary;
 
 - (nullable NSString *)groupName;
 
 @end
 
-@interface VRMBlendShape : NSObject
+@interface VRM0BlendShape : NSObject
 
 @property(nonatomic, strong, nullable)
-    NSArray<VRMBlendShapeGroup *> *blendShapeGroups;
+    NSArray<VRM0BlendShapeGroup *> *blendShapeGroups;
 
-- (nullable VRMBlendShapeGroup *)blendShapeGroupByPreset:(NSString *)presetName;
+- (nullable VRM0BlendShapeGroup *)blendShapeGroupByPreset:
+    (NSString *)presetName;
 - (NSArray<NSString *> *)groupNames;
 
 @end
 
-@interface VRMSecondaryAnimationCollider : NSObject
+@interface VRM0SecondaryAnimationCollider : NSObject
 
 @property(nonatomic, strong, nullable) Vec3 *offset;
 @property(nonatomic, strong, nullable) NSNumber *radius;
@@ -975,15 +980,15 @@ extern NSString *const VRMBlendShapeGroupPresetNameBlinkR;
 
 @end
 
-@interface VRMSecondaryAnimationColliderGroup : NSObject
+@interface VRM0SecondaryAnimationColliderGroup : NSObject
 
 @property(nonatomic, strong, nullable) NSNumber *node;
 @property(nonatomic, strong, nullable)
-    NSArray<VRMSecondaryAnimationCollider *> *colliders;
+    NSArray<VRM0SecondaryAnimationCollider *> *colliders;
 
 @end
 
-@interface VRMSecondaryAnimationSpring : NSObject
+@interface VRM0SecondaryAnimationSpring : NSObject
 
 @property(nonatomic, copy, nullable) NSString *comment;
 @property(nonatomic, strong, nullable) NSNumber *stiffiness;
@@ -997,16 +1002,16 @@ extern NSString *const VRMBlendShapeGroupPresetNameBlinkR;
 
 @end
 
-@interface VRMSecondaryAnimation : NSObject
+@interface VRM0SecondaryAnimation : NSObject
 
 @property(nonatomic, strong, nullable)
-    NSArray<VRMSecondaryAnimationSpring *> *boneGroups;
+    NSArray<VRM0SecondaryAnimationSpring *> *boneGroups;
 @property(nonatomic, strong, nullable)
-    NSArray<VRMSecondaryAnimationColliderGroup *> *colliderGroups;
+    NSArray<VRM0SecondaryAnimationColliderGroup *> *colliderGroups;
 
 @end
 
-@interface VRMMaterial : NSObject
+@interface VRM0Material : NSObject
 
 @property(nonatomic, copy, nullable) NSString *name;
 @property(nonatomic, copy, nullable) NSString *shader;
@@ -1024,24 +1029,25 @@ extern NSString *const VRMBlendShapeGroupPresetNameBlinkR;
 
 @end
 
-@interface VRMVrm : NSObject
+@interface VRM0VRM : NSObject
 
 @property(nonatomic, copy, nullable) NSString *exporterVersion;
 @property(nonatomic, copy, nullable) NSString *specVersion;
-@property(nonatomic, strong, nullable) VRMMeta *meta;
-@property(nonatomic, strong, nullable) VRMHumanoid *humanoid;
-@property(nonatomic, strong, nullable) VRMFirstPerson *firstPerson;
-@property(nonatomic, strong, nullable) VRMBlendShape *blendShapeMaster;
+@property(nonatomic, strong, nullable) VRM0Meta *meta;
+@property(nonatomic, strong, nullable) VRM0Humanoid *humanoid;
+@property(nonatomic, strong, nullable) VRM0FirstPerson *firstPerson;
+@property(nonatomic, strong, nullable) VRM0BlendShape *blendShapeMaster;
 @property(nonatomic, strong, nullable)
-    VRMSecondaryAnimation *secondaryAnimation;
+    VRM0SecondaryAnimation *secondaryAnimation;
 @property(nonatomic, strong, nullable)
-    NSArray<VRMMaterial *> *materialProperties;
+    NSArray<VRM0Material *> *materialProperties;
 
-- (nullable VRMBlendShapeGroup *)blendShapeGroupByPreset:(NSString *)presetName;
+- (nullable VRM0BlendShapeGroup *)blendShapeGroupByPreset:
+    (NSString *)presetName;
 
 @end
 
-@interface VRMCSpringBoneShapeSphere : NSObject
+@interface VRMSpringBoneShapeSphere : NSObject
 
 @property(nonatomic, strong, nullable) Vec3 *offset;
 @property(nonatomic, strong, nullable) NSNumber *radius;
@@ -1051,7 +1057,7 @@ extern NSString *const VRMBlendShapeGroupPresetNameBlinkR;
 
 @end
 
-@interface VRMCSpringBoneShapeCapsule : NSObject
+@interface VRMSpringBoneShapeCapsule : NSObject
 
 @property(nonatomic, strong, nullable) Vec3 *offset;
 @property(nonatomic, strong, nullable) NSNumber *radius;
@@ -1063,21 +1069,21 @@ extern NSString *const VRMBlendShapeGroupPresetNameBlinkR;
 
 @end
 
-@interface VRMCSpringBoneShape : NSObject
+@interface VRMSpringBoneShape : NSObject
 
-@property(nonatomic, strong, nullable) VRMCSpringBoneShapeSphere *sphere;
-@property(nonatomic, strong, nullable) VRMCSpringBoneShapeCapsule *capsule;
+@property(nonatomic, strong, nullable) VRMSpringBoneShapeSphere *sphere;
+@property(nonatomic, strong, nullable) VRMSpringBoneShapeCapsule *capsule;
 
 @end
 
-@interface VRMCSpringBoneCollider : NSObject
+@interface VRMSpringBoneCollider : NSObject
 
 @property(nonatomic, assign) NSUInteger node;
-@property(nonatomic, strong) VRMCSpringBoneShape *shape;
+@property(nonatomic, strong) VRMSpringBoneShape *shape;
 
 @end
 
-@interface VRMCSpringBoneJoint : NSObject
+@interface VRMSpringBoneJoint : NSObject
 
 @property(nonatomic, assign) NSUInteger node;
 @property(nonatomic, strong, nullable) NSNumber *hitRadius;
@@ -1094,30 +1100,30 @@ extern NSString *const VRMBlendShapeGroupPresetNameBlinkR;
 
 @end
 
-@interface VRMCSpringBoneColliderGroup : NSObject
+@interface VRMSpringBoneColliderGroup : NSObject
 
 @property(nonatomic, copy, nullable) NSString *name;
 @property(nonatomic, strong) NSArray<NSNumber *> *colliders;
 
 @end
 
-@interface VRMCSpringBoneSpring : NSObject
+@interface VRMSpringBoneSpring : NSObject
 
 @property(nonatomic, copy, nullable) NSString *name;
-@property(nonatomic, strong) NSArray<VRMCSpringBoneJoint *> *joints;
+@property(nonatomic, strong) NSArray<VRMSpringBoneJoint *> *joints;
 @property(nonatomic, strong, nullable) NSArray<NSNumber *> *colliderGroups;
 @property(nonatomic, strong, nullable) NSNumber *center;
 
 @end
 
-@interface VRMCSpringBone : NSObject
+@interface VRMSpringBone : NSObject
 
 @property(nonatomic, copy) NSString *specVersion;
 @property(nonatomic, strong, nullable)
-    NSArray<VRMCSpringBoneCollider *> *colliders;
+    NSArray<VRMSpringBoneCollider *> *colliders;
 @property(nonatomic, strong, nullable)
-    NSArray<VRMCSpringBoneColliderGroup *> *colliderGroups;
-@property(nonatomic, strong, nullable) NSArray<VRMCSpringBoneSpring *> *springs;
+    NSArray<VRMSpringBoneColliderGroup *> *colliderGroups;
+@property(nonatomic, strong, nullable) NSArray<VRMSpringBoneSpring *> *springs;
 
 @end
 
@@ -1141,9 +1147,9 @@ extern NSString *const VRMBlendShapeGroupPresetNameBlinkR;
 @property(nonatomic, strong, nullable) NSArray<GLTFSkin *> *skins;
 @property(nonatomic, strong, nullable) NSArray<GLTFTexture *> *textures;
 @property(nonatomic, strong, nullable) NSArray<KHRLight *> *lights;
-@property(nonatomic, strong, nullable) VRMVrm *vrm0;
-@property(nonatomic, strong, nullable) VRMCVrm *vrm1;
-@property(nonatomic, strong, nullable) VRMCSpringBone *springBone;
+@property(nonatomic, strong, nullable) VRM0VRM *vrm0;
+@property(nonatomic, strong, nullable) VRM1VRM *vrm1;
+@property(nonatomic, strong, nullable) VRMSpringBone *springBone;
 
 @end
 

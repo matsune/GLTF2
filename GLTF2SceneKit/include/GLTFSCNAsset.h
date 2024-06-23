@@ -8,22 +8,16 @@ NS_ASSUME_NONNULL_BEGIN
 GLTF_EXPORT @interface GLTFSCNAsset : NSObject
 
 @property(nonatomic, strong) NSArray<SCNScene *> *scenes;
-@property(nonatomic, strong, readonly) NSArray<SCNNode *> *cameraNodes;
 @property(nonatomic, strong) NSArray<SCNAnimationPlayer *> *animationPlayers;
-@property(nonatomic, strong, nullable) GLTFJson *json;
+@property(nonatomic, strong, nullable, readonly) GLTFJson *json;
+@property(nonatomic, strong, readonly) NSArray<SCNNode *> *scnNodes;
+@property(nonatomic, strong, readonly) NSArray<SCNNode *> *meshNodes;
 
 - (BOOL)loadFile:(const NSString *)path
            error:(NSError *_Nullable *_Nullable)error;
 
-- (nullable SCNScene *)defaultScene;
-
-- (NSArray<NSString *> *)blendShapeKeys;
-- (CGFloat)weightForBlendShapeKey:(NSString *)key;
-- (void)setBlendShapeWeight:(CGFloat)weight forKey:(NSString *)key;
-
-- (nullable SCNNode *)vrmRootNode;
-- (void)lookAtTarget:(SCNVector3)target;
-- (void)updateAtTime:(NSTimeInterval)time;
+- (SCNScene *)defaultScene;
+- (NSArray<SCNNode *> *)cameraNodes;
 
 @end
 

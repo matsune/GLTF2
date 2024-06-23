@@ -2,3 +2,4 @@
 #import "GLTFError.h"
 #import "GLTFJson.h"
 #import "GLTFSCNAsset.h"
+#import "VRMSCNAsset.h"

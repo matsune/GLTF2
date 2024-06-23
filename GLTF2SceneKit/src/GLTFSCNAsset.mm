@@ -2,10 +2,11 @@
 #include "GLTF2.h"
 #include "GLTFError.h"
 #import "JsonConverter.h"
+#import "SurfaceShaderModifierBuilder.h"
 #include <memory>
 #include <unordered_map>
 
-NSError *NSErrorFromInputException(gltf2::InputException e) {
+static NSError *NSErrorFromInputException(gltf2::InputException e) {
   return [NSError errorWithDomain:GLTFErrorDomainInput
                              code:GLTFInputError
                          userInfo:@{
@@ -15,7 +16,7 @@ NSError *NSErrorFromInputException(gltf2::InputException e) {
                          }];
 }
 
-NSError *NSErrorFromKeyNotFoundException(gltf2::KeyNotFoundException e) {
+static NSError *NSErrorFromKeyNotFoundException(gltf2::KeyNotFoundException e) {
   return [NSError errorWithDomain:GLTFErrorDomainKeyNotFound
                              code:GLTFKeyNotFoundError
                          userInfo:@{
@@ -25,7 +26,8 @@ NSError *NSErrorFromKeyNotFoundException(gltf2::KeyNotFoundException e) {
                          }];
 }
 
-NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
+static NSError *
+NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
   return [NSError errorWithDomain:GLTFErrorDomainInvalidFormat
                              code:GLTFInvalidFormatError
                          userInfo:@{
@@ -35,108 +37,21 @@ NSError *NSErrorFromInvalidFormatException(gltf2::InvalidFormatException e) {
                          }];
 }
 
-@interface SpringBoneJointState : NSObject
-
-@property(nonatomic, nonnull, strong) SCNNode *node;
-@property(nonatomic, assign) SCNVector3 prevTail;
-@property(nonatomic, assign) SCNVector3 currentTail;
-@property(nonatomic, assign) SCNVector3 boneAxis;
-@property(nonatomic, assign) CGFloat boneLength;
-@property(nonatomic, assign) SCNMatrix4 initialLocalMatrix;
-@property(nonatomic, assign) SCNQuaternion quaternion;
-
-@property(nonatomic, assign) float stiffness;
-@property(nonatomic, assign) float gravityPower;
-@property(nonatomic, assign) SCNVector3 gravityDir;
-@property(nonatomic, assign) float dragForce;
-@property(nonatomic, assign) float hitRadius;
-
-@end
-
-@implementation SpringBoneJointState
-
-@end
+static CGImageRef CGImageRefFromData(NSData *data) {
+  CGImageSourceRef source =
+      CGImageSourceCreateWithData((__bridge CFDataRef)data, NULL);
+  CGImageRef imageRef = CGImageSourceCreateImageAtIndex(source, 0, NULL);
+  CFRelease(source);
+  return imageRef;
+}
 
 @interface GLTFSCNAsset ()
 
 @property(nonatomic, strong) NSArray<SCNMaterial *> *scnMaterials;
-@property(nonatomic, strong) NSDictionary<NSNumber *, SCNNode *> *meshNodeDict;
-@property(nonatomic, strong) NSDictionary<NSNumber *, SCNNode *> *nodeDict;
-
-@property(nonatomic, assign) SCNMatrix4 lookAtMatrix;
-@property(nonatomic, assign) SCNVector3 initialLeftEyeAngles;
-@property(nonatomic, assign) SCNVector3 initialRightEyeAngles;
-
-@property(nonatomic, strong) NSArray<SpringBoneJointState *> *jointStates;
-@property(nonatomic, assign) NSTimeInterval lastTime;
 
 @end
 
 @implementation GLTFSCNAsset
-
-- (instancetype)init {
-  self = [super init];
-  if (self) {
-    _scenes = [NSArray array];
-    _cameraNodes = [NSArray array];
-    _animationPlayers = [NSArray array];
-    _scnMaterials = [NSArray array];
-    _lastTime = 0;
-  }
-  return self;
-}
-
-SCNMatrix4 LookAtMatrix(SCNNode *headBone, SCNVector3 offsetFromHeadBone) {
-  SCNVector3 headPosition = headBone.worldPosition;
-  SCNQuaternion headRotation = headBone.worldOrientation;
-
-  SCNMatrix4 headPositionMatrix =
-      SCNMatrix4MakeTranslation(headPosition.x, headPosition.y, headPosition.z);
-  SCNMatrix4 headRotationMatrix =
-      SCNMatrix4RotationFromQuaternion(headRotation);
-  SCNMatrix4 inverseHeadRotationMatrix = SCNMatrix4Invert(headRotationMatrix);
-
-  SCNMatrix4 offsetFromHeadBoneMatrix = SCNMatrix4MakeTranslation(
-      offsetFromHeadBone.x, offsetFromHeadBone.y, offsetFromHeadBone.z);
-
-  SCNMatrix4 headMatrix =
-      SCNMatrix4Mult(headPositionMatrix, headRotationMatrix);
-  SCNMatrix4 offsetMatrix =
-      SCNMatrix4Mult(headMatrix, offsetFromHeadBoneMatrix);
-  return SCNMatrix4Mult(offsetMatrix, inverseHeadRotationMatrix);
-}
-
-SCNMatrix4 SCNMatrix4RotationFromQuaternion(const SCNQuaternion &q) {
-  CGFloat w = q.w;
-  CGFloat x = q.x;
-  CGFloat y = q.y;
-  CGFloat z = q.z;
-
-  CGFloat angle = 2 * acos(w);
-  CGFloat sinHalfAngle = sqrt(1 - w * w);
-
-  CGFloat ux, uy, uz;
-  if (sinHalfAngle < 0.0001) {
-    ux = 1;
-    uy = 0;
-    uz = 0;
-  } else {
-    ux = x / sinHalfAngle;
-    uy = y / sinHalfAngle;
-    uz = z / sinHalfAngle;
-  }
-  return SCNMatrix4MakeRotation(angle, ux, uy, uz);
-}
-
-SCNVector3 SCNVector3ApplyTransform(SCNVector3 vector, SCNMatrix4 transform) {
-  float x = transform.m11 * vector.x + transform.m21 * vector.y +
-            transform.m31 * vector.z + transform.m41;
-  float y = transform.m12 * vector.x + transform.m22 * vector.y +
-            transform.m32 * vector.z + transform.m42;
-  float z = transform.m13 * vector.x + transform.m23 * vector.y +
-            transform.m33 * vector.z + transform.m43;
-  return SCNVector3Make(x, y, z);
-}
 
 - (BOOL)loadFile:(const NSString *)path
            error:(NSError *_Nullable *_Nullable)error {
@@ -146,17 +61,6 @@ SCNVector3 SCNVector3ApplyTransform(SCNVector3 vector, SCNMatrix4 transform) {
     [self loadScenesWithData:data];
     const auto json = data.moveJson();
     _json = [JsonConverter convertGLTFJson:json];
-
-    if (self.isLookAtTypeBone) {
-      // Bone
-      _lookAtMatrix = LookAtMatrix(self.vrmHeadBone, self.offsetFromHeadBone);
-      _initialLeftEyeAngles = self.leftEyeBone.eulerAngles;
-      _initialRightEyeAngles = self.rightEyeBone.eulerAngles;
-    }
-
-    if (self.json.vrm0) {
-      self.vrmRootNode.rotation = SCNVector4Make(0, 1, 0, M_PI);
-    }
   } catch (gltf2::InputException e) {
     if (error)
       *error = NSErrorFromInputException(e);
@@ -174,20 +78,7 @@ SCNVector3 SCNVector3ApplyTransform(SCNVector3 vector, SCNMatrix4 transform) {
   return YES;
 }
 
-- (nullable SCNNode *)vrmRootNode {
-  if (self.json.vrm0) {
-    VRMHumanoidBone *bone =
-        [self.json.vrm0.humanoid humanBoneByName:VRMHumanoidBoneTypeHips];
-    return self.nodeDict[bone.node];
-  } else if (self.json.vrm1) {
-    return self.nodeDict[self.json.vrm1.humanoid.humanBones.hips.node];
-  }
-  return nil;
-}
-
-#pragma mark SCNScene
-
-- (nullable SCNScene *)defaultScene {
+- (SCNScene *)defaultScene {
   if (self.json.scene) {
     return self.scenes[self.json.scene.integerValue];
   } else {
@@ -195,7 +86,20 @@ SCNVector3 SCNVector3ApplyTransform(SCNVector3 vector, SCNMatrix4 transform) {
   }
 }
 
-static simd_float4x4 simdTransformOfNode(const gltf2::json::Node &node) {
+- (NSArray<SCNNode *> *)cameraNodes {
+  if (!self.json.cameras)
+    return [NSArray array];
+  NSMutableArray<SCNNode *> *nodes = [NSMutableArray array];
+  for (GLTFNode *node in self.json.nodes) {
+    if (node.camera) {
+      SCNNode *scnNode = self.scnNodes[node.camera.unsignedIntegerValue];
+      [nodes addObject:scnNode];
+    }
+  }
+  return [nodes copy];
+}
+
++ (simd_float4x4)simdTransformOfNode:(const gltf2::json::Node &)node {
   if (node.matrix.has_value()) {
     auto matrixValue = node.matrixValue();
     simd_float4x4 matrix;
@@ -234,126 +138,45 @@ static simd_float4x4 simdTransformOfNode(const gltf2::json::Node &node) {
   return matrix_identity_float4x4;
 }
 
-SCNVector3 crossProduct(SCNVector3 v1, SCNVector3 v2) {
-  return SCNVector3Make(v1.y * v2.z - v1.z * v2.y, v1.z * v2.x - v1.x * v2.z,
-                        v1.x * v2.y - v1.y * v2.x);
-}
-
-float angleBetweenVectors(SCNVector3 v1, SCNVector3 v2) {
-  float dot = v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
-  float magnitudeV1 = sqrt(v1.x * v1.x + v1.y * v1.y + v1.z * v1.z);
-  float magnitudeV2 = sqrt(v2.x * v2.x + v2.y * v2.y + v2.z * v2.z);
-  return acos(dot / (magnitudeV1 * magnitudeV2));
-}
-
 - (void)loadScenesWithData:(const gltf2::GLTFData &)data {
   // load materials
-  self.scnMaterials = [self loadSCNMaterialsWithData:data];
+  _scnMaterials = [GLTFSCNAsset loadSCNMaterialsWithData:data];
 
   // load cameras
-  NSArray<SCNCamera *> *scnCameras = [self loadSCNCamerasWithData:data];
+  NSArray<SCNCamera *> *scnCameras = [GLTFSCNAsset loadSCNCamerasWithData:data];
+
+  // load mesh nodes
+  _meshNodes = [GLTFSCNAsset loadMeshSCNNodesWithData:data
+                                         scnMaterials:self.scnMaterials];
 
   // load nodes
-  NSMutableArray<SCNNode *> *scnNodes;
-  NSMutableArray<SCNNode *> *cameraNodes = [NSMutableArray array];
-  NSMutableDictionary<NSNumber *, SCNNode *> *meshNodeDict =
-      [NSMutableDictionary dictionary];
-  NSMutableDictionary<NSNumber *, SCNNode *> *nodeDict =
-      [NSMutableDictionary dictionary];
-
   if (data.json().nodes.has_value()) {
     const auto &nodes = *data.json().nodes;
-    scnNodes = [NSMutableArray arrayWithCapacity:nodes.size()];
 
-    for (NSInteger nodeIndex = 0; nodeIndex < nodes.size(); nodeIndex++) {
-      const auto &node = nodes[nodeIndex];
+    NSMutableArray<SCNNode *> *scnNodes =
+        [NSMutableArray arrayWithCapacity:nodes.size()];
+    for (NSInteger i = 0; i < nodes.size(); ++i) {
+      const auto &node = nodes[i];
       SCNNode *scnNode = [SCNNode node];
       scnNode.name = [[NSUUID UUID] UUIDString];
-      scnNode.simdTransform = simdTransformOfNode(node);
-
+      scnNode.simdTransform = [GLTFSCNAsset simdTransformOfNode:node];
       if (node.camera.has_value()) {
         scnNode.camera = scnCameras[*node.camera];
-        [cameraNodes addObject:scnNode];
       }
-
       if (node.mesh.has_value()) {
-        const uint32_t meshIndex = *node.mesh;
-        const auto &mesh = data.json().meshes->at(meshIndex);
-
-        for (uint32_t primitiveIndex = 0;
-             primitiveIndex < mesh.primitives.size(); primitiveIndex++) {
-          const auto &primitive = mesh.primitives[primitiveIndex];
-          const auto &meshPrimitive =
-              data.meshPrimitiveAt(meshIndex, primitiveIndex);
-
-          SCNGeometry *geometry =
-              [self scnGeometryFromMeshPrimitive:meshPrimitive];
-          if (primitive.modeValue() ==
-                  gltf2::json::MeshPrimitive::Mode::POINTS &&
-              geometry.geometryElementCount > 0) {
-            geometry.geometryElements.firstObject
-                .minimumPointScreenSpaceRadius = 1.0;
-            geometry.geometryElements.firstObject
-                .maximumPointScreenSpaceRadius = 1.0;
-          }
-
-          if (primitive.material.has_value()) {
-            geometry.firstMaterial = self.scnMaterials[*primitive.material];
-          }
-
-          SCNMorpher *morpher;
-          if (primitive.targets.has_value()) {
-            morpher = [SCNMorpher new];
-
-            NSMutableArray<SCNGeometry *> *morphTargets =
-                [NSMutableArray arrayWithCapacity:primitive.targets->size()];
-            for (uint32_t targetIndex = 0;
-                 targetIndex < primitive.targets->size(); targetIndex++) {
-              const auto primitiveSources = meshPrimitive.targets[targetIndex];
-              NSArray<SCNGeometrySource *> *sources = [self
-                  scnGeometrySourcesFromMeshPrimitiveSources:primitiveSources];
-              SCNGeometry *morphTarget =
-                  [SCNGeometry geometryWithSources:sources
-                                          elements:geometry.geometryElements];
-              [morphTargets addObject:morphTarget];
-            }
-
-            morpher.targets = [morphTargets copy];
-            morpher.unifiesNormals = YES;
-            morpher.calculationMode = SCNMorpherCalculationModeAdditive;
-            if (mesh.weights.has_value()) {
-              NSMutableArray<NSNumber *> *values =
-                  [NSMutableArray arrayWithCapacity:mesh.weights->size()];
-              for (auto weight : *mesh.weights) {
-                [values addObject:[NSNumber numberWithFloat:weight]];
-              }
-              morpher.weights = [values copy];
-            }
-          }
-
-          SCNNode *geometryNode = [SCNNode nodeWithGeometry:geometry];
-          geometryNode.name = [[NSUUID UUID] UUIDString];
-          geometryNode.morpher = morpher;
-          [scnNode addChildNode:geometryNode];
-        }
-
-        meshNodeDict[[NSNumber numberWithUnsignedInt:meshIndex]] = scnNode;
+        [scnNode addChildNode:self.meshNodes[*node.mesh]];
       }
-
       [scnNodes addObject:scnNode];
-      nodeDict[@(nodeIndex)] = scnNode;
     }
-    _meshNodeDict = [meshNodeDict copy];
-    _nodeDict = [nodeDict copy];
+    _scnNodes = [scnNodes copy];
 
-    for (int i = 0; i < nodes.size(); i++) {
-      const auto &node = nodes.at(i);
+    for (NSInteger i = 0; i < nodes.size(); i++) {
+      const auto &node = nodes[i];
       SCNNode *scnNode = scnNodes[i];
 
       if (node.children.has_value()) {
-        for (auto childIndex : *node.children) {
-          SCNNode *childNode = scnNodes[childIndex];
-          [scnNode addChildNode:childNode];
+        for (const auto childIndex : *node.children) {
+          [scnNode addChildNode:scnNodes[childIndex]];
         }
       }
 
@@ -363,8 +186,7 @@ float angleBetweenVectors(SCNVector3 v1, SCNVector3 v2) {
         NSMutableArray<SCNNode *> *bones =
             [NSMutableArray arrayWithCapacity:skin.joints.size()];
         for (auto joint : skin.joints) {
-          SCNNode *bone = scnNodes[joint];
-          [bones addObject:bone];
+          [bones addObject:scnNodes[joint]];
         }
 
         NSArray<NSValue *> *boneInverseBindTransforms;
@@ -387,18 +209,19 @@ float angleBetweenVectors(SCNVector3 v1, SCNVector3 v2) {
 
         const uint32_t meshIndex = *node.mesh;
         const auto &mesh = data.json().meshes->at(meshIndex);
+        SCNNode *meshNode = self.meshNodes[meshIndex];
         for (uint32_t primitiveIndex = 0;
              primitiveIndex < mesh.primitives.size(); primitiveIndex++) {
           const auto &primitive = mesh.primitives[primitiveIndex];
           const auto &meshPrimitive =
               data.meshPrimitiveAt(meshIndex, primitiveIndex);
 
-          SCNNode *geometryNode = scnNode.childNodes[primitiveIndex];
+          SCNNode *geometryNode = meshNode.childNodes[primitiveIndex];
           SCNGeometry *geometry = geometryNode.geometry;
 
           SCNGeometrySource *boneWeights;
           if (meshPrimitive.sources.weights.size() > 0) {
-            boneWeights = [self
+            boneWeights = [GLTFSCNAsset
                 scnGeometrySourceFromMeshPrimitiveSource:meshPrimitive.sources
                                                              .weights[0]
                                                 semantic:
@@ -406,7 +229,7 @@ float angleBetweenVectors(SCNVector3 v1, SCNVector3 v2) {
           }
           SCNGeometrySource *boneIndices;
           if (meshPrimitive.sources.joints.size() > 0) {
-            boneIndices = [self
+            boneIndices = [GLTFSCNAsset
                 scnGeometrySourceFromMeshPrimitiveSource:meshPrimitive.sources
                                                              .joints[0]
                                                 semantic:
@@ -429,12 +252,10 @@ float angleBetweenVectors(SCNVector3 v1, SCNVector3 v2) {
       }
     }
   }
-  _cameraNodes = [cameraNodes copy];
 
   // animations
   NSMutableArray<SCNAnimationPlayer *> *animationPlayers =
       [NSMutableArray array];
-
   if (data.json().animations.has_value()) {
     for (const auto &animation : *data.json().animations) {
       NSMutableArray *channelAnimations = [NSMutableArray array];
@@ -445,15 +266,15 @@ float angleBetweenVectors(SCNVector3 v1, SCNVector3 v2) {
           continue;
 
         const auto &node = data.json().nodes->at(*channel.target.node);
-        SCNNode *scnNode = scnNodes[*channel.target.node];
+        SCNNode *scnNode = self.scnNodes[*channel.target.node];
 
         const auto &sampler = animation.samplers[channel.sampler];
 
         float maxKeyTime = 1.0f;
         NSArray<NSNumber *> *keyTimes =
-            [self keyTimesFromAnimationSampler:sampler
-                                    maxKeyTime:&maxKeyTime
-                                          data:data];
+            [GLTFSCNAsset keyTimesFromAnimationSampler:sampler
+                                            maxKeyTime:&maxKeyTime
+                                                  data:data];
         maxDuration = MAX(maxDuration, maxKeyTime);
 
         const auto &outputAccessor = data.json().accessors->at(sampler.output);
@@ -577,705 +398,294 @@ float angleBetweenVectors(SCNVector3 v1, SCNVector3 v2) {
       SCNScene *scnScene = [SCNScene scene];
       if (scene.nodes.has_value()) {
         for (auto nodeIndex : *scene.nodes) {
-          SCNNode *node = scnNodes[nodeIndex];
-          [scnScene.rootNode addChildNode:node];
+          [scnScene.rootNode addChildNode:self.scnNodes[nodeIndex]];
         }
       }
       [scnScenes addObject:scnScene];
     }
   }
   self.scenes = [scnScenes copy];
-
-  if (data.json().springBone.has_value()) {
-    const auto &springBone = data.json().springBone.value();
-    NSMutableArray<SCNNode *> *colliderNodes = [NSMutableArray array];
-    if (springBone.colliders.has_value()) {
-      for (const auto &collider : *springBone.colliders) {
-        SCNNode *node = nodeDict[@(collider.node)];
-        SCNNode *colliderNode = [SCNNode node];
-        if (collider.shape.sphere.has_value()) {
-          colliderNode.geometry =
-              [SCNSphere sphereWithRadius:collider.shape.sphere->radiusValue()];
-          auto offset = collider.shape.sphere->offsetValue();
-          colliderNode.position =
-              SCNVector3Make(offset[0], offset[1], offset[2]);
-        } else if (collider.shape.capsule.has_value()) {
-          auto offset = collider.shape.capsule->offsetValue();
-          auto tail = collider.shape.capsule->tailValue();
-          float height =
-              sqrt(pow(tail[0] - offset[0], 2) + pow(tail[1] - offset[1], 2) +
-                   pow(tail[2] - offset[2], 2));
-          colliderNode.geometry = [SCNCapsule
-              capsuleWithCapRadius:collider.shape.capsule->radiusValue()
-                            height:height];
-
-          colliderNode.position =
-              SCNVector3Make(offset[0], offset[1], offset[2]);
-
-          SCNVector3 direction = SCNVector3Make(
-              tail[0] - offset[0], tail[1] - offset[1], tail[2] - offset[2]);
-          SCNVector3 up = SCNVector3Make(0, 1, 0);
-          SCNVector3 cross = crossProduct(up, direction);
-          SCNVector3 axis = crossProduct(up, direction);
-          float angle = angleBetweenVectors(up, direction);
-          colliderNode.rotation = SCNVector4Make(axis.x, axis.y, axis.z, angle);
-        }
-        colliderNode.geometry.firstMaterial.transparency = 0.0;
-        colliderNode.physicsBody = [SCNPhysicsBody
-            bodyWithType:SCNPhysicsBodyTypeKinematic
-                   shape:[SCNPhysicsShape shapeWithNode:colliderNode
-                                                options:nil]];
-        [node addChildNode:colliderNode];
-
-        [colliderNodes addObject:colliderNode];
-      }
-    }
-
-    NSMutableArray<NSArray<SCNNode *> *> *colliderGroups =
-        [NSMutableArray array];
-    if (springBone.colliderGroups.has_value()) {
-      for (const auto &colliderGroup : *springBone.colliderGroups) {
-        NSMutableArray<SCNNode *> *groupColliders = [NSMutableArray array];
-        for (auto colliderIndex : colliderGroup.colliders) {
-          SCNNode *colliderNode = colliderNodes[colliderIndex];
-          [groupColliders addObject:colliderNode];
-        }
-        [colliderGroups addObject:[groupColliders copy]];
-      }
-    }
-
-    if (springBone.springs.has_value()) {
-      NSMutableArray<SpringBoneJointState *> *jointStates =
-          [NSMutableArray array];
-      for (const auto &spring : *springBone.springs) {
-        for (int i = 0; i < spring.joints.size() - 1; i++) {
-          uint32_t headIndex = spring.joints[i].node;
-          uint32_t tailIndex = spring.joints[i + 1].node;
-          NSLog(@"head: %d, tail: %d", headIndex, tailIndex);
-          SCNNode *head = nodeDict[@(spring.joints[i].node)];
-          SCNNode *tail = nodeDict[@(spring.joints[i + 1].node)];
-          assert(head == tail.parentNode);
-
-          SpringBoneJointState *state = [[SpringBoneJointState alloc] init];
-          state.node = tail;
-          state.prevTail = tail.worldPosition;
-          state.currentTail = tail.worldPosition;
-          state.boneAxis = SCNVector3Make(tail.position.x - head.position.x,
-                                          tail.position.y - head.position.y,
-                                          tail.position.z - head.position.z);
-          state.boneLength = sqrtf(state.boneAxis.x * state.boneAxis.x +
-                                   state.boneAxis.y * state.boneAxis.y +
-                                   state.boneAxis.z * state.boneAxis.z);
-          state.initialLocalMatrix = head.transform;
-          state.quaternion = head.orientation;
-
-          state.stiffness = spring.joints[i].stiffnessValue();
-          state.gravityPower = spring.joints[i].gravityPowerValue();
-          state.gravityDir =
-              SCNVector3Make(spring.joints[i].gravityDirValue().at(0),
-                             spring.joints[i].gravityDirValue().at(1),
-                             spring.joints[i].gravityDirValue().at(2));
-          state.dragForce = spring.joints[i].dragForceValue();
-          state.hitRadius = spring.joints[i].hitRadiusValue();
-
-          [jointStates addObject:state];
-        }
-      }
-      self.jointStates = [jointStates copy];
-    }
-  }
-
-  if (data.json().vrm0.has_value() &&
-      data.json().vrm0->secondaryAnimation.has_value() &&
-      data.json().vrm0->secondaryAnimation->colliderGroups.has_value()) {
-    for (const auto &colliderGroup :
-         *data.json().vrm0->secondaryAnimation->colliderGroups) {
-      if (colliderGroup.node.has_value() &&
-          colliderGroup.colliders.has_value()) {
-        SCNNode *node = nodeDict[@(*colliderGroup.node)];
-        for (const auto &collider : *colliderGroup.colliders) {
-          SCNNode *colliderNode = [SCNNode node];
-          colliderNode.geometry =
-              [SCNSphere sphereWithRadius:collider.radiusValue()];
-          const auto offset = collider.offsetValue();
-          colliderNode.position = SCNVector3Make(
-              offset.x.value_or(0), offset.y.value_or(0), offset.z.value_or(0));
-          colliderNode.geometry.firstMaterial.transparency = 0.0;
-          colliderNode.physicsBody = [SCNPhysicsBody
-              bodyWithType:SCNPhysicsBodyTypeKinematic
-                     shape:[SCNPhysicsShape shapeWithNode:colliderNode
-                                                  options:nil]];
-          [node addChildNode:colliderNode];
-        }
-      }
-    }
-  }
 }
 
 #pragma mark SCNMaterial
 
-class SurfaceShaderModifierBuilder {
-public:
-  bool transparent;
-  bool hasBaseColorTexture;
-  bool enableDiffuseAlphaCutoff;
-  bool isDiffuseOpaque;
-  bool enableAnisotropy;
-  bool hasAnisotropyTexture;
-  bool enableSheen;
-  bool hasSheenColorTexture;
-  bool hasSheenRoughnessTexture;
-
-  SurfaceShaderModifierBuilder()
-      : transparent(false), hasBaseColorTexture(false),
-        enableDiffuseAlphaCutoff(false), isDiffuseOpaque(false),
-        enableAnisotropy(false), hasAnisotropyTexture(false),
-        enableSheen(false), hasSheenColorTexture(false),
-        hasSheenRoughnessTexture(false) {}
-
-  NSString *buildShader() {
-    NSMutableString *shader = [NSMutableString string];
-
-    if (transparent) {
-      [shader appendString:@"#pragma transparent\n"];
-    }
-
-    NSArray<NSString *> *uniforms = @[
-      @"vec4  diffuseBaseColorFactor",
-      @"float diffuseAlphaCutoff",
-
-      @"float anisotropyStrength",
-      @"float anisotropyRotation",
-      @"sampler2D anisotropyTexture",
-
-      @"vec3  sheenColorFactor",
-      @"float sheenRoughnessFactor",
-      @"sampler2D sheenColorTexture",
-      @"sampler2D sheenRoughnessTexture",
-
-      @"float emissiveStrength",
-
-      @"float ior",
-    ];
-    for (NSString *uniform in uniforms) {
-      [shader appendString:[@[ @"uniform ", uniform, @";" ]
-                               componentsJoinedByString:@""]];
-    }
-
-    [shader appendString:@"\n"
-                          "vec3 F_Schlick(vec3 f0, vec3 f90, float VdotH) {"
-                          "  return f0 + (f90 - f0) * pow("
-                          "    clamp(1.0 - VdotH, 0.0, 1.0), 5.0"
-                          "  );"
-                          "}"
-                          "\n"];
-
-    // anisotropy
-    [shader
-        appendFormat:
-            @"\n"
-             "float D_GGX_anisotropic("
-             "  float NdotH, float TdotH, float BdotH,"
-             "  float at, float ab"
-             ") {"
-             "  float a2 = at * ab;"
-             "  vec3 f = vec3(ab * TdotH, at * BdotH, a2 * NdotH);"
-             "  float w2 = a2 / dot(f, f);"
-             "  return a2 * w2 * w2 / %f;"
-             "}"
-             "\n"
-             "float V_GGX_anisotropic("
-             "  float NdotL, float NdotV, float BdotV, "
-             "  float TdotV, float TdotL, float BdotL, float at, float ab"
-             ") {"
-             "  float GGXV = NdotL * length("
-             "    vec3(at * TdotV, ab * BdotV, NdotV)"
-             "  );"
-             "  float GGXL = NdotV * length("
-             "    vec3(at * TdotL, ab * BdotL, NdotL)"
-             "  );"
-             "  float v = 0.5 / (GGXV + GGXL);"
-             "  return clamp(v, 0.0, 1.0);"
-             "}"
-             "\n"
-             "vec3 BRDF_specularAnisotropicGGX("
-             "  vec3 f0, vec3 f90, float alphaRoughness,"
-             "  float VdotH, float NdotL, float NdotV, "
-             "  float NdotH, float BdotV, float TdotV,"
-             "  float TdotL, float BdotL, float TdotH, "
-             "  float BdotH, float anisotropy"
-             ") {"
-             "  float at = mix(alphaRoughness, 1.0, anisotropy * anisotropy);"
-             "  float ab = alphaRoughness;"
-             "  vec3 F = F_Schlick(f0, f90, VdotH);"
-             "  float V = V_GGX_anisotropic("
-             "    NdotL, NdotV, BdotV, TdotV,"
-             "    TdotL, BdotL, at, ab"
-             "  );"
-             "  float D = D_GGX_anisotropic(NdotH, TdotH, BdotH, at, ab);"
-             "  return F * V * D * %f * NdotL;"
-             "}"
-             "\n",
-            M_PI, M_PI];
-
-    // sheen
-    // Charlie distribution and Ashikhmin visibility
-    [shader
-        appendFormat:
-            @"\n"
-             "float D_Sheen(float alphaG, float NdotH) {"
-             "  float invR = 1. / alphaG;"
-             "  float cos2h = NdotH * NdotH;"
-             "  float sin2h = 1. - cos2h;"
-             "  return (2. + invR) * pow(sin2h, invR * .5) / (2. * %f);"
-             "}"
-             "\n"
-             "float l(float x, float alphaG) {"
-             "  float oneMinusAlphaSq = (1.0 - alphaG) * (1.0 - alphaG);"
-             "  float a = mix(21.5473, 25.3245, oneMinusAlphaSq);"
-             "  float b = mix(3.82987, 3.32435, oneMinusAlphaSq);"
-             "  float c = mix(0.19823, 0.16801, oneMinusAlphaSq);"
-             "  float d = mix(-1.97760, -1.27393, oneMinusAlphaSq);"
-             "  float e = mix(-4.32054, -4.85967, oneMinusAlphaSq);"
-             "  return a / (1.0 + b * pow(x, c)) + d * x + e;"
-             "}"
-             "\n"
-             "float lambdaSheen(float cosTheta, float alphaG) {"
-             "  if (abs(cosTheta) < 0.5) {"
-             "    return exp(l(cosTheta, alphaG));"
-             "  } else {"
-             "    return exp(2.0 * l(0.5, alphaG) - "
-             "l(1.0 - cosTheta, alphaG));"
-             "  }"
-             "}"
-             "\n"
-             "float V_Sheen(float alphaG, float NdotV, float NdotL) {"
-             "  return clamp(1.0 / ((1.0 + lambdaSheen(NdotV, alphaG) + "
-             "lambdaSheen(NdotL, alphaG)) * (4.0 * NdotV * NdotL)), 0.0, 1.0);"
-             "}"
-             "\n"
-             "\n"
-             "vec3 BRDF_specularSheen("
-             "  float sheenRoughness, "
-             "  float NdotL, float NdotV, float NdotH "
-             ") {"
-             "  float roughness = max(sheenRoughness, 0.000001);"
-             "  float alphaG = roughness * roughness;"
-             "  float D = D_Sheen(alphaG, NdotH);"
-             "  float V = V_Sheen(alphaG, NdotV, NdotL);"
-             "  return D * V * %f * NdotL;"
-             "}"
-             "\n",
-            M_PI, M_PI];
-
-    // Body
-    [shader appendString:@"#pragma body\n"];
-
-    [shader appendString:@"vec3 f0 = vec3(pow((ior - 1)/(ior + 1), 2));"
-                          "vec3 f90 = vec3(1.0);"
-                          "float metalness = _surface.metalness;"
-                          "float roughness = _surface.roughness;"
-                          "float alphaRoughness = 0.0;"
-                          "vec4 baseColor = _surface.diffuse;"
-                          "_surface.emission *= emissiveStrength;"];
-
-    if (hasBaseColorTexture) {
-      [shader appendString:@"baseColor *= diffuseBaseColorFactor;"];
-    }
-
-    [shader appendString:@"alphaRoughness = roughness * roughness;"
-                          "f0 = mix(f0, baseColor.rgb, metalness);"];
-
-    if (enableAnisotropy) {
-      [shader appendString:@"if (true) {"
-                            "  vec2 u_AnisotropyRotation = vec2("
-                            "    cos(anisotropyRotation),"
-                            "    sin(anisotropyRotation)"
-                            "  );"
-                            "  vec2 direction = u_AnisotropyRotation;"
-                            "  float anisotropy = anisotropyStrength;"];
-      if (hasAnisotropyTexture) {
-        [shader
-            appendString:@"  vec3 anisotropyTex = texture2D("
-                          "    anisotropyTexture, "
-                          "    _surface.diffuseTexcoord" // surface modifier
-                                                         // cannot
-                          // get texcoords. so we use
-                          // diffuseTexcoord instead
-                          "  ).rgb;"
-                          "  direction = anisotropyTex.rg * 2.0 - vec2(1.0);"
-                          "  direction = mat2(u_AnisotropyRotation.x,"
-                          "                   u_AnisotropyRotation.y,"
-                          "                   -u_AnisotropyRotation.y,"
-                          "                   u_AnisotropyRotation.x"
-                          "  ) * normalize(direction);"
-                          "  anisotropy = anisotropyTex.b;"];
-      }
-      [shader
-          appendString:
-              @"  vec3 N = normalize(_surface.normal);"
-               "  vec3 V = normalize(_surface.view);"
-               "  vec3 L = normalize(scn_lights[0].pos - _surface.position);"
-               "  vec3 H = normalize(V + L);"
-               "  vec3 T = normalize(_surface.tangent);"
-               "  vec3 B = normalize(cross(N, T));"
-               "  mat3 TBN = mat3(T, B, N);"
-               "  vec3 anisotropicT = normalize(TBN * vec3(direction, 0.0));"
-               "  vec3 anisotropicB = normalize(cross(N, anisotropicT));"
-               "  float VdotH = max(dot(V, H), 0.0);\n"
-               "  float NdotL = max(dot(N, L), 0.0);\n"
-               "  float NdotV = max(dot(N, V), 0.0);\n"
-               "  float NdotH = max(dot(N, H), 0.0);\n"
-               "  float BdotV = max(dot(anisotropicB, V), 0.0);\n"
-               "  float TdotV = max(dot(anisotropicT, V), 0.0);\n"
-               "  float TdotL = max(dot(anisotropicT, L), 0.0);\n"
-               "  float BdotL = max(dot(anisotropicB, L), 0.0);\n"
-               "  float TdotH = max(dot(anisotropicT, H), 0.0);\n"
-               "  float BdotH = max(dot(anisotropicB, H), 0.0);\n"
-               "  vec3 brdf = BRDF_specularAnisotropicGGX("
-               "    f0, f90, alphaRoughness,"
-               "    VdotH, NdotL, NdotV, "
-               "    NdotH, BdotV, TdotV, "
-               "    TdotL, BdotL, TdotH, "
-               "    BdotH, anisotropy"
-               "  );\n"
-               "  baseColor.rgb += brdf;"
-               "}"
-               "\n"];
-    }
-
-    if (enableSheen) {
-      [shader
-          appendString:
-              @"if (true) {"
-               "  vec3 N = normalize(_surface.normal);"
-               "  vec3 V = normalize(_surface.view);"
-               "  vec3 L = normalize(scn_lights[0].pos - _surface.position);"
-               "  vec3 H = normalize(V + L);"
-               "  float NdotL = max(dot(N, L), 0.0);"
-               "  float NdotV = max(dot(N, V), 0.0);"
-               "  float NdotH = max(dot(N, H), 0.0);"
-               "  float VdotH = max(dot(V, H), 0.0);"
-               "  vec3 sheenColor = sheenColorFactor;"
-               "  float sheenRoughness = sheenRoughnessFactor;\n"];
-
-      if (hasSheenColorTexture) {
-        [shader appendString:
-                    @"  sheenColor = texture2D("
-                     "    sheenColorTexture, "
-                     "    _surface.diffuseTexcoord" // surface modifier cannot
-                                                    // get texcoords. so we use
-                                                    // diffuseTexcoord instead
-                     "  ).rgb;"
-                     "  sheenColor *= sheenColorFactor;"];
-      }
-      if (hasSheenRoughnessTexture) {
-        [shader appendString:
-                    @"  sheenRoughness = texture2D("
-                     "    sheenRoughnessTexture, "
-                     "    _surface.diffuseTexcoord" // surface modifier cannot
-                                                    // get texcoords. so we use
-                                                    // diffuseTexcoord instead
-                     "  ).a;"
-                     "  sheenRoughness *= sheenRoughnessFactor;"];
-      }
-
-      [shader appendString:@"\n"
-                            "  vec3 sheen_brdf = BRDF_specularSheen("
-                            "    sheenRoughness,"
-                            "    NdotL, NdotV, NdotH"
-                            "  );"
-                            "  baseColor.rgb += sheenColor * sheen_brdf;"
-                            "}\n"];
-    }
-    [shader appendString:@"_surface.diffuse = baseColor;"
-                          "_surface.metalness = metalness;"
-                          "_surface.roughness = roughness;"];
-
-    if (isDiffuseOpaque) {
-      [shader appendString:@"_surface.diffuse.a = 1.0;"];
-    } else if (enableDiffuseAlphaCutoff) {
-      [shader appendString:@"_surface.diffuse.a = _surface.diffuse.a < "
-                            "diffuseAlphaCutoff ? 0.0 : 1.0;"];
-    }
-    return shader;
-  }
-};
-
-- (SCNMatrix4)contentsTransformFromKHRTextureTransform:
-    (const gltf2::json::KHRTextureTransform &)transform {
-  auto scale = transform.scaleValue();
-  auto rotation = transform.rotationValue();
-  auto offset = transform.offsetValue();
-  SCNMatrix4 t = SCNMatrix4MakeTranslation(offset[0], offset[1], 0);
-  SCNMatrix4 r = SCNMatrix4MakeRotation(-rotation, 0, 0, 1);
-  SCNMatrix4 s = SCNMatrix4MakeScale(scale[0], scale[1], 1);
-  return SCNMatrix4Mult(SCNMatrix4Mult(s, r), t);
-}
-
-- (void)applyKHRTextureTransform:
-            (const gltf2::json::KHRTextureTransform &)transform
-                      toProperty:(SCNMaterialProperty *)property {
-  if (transform.texCoord.has_value()) {
-    property.mappingChannel = *transform.texCoord;
-  }
-  property.contentsTransform =
-      [self contentsTransformFromKHRTextureTransform:transform];
-}
-
-- (nullable NSArray<SCNMaterial *> *)loadSCNMaterialsWithData:
++ (nullable NSArray<SCNMaterial *> *)loadSCNMaterialsWithData:
     (const gltf2::GLTFData &)data {
   if (!data.json().materials)
     return nil;
+
+  NSUInteger materialsSize = data.json().materials->size();
   NSMutableArray<SCNMaterial *> *scnMaterials =
-      [NSMutableArray arrayWithCapacity:data.json().materials->size()];
-
-  for (auto &material : data.json().materials.value()) {
-    SCNMaterial *scnMaterial = [SCNMaterial material];
-    //    scnMaterial.name = material.name;
-    scnMaterial.locksAmbientWithDiffuse = YES;
-    if (material.isUnlit()) {
-      scnMaterial.lightingModelName = SCNLightingModelConstant;
-    } else if (material.pbrMetallicRoughness.has_value()) {
-      scnMaterial.lightingModelName = SCNLightingModelPhysicallyBased;
-    } else {
-      scnMaterial.lightingModelName = SCNLightingModelBlinn;
-    }
-
-    SurfaceShaderModifierBuilder builder;
-
-    SCNVector4 diffuseBaseColorFactor = SCNVector4Make(1.0, 1.0, 1.0, 1.0);
-    float diffuseAlphaCutoff = 0.0f;
-
-    float anisotropyStrength = 1.0f;
-    float anisotropyRotation = 0.0f;
-    SCNMaterialProperty *anisotropyTexture;
-
-    SCNVector3 sheenColorFactor = SCNVector3Make(1.0, 1.0, 1.0);
-    SCNMaterialProperty *sheenColorTexture;
-    float sheenRoughnessFactor = 1.0;
-    SCNMaterialProperty *sheenRoughnessTexture;
-
-    float emissiveStrength = 1.0f;
-
-    float ior = 1.5f;
-
-    auto pbrMetallicRoughness = material.pbrMetallicRoughness.value_or(
-        gltf2::json::MaterialPBRMetallicRoughness());
-
-    // baseColor
-    if (pbrMetallicRoughness.baseColorTexture.has_value()) {
-      // set contents to texture
-      [self applyTextureInfo:*pbrMetallicRoughness.baseColorTexture
-               withIntensity:1.0f
-                  toProperty:scnMaterial.diffuse
-                        data:data];
-      builder.hasBaseColorTexture = true;
-
-      if (pbrMetallicRoughness.baseColorFactor.has_value()) {
-        auto factor = *pbrMetallicRoughness.baseColorFactor;
-        diffuseBaseColorFactor =
-            SCNVector4Make(factor[0], factor[1], factor[2], factor[3]);
-        builder.transparent = diffuseBaseColorFactor.w < 1.0f;
-      }
-    } else {
-      auto value = pbrMetallicRoughness.baseColorFactorValue();
-      applyColorContentsToProperty(value[0], value[1], value[2], value[3],
-                                   scnMaterial.diffuse);
-    }
-
-    // metallic & roughness
-    if (pbrMetallicRoughness.metallicRoughnessTexture.has_value()) {
-      [self applyTextureInfo:*pbrMetallicRoughness.metallicRoughnessTexture
-               withIntensity:pbrMetallicRoughness.metallicFactorValue()
-                  toProperty:scnMaterial.metalness
-                        data:data];
-      scnMaterial.metalness.textureComponents = SCNColorMaskBlue;
-
-      [self applyTextureInfo:*pbrMetallicRoughness.metallicRoughnessTexture
-               withIntensity:pbrMetallicRoughness.roughnessFactorValue()
-                  toProperty:scnMaterial.roughness
-                        data:data];
-      scnMaterial.roughness.textureComponents = SCNColorMaskGreen;
-
-    } else {
-      scnMaterial.metalness.contents =
-          @(pbrMetallicRoughness.metallicFactorValue());
-      scnMaterial.roughness.contents =
-          @(pbrMetallicRoughness.roughnessFactorValue());
-    }
-
-    if (material.normalTexture.has_value()) {
-      [self applyTextureInfo:*material.normalTexture
-               withIntensity:material.normalTexture->scaleValue()
-                  toProperty:scnMaterial.normal
-                        data:data];
-    }
-
-    if (material.occlusionTexture.has_value()) {
-      [self applyTextureInfo:*material.occlusionTexture
-               withIntensity:material.occlusionTexture->strengthValue()
-                  toProperty:scnMaterial.ambientOcclusion
-                        data:data];
-      scnMaterial.ambientOcclusion.textureComponents = SCNColorMaskRed;
-    }
-
-    if (material.emissiveTexture.has_value()) {
-      [self applyTextureInfo:*material.emissiveTexture
-               withIntensity:1.0f
-                  toProperty:scnMaterial.emission
-                        data:data];
-    } else {
-      auto value = material.emissiveFactorValue();
-      applyColorContentsToProperty(value[0], value[1], value[2], 1.0,
-                                   scnMaterial.emission);
-    }
-    if (material.emissiveStrength.has_value()) {
-      emissiveStrength = material.emissiveStrength->emissiveStrengthValue();
-    }
-
-    if (material.alphaModeValue() == gltf2::json::Material::AlphaMode::OPAQUE) {
-      scnMaterial.blendMode = SCNBlendModeReplace;
-      builder.isDiffuseOpaque = true;
-    } else if (material.alphaModeValue() ==
-               gltf2::json::Material::AlphaMode::MASK) {
-      scnMaterial.blendMode = SCNBlendModeReplace;
-      diffuseAlphaCutoff = material.alphaCutoffValue();
-      builder.enableDiffuseAlphaCutoff = true;
-    } else if (material.alphaModeValue() ==
-               gltf2::json::Material::AlphaMode::BLEND) {
-      scnMaterial.blendMode = SCNBlendModeAlpha;
-      scnMaterial.transparencyMode = SCNTransparencyModeDualLayer;
-    }
-
-    scnMaterial.doubleSided = material.isDoubleSided();
-
-    if (material.anisotropy.has_value()) {
-      if (material.anisotropy->anisotropyTexture.has_value()) {
-        anisotropyTexture = [SCNMaterialProperty new];
-        [self applyTextureInfo:*material.anisotropy->anisotropyTexture
-                 withIntensity:1.0
-                    toProperty:anisotropyTexture
-                          data:data];
-        builder.hasAnisotropyTexture = true;
-      }
-      anisotropyStrength = material.anisotropy->anisotropyStrengthValue();
-      anisotropyRotation = material.anisotropy->anisotropyRotationValue();
-      builder.enableAnisotropy = true;
-    }
-
-    if (material.sheen.has_value()) {
-      std::array<float, 3> colorFactor =
-          material.sheen->sheenColorFactorValue();
-      sheenColorFactor =
-          SCNVector3Make(colorFactor[0], colorFactor[1], colorFactor[2]);
-      sheenRoughnessFactor = material.sheen->sheenRoughnessFactorValue();
-      if (material.sheen->sheenColorTexture.has_value()) {
-        sheenColorTexture = [SCNMaterialProperty new];
-        [self applyTextureInfo:*material.sheen->sheenColorTexture
-                 withIntensity:1.0
-                    toProperty:sheenColorTexture
-                          data:data];
-        builder.hasSheenColorTexture = true;
-      }
-      if (material.sheen->sheenRoughnessTexture.has_value()) {
-        sheenRoughnessTexture = [SCNMaterialProperty new];
-        [self applyTextureInfo:*material.sheen->sheenRoughnessTexture
-                 withIntensity:1.0
-                    toProperty:sheenRoughnessTexture
-                          data:data];
-        builder.hasSheenRoughnessTexture = true;
-      }
-      builder.enableSheen = true;
-    }
-
-    if (material.specular.has_value()) {
-      // TODO: specular
-    }
-
-    if (material.ior.has_value()) {
-      ior = material.ior->iorValue();
-    }
-
-    if (material.clearcoat.has_value()) {
-      if (material.clearcoat->clearcoatTexture.has_value()) {
-        [self applyTextureInfo:*material.clearcoat->clearcoatTexture
-                 withIntensity:material.clearcoat->clearcoatFactorValue()
-                    toProperty:scnMaterial.clearCoat
-                          data:data];
-        scnMaterial.clearCoat.textureComponents = SCNColorMaskRed;
-      } else {
-        scnMaterial.clearCoat.contents =
-            @(material.clearcoat->clearcoatFactorValue());
-      }
-      if (material.clearcoat->clearcoatRoughnessTexture.has_value()) {
-        [self
-            applyTextureInfo:*material.clearcoat->clearcoatRoughnessTexture
-               withIntensity:material.clearcoat->clearcoatRoughnessFactorValue()
-                  toProperty:scnMaterial.clearCoatRoughness
-                        data:data];
-        scnMaterial.clearCoatRoughness.textureComponents = SCNColorMaskGreen;
-      } else {
-        scnMaterial.clearCoatRoughness.contents =
-            @(material.clearcoat->clearcoatRoughnessFactorValue());
-      }
-      if (material.clearcoat->clearcoatNormalTexture.has_value()) {
-        [self applyTextureInfo:*material.clearcoat->clearcoatNormalTexture
-                 withIntensity:1.0
-                    toProperty:scnMaterial.clearCoatNormal
-                          data:data];
-      }
-    }
-
-    if (material.transmission.has_value()) {
-      if (material.transmission->transmissionTexture.has_value()) {
-        [self applyTextureInfo:*material.transmission->transmissionTexture
-                 withIntensity:material.transmission->transmissionFactorValue()
-                    toProperty:scnMaterial.transparent
-                          data:data];
-        scnMaterial.transparent.textureComponents = SCNColorMaskRed;
-      } else {
-        scnMaterial.transparent.contents =
-            @(material.transmission->transmissionFactorValue());
-      }
-    }
-
-    [scnMaterial setValue:[NSValue valueWithSCNVector4:diffuseBaseColorFactor]
-               forKeyPath:@"diffuseBaseColorFactor"];
-    [scnMaterial setValue:[NSNumber numberWithFloat:diffuseAlphaCutoff]
-               forKeyPath:@"diffuseAlphaCutoff"];
-
-    [scnMaterial setValue:[NSNumber numberWithFloat:anisotropyStrength]
-               forKeyPath:@"anisotropyStrength"];
-    [scnMaterial setValue:[NSNumber numberWithFloat:anisotropyRotation]
-               forKeyPath:@"anisotropyRotation"];
-    [scnMaterial setValue:anisotropyTexture forKeyPath:@"anisotropyTexture"];
-
-    [scnMaterial setValue:[NSValue valueWithSCNVector3:sheenColorFactor]
-               forKeyPath:@"sheenColorFactor"];
-    [scnMaterial setValue:sheenColorTexture forKeyPath:@"sheenColorTexture"];
-    [scnMaterial setValue:[NSNumber numberWithFloat:sheenRoughnessFactor]
-               forKeyPath:@"sheenRoughnessFactor"];
-    [scnMaterial setValue:sheenRoughnessTexture
-               forKeyPath:@"sheenRoughnessTexture"];
-
-    [scnMaterial setValue:[NSNumber numberWithFloat:emissiveStrength]
-                   forKey:@"emissiveStrength"];
-
-    [scnMaterial setValue:[NSNumber numberWithFloat:ior] forKey:@"ior"];
-
-    scnMaterial.shaderModifiers = @{
-      SCNShaderModifierEntryPointSurface : builder.buildShader(),
-    };
-
-    [scnMaterials addObject:scnMaterial];
+      [NSMutableArray arrayWithCapacity:materialsSize];
+  for (NSUInteger index = 0; index < materialsSize; ++index) {
+    [scnMaterials addObject:[GLTFSCNAsset loadSCNMaterialWithData:data
+                                                          atIndex:index]];
   }
-
   return [scnMaterials copy];
 }
 
-static void applyColorContentsToProperty(float r, float g, float b, float a,
-                                         SCNMaterialProperty *property) {
++ (SCNMaterial *)loadSCNMaterialWithData:(const gltf2::GLTFData &)data
+                                 atIndex:(NSUInteger)index {
+  const auto &material = data.json().materials->at(index);
+  SCNMaterial *scnMaterial = [SCNMaterial material];
+  scnMaterial.locksAmbientWithDiffuse = YES;
+  if (material.isUnlit()) {
+    scnMaterial.lightingModelName = SCNLightingModelConstant;
+  } else if (material.pbrMetallicRoughness.has_value()) {
+    scnMaterial.lightingModelName = SCNLightingModelPhysicallyBased;
+  } else {
+    scnMaterial.lightingModelName = SCNLightingModelBlinn;
+  }
+
+  SurfaceShaderModifierBuilder *builder =
+      [[SurfaceShaderModifierBuilder alloc] init];
+
+  SCNVector4 diffuseBaseColorFactor = SCNVector4Make(1.0, 1.0, 1.0, 1.0);
+  float diffuseAlphaCutoff = 0.0f;
+
+  float anisotropyStrength = 1.0f;
+  float anisotropyRotation = 0.0f;
+  SCNMaterialProperty *anisotropyTexture;
+
+  SCNVector3 sheenColorFactor = SCNVector3Make(1.0, 1.0, 1.0);
+  SCNMaterialProperty *sheenColorTexture;
+  float sheenRoughnessFactor = 1.0;
+  SCNMaterialProperty *sheenRoughnessTexture;
+
+  float emissiveStrength = 1.0f;
+
+  float ior = 1.5f;
+
+  auto pbrMetallicRoughness = material.pbrMetallicRoughness.value_or(
+      gltf2::json::MaterialPBRMetallicRoughness());
+
+  // baseColor
+  if (pbrMetallicRoughness.baseColorTexture.has_value()) {
+    // set contents to texture
+    [self applyTextureInfo:*pbrMetallicRoughness.baseColorTexture
+             withIntensity:1.0f
+                toProperty:scnMaterial.diffuse
+                      data:data];
+    builder.hasBaseColorTexture = true;
+
+    if (pbrMetallicRoughness.baseColorFactor.has_value()) {
+      auto factor = *pbrMetallicRoughness.baseColorFactor;
+      diffuseBaseColorFactor =
+          SCNVector4Make(factor[0], factor[1], factor[2], factor[3]);
+      builder.transparent = diffuseBaseColorFactor.w < 1.0f;
+    }
+  } else {
+    auto value = pbrMetallicRoughness.baseColorFactorValue();
+    [self applyColorR:value[0]
+                    G:value[1]
+                    B:value[2]
+                    A:value[3]
+           toProperty:scnMaterial.diffuse];
+  }
+
+  // metallic & roughness
+  if (pbrMetallicRoughness.metallicRoughnessTexture.has_value()) {
+    [GLTFSCNAsset
+        applyTextureInfo:*pbrMetallicRoughness.metallicRoughnessTexture
+           withIntensity:pbrMetallicRoughness.metallicFactorValue()
+              toProperty:scnMaterial.metalness
+                    data:data];
+    scnMaterial.metalness.textureComponents = SCNColorMaskBlue;
+
+    [GLTFSCNAsset
+        applyTextureInfo:*pbrMetallicRoughness.metallicRoughnessTexture
+           withIntensity:pbrMetallicRoughness.roughnessFactorValue()
+              toProperty:scnMaterial.roughness
+                    data:data];
+    scnMaterial.roughness.textureComponents = SCNColorMaskGreen;
+  } else {
+    scnMaterial.metalness.contents =
+        @(pbrMetallicRoughness.metallicFactorValue());
+    scnMaterial.roughness.contents =
+        @(pbrMetallicRoughness.roughnessFactorValue());
+  }
+
+  // normal
+  if (material.normalTexture.has_value()) {
+    [self applyTextureInfo:*material.normalTexture
+             withIntensity:material.normalTexture->scaleValue()
+                toProperty:scnMaterial.normal
+                      data:data];
+  }
+
+  // occlusion
+  if (material.occlusionTexture.has_value()) {
+    [self applyTextureInfo:*material.occlusionTexture
+             withIntensity:material.occlusionTexture->strengthValue()
+                toProperty:scnMaterial.ambientOcclusion
+                      data:data];
+    scnMaterial.ambientOcclusion.textureComponents = SCNColorMaskRed;
+  }
+
+  // emissive
+  if (material.emissiveTexture.has_value()) {
+    [self applyTextureInfo:*material.emissiveTexture
+             withIntensity:1.0f
+                toProperty:scnMaterial.emission
+                      data:data];
+  } else {
+    auto value = material.emissiveFactorValue();
+    [self applyColorR:value[0]
+                    G:value[1]
+                    B:value[2]
+                    A:1.0
+           toProperty:scnMaterial.emission];
+  }
+  if (material.emissiveStrength.has_value()) {
+    emissiveStrength = material.emissiveStrength->emissiveStrengthValue();
+  }
+
+  // blend mode
+  if (material.alphaModeValue() == gltf2::json::Material::AlphaMode::OPAQUE) {
+    scnMaterial.blendMode = SCNBlendModeReplace;
+    builder.isDiffuseOpaque = true;
+  } else if (material.alphaModeValue() ==
+             gltf2::json::Material::AlphaMode::MASK) {
+    scnMaterial.blendMode = SCNBlendModeReplace;
+    diffuseAlphaCutoff = material.alphaCutoffValue();
+    builder.enableDiffuseAlphaCutoff = true;
+  } else if (material.alphaModeValue() ==
+             gltf2::json::Material::AlphaMode::BLEND) {
+    scnMaterial.blendMode = SCNBlendModeAlpha;
+    scnMaterial.transparencyMode = SCNTransparencyModeDualLayer;
+  }
+
+  scnMaterial.doubleSided = material.isDoubleSided();
+
+  // anisotropy
+  if (material.anisotropy.has_value()) {
+    if (material.anisotropy->anisotropyTexture.has_value()) {
+      anisotropyTexture = [SCNMaterialProperty new];
+      [self applyTextureInfo:*material.anisotropy->anisotropyTexture
+               withIntensity:1.0
+                  toProperty:anisotropyTexture
+                        data:data];
+      builder.hasAnisotropyTexture = true;
+    }
+    anisotropyStrength = material.anisotropy->anisotropyStrengthValue();
+    anisotropyRotation = material.anisotropy->anisotropyRotationValue();
+    builder.enableAnisotropy = true;
+  }
+
+  // sheen
+  if (material.sheen.has_value()) {
+    std::array<float, 3> colorFactor = material.sheen->sheenColorFactorValue();
+    sheenColorFactor =
+        SCNVector3Make(colorFactor[0], colorFactor[1], colorFactor[2]);
+    sheenRoughnessFactor = material.sheen->sheenRoughnessFactorValue();
+    if (material.sheen->sheenColorTexture.has_value()) {
+      sheenColorTexture = [SCNMaterialProperty new];
+      [self applyTextureInfo:*material.sheen->sheenColorTexture
+               withIntensity:1.0
+                  toProperty:sheenColorTexture
+                        data:data];
+      builder.hasSheenColorTexture = true;
+    }
+    if (material.sheen->sheenRoughnessTexture.has_value()) {
+      sheenRoughnessTexture = [SCNMaterialProperty new];
+      [self applyTextureInfo:*material.sheen->sheenRoughnessTexture
+               withIntensity:1.0
+                  toProperty:sheenRoughnessTexture
+                        data:data];
+      builder.hasSheenRoughnessTexture = true;
+    }
+    builder.enableSheen = true;
+  }
+
+  // TODO: specular
+  if (material.specular.has_value()) {
+  }
+
+  // ior
+  if (material.ior.has_value()) {
+    ior = material.ior->iorValue();
+  }
+
+  // clearcoat
+  if (material.clearcoat.has_value()) {
+    if (material.clearcoat->clearcoatTexture.has_value()) {
+      [self applyTextureInfo:*material.clearcoat->clearcoatTexture
+               withIntensity:material.clearcoat->clearcoatFactorValue()
+                  toProperty:scnMaterial.clearCoat
+                        data:data];
+      scnMaterial.clearCoat.textureComponents = SCNColorMaskRed;
+    } else {
+      scnMaterial.clearCoat.contents =
+          @(material.clearcoat->clearcoatFactorValue());
+    }
+    if (material.clearcoat->clearcoatRoughnessTexture.has_value()) {
+      [self applyTextureInfo:*material.clearcoat->clearcoatRoughnessTexture
+               withIntensity:material.clearcoat->clearcoatRoughnessFactorValue()
+                  toProperty:scnMaterial.clearCoatRoughness
+                        data:data];
+      scnMaterial.clearCoatRoughness.textureComponents = SCNColorMaskGreen;
+    } else {
+      scnMaterial.clearCoatRoughness.contents =
+          @(material.clearcoat->clearcoatRoughnessFactorValue());
+    }
+    if (material.clearcoat->clearcoatNormalTexture.has_value()) {
+      [self applyTextureInfo:*material.clearcoat->clearcoatNormalTexture
+               withIntensity:1.0
+                  toProperty:scnMaterial.clearCoatNormal
+                        data:data];
+    }
+  }
+
+  // transmission
+  if (material.transmission.has_value()) {
+    if (material.transmission->transmissionTexture.has_value()) {
+      [GLTFSCNAsset
+          applyTextureInfo:*material.transmission->transmissionTexture
+             withIntensity:material.transmission->transmissionFactorValue()
+                toProperty:scnMaterial.transparent
+                      data:data];
+      scnMaterial.transparent.textureComponents = SCNColorMaskRed;
+    } else {
+      scnMaterial.transparent.contents =
+          @(material.transmission->transmissionFactorValue());
+    }
+  }
+
+  [scnMaterial setValue:[NSValue valueWithSCNVector4:diffuseBaseColorFactor]
+             forKeyPath:@"diffuseBaseColorFactor"];
+  [scnMaterial setValue:[NSNumber numberWithFloat:diffuseAlphaCutoff]
+             forKeyPath:@"diffuseAlphaCutoff"];
+
+  [scnMaterial setValue:[NSNumber numberWithFloat:anisotropyStrength]
+             forKeyPath:@"anisotropyStrength"];
+  [scnMaterial setValue:[NSNumber numberWithFloat:anisotropyRotation]
+             forKeyPath:@"anisotropyRotation"];
+  [scnMaterial setValue:anisotropyTexture forKeyPath:@"anisotropyTexture"];
+
+  [scnMaterial setValue:[NSValue valueWithSCNVector3:sheenColorFactor]
+             forKeyPath:@"sheenColorFactor"];
+  [scnMaterial setValue:sheenColorTexture forKeyPath:@"sheenColorTexture"];
+  [scnMaterial setValue:[NSNumber numberWithFloat:sheenRoughnessFactor]
+             forKeyPath:@"sheenRoughnessFactor"];
+  [scnMaterial setValue:sheenRoughnessTexture
+             forKeyPath:@"sheenRoughnessTexture"];
+
+  [scnMaterial setValue:[NSNumber numberWithFloat:emissiveStrength]
+                 forKey:@"emissiveStrength"];
+
+  [scnMaterial setValue:[NSNumber numberWithFloat:ior] forKey:@"ior"];
+
+  scnMaterial.shaderModifiers = @{
+    SCNShaderModifierEntryPointSurface : [builder buildShader],
+  };
+  return scnMaterial;
+}
+
++ (void)applyColorR:(float)r
+                  G:(float)g
+                  B:(float)b
+                  A:(float)a
+         toProperty:(SCNMaterialProperty *)property {
   CGColorSpaceRef colorSpace =
       CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB);
   CGFloat components[] = {r, g, b, a};
@@ -1285,7 +695,7 @@ static void applyColorContentsToProperty(float r, float g, float b, float a,
   CGColorSpaceRelease(colorSpace);
 }
 
-- (void)applyTextureInfo:(const gltf2::json::TextureInfo &)textureInfo
++ (void)applyTextureInfo:(const gltf2::json::TextureInfo &)textureInfo
            withIntensity:(CGFloat)intensity
               toProperty:(SCNMaterialProperty *)property
                     data:(const gltf2::GLTFData &)data {
@@ -1300,22 +710,13 @@ static void applyColorContentsToProperty(float r, float g, float b, float a,
   }
 }
 
-- (CGImageRef)createCGImageFromData:(NSData *)data {
-  CGImageSourceRef source =
-      CGImageSourceCreateWithData((__bridge CFDataRef)data, NULL);
-  CGImageRef imageRef = CGImageSourceCreateImageAtIndex(source, 0, NULL);
-  CFRelease(source);
-  return imageRef;
++ (void)applyImageBuffer:(const gltf2::Buffer &)buffer
+              toProperty:(SCNMaterialProperty *)property {
+  NSData *nsData = [NSData dataWithBytes:buffer.data() length:buffer.size()];
+  property.contents = (__bridge id)CGImageRefFromData(nsData);
 }
 
-- (CGImageRef)cgImageForImage:(uint32_t)index
-                         data:(const gltf2::GLTFData &)data {
-  const auto &buffer = data.imageBufferAt(index);
-  return [self createCGImageFromData:[NSData dataWithBytes:buffer.data()
-                                                    length:buffer.size()]];
-}
-
-- (void)applyTexture:(const gltf2::json::Texture &)texture
++ (void)applyTexture:(const gltf2::json::Texture &)texture
           toProperty:(SCNMaterialProperty *)property
                 data:(const gltf2::GLTFData &)data {
   property.wrapS = SCNWrapModeRepeat;
@@ -1325,8 +726,8 @@ static void applyColorContentsToProperty(float r, float g, float b, float a,
   property.mipFilter = SCNFilterModeNone;
 
   if (texture.source.has_value()) {
-    property.contents =
-        (__bridge id)[self cgImageForImage:*texture.source data:data];
+    const auto &buffer = data.imageBufferAt(*texture.source);
+    [self applyImageBuffer:buffer toProperty:property];
   }
 
   if (texture.sampler.has_value()) {
@@ -1335,7 +736,7 @@ static void applyColorContentsToProperty(float r, float g, float b, float a,
   }
 }
 
-- (void)applyTextureSampler:(const gltf2::json::Sampler &)sampler
++ (void)applyTextureSampler:(const gltf2::json::Sampler &)sampler
                  toProperty:(SCNMaterialProperty *)property {
   if (sampler.magFilter.has_value()) {
     switch (*sampler.magFilter) {
@@ -1393,30 +794,57 @@ SCNWrapModeFromGLTFSamplerWrapMode(gltf2::json::Sampler::WrapMode mode) {
   }
 }
 
++ (SCNMatrix4)contentsTransformFromKHRTextureTransform:
+    (const gltf2::json::KHRTextureTransform &)transform {
+  auto scale = transform.scaleValue();
+  auto rotation = transform.rotationValue();
+  auto offset = transform.offsetValue();
+  SCNMatrix4 t = SCNMatrix4MakeTranslation(offset[0], offset[1], 0);
+  SCNMatrix4 r = SCNMatrix4MakeRotation(-rotation, 0, 0, 1);
+  SCNMatrix4 s = SCNMatrix4MakeScale(scale[0], scale[1], 1);
+  return SCNMatrix4Mult(SCNMatrix4Mult(s, r), t);
+}
+
++ (void)applyKHRTextureTransform:
+            (const gltf2::json::KHRTextureTransform &)transform
+                      toProperty:(SCNMaterialProperty *)property {
+  if (transform.texCoord.has_value()) {
+    property.mappingChannel = *transform.texCoord;
+  }
+  property.contentsTransform =
+      [self contentsTransformFromKHRTextureTransform:transform];
+}
+
 #pragma mark SCNCamera
 
-- (nullable NSArray<SCNCamera *> *)loadSCNCamerasWithData:
++ (nullable NSArray<SCNCamera *> *)loadSCNCamerasWithData:
     (const gltf2::GLTFData &)data {
   if (!data.json().cameras.has_value())
     return nil;
 
+  NSUInteger camerasSize = data.json().cameras->size();
   NSMutableArray<SCNCamera *> *scnCameras =
-      [NSMutableArray arrayWithCapacity:data.json().cameras->size()];
-  for (const auto &camera : *data.json().cameras) {
-    SCNCamera *scnCamera = [SCNCamera camera];
-    //     scnCamera.name = camera.name;
-
-    if (camera.orthographic.has_value()) {
-      [self applyOrthographicCamera:*camera.orthographic toSCNCamera:scnCamera];
-    } else if (camera.perspective.has_value()) {
-      [self applyPerspectiveCamera:*camera.perspective toSCNCamera:scnCamera];
-    }
-    [scnCameras addObject:scnCamera];
+      [NSMutableArray arrayWithCapacity:camerasSize];
+  for (NSUInteger index = 0; index < camerasSize; ++index) {
+    [scnCameras addObject:[self loadSCNCameraWithData:data atIndex:index]];
   }
   return [scnCameras copy];
 }
 
-- (void)applyOrthographicCamera:
++ (SCNCamera *)loadSCNCameraWithData:(const gltf2::GLTFData &)data
+                             atIndex:(NSUInteger)index {
+  const auto &camera = data.json().cameras->at(index);
+  SCNCamera *scnCamera = [SCNCamera camera];
+
+  if (camera.orthographic.has_value()) {
+    [self applyOrthographicCamera:*camera.orthographic toSCNCamera:scnCamera];
+  } else if (camera.perspective.has_value()) {
+    [self applyPerspectiveCamera:*camera.perspective toSCNCamera:scnCamera];
+  }
+  return scnCamera;
+}
+
++ (void)applyOrthographicCamera:
             (const gltf2::json::CameraOrthographic &)orthographic
                     toSCNCamera:(SCNCamera *)scnCamera {
   scnCamera.usesOrthographicProjection = YES;
@@ -1425,13 +853,11 @@ SCNWrapModeFromGLTFSamplerWrapMode(gltf2::json::Sampler::WrapMode mode) {
   scnCamera.zNear = orthographic.znear;
 }
 
-- (void)applyPerspectiveCamera:
++ (void)applyPerspectiveCamera:
             (const gltf2::json::CameraPerspective &)perspective
                    toSCNCamera:(SCNCamera *)scnCamera {
   scnCamera.usesOrthographicProjection = NO;
-  if (perspective.zfar.has_value()) {
-    scnCamera.zFar = *perspective.zfar;
-  }
+  scnCamera.zFar = perspective.zfar.value_or(scnCamera.zFar);
   scnCamera.zNear = perspective.znear;
   scnCamera.fieldOfView = perspective.yfov * (180.0 / M_PI); // radian to degree
   if (perspective.aspectRatio.has_value()) {
@@ -1472,7 +898,85 @@ SCNWrapModeFromGLTFSamplerWrapMode(gltf2::json::Sampler::WrapMode mode) {
 
 #pragma mark SCNGeometry
 
-- (NSArray<SCNGeometrySource *> *)scnGeometrySourcesFromMeshPrimitiveSources:
++ (NSArray<SCNNode *> *)loadMeshSCNNodesWithData:(const gltf2::GLTFData &)data
+                                    scnMaterials:
+                                        (NSArray<SCNMaterial *> *)scnMaterials {
+  if (!data.json().meshes)
+    return nil;
+
+  NSUInteger meshesSize = data.json().meshes->size();
+  NSMutableArray<SCNNode *> *scnNodes =
+      [NSMutableArray arrayWithCapacity:meshesSize];
+  for (uint32_t index = 0; index < meshesSize; ++index) {
+    [scnNodes addObject:[GLTFSCNAsset loadMeshSCNNodeWithData:data
+                                                      atIndex:index
+                                                 scnMaterials:scnMaterials]];
+  }
+  return [scnNodes copy];
+}
+
++ (SCNNode *)loadMeshSCNNodeWithData:(const gltf2::GLTFData &)data
+                             atIndex:(uint32_t)index
+                        scnMaterials:(NSArray<SCNMaterial *> *)scnMaterials {
+  const auto &mesh = data.json().meshes->at(index);
+  SCNNode *meshNode = [SCNNode node];
+
+  for (uint32_t primitiveIndex = 0; primitiveIndex < mesh.primitives.size();
+       primitiveIndex++) {
+    const auto &primitive = mesh.primitives[primitiveIndex];
+    const auto &meshPrimitive = data.meshPrimitiveAt(index, primitiveIndex);
+
+    SCNGeometry *geometry = [self scnGeometryFromMeshPrimitive:meshPrimitive];
+    if (primitive.modeValue() == gltf2::json::MeshPrimitive::Mode::POINTS &&
+        geometry.geometryElementCount > 0) {
+      geometry.geometryElements.firstObject.minimumPointScreenSpaceRadius = 1.0;
+      geometry.geometryElements.firstObject.maximumPointScreenSpaceRadius = 1.0;
+    }
+
+    if (primitive.material.has_value()) {
+      geometry.firstMaterial = scnMaterials[*primitive.material];
+    }
+
+    SCNMorpher *morpher;
+    if (primitive.targets.has_value()) {
+      morpher = [SCNMorpher new];
+
+      NSMutableArray<SCNGeometry *> *morphTargets =
+          [NSMutableArray arrayWithCapacity:primitive.targets->size()];
+      for (uint32_t targetIndex = 0; targetIndex < primitive.targets->size();
+           targetIndex++) {
+        const auto primitiveSources = meshPrimitive.targets[targetIndex];
+        NSArray<SCNGeometrySource *> *sources =
+            [self scnGeometrySourcesFromMeshPrimitiveSources:primitiveSources];
+        SCNGeometry *morphTarget =
+            [SCNGeometry geometryWithSources:sources
+                                    elements:geometry.geometryElements];
+        [morphTargets addObject:morphTarget];
+      }
+
+      morpher.targets = [morphTargets copy];
+      morpher.unifiesNormals = YES;
+      morpher.calculationMode = SCNMorpherCalculationModeAdditive;
+      if (mesh.weights.has_value()) {
+        NSMutableArray<NSNumber *> *values =
+            [NSMutableArray arrayWithCapacity:mesh.weights->size()];
+        for (auto weight : *mesh.weights) {
+          [values addObject:[NSNumber numberWithFloat:weight]];
+        }
+        morpher.weights = [values copy];
+      }
+    }
+
+    SCNNode *geometryNode = [SCNNode nodeWithGeometry:geometry];
+    geometryNode.name = [[NSUUID UUID] UUIDString];
+    geometryNode.morpher = morpher;
+    [meshNode addChildNode:geometryNode];
+  }
+
+  return meshNode;
+}
+
++ (NSArray<SCNGeometrySource *> *)scnGeometrySourcesFromMeshPrimitiveSources:
     (const gltf2::MeshPrimitiveSources &)sources {
   NSMutableArray<SCNGeometrySource *> *geometrySources = [NSMutableArray array];
   if (sources.position.has_value()) {
@@ -1518,7 +1022,7 @@ SCNWrapModeFromGLTFSamplerWrapMode(gltf2::json::Sampler::WrapMode mode) {
   return [geometrySources copy];
 }
 
-- (SCNGeometry *)scnGeometryFromMeshPrimitive:
++ (SCNGeometry *)scnGeometryFromMeshPrimitive:
     (const gltf2::MeshPrimitive &)meshPrimitive {
   NSArray<SCNGeometrySource *> *geometrySources =
       [self scnGeometrySourcesFromMeshPrimitiveSources:meshPrimitive.sources];
@@ -1532,7 +1036,7 @@ SCNWrapModeFromGLTFSamplerWrapMode(gltf2::json::Sampler::WrapMode mode) {
                                  elements:geometryElements];
 }
 
-- (SCNGeometrySource *)
++ (SCNGeometrySource *)
     scnGeometrySourceFromMeshPrimitiveSource:
         (const gltf2::MeshPrimitiveSource &)source
                                     semantic:
@@ -1553,7 +1057,7 @@ SCNWrapModeFromGLTFSamplerWrapMode(gltf2::json::Sampler::WrapMode mode) {
                   dataStride:bytesPerComponent * source.componentsPerVector];
 }
 
-- (SCNGeometryElement *)scnGeometryElementFromMeshPrimitiveElement:
++ (SCNGeometryElement *)scnGeometryElementFromMeshPrimitiveElement:
     (const gltf2::MeshPrimitiveElement &)element {
   SCNGeometryPrimitiveType primitiveType = SCNGeometryPrimitiveTypeTriangles;
   NSUInteger sizeOfComponent =
@@ -1661,7 +1165,7 @@ CAAnimationCalculationModeFromGLTFAnimationSamplerInterpolation(
   return kCAAnimationLinear;
 }
 
-- (NSArray<NSNumber *> *)
++ (NSArray<NSNumber *> *)
     keyTimesFromAnimationSampler:(const gltf2::json::AnimationSampler &)sampler
                       maxKeyTime:(float *)maxKeyTime
                             data:(const gltf2::GLTFData &)data {
@@ -1804,431 +1308,6 @@ NSArray<NSValue *> *SCNVec3ArrayFromPackedFloatDataWithAccessor(
     [values addObject:[NSValue valueWithSCNVector3:vec]];
   }
   return [values copy];
-}
-
-static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
-
-- (NSArray<NSString *> *)blendShapeKeys {
-  if (self.json.vrm0) {
-    if (self.json.vrm0.blendShapeMaster &&
-        self.json.vrm0.blendShapeMaster.blendShapeGroups) {
-      return self.json.vrm0.blendShapeMaster.groupNames;
-    }
-  } else if (self.json.vrm1) {
-    if (self.json.vrm1.expressions) {
-      return self.json.vrm1.expressions.expressionNames;
-    }
-  }
-  return @[];
-}
-
-- (CGFloat)weightForBlendShapeKey:(NSString *)key {
-  if (self.json.vrm0) {
-    VRMBlendShapeGroup *group = [self.json.vrm0 blendShapeGroupByPreset:key];
-    if (group && group.binds) {
-      for (VRMBlendShapeBind *bind in group.binds) {
-        NSInteger meshIndex = 0;
-        if (bind.mesh)
-          meshIndex = bind.mesh.integerValue;
-        NSInteger bindIndex = 0;
-        if (bind.index)
-          bindIndex = bind.index.integerValue;
-
-        SCNNode *meshNode = _meshNodeDict[@(meshIndex)];
-        for (SCNNode *childNode in meshNode.childNodes) {
-          if (childNode.morpher) {
-            return [childNode.morpher weightForTargetAtIndex:bindIndex];
-          }
-        }
-      }
-    }
-  } else if (self.json.vrm1) {
-    VRMCExpression *expression = [self.json.vrm1 expressionByName:key];
-    if (expression && expression.morphTargetBinds) {
-      for (VRMCExpressionMorphTargetBind *bind in expression.morphTargetBinds) {
-        SCNNode *meshNode = _nodeDict[@(bind.node)];
-        for (SCNNode *childNode in meshNode.childNodes) {
-          if (childNode.morpher) {
-            return [childNode.morpher weightForTargetAtIndex:bind.index];
-          }
-        }
-      }
-    }
-  }
-  return 0.0f;
-}
-
-- (void)setBlendShapeWeight:(CGFloat)weight
-                   meshNode:(SCNNode *)meshNode
-                  bindIndex:(NSInteger)bindIndex {
-  for (SCNNode *childNode in meshNode.childNodes) {
-    if (childNode.morpher) {
-      [childNode.morpher setWeight:weight forTargetAtIndex:bindIndex];
-    }
-  }
-}
-
-- (void)setBlendShapeWeight:(CGFloat)weight forKey:(NSString *)key {
-  if (self.json.vrm0) {
-    const auto group = [self.json.vrm0 blendShapeGroupByPreset:key];
-    if (group && group.binds) {
-      float value = group.isBinary ? roundValue(weight) : weight;
-      for (VRMBlendShapeBind *bind in group.binds) {
-        float bindWeight = weight;
-        if (bind.weight) {
-          bindWeight = (bind.weight.floatValue / 100.0f) * weight;
-        }
-        NSInteger meshIndex = 0;
-        if (bind.mesh)
-          meshIndex = bind.mesh.integerValue;
-        NSInteger bindIndex = 0;
-        if (bind.index)
-          bindIndex = bind.index.integerValue;
-        SCNNode *meshNode = _meshNodeDict[@(meshIndex)];
-        [self setBlendShapeWeight:bindWeight
-                         meshNode:meshNode
-                        bindIndex:bindIndex];
-      }
-    }
-  } else if (self.json.vrm1) {
-    VRMCExpression *expression = [self.json.vrm1 expressionByName:key];
-    if (expression && expression.morphTargetBinds) {
-      float value = expression.isBinary ? roundValue(weight) : weight;
-      for (VRMCExpressionMorphTargetBind *bind in expression.morphTargetBinds) {
-        SCNNode *node = _nodeDict[@(bind.node)];
-        [self setBlendShapeWeight:value meshNode:node bindIndex:bind.index];
-      }
-      // TODO: materialColorBinds, textureTransform, overrides
-    }
-  }
-}
-
-- (BOOL)isLookAtTypeBone {
-  if (self.json.vrm0 && self.json.vrm0.firstPerson) {
-    return self.json.vrm0.firstPerson.isLookAtTypeBone;
-  } else if (self.json.vrm1 && self.json.vrm1.lookAt) {
-    return self.json.vrm1.lookAt.isTypeBone;
-  }
-  return NO;
-}
-
-- (nullable SCNNode *)vrmHeadBone {
-  if (self.json.vrm0) {
-    if (self.json.vrm0.firstPerson &&
-        self.json.vrm0.firstPerson.firstPersonBone) {
-      return self.nodeDict[self.json.vrm0.firstPerson.firstPersonBone];
-    } else if (self.json.vrm0.humanoid) {
-      return self.nodeDict[
-          [self.json.vrm0.humanoid humanBoneByName:VRMHumanoidBoneTypeHead]
-              .node];
-    }
-  } else if (self.json.vrm1 && self.json.vrm1.humanoid &&
-             self.json.vrm1.humanoid.humanBones &&
-             self.json.vrm1.humanoid.humanBones.head) {
-    return self.nodeDict[self.json.vrm1.humanoid.humanBones.head.node];
-  }
-  return nil;
-}
-
-SCNVector3 SCNVector3FromVec3(Vec3 *v) { return SCNVector3Make(v.x, v.y, v.z); }
-
-- (SCNVector3)offsetFromHeadBone {
-  if (self.json.vrm0 && self.json.vrm0.firstPerson &&
-      self.json.vrm0.firstPerson.firstPersonBoneOffset) {
-    return SCNVector3FromVec3(self.json.vrm0.firstPerson.firstPersonBoneOffset);
-  }
-  if (self.json.vrm1 && self.json.vrm1.lookAt &&
-      self.json.vrm1.lookAt.offsetFromHeadBone) {
-    return SCNVector3FromVec3(self.json.vrm1.lookAt.offsetFromHeadBone);
-  }
-  return SCNVector3Make(0, 0, 0);
-}
-
-- (nullable SCNNode *)leftEyeBone {
-  if (self.json.vrm0 && self.json.vrm0.humanoid && self.json.vrm0.humanoid) {
-    return self.nodeDict[
-        [self.json.vrm0.humanoid humanBoneByName:VRMHumanoidBoneTypeLeftEye]
-            .node];
-  } else if (self.json.vrm1 && self.json.vrm1.humanoid &&
-             self.json.vrm1.humanoid.humanBones &&
-             self.json.vrm1.humanoid.humanBones.leftEye) {
-    return self.nodeDict[self.json.vrm1.humanoid.humanBones.leftEye.node];
-  }
-  return nil;
-}
-
-- (nullable SCNNode *)rightEyeBone {
-  if (self.json.vrm0 && self.json.vrm0.humanoid && self.json.vrm0.humanoid) {
-    return self.nodeDict[
-        [self.json.vrm0.humanoid humanBoneByName:VRMHumanoidBoneTypeRightEye]
-            .node];
-  } else if (self.json.vrm1 && self.json.vrm1.humanoid &&
-             self.json.vrm1.humanoid.humanBones &&
-             self.json.vrm1.humanoid.humanBones.rightEye) {
-    return self.nodeDict[self.json.vrm1.humanoid.humanBones.rightEye.node];
-  }
-  return nil;
-}
-
-- (void)calcYawPitchDegreesForTarget:(SCNVector3)target
-                                 yaw:(CGFloat *)yaw
-                               pitch:(CGFloat *)pitch {
-  SCNMatrix4 lookAtSpace = self.lookAtMatrix;
-  SCNMatrix4 inverseLookAtSpace = SCNMatrix4Invert(lookAtSpace);
-
-  SCNVector3 localTarget = SCNVector3Make(
-      inverseLookAtSpace.m11 * target.x + inverseLookAtSpace.m21 * target.y +
-          inverseLookAtSpace.m31 * target.z + inverseLookAtSpace.m41,
-      inverseLookAtSpace.m12 * target.x + inverseLookAtSpace.m22 * target.y +
-          inverseLookAtSpace.m32 * target.z + inverseLookAtSpace.m42,
-      inverseLookAtSpace.m13 * target.x + inverseLookAtSpace.m23 * target.y +
-          inverseLookAtSpace.m33 * target.z + inverseLookAtSpace.m43);
-
-  CGFloat z = localTarget.z;
-  CGFloat x = localTarget.x;
-  *yaw = atan2(x, z) * (180.0 / M_PI);
-
-  CGFloat xz = sqrt(x * x + z * z);
-  CGFloat y = localTarget.y;
-  *pitch = atan2(-y, xz) * (180.0 / M_PI);
-}
-
-- (void)lookAtTarget:(SCNVector3)target {
-  CGFloat yaw, pitch;
-  [self calcYawPitchDegreesForTarget:target yaw:&yaw pitch:&pitch];
-  [self applyLeftEyeBoneWithYaw:yaw pitch:pitch];
-  [self applyRightEyeBoneWithYaw:yaw pitch:pitch];
-}
-
-- (CGFloat)clampHorizontalInner:(CGFloat)degree {
-  if (self.json.vrm0 && self.json.vrm0.firstPerson) {
-    VRMDegreeMap *horizontalInner =
-        self.json.vrm0.firstPerson.lookAtHorizontalInner;
-    if (horizontalInner && horizontalInner.xRange) {
-      CGFloat inputMaxValue = horizontalInner.xRange.floatValue;
-      return fmin(fabs(degree), inputMaxValue);
-    }
-  } else if (self.json.vrm1 && self.json.vrm1.lookAt &&
-             self.json.vrm1.lookAt.rangeMapHorizontalInner) {
-    CGFloat inputMaxValue = 90.0;
-    if (self.json.vrm1.lookAt.rangeMapHorizontalInner.inputMaxValue) {
-      inputMaxValue = self.json.vrm1.lookAt.rangeMapHorizontalInner
-                          .inputMaxValue.floatValue;
-    }
-    CGFloat outputScale = 1.0;
-    if (self.json.vrm1.lookAt.rangeMapHorizontalInner.outputScale) {
-      outputScale =
-          self.json.vrm1.lookAt.rangeMapHorizontalInner.outputScale.floatValue;
-    }
-    return fmin(fabs(degree), inputMaxValue) / inputMaxValue * outputScale;
-  }
-  return degree;
-}
-
-- (CGFloat)clampHorizontalOuter:(CGFloat)degree {
-  if (self.json.vrm0 && self.json.vrm0.firstPerson) {
-    VRMDegreeMap *horizontalOuter =
-        self.json.vrm0.firstPerson.lookAtHorizontalOuter;
-    if (horizontalOuter && horizontalOuter.xRange) {
-      CGFloat inputMaxValue = horizontalOuter.xRange.floatValue;
-      return fmin(fabs(degree), inputMaxValue);
-    }
-  } else if (self.json.vrm1 && self.json.vrm1.lookAt &&
-             self.json.vrm1.lookAt.rangeMapHorizontalOuter) {
-    CGFloat inputMaxValue = 90.0;
-    if (self.json.vrm1.lookAt.rangeMapHorizontalOuter.inputMaxValue) {
-      inputMaxValue = self.json.vrm1.lookAt.rangeMapHorizontalOuter
-                          .inputMaxValue.floatValue;
-    }
-    CGFloat outputScale = 1.0;
-    if (self.json.vrm1.lookAt.rangeMapHorizontalOuter.outputScale) {
-      outputScale =
-          self.json.vrm1.lookAt.rangeMapHorizontalOuter.outputScale.floatValue;
-    }
-    return fmin(fabs(degree), inputMaxValue) / inputMaxValue * outputScale;
-  }
-  return degree;
-}
-
-- (CGFloat)clampVerticalUp:(CGFloat)degree {
-  if (self.json.vrm0 && self.json.vrm0.firstPerson) {
-    VRMDegreeMap *verticalUp = self.json.vrm0.firstPerson.lookAtVerticalUp;
-    if (verticalUp && verticalUp.yRange) {
-      CGFloat inputMaxValue = verticalUp.yRange.floatValue;
-      return fmin(fabs(degree), inputMaxValue);
-    }
-  } else if (self.json.vrm1 && self.json.vrm1.lookAt &&
-             self.json.vrm1.lookAt.rangeMapVerticalUp) {
-    CGFloat inputMaxValue = 90.0;
-    if (self.json.vrm1.lookAt.rangeMapVerticalUp.inputMaxValue) {
-      inputMaxValue =
-          self.json.vrm1.lookAt.rangeMapVerticalUp.inputMaxValue.floatValue;
-    }
-    CGFloat outputScale = 1.0;
-    if (self.json.vrm1.lookAt.rangeMapVerticalUp.outputScale) {
-      outputScale =
-          self.json.vrm1.lookAt.rangeMapVerticalUp.outputScale.floatValue;
-    }
-    return fmin(fabs(degree), inputMaxValue) / inputMaxValue * outputScale;
-  }
-  return degree;
-}
-
-- (CGFloat)clampVerticalDown:(CGFloat)degree {
-  if (self.json.vrm0 && self.json.vrm0.firstPerson) {
-    VRMDegreeMap *verticalDown = self.json.vrm0.firstPerson.lookAtVerticalDown;
-    if (verticalDown && verticalDown.yRange) {
-      CGFloat inputMaxValue = verticalDown.yRange.floatValue;
-      return fmin(fabs(degree), inputMaxValue);
-    }
-  } else if (self.json.vrm1 && self.json.vrm1.lookAt &&
-             self.json.vrm1.lookAt.rangeMapVerticalDown) {
-    CGFloat inputMaxValue = 90.0;
-    if (self.json.vrm1.lookAt.rangeMapVerticalDown.inputMaxValue) {
-      inputMaxValue =
-          self.json.vrm1.lookAt.rangeMapVerticalDown.inputMaxValue.floatValue;
-    }
-    CGFloat outputScale = 1.0;
-    if (self.json.vrm1.lookAt.rangeMapVerticalDown.outputScale) {
-      outputScale =
-          self.json.vrm1.lookAt.rangeMapVerticalDown.outputScale.floatValue;
-    }
-    return fmin(fabs(degree), inputMaxValue) / inputMaxValue * outputScale;
-  }
-  return degree;
-}
-
-- (void)applyLeftEyeBoneWithYaw:(CGFloat)yawDegrees
-                          pitch:(CGFloat)pitchDegrees {
-  CGFloat yaw = 0;
-  if (yawDegrees > 0) {
-    yaw = [self clampHorizontalOuter:yawDegrees];
-  } else {
-    yaw = -[self clampHorizontalInner:yawDegrees];
-  }
-
-  CGFloat pitch = 0;
-  if (pitchDegrees > 0) {
-    pitch = [self clampVerticalDown:pitchDegrees];
-  } else {
-    pitch = -[self clampVerticalUp:pitchDegrees];
-  }
-  if (self.json.vrm0) {
-    pitch *= -1;
-  }
-
-  SCNVector3 angles = self.initialLeftEyeAngles;
-  angles.x += pitch * M_PI / 180.0f;
-  angles.y += yaw * M_PI / 180.0f;
-  self.leftEyeBone.eulerAngles = angles;
-}
-
-- (void)applyRightEyeBoneWithYaw:(CGFloat)yawDegrees
-                           pitch:(CGFloat)pitchDegrees {
-  CGFloat yaw = 0;
-  if (yawDegrees > 0) {
-    yaw = [self clampHorizontalInner:yawDegrees];
-  } else {
-    yaw = -[self clampHorizontalOuter:yawDegrees];
-  }
-
-  CGFloat pitch = 0;
-  if (pitchDegrees > 0) {
-    pitch = [self clampVerticalDown:pitchDegrees];
-  } else {
-    pitch = -[self clampVerticalUp:pitchDegrees];
-  }
-  if (self.json.vrm0) {
-    pitch *= -1;
-  }
-
-  SCNVector3 angles = self.initialRightEyeAngles;
-  angles.x += pitch * M_PI / 180.0f;
-  angles.y += yaw * M_PI / 180.0f;
-  self.rightEyeBone.eulerAngles = angles;
-}
-
-- (void)updateAtTime:(NSTimeInterval)time {
-  if (self.lastTime == 0) {
-    self.lastTime = time;
-    return;
-  }
-
-  float deltaTime = time - self.lastTime;
-  //  if (deltaTime < 1.0) {
-  //    return;
-  //  }
-  self.lastTime = time;
-
-  for (SpringBoneJointState *state in self.jointStates) {
-    SCNNode *tail = state.node;
-    SCNNode *head = tail.parentNode;
-    if (!head)
-      continue;
-
-    SCNVector3 currentTail = state.currentTail;
-    SCNVector3 prevTail = state.prevTail;
-    SCNQuaternion initialLocalRotation = state.quaternion;
-    SCNVector3 boneAxis = state.boneAxis;
-    CGFloat boneLength = state.boneLength;
-
-    CGFloat dragForce = state.dragForce;
-    CGFloat stiffnessForce = state.stiffness;
-    SCNVector3 gravityDir = state.gravityDir;
-    CGFloat gravityPower = 0.1f; // state.gravityPower;
-
-    SCNVector3 worldPosition = head.worldPosition;
-    SCNQuaternion parentWorldRotation = head.orientation;
-
-    // 慣性の計算
-    SCNVector3 inertia =
-        SCNVector3Make((currentTail.x - prevTail.x) * (1.0 - dragForce),
-                       (currentTail.y - prevTail.y) * (1.0 - dragForce),
-                       (currentTail.z - prevTail.z) * (1.0 - dragForce));
-
-    // 剛性の計算
-    SCNVector3 stiffness = SCNVector3Make(
-        deltaTime * stiffnessForce *
-            (parentWorldRotation.x * initialLocalRotation.x) * boneAxis.x,
-        deltaTime * stiffnessForce *
-            (parentWorldRotation.y * initialLocalRotation.y) * boneAxis.y,
-        deltaTime * stiffnessForce *
-            (parentWorldRotation.z * initialLocalRotation.z) * boneAxis.z);
-
-    // 重力の計算
-    SCNVector3 external =
-        SCNVector3Make(deltaTime * gravityDir.x * gravityPower,
-                       deltaTime * gravityDir.y * gravityPower,
-                       deltaTime * gravityDir.z * gravityPower);
-
-    // 次のテール位置の計算
-    SCNVector3 nextTail =
-        SCNVector3Make(currentTail.x + inertia.x + stiffness.x + external.x,
-                       currentTail.y + inertia.y + stiffness.y + external.y,
-                       currentTail.z + inertia.z + stiffness.z + external.z);
-
-    // 長さの制約を適用
-    SCNVector3 direction = SCNVector3Make(nextTail.x - worldPosition.x,
-                                          nextTail.y - worldPosition.y,
-                                          nextTail.z - worldPosition.z);
-
-    float length = sqrtf(direction.x * direction.x + direction.y * direction.y +
-                         direction.z * direction.z);
-    if (length > boneLength) {
-      direction.x = (direction.x / length) * boneLength;
-      direction.y = (direction.y / length) * boneLength;
-      direction.z = (direction.z / length) * boneLength;
-
-      nextTail = SCNVector3Make(worldPosition.x + direction.x,
-                                worldPosition.y + direction.y,
-                                worldPosition.z + direction.z);
-    }
-
-    tail.worldPosition = nextTail;
-
-    state.prevTail = currentTail;
-    state.currentTail = nextTail;
-  }
 }
 
 @end

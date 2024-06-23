@@ -453,6 +453,9 @@ NSString *const VRMCExpressionOverrideBlend = @"blend";
   return self;
 }
 
+- (SCNVector3)scnVector3;
+{ return SCNVector3Make(self.x, self.y, self.z); }
+
 @end
 
 NSString *const VRMHumanoidBoneTypeHips = @"hips";
@@ -661,6 +664,18 @@ NSString *const VRMBlendShapeGroupPresetNameBlinkR = @"blink_r";
 
 @implementation VRMSecondaryAnimationCollider
 
+- (SCNVector3)offsetValue {
+  if (self.offset)
+    return self.offset.scnVector3;
+  return SCNVector3Make(0, 0, 0);
+}
+
+- (float)radiusValue {
+  if (self.radius)
+    return self.radius.floatValue;
+  return 0;
+}
+
 @end
 
 @implementation VRMSecondaryAnimationColliderGroup
@@ -691,9 +706,41 @@ NSString *const VRMBlendShapeGroupPresetNameBlinkR = @"blink_r";
 @end
 
 @implementation VRMCSpringBoneShapeSphere
+
+- (SCNVector3)offsetValue {
+  if (self.offset)
+    return self.offset.scnVector3;
+  return SCNVector3Make(0, 0, 0);
+}
+
+- (float)radiusValue {
+  if (self.radius)
+    return self.radius.floatValue;
+  return 0;
+}
+
 @end
 
 @implementation VRMCSpringBoneShapeCapsule
+
+- (SCNVector3)offsetValue {
+  if (self.offset)
+    return self.offset.scnVector3;
+  return SCNVector3Make(0, 0, 0);
+}
+
+- (float)radiusValue {
+  if (self.radius)
+    return self.radius.floatValue;
+  return 0;
+}
+
+- (SCNVector3)tailValue {
+  if (self.tail)
+    return self.tail.scnVector3;
+  return SCNVector3Make(0, 0, 0);
+}
+
 @end
 
 @implementation VRMCSpringBoneShape
@@ -703,6 +750,37 @@ NSString *const VRMBlendShapeGroupPresetNameBlinkR = @"blink_r";
 @end
 
 @implementation VRMCSpringBoneJoint
+
+- (float)hitRadiusValue {
+  if (self.hitRadius)
+    return self.hitRadius.floatValue;
+  return 0;
+}
+
+- (float)stiffnessValue {
+  if (self.stiffness)
+    return self.stiffness.floatValue;
+  return 1.0f;
+}
+
+- (float)gravityPowerValue {
+  if (self.gravityPower)
+    return self.gravityPower.floatValue;
+  return 0;
+}
+
+- (SCNVector3)gravityDirValue {
+  if (self.gravityDir)
+    return self.gravityDir.scnVector3;
+  return SCNVector3Make(0, -1.0f, 0);
+}
+
+- (float)dragForceValue {
+  if (self.dragForce)
+    return self.dragForce.floatValue;
+  return 0.5f;
+}
+
 @end
 
 @implementation VRMCSpringBoneColliderGroup

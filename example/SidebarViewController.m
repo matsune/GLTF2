@@ -52,16 +52,17 @@
 
   self.currentAnimationPlayer = self.animationPlayers.firstObject;
 
-  for (int i = 0; i < asset.cameraNodes.count; i++) {
+  NSArray<SCNNode *> *cameras = [asset cameraNodes];
+  for (int i = 0; i < cameras.count; i++) {
     [self.camerasPopUpButton
         addItemWithTitle:[NSString stringWithFormat:@"Camera %d", i]];
   }
-  self.camerasPopUpButton.enabled = asset.cameraNodes.count > 0;
+  self.camerasPopUpButton.enabled = cameras.count > 0;
 
-  NSArray<NSString *> *keys = asset.blendShapeKeys;
-  self.blendShapePopUpButton.enabled = keys.count > 0;
-  [self.blendShapePopUpButton addItemsWithTitles:keys];
-  self.blendShapeKey = keys.firstObject;
+  //  NSArray<NSString *> *keys = asset.blendShapeKeys;
+  //  self.blendShapePopUpButton.enabled = keys.count > 0;
+  //  [self.blendShapePopUpButton addItemsWithTitles:keys];
+  //  self.blendShapeKey = keys.firstObject;
 
   self.lookAtXTextField.floatValue = 0.0f;
   self.lookAtYTextField.floatValue = 1.5f;
@@ -89,8 +90,8 @@
 - (void)setBlendShapeKey:(NSString *)blendShapeKey {
   _blendShapeKey = blendShapeKey;
   if (blendShapeKey) {
-    CGFloat weight = [self.asset weightForBlendShapeKey:blendShapeKey];
-    self.blendShapeValueSlider.floatValue = weight;
+    //    CGFloat weight = [self.asset weightForBlendShapeKey:blendShapeKey];
+    //    self.blendShapeValueSlider.floatValue = weight;
   }
 }
 

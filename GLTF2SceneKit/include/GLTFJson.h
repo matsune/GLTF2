@@ -1,4 +1,5 @@
 #import <Foundation/Foundation.h>
+#import <SceneKit/SceneKit.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -620,6 +621,8 @@ extern NSString *const VRMCFirstPersonMeshAnnotationTypeFirstPersonOnly;
 
 - (instancetype)initWithX:(float)x Y:(float)y Z:(float)z;
 
+- (SCNVector3)scnVector3;
+
 @end
 
 extern NSString *const VRMCLookAtTypeBone;
@@ -967,6 +970,9 @@ extern NSString *const VRMBlendShapeGroupPresetNameBlinkR;
 @property(nonatomic, strong, nullable) Vec3 *offset;
 @property(nonatomic, strong, nullable) NSNumber *radius;
 
+- (SCNVector3)offsetValue;
+- (float)radiusValue;
+
 @end
 
 @interface VRMSecondaryAnimationColliderGroup : NSObject
@@ -1040,6 +1046,9 @@ extern NSString *const VRMBlendShapeGroupPresetNameBlinkR;
 @property(nonatomic, strong, nullable) Vec3 *offset;
 @property(nonatomic, strong, nullable) NSNumber *radius;
 
+- (SCNVector3)offsetValue;
+- (float)radiusValue;
+
 @end
 
 @interface VRMCSpringBoneShapeCapsule : NSObject
@@ -1047,6 +1056,10 @@ extern NSString *const VRMBlendShapeGroupPresetNameBlinkR;
 @property(nonatomic, strong, nullable) Vec3 *offset;
 @property(nonatomic, strong, nullable) NSNumber *radius;
 @property(nonatomic, strong, nullable) Vec3 *tail;
+
+- (SCNVector3)offsetValue;
+- (float)radiusValue;
+- (SCNVector3)tailValue;
 
 @end
 
@@ -1072,6 +1085,12 @@ extern NSString *const VRMBlendShapeGroupPresetNameBlinkR;
 @property(nonatomic, strong, nullable) NSNumber *gravityPower;
 @property(nonatomic, strong, nullable) Vec3 *gravityDir;
 @property(nonatomic, strong, nullable) NSNumber *dragForce;
+
+- (float)hitRadiusValue;
+- (float)stiffnessValue;
+- (float)gravityPowerValue;
+- (SCNVector3)gravityDirValue;
+- (float)dragForceValue;
 
 @end
 

@@ -27,7 +27,11 @@
 
 - (void)loadModelURL:(NSURL *)url {
   NSError *error;
-  self.asset = [[GLTFSCNAsset alloc] init];
+  if ([url.pathExtension isEqualToString:@"vrm"]) {
+    self.asset = [[VRMSCNAsset alloc] init];
+  } else {
+    self.asset = [[GLTFSCNAsset alloc] init];
+  }
   [self.asset loadFile:[url path] error:&error];
   if (error) {
     [[NSAlert alertWithError:error] runModal];
@@ -95,7 +99,7 @@
 - (void)sidebarViewController:(SidebarViewController *)sidebarViewController
               didChangeWeight:(float)weight
              forBlendShapeKey:(NSString *)key {
-  [self.asset setBlendShapeWeight:weight forKey:key];
+  //  [self.asset setBlendShapeWeight:weight forKey:key];
 }
 
 - (void)sidebarViewController:(SidebarViewController *)sidebarViewController
@@ -121,45 +125,48 @@
 
 - (void)sidebarViewController:(SidebarViewController *)sidebarViewController
         didChangeVrmPositionX:(float)value {
-  SCNVector3 position = self.asset.vrmRootNode.position;
-  position.x = value;
-  self.asset.vrmRootNode.position = position;
-
-  //  SCNVector3 position = self.boxNode.position;
-  //  position.x = value;
-  //  self.boxNode.position = position;
+  if ([self.asset isKindOfClass:[VRMSCNAsset class]]) {
+    VRMSCNAsset *asset = (VRMSCNAsset *)self.asset;
+    SCNVector3 position = asset.vrmRootNode.position;
+    position.x = value;
+    asset.vrmRootNode.position = position;
+  }
 }
 
 - (void)sidebarViewController:(SidebarViewController *)sidebarViewController
         didChangeVrmPositionY:(float)value {
-  SCNVector3 position = self.boxNode.position;
-  position.y = value;
-  self.asset.vrmRootNode.position = position;
-
-  //  SCNVector3 position = self.boxNode.position;
-  //  position.y = value;
-  //  self.boxNode.position = position;
+  if ([self.asset isKindOfClass:[VRMSCNAsset class]]) {
+    VRMSCNAsset *asset = (VRMSCNAsset *)self.asset;
+    SCNVector3 position = asset.vrmRootNode.position;
+    position.y = value;
+    asset.vrmRootNode.position = position;
+  }
 }
 
 - (void)sidebarViewController:(SidebarViewController *)sidebarViewController
         didChangeVrmPositionZ:(float)value {
-  SCNVector3 position = self.boxNode.position;
-  position.z = value;
-  self.asset.vrmRootNode.position = position;
-
-  //  SCNVector3 position = self.boxNode.position;
-  //  position.z = value;
-  //  self.boxNode.position = position;
+  if ([self.asset isKindOfClass:[VRMSCNAsset class]]) {
+    VRMSCNAsset *asset = (VRMSCNAsset *)self.asset;
+    SCNVector3 position = asset.vrmRootNode.position;
+    position.z = value;
+    asset.vrmRootNode.position = position;
+  }
 }
 
 - (void)lookAt:(SCNVector3)value {
   self.lookAtTargetSphere.position = value;
-  [self.asset lookAtTarget:value];
+  if ([self.asset isKindOfClass:[VRMSCNAsset class]]) {
+    VRMSCNAsset *asset = (VRMSCNAsset *)self.asset;
+    [asset lookAtTarget:value];
+  }
 }
 
 - (void)renderer:(id<SCNSceneRenderer>)renderer
     updateAtTime:(NSTimeInterval)time {
-  [self.asset updateAtTime:time];
+  if ([self.asset isKindOfClass:[VRMSCNAsset class]]) {
+    VRMSCNAsset *asset = (VRMSCNAsset *)self.asset;
+    [asset updateAtTime:time];
+  }
 }
 
 @end

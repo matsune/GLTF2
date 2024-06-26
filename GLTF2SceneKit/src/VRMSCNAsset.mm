@@ -2,17 +2,19 @@
 
 #pragma mark - SCNQuaternion Utils
 
-static SCNQuaternion SCNQuaternionMake(CGFloat x, CGFloat y, CGFloat z, CGFloat w) {
+static SCNQuaternion SCNQuaternionMake(CGFloat x, CGFloat y, CGFloat z,
+                                       CGFloat w) {
   return SCNVector4Make(x, y, z, w);
 }
 
 static SCNQuaternion SCNQuaternionNormalize(const SCNQuaternion &v) {
-    float norm = sqrt(v.x * v.x + v.y * v.y + v.z * v.z + v.w * v.w);
-    if (norm == 0) {
-        return v;
-    }
-    float inverseNorm = 1.0 / norm;
-    return SCNQuaternionMake(v.x * inverseNorm, v.y * inverseNorm, v.z * inverseNorm, v.w * inverseNorm);
+  float norm = sqrt(v.x * v.x + v.y * v.y + v.z * v.z + v.w * v.w);
+  if (norm == 0) {
+    return v;
+  }
+  float inverseNorm = 1.0 / norm;
+  return SCNQuaternionMake(v.x * inverseNorm, v.y * inverseNorm,
+                           v.z * inverseNorm, v.w * inverseNorm);
 }
 
 static SCNQuaternion SCNQuaternionMul(const SCNQuaternion &q1,
@@ -23,8 +25,8 @@ static SCNQuaternion SCNQuaternionMul(const SCNQuaternion &q1,
                         q1.w * q2.w - q1.x * q2.x - q1.y * q2.y - q1.z * q2.z);
 }
 
-SCNQuaternion SCNQuaternionFromUnitVectors(const SCNVector3 &vFrom,
-                                           const SCNVector3 &vTo) {
+static SCNQuaternion SCNQuaternionFromUnitVectors(const SCNVector3 &vFrom,
+                                                  const SCNVector3 &vTo) {
   const float EPS = 0.000001;
   SCNQuaternion q;
   float r = vFrom.x * vTo.x + vFrom.y * vTo.y + vFrom.z * vTo.z + 1.0f;
@@ -59,7 +61,7 @@ SCNQuaternion SCNQuaternionFromUnitVectors(const SCNVector3 &vFrom,
   return q;
 }
 
-SCNQuaternion SCNQuaternionFromRotationMatrix(const SCNMatrix4 &m) {
+static SCNQuaternion SCNQuaternionFromRotationMatrix(const SCNMatrix4 &m) {
   SCNQuaternion q;
 
   float m11 = m.m11, m12 = m.m12, m13 = m.m13;
@@ -144,17 +146,24 @@ static SCNVector3 SCNVector3Normalize(const SCNVector3 &vector) {
 }
 
 static SCNVector3 SCNVector3Apply(const SCNVector3 &v, const SCNMatrix4 &m) {
-    float w = 1.0 / (m.m14 * v.x + m.m24 * v.y + m.m34 * v.z + m.m44);
-    return SCNVector3Make(
-        (m.m11 * v.x + m.m21 * v.y + m.m31 * v.z + m.m41) * w,
-        (m.m12 * v.x + m.m22 * v.y + m.m32 * v.z + m.m42) * w,
-        (m.m13 * v.x + m.m23 * v.y + m.m33 * v.z + m.m43) * w
-    );
+  float w = 1.0 / (m.m14 * v.x + m.m24 * v.y + m.m34 * v.z + m.m44);
+  return SCNVector3Make((m.m11 * v.x + m.m21 * v.y + m.m31 * v.z + m.m41) * w,
+                        (m.m12 * v.x + m.m22 * v.y + m.m32 * v.z + m.m42) * w,
+                        (m.m13 * v.x + m.m23 * v.y + m.m33 * v.z + m.m43) * w);
 }
 
 static SCNVector3 SCNVector3Apply(const SCNVector3 &vector,
                                   const SCNQuaternion &quaternion) {
   return SCNVector3Apply(vector, SCNMatrix4MakeRotation(quaternion));
+}
+
+static CGFloat SCNVector3LengthBetween(const SCNVector3 &a,
+                                       const SCNVector3 &b) {
+  return SCNVector3Length(SCNVector3Sub(a, b));
+}
+
+static SCNVector3 SCNVector3Axis(const SCNVector3 &from, const SCNVector3 &to) {
+  return SCNVector3Normalize(SCNVector3Sub(to, from));
 }
 
 #pragma mark - SpringBoneJointState
@@ -165,13 +174,12 @@ static SCNVector3 SCNVector3Apply(const SCNVector3 &vector,
 @property(nonatomic, nullable, strong) SCNNode *child;
 @property(nonatomic, nullable, strong) SCNNode *center;
 @property(nonatomic, nonnull, strong) VRMSpringBoneJoint *joint;
-@property(nonatomic, assign)
-    SCNMatrix4 initialLocalMatrix; // bone to parent space
+@property(nonatomic, assign) SCNMatrix4 initialLocalMatrix;
 @property(nonatomic, assign) SCNQuaternion initialLocalRotation;
 @property(nonatomic, assign) SCNVector3 initialLocalChildPosition;
-@property(nonatomic, assign) SCNVector3 boneAxisInBone;      // in bone space
-@property(nonatomic, assign) SCNVector3 prevTailInCenter;    // in center space
-@property(nonatomic, assign) SCNVector3 currentTailInCenter; // in center space
+@property(nonatomic, assign) SCNVector3 boneAxisInBone;
+@property(nonatomic, assign) SCNVector3 prevTailInCenter;
+@property(nonatomic, assign) SCNVector3 currentTailInCenter;
 
 - (void)update:(NSTimeInterval)deltaTime;
 
@@ -199,11 +207,11 @@ static SCNVector3 SCNVector3Apply(const SCNVector3 &vector,
     }
     _boneAxisInBone = SCNVector3Normalize(_initialLocalChildPosition);
 
-    SCNMatrix4 boneToWorld = self.bone.worldTransform;
-    SCNMatrix4 worldToCenter = [self getWorldToCenterMatrix];
-    SCNMatrix4 boneToCenter = SCNMatrix4Mult(boneToWorld, worldToCenter);
+    SCNMatrix4 boneToCenterMatrix =
+        SCNMatrix4Mult(bone.worldTransform, [self getWorldToCenterMatrix]);
     _currentTailInCenter =
-        SCNVector3Apply(_initialLocalChildPosition, boneToCenter);
+        SCNVector3Apply(_initialLocalChildPosition, boneToCenterMatrix);
+
     _prevTailInCenter = _currentTailInCenter;
   }
   return self;
@@ -233,17 +241,18 @@ static SCNVector3 SCNVector3Apply(const SCNVector3 &vector,
   }
 }
 
-- (CGFloat)getBoneLength {
-  SCNVector3 bonePositionInWorld = self.bone.worldPosition;
-  SCNVector3 childPositionInWorld;
+- (SCNVector3)getChildPositionInWorld {
   if (self.child) {
-    childPositionInWorld = self.child.worldPosition;
+    return self.child.worldPosition;
   } else {
-    childPositionInWorld = SCNVector3Apply(self.initialLocalChildPosition,
-                                           self.bone.worldTransform);
+    return SCNVector3Apply(self.initialLocalChildPosition,
+                           self.bone.worldTransform);
   }
-  return SCNVector3Length(
-      SCNVector3Sub(childPositionInWorld, bonePositionInWorld));
+}
+
+- (CGFloat)getBoneLength {
+  return SCNVector3LengthBetween(self.bone.worldPosition,
+                                 [self getChildPositionInWorld]);
 }
 
 - (void)update:(NSTimeInterval)deltaTime {
@@ -254,21 +263,22 @@ static SCNVector3 SCNVector3Apply(const SCNVector3 &vector,
 
   // Get bone position in center space
   SCNVector3 bonePositionInWorld = self.bone.worldPosition;
-  SCNMatrix4 worldToCenter = [self getWorldToCenterMatrix];
+  SCNMatrix4 worldToCenterMatrix = [self getWorldToCenterMatrix];
   SCNVector3 bonePositionInCenter =
-      SCNVector3Apply(bonePositionInWorld, worldToCenter);
+      SCNVector3Apply(bonePositionInWorld, worldToCenterMatrix);
 
-  // Get bone position in center space
-  SCNMatrix4 boneToParent = self.initialLocalMatrix;
-  SCNMatrix4 parentToWorld = [self getParentToWorldMatrix];
-  SCNMatrix4 boneToCenter = SCNMatrix4Mult(
-      boneToParent, SCNMatrix4Mult(parentToWorld, worldToCenter));
-  SCNVector3 boneAxisInCenter = SCNVector3Normalize(
-      SCNVector3Sub(SCNVector3Apply(self.boneAxisInBone, boneToCenter),
-                    bonePositionInCenter));
+  // Get bone axis in center space
+  SCNMatrix4 parentToWorldMatrix = [self getParentToWorldMatrix];
+  SCNMatrix4 parentToCenterMatrix =
+      SCNMatrix4Mult(parentToWorldMatrix, worldToCenterMatrix);
+  SCNVector3 boneAxisInCenter =
+      SCNVector3Axis(bonePositionInCenter,
+                     SCNVector3Apply(SCNVector3Apply(self.boneAxisInBone,
+                                                     self.initialLocalMatrix),
+                                     parentToCenterMatrix));
 
   SCNQuaternion worldToCenterQuat =
-      SCNQuaternionFromRotationMatrix(worldToCenter);
+      SCNQuaternionFromRotationMatrix(worldToCenterMatrix);
 
   // gravity in center space
   SCNVector3 gravityDirInCenter = SCNVector3Normalize(
@@ -301,15 +311,15 @@ static SCNVector3 SCNVector3Apply(const SCNVector3 &vector,
                                         nextTailInWorld, bonePositionInWorld)),
                                     boneLength),
                     bonePositionInWorld);
-  nextTailInCenter = SCNVector3Apply(nextTailInWorld, worldToCenter);
+  nextTailInCenter = SCNVector3Apply(nextTailInWorld, worldToCenterMatrix);
 
   // TODO: collision
 
   self.prevTailInCenter = self.currentTailInCenter;
   self.currentTailInCenter = nextTailInCenter;
 
-  SCNMatrix4 worldToBoneMatrix =
-      SCNMatrix4Invert(SCNMatrix4Mult(boneToParent, parentToWorld));
+  SCNMatrix4 worldToBoneMatrix = SCNMatrix4Invert(
+      SCNMatrix4Mult(self.initialLocalMatrix, parentToWorldMatrix));
   SCNVector3 nextBoneAxisInBone =
       SCNVector3Normalize(SCNVector3Apply(nextTailInWorld, worldToBoneMatrix));
   SCNQuaternion applyRotation =

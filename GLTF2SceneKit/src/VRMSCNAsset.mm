@@ -1,10 +1,140 @@
 #import "VRMSCNAsset.h"
 
+#pragma mark - SCNQuaternion Utils
+
+static SCNQuaternion SCNQuaternionMake(CGFloat x, CGFloat y, CGFloat z, CGFloat w) {
+  return SCNVector4Make(x, y, z, w);
+}
+
+static SCNQuaternion SCNQuaternionNormalize(const SCNQuaternion &v) {
+    float norm = sqrt(v.x * v.x + v.y * v.y + v.z * v.z + v.w * v.w);
+    if (norm == 0) {
+        return v;
+    }
+    float inverseNorm = 1.0 / norm;
+    return SCNQuaternionMake(v.x * inverseNorm, v.y * inverseNorm, v.z * inverseNorm, v.w * inverseNorm);
+}
+
+static SCNQuaternion SCNQuaternionMul(const SCNQuaternion &q1,
+                                      const SCNQuaternion &q2) {
+  return SCNVector4Make(q1.x * q2.w + q1.w * q2.x + q1.y * q2.z - q1.z * q2.y,
+                        q1.y * q2.w + q1.w * q2.y + q1.z * q2.x - q1.x * q2.z,
+                        q1.z * q2.w + q1.w * q2.z + q1.x * q2.y - q1.y * q2.x,
+                        q1.w * q2.w - q1.x * q2.x - q1.y * q2.y - q1.z * q2.z);
+}
+
+SCNQuaternion SCNQuaternionFromUnitVectors(const SCNVector3 &vFrom,
+                                           const SCNVector3 &vTo) {
+  const float EPS = 0.000001;
+  SCNQuaternion q;
+  float r = vFrom.x * vTo.x + vFrom.y * vTo.y + vFrom.z * vTo.z + 1.0f;
+
+  if (r < EPS) {
+    r = 0.0f;
+
+    if (fabs(vFrom.x) > fabs(vFrom.z)) {
+      q.x = -vFrom.y;
+      q.y = vFrom.x;
+      q.z = 0.0f;
+      q.w = r;
+    } else {
+      q.x = 0.0f;
+      q.y = -vFrom.z;
+      q.z = vFrom.y;
+      q.w = r;
+    }
+  } else {
+    q.x = vFrom.y * vTo.z - vFrom.z * vTo.y;
+    q.y = vFrom.z * vTo.x - vFrom.x * vTo.z;
+    q.z = vFrom.x * vTo.y - vFrom.y * vTo.x;
+    q.w = r;
+  }
+
+  float magnitude = sqrt(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w);
+  q.x /= magnitude;
+  q.y /= magnitude;
+  q.z /= magnitude;
+  q.w /= magnitude;
+
+  return q;
+}
+
+SCNQuaternion SCNQuaternionFromRotationMatrix(const SCNMatrix4 &m) {
+  SCNQuaternion q;
+
+  float m11 = m.m11, m12 = m.m12, m13 = m.m13;
+  float m21 = m.m21, m22 = m.m22, m23 = m.m23;
+  float m31 = m.m31, m32 = m.m32, m33 = m.m33;
+
+  float trace = m11 + m22 + m33;
+
+  if (trace > 0) {
+    float s = 0.5f / sqrt(trace + 1.0f);
+    q.w = 0.25f / s;
+    q.x = (m32 - m23) * s;
+    q.y = (m13 - m31) * s;
+    q.z = (m21 - m12) * s;
+  } else if (m11 > m22 && m11 > m33) {
+    float s = 2.0f * sqrt(1.0f + m11 - m22 - m33);
+    q.w = (m32 - m23) / s;
+    q.x = 0.25f * s;
+    q.y = (m12 + m21) / s;
+    q.z = (m13 + m31) / s;
+  } else if (m22 > m33) {
+    float s = 2.0f * sqrt(1.0f + m22 - m11 - m33);
+    q.w = (m13 - m31) / s;
+    q.x = (m12 + m21) / s;
+    q.y = 0.25f * s;
+    q.z = (m23 + m32) / s;
+  } else {
+    float s = 2.0f * sqrt(1.0f + m33 - m11 - m22);
+    q.w = (m21 - m12) / s;
+    q.x = (m13 + m31) / s;
+    q.y = (m23 + m32) / s;
+    q.z = 0.25f * s;
+  }
+
+  return q;
+}
+
+#pragma mark - SCNMatrix4 Utils
+
+static SCNMatrix4 SCNMatrix4MakeRotation(const SCNQuaternion &q) {
+  SCNQuaternion qn = SCNQuaternionNormalize(q);
+  CGFloat angle = 2.0f * acos(qn.w);
+
+  CGFloat s = sqrt(1.0f - qn.w * qn.w);
+  if (s < 0.0001f) {
+    return SCNMatrix4MakeRotation(angle, 1.0f, 0.0f, 0.0f);
+  } else {
+    return SCNMatrix4MakeRotation(angle, qn.x / s, qn.y / s, qn.z / s);
+  }
+}
+
+#pragma mark - SCNVector3 Utils
+
+static SCNVector3 SCNVector3Add(const SCNVector3 &v1, const SCNVector3 &v2) {
+  return SCNVector3Make(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
+}
+
+static SCNVector3 SCNVector3Sub(const SCNVector3 &a, const SCNVector3 &b) {
+  return SCNVector3Make(a.x - b.x, a.y - b.y, a.z - b.z);
+}
+
+static SCNVector3 SCNVector3Cross(const SCNVector3 &v1, const SCNVector3 &v2) {
+  return SCNVector3Make(v1.y * v2.z - v1.z * v2.y, v1.z * v2.x - v1.x * v2.z,
+                        v1.x * v2.y - v1.y * v2.x);
+}
+
+static SCNVector3 SCNVector3Scale(const SCNVector3 &vector, CGFloat n) {
+  return SCNVector3Make(vector.x * n, vector.y * n, vector.z * n);
+}
+
 static CGFloat SCNVector3Length(const SCNVector3 &vector) {
   return sqrt(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z);
 }
 
-static SCNVector3 SCNVector3Normalized(const SCNVector3 &vector) {
+static SCNVector3 SCNVector3Normalize(const SCNVector3 &vector) {
   CGFloat length = SCNVector3Length(vector);
   if (length == 0) {
     return SCNVector3Make(0, 0, 0);
@@ -13,104 +143,35 @@ static SCNVector3 SCNVector3Normalized(const SCNVector3 &vector) {
                         vector.z / length);
 }
 
-static SCNVector3 SCNVector3Add(SCNVector3 v1, SCNVector3 v2) {
-  return SCNVector3Make(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
+static SCNVector3 SCNVector3Apply(const SCNVector3 &v, const SCNMatrix4 &m) {
+    float w = 1.0 / (m.m14 * v.x + m.m24 * v.y + m.m34 * v.z + m.m44);
+    return SCNVector3Make(
+        (m.m11 * v.x + m.m21 * v.y + m.m31 * v.z + m.m41) * w,
+        (m.m12 * v.x + m.m22 * v.y + m.m32 * v.z + m.m42) * w,
+        (m.m13 * v.x + m.m23 * v.y + m.m33 * v.z + m.m43) * w
+    );
 }
 
-static SCNVector3 SCNVector3Sub(const SCNVector3 &a, const SCNVector3 &b) {
-  return SCNVector3Make(a.x - b.x, a.y - b.y, a.z - b.z);
+static SCNVector3 SCNVector3Apply(const SCNVector3 &vector,
+                                  const SCNQuaternion &quaternion) {
+  return SCNVector3Apply(vector, SCNMatrix4MakeRotation(quaternion));
 }
 
-static SCNVector3 SCNVector3Scale(const SCNVector3 &vector, CGFloat n) {
-  return SCNVector3Make(vector.x * n, vector.y * n, vector.z * n);
-}
-
-static BOOL SCNVectorIsEqual(const SCNVector3 &a, const SCNVector3 &b) {
-  return a.x == b.x && a.y == b.y && a.z == b.z;
-}
-
-static SCNQuaternion SCNQuaternionMultiply(SCNQuaternion q1, SCNQuaternion q2) {
-  SCNQuaternion result;
-  result.x = q1.x * q2.w + q1.w * q2.x + q1.y * q2.z - q1.z * q2.y;
-  result.y = q1.y * q2.w + q1.w * q2.y + q1.z * q2.x - q1.x * q2.z;
-  result.z = q1.z * q2.w + q1.w * q2.z + q1.x * q2.y - q1.y * q2.x;
-  result.w = q1.w * q2.w - q1.x * q2.x - q1.y * q2.y - q1.z * q2.z;
-  return result;
-}
-
-static SCNVector3 SCNVector3CrossProduct(SCNVector3 v1, SCNVector3 v2) {
-  return SCNVector3Make(v1.y * v2.z - v1.z * v2.y, v1.z * v2.x - v1.x * v2.z,
-                        v1.x * v2.y - v1.y * v2.x);
-}
-
-static SCNVector3 SCNVector3ApplyQuaternion(SCNVector3 v, SCNQuaternion q) {
-  SCNVector3 qVec = SCNVector3Make(q.x, q.y, q.z);
-  SCNVector3 uv = SCNVector3CrossProduct(qVec, v);
-  SCNVector3 uuv = SCNVector3CrossProduct(qVec, uv);
-  uv = SCNVector3Scale(uv, 2.0 * q.w);
-  uuv = SCNVector3Scale(uuv, 2.0);
-
-  return SCNVector3Add(SCNVector3Add(v, uv), uuv);
-}
-
-static SCNVector3 SCNVector3ApplyTransform(SCNVector3 vector, SCNMatrix4 transform) {
-    SCNVector3 result;
-    result.x = transform.m11 * vector.x + transform.m21 * vector.y + transform.m31 * vector.z + transform.m41;
-    result.y = transform.m12 * vector.x + transform.m22 * vector.y + transform.m32 * vector.z + transform.m42;
-    result.z = transform.m13 * vector.x + transform.m23 * vector.y + transform.m33 * vector.z + transform.m43;
-    return result;
-}
-
-static SCNVector3 SCNVector3Transform(SCNVector3 vector, SCNQuaternion quaternion) {
-    SCNMatrix4 rotationMatrix = SCNMatrix4MakeRotation(quaternion.x, quaternion.y, quaternion.z, quaternion.w);
-    return SCNVector3ApplyTransform(vector, rotationMatrix);
-}
-
-static SCNVector3 SCNVector3Transform(SCNVector3 vector, SCNMatrix4 transform) {
-    SCNVector3 result;
-    result.x = transform.m11 * vector.x + transform.m21 * vector.y + transform.m31 * vector.z + transform.m41;
-    result.y = transform.m12 * vector.x + transform.m22 * vector.y + transform.m32 * vector.z + transform.m42;
-    result.z = transform.m13 * vector.x + transform.m23 * vector.y + transform.m33 * vector.z + transform.m43;
-    return result;
-}
-
-SCNVector3 SCNVector3Cross(SCNVector3 a, SCNVector3 b) {
-    return SCNVector3Make(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
-}
-
-float SCNVector3Dot(SCNVector3 a, SCNVector3 b) {
-    return a.x * b.x + a.y * b.y + a.z * b.z;
-}
-
-SCNQuaternion SCNQuaternionMakeWithAngleAndAxis(float angle, float x, float y, float z) {
-    float halfAngle = angle * 0.5;
-    float sinHalfAngle = sin(halfAngle);
-
-    SCNQuaternion quaternion;
-    quaternion.x = x * sinHalfAngle;
-    quaternion.y = y * sinHalfAngle;
-    quaternion.z = z * sinHalfAngle;
-    quaternion.w = cos(halfAngle);
-
-    return quaternion;
-}
-
-SCNQuaternion SCNQuaternionFromToRotation(SCNVector3 from, SCNVector3 to) {
-    SCNVector3 axis = SCNVector3Normalized(SCNVector3Cross(from, to));
-    float angle = acos(SCNVector3Dot(SCNVector3Normalized(from), SCNVector3Normalized(to)));
-    return SCNQuaternionMakeWithAngleAndAxis(angle, axis.x, axis.y, axis.z);
-}
+#pragma mark - SpringBoneJointState
 
 @interface SpringBoneJointState : NSObject
 
-@property(nonatomic, nonnull, strong) SCNNode *tailNode;
-@property(nonatomic, assign) SCNVector3 prevTail;
-@property(nonatomic, assign) SCNVector3 currentTail;
-@property(nonatomic, assign) SCNVector3 boneAxis;
-@property(nonatomic, assign) CGFloat boneLength;
-@property(nonatomic, assign) SCNMatrix4 initialLocalMatrix;
+@property(nonatomic, nonnull, strong) SCNNode *bone;
+@property(nonatomic, nullable, strong) SCNNode *child;
+@property(nonatomic, nullable, strong) SCNNode *center;
+@property(nonatomic, nonnull, strong) VRMSpringBoneJoint *joint;
+@property(nonatomic, assign)
+    SCNMatrix4 initialLocalMatrix; // bone to parent space
 @property(nonatomic, assign) SCNQuaternion initialLocalRotation;
-@property(nonatomic, strong) VRMSpringBoneJoint *joint;
+@property(nonatomic, assign) SCNVector3 initialLocalChildPosition;
+@property(nonatomic, assign) SCNVector3 boneAxisInBone;      // in bone space
+@property(nonatomic, assign) SCNVector3 prevTailInCenter;    // in center space
+@property(nonatomic, assign) SCNVector3 currentTailInCenter; // in center space
 
 - (void)update:(NSTimeInterval)deltaTime;
 
@@ -118,99 +179,143 @@ SCNQuaternion SCNQuaternionFromToRotation(SCNVector3 from, SCNVector3 to) {
 
 @implementation SpringBoneJointState
 
-- (void)update:(NSTimeInterval)deltaTime {
-  SCNVector3 worldPosition = self.tailNode.parentNode.worldPosition;
-  SCNQuaternion parentWorldRotation = self.tailNode.parentNode.worldOrientation;
+- (instancetype)initWithBone:(SCNNode *)bone
+                       child:(nullable SCNNode *)child
+                      center:(nullable SCNNode *)center
+                       joint:(VRMSpringBoneJoint *)joint {
+  self = [super init];
+  if (self) {
+    _bone = bone;
+    _child = child;
+    _center = center;
+    _joint = joint;
+    _initialLocalMatrix = bone.transform;
+    _initialLocalRotation = bone.orientation;
+    if (child) {
+      _initialLocalChildPosition = child.position;
+    } else {
+      _initialLocalChildPosition =
+          SCNVector3Scale(SCNVector3Normalize(bone.position), 0.07);
+    }
+    _boneAxisInBone = SCNVector3Normalize(_initialLocalChildPosition);
 
-  // 慣性計算
+    SCNMatrix4 boneToWorld = self.bone.worldTransform;
+    SCNMatrix4 worldToCenter = [self getWorldToCenterMatrix];
+    SCNMatrix4 boneToCenter = SCNMatrix4Mult(boneToWorld, worldToCenter);
+    _currentTailInCenter =
+        SCNVector3Apply(_initialLocalChildPosition, boneToCenter);
+    _prevTailInCenter = _currentTailInCenter;
+  }
+  return self;
+}
+
+- (SCNMatrix4)getCenterToWorldMatrix {
+  if (self.center) {
+    return self.center.worldTransform;
+  } else {
+    return SCNMatrix4Identity;
+  }
+}
+
+- (SCNMatrix4)getWorldToCenterMatrix {
+  if (self.center) {
+    return SCNMatrix4Invert(self.center.worldTransform);
+  } else {
+    return SCNMatrix4Identity;
+  }
+}
+
+- (SCNMatrix4)getParentToWorldMatrix {
+  if (self.bone.parentNode) {
+    return self.bone.parentNode.worldTransform;
+  } else {
+    return SCNMatrix4Identity;
+  }
+}
+
+- (CGFloat)getBoneLength {
+  SCNVector3 bonePositionInWorld = self.bone.worldPosition;
+  SCNVector3 childPositionInWorld;
+  if (self.child) {
+    childPositionInWorld = self.child.worldPosition;
+  } else {
+    childPositionInWorld = SCNVector3Apply(self.initialLocalChildPosition,
+                                           self.bone.worldTransform);
+  }
+  return SCNVector3Length(
+      SCNVector3Sub(childPositionInWorld, bonePositionInWorld));
+}
+
+- (void)update:(NSTimeInterval)deltaTime {
+  if (deltaTime <= 0)
+    return;
+
+  CGFloat boneLength = [self getBoneLength];
+
+  // Get bone position in center space
+  SCNVector3 bonePositionInWorld = self.bone.worldPosition;
+  SCNMatrix4 worldToCenter = [self getWorldToCenterMatrix];
+  SCNVector3 bonePositionInCenter =
+      SCNVector3Apply(bonePositionInWorld, worldToCenter);
+
+  // Get bone position in center space
+  SCNMatrix4 boneToParent = self.initialLocalMatrix;
+  SCNMatrix4 parentToWorld = [self getParentToWorldMatrix];
+  SCNMatrix4 boneToCenter = SCNMatrix4Mult(
+      boneToParent, SCNMatrix4Mult(parentToWorld, worldToCenter));
+  SCNVector3 boneAxisInCenter = SCNVector3Normalize(
+      SCNVector3Sub(SCNVector3Apply(self.boneAxisInBone, boneToCenter),
+                    bonePositionInCenter));
+
+  SCNQuaternion worldToCenterQuat =
+      SCNQuaternionFromRotationMatrix(worldToCenter);
+
+  // gravity in center space
+  SCNVector3 gravityDirInCenter = SCNVector3Normalize(
+      SCNVector3Apply(self.joint.gravityDirValue, worldToCenterQuat));
+
+  SCNMatrix4 centerToWorld = [self getCenterToWorldMatrix];
+
+  // inertia
   SCNVector3 inertia = SCNVector3Scale(
-      SCNVector3Sub(self.currentTail, self.prevTail),
+      SCNVector3Sub(self.currentTailInCenter, self.prevTailInCenter),
       1.0 - self.joint.dragForceValue);
 
-  // 剛性計算
-  SCNVector3 stiffness = SCNVector3Scale(
-      SCNVector3Transform(
-                          SCNVector3Scale(self.boneAxis, self.joint.stiffnessValue),
-          parentWorldRotation),
-      deltaTime);
+  // stiffness
+  SCNVector3 stiffness =
+      SCNVector3Scale(boneAxisInCenter, self.joint.stiffnessValue * deltaTime);
 
-  // 重力計算
+  // gravity
   SCNVector3 gravity = SCNVector3Scale(
-      self.joint.gravityDirValue, self.joint.gravityPowerValue * deltaTime);
+      gravityDirInCenter, self.joint.gravityPowerValue * deltaTime);
 
-  // 次の位置を計算
-  SCNVector3 nextTail = SCNVector3Add(
-      SCNVector3Add(SCNVector3Add(self.currentTail, inertia), stiffness),
-      gravity);
+  // nextTail = currentTail + inertia + stiffness + gravity (in center space)
+  SCNVector3 nextTailInCenter =
+      SCNVector3Add(self.currentTailInCenter,
+                    SCNVector3Add(SCNVector3Add(inertia, stiffness), gravity));
+  // nextTail in world space
+  SCNVector3 nextTailInWorld = SCNVector3Apply(nextTailInCenter, centerToWorld);
 
-  // 長さの制約
-  nextTail = SCNVector3Add(
-      worldPosition,
-                           SCNVector3Scale(SCNVector3Normalized(SCNVector3Sub(nextTail, worldPosition)),
-          self.boneLength));
+  nextTailInWorld =
+      SCNVector3Add(SCNVector3Scale(SCNVector3Normalize(SCNVector3Sub(
+                                        nextTailInWorld, bonePositionInWorld)),
+                                    boneLength),
+                    bonePositionInWorld);
+  nextTailInCenter = SCNVector3Apply(nextTailInWorld, worldToCenter);
 
-  // prevTail・currentTailの更新
-  self.prevTail = self.currentTail;
-  self.currentTail = nextTail;
+  // TODO: collision
 
-  // 回転の更新
-  SCNMatrix4 invertedMatrix = SCNMatrix4Invert(self.initialLocalMatrix);
-  SCNVector3 to = SCNVector3Normalized(SCNVector3Transform(SCNVector3Sub(nextTail, worldPosition), invertedMatrix));
+  self.prevTailInCenter = self.currentTailInCenter;
+  self.currentTailInCenter = nextTailInCenter;
 
-//  SCNVector3 to = SCNVector3Normalized(
-//      SCNVector3Transform(SCNVector3Sub(nextTail, worldPosition),
-//                          SCNMatrix4Invert(self.initialLocalMatrix)));
-  self.tailNode.orientation =
-      SCNQuaternionMultiply(self.initialLocalRotation,
-                            SCNQuaternionFromToRotation(self.boneAxis, to));
-
-  SCNVector3 localNextTail = [self.tailNode.parentNode convertPosition:nextTail fromNode:nil];
-    self.tailNode.position = localNextTail;
-  //  SCNNode *headNode = self.tailNode.parentNode;
-  //  if (!headNode)
-  //    return;
-  //
-  //  SCNVector3 currentTail = self.currentTail;
-  //  SCNVector3 prevTail = self.prevTail;
-  //  SCNQuaternion initialLocalRotation = self.initialLocalRotation;
-  //  SCNVector3 boneAxis = self.boneAxis;
-  //  CGFloat boneLength = self.boneLength;
-  //
-  //  CGFloat dragForce = self.joint.dragForceValue;
-  //  CGFloat stiffnessForce = self.joint.stiffnessValue;
-  //  SCNVector3 gravityDir = self.joint.gravityDirValue;
-  //  CGFloat gravityPower = self.joint.gravityPowerValue;
-  //
-  //  SCNVector3 worldPosition = self.tailNode.worldPosition;
-  //  SCNQuaternion parentWorldRotation = headNode.worldOrientation;
-  //
-  //  SCNVector3 inertia =
-  //      SCNVector3Scale(SCNVector3Sub(currentTail, prevTail), (1.0 -
-  //      dragForce));
-  //
-  //  SCNQuaternion combinedRotation =
-  //      SCNQuaternionMultiply(parentWorldRotation, initialLocalRotation);
-  //  SCNVector3 rotatedDirection =
-  //      SCNVector3ApplyQuaternion(boneAxis, combinedRotation);
-  //  SCNVector3 stiffness =
-  //      SCNVector3Scale(rotatedDirection, stiffnessForce * deltaTime);
-  //
-  //  SCNVector3 external = SCNVector3Scale(gravityDir, gravityPower *
-  //  deltaTime);
-  //
-  //  SCNVector3 nextTail = SCNVector3Add(
-  //      SCNVector3Add(SCNVector3Add(currentTail, inertia), stiffness),
-  //      external);
-  //
-  //  SCNVector3 direction =
-  //      SCNVector3Normalized(SCNVector3Sub(nextTail, worldPosition));
-  //  nextTail =
-  //      SCNVector3Add(worldPosition, SCNVector3Scale(direction, boneLength));
-  //
-  //  self.prevTail = self.currentTail;
-  //  self.currentTail = nextTail;
-  //
-  //  self.tailNode.worldPosition = nextTail;
+  SCNMatrix4 worldToBoneMatrix =
+      SCNMatrix4Invert(SCNMatrix4Mult(boneToParent, parentToWorld));
+  SCNVector3 nextBoneAxisInBone =
+      SCNVector3Normalize(SCNVector3Apply(nextTailInWorld, worldToBoneMatrix));
+  SCNQuaternion applyRotation =
+      SCNQuaternionFromUnitVectors(self.boneAxisInBone, nextBoneAxisInBone);
+  self.bone.orientation =
+      SCNQuaternionMul(self.initialLocalRotation, applyRotation);
 }
 
 @end
@@ -222,28 +327,6 @@ static float angleBetweenVectors(SCNVector3 v1, SCNVector3 v2) {
   return acos(dot / (magnitudeV1 * magnitudeV2));
 }
 
-static SCNMatrix4 SCNMatrix4RotationFromQuaternion(const SCNQuaternion &q) {
-  CGFloat w = q.w;
-  CGFloat x = q.x;
-  CGFloat y = q.y;
-  CGFloat z = q.z;
-
-  CGFloat angle = 2 * acos(w);
-  CGFloat sinHalfAngle = sqrt(1 - w * w);
-
-  CGFloat ux, uy, uz;
-  if (sinHalfAngle < 0.0001) {
-    ux = 1;
-    uy = 0;
-    uz = 0;
-  } else {
-    ux = x / sinHalfAngle;
-    uy = y / sinHalfAngle;
-    uz = z / sinHalfAngle;
-  }
-  return SCNMatrix4MakeRotation(angle, ux, uy, uz);
-}
-
 static SCNMatrix4 LookAtMatrix(SCNNode *headBone,
                                SCNVector3 offsetFromHeadBone) {
   SCNVector3 headPosition = headBone.worldPosition;
@@ -251,8 +334,7 @@ static SCNMatrix4 LookAtMatrix(SCNNode *headBone,
 
   SCNMatrix4 headPositionMatrix =
       SCNMatrix4MakeTranslation(headPosition.x, headPosition.y, headPosition.z);
-  SCNMatrix4 headRotationMatrix =
-      SCNMatrix4RotationFromQuaternion(headRotation);
+  SCNMatrix4 headRotationMatrix = SCNMatrix4MakeRotation(headRotation);
   SCNMatrix4 inverseHeadRotationMatrix = SCNMatrix4Invert(headRotationMatrix);
 
   SCNMatrix4 offsetFromHeadBoneMatrix = SCNMatrix4MakeTranslation(
@@ -266,6 +348,8 @@ static SCNMatrix4 LookAtMatrix(SCNNode *headBone,
 }
 
 static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
+
+#pragma mark - VRMSCNAsset
 
 @interface VRMSCNAsset ()
 
@@ -315,8 +399,8 @@ static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
       SCNVector3 direction = SCNVector3Make(
           tail.x - offset.x, tail.y - offset.y, tail.z - offset.z);
       SCNVector3 up = SCNVector3Make(0, 1, 0);
-      SCNVector3 cross = SCNVector3CrossProduct(up, direction);
-      SCNVector3 axis = SCNVector3CrossProduct(up, direction);
+      SCNVector3 cross = SCNVector3Cross(up, direction);
+      SCNVector3 axis = SCNVector3Cross(up, direction);
       float angle = angleBetweenVectors(up, direction);
       colliderNode.rotation = SCNVector4Make(axis.x, axis.y, axis.z, angle);
     }
@@ -375,26 +459,23 @@ static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
       NSMutableArray<SpringBoneJointState *> *jointStates =
           [NSMutableArray array];
       for (VRMSpringBoneSpring *spring in springBone.springs) {
-        // TODO: center space
-        for (int i = 0; i < spring.joints.count - 1; i++) {
-          NSUInteger headIndex = spring.joints[i].node;
-          NSUInteger tailIndex = spring.joints[i + 1].node;
-          SCNNode *head = self.scnNodes[headIndex];
-          SCNNode *tail = self.scnNodes[tailIndex];
-          assert(head == tail.parentNode);
+        SCNNode *center;
+        if (spring.center) {
+          center = self.scnNodes[spring.center.unsignedIntValue];
+        }
 
-          SpringBoneJointState *state = [[SpringBoneJointState alloc] init];
-          state.tailNode = tail;
-          state.prevTail = tail.worldPosition;
-          state.currentTail = tail.worldPosition;
-          state.boneAxis = SCNVector3Normalized(
-              SCNVector3Sub(tail.worldPosition, head.worldPosition));
-          state.boneLength = SCNVector3Length(
-              SCNVector3Sub(tail.worldPosition, head.worldPosition));
-          state.initialLocalMatrix = tail.transform;
-          state.initialLocalRotation = tail.orientation;
-          state.joint = spring.joints[i];
-
+        for (int i = 1; i < spring.joints.count; i++) {
+          NSUInteger boneIndex = spring.joints[i - 1].node;
+          NSUInteger childIndex = spring.joints[i].node;
+          SCNNode *bone = self.scnNodes[boneIndex];
+          SCNNode *child = self.scnNodes[childIndex];
+          assert(bone == child.parentNode);
+          VRMSpringBoneJoint *joint = spring.joints[i - 1];
+          SpringBoneJointState *state =
+              [[SpringBoneJointState alloc] initWithBone:bone
+                                                   child:child
+                                                  center:center
+                                                   joint:joint];
           [jointStates addObject:state];
         }
       }

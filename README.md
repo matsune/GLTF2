@@ -18,9 +18,9 @@ Decoder library for glTF 2.0 format files written in C++
 - [x] KHR_materials_unlit
 - [x] KHR_texture_transform
 - [x] KHR_texture_volume
-- [x] VRM (0.0, 1.0)
-
-TODO: other extensions
+- [x] VRM 0.0
+- [x] VRM 1.0
+- [x] VRMC Spring Bone
 
 # GLTF2SceneKit
 
@@ -28,7 +28,7 @@ GLTF2SceneKit framework provides a bridge to display glTF models using SceneKit.
 
 TODO: iOS
 
-## Supported Extensions (Khronos)
+## Supported Extensions
 
 - [x] KHR_draco_mesh_compression
 - [x] KHR_materials_anisotropy
@@ -39,7 +39,9 @@ TODO: iOS
 - [x] KHR_materials_transmission
 - [x] KHR_materials_unlit
 - [x] KHR_texture_transform
-- [x] VRM
+- [x] VRM 0.0
+- [x] VRM 1.0
+- [x] VRMC Spring Bone
 
 ## Requirements
 

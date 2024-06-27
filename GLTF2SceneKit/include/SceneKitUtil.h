@@ -168,4 +168,13 @@ static SCNVector3 SCNVector3Axis(const SCNVector3 &from, const SCNVector3 &to) {
   return SCNVector3Normalize(SCNVector3Sub(to, from));
 }
 
+// angle in radians
+static CGFloat SCNVector3AngleBetween(const SCNVector3 &v1,
+                                      const SCNVector3 &v2) {
+  CGFloat dot = v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+  CGFloat magnitudeV1 = sqrt(pow(v1.x, 2) + pow(v1.y, 2) + pow(v1.z, 2));
+  CGFloat magnitudeV2 = sqrt(pow(v2.x, 2) + pow(v2.y, 2) + pow(v2.z, 2));
+  return acos(dot / (magnitudeV1 * magnitudeV2));
+}
+
 #endif /* SceneKitUtil_h */

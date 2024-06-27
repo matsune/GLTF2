@@ -4,23 +4,29 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface SpringBoneJointState : NSObject
+@interface SpringBoneSetting : NSObject
 
-@property(nonatomic, nonnull, strong) SCNNode *bone;
-@property(nonatomic, nullable, strong) SCNNode *child;
-@property(nonatomic, nullable, strong) SCNNode *center;
-@property(nonatomic, nonnull, strong) VRMSpringBoneJoint *joint;
-@property(nonatomic, assign) SCNMatrix4 initialLocalMatrix;
-@property(nonatomic, assign) SCNQuaternion initialLocalRotation;
-@property(nonatomic, assign) SCNVector3 initialLocalChildPosition;
-@property(nonatomic, assign) SCNVector3 boneAxisInBone;
-@property(nonatomic, assign) SCNVector3 prevTailInCenter;
-@property(nonatomic, assign) SCNVector3 currentTailInCenter;
+@property(nonatomic, assign) CGFloat hitRadius;
+@property(nonatomic, assign) CGFloat stiffness;
+@property(nonatomic, assign) CGFloat gravityPower;
+@property(nonatomic, assign) SCNVector3 gravityDir;
+@property(nonatomic, assign) CGFloat dragForce;
+
+- (instancetype)initWithHitRadius:(CGFloat)hitRadius
+                        stiffness:(CGFloat)stiffness
+                     gravityPower:(CGFloat)gravityPower
+                       gravityDir:(SCNVector3)gravityDir
+                        dragForce:(CGFloat)dragForce;
+
+@end
+
+@interface SpringBoneJointState : NSObject
 
 - (instancetype)initWithBone:(SCNNode *)bone
                        child:(nullable SCNNode *)child
                       center:(nullable SCNNode *)center
-                       joint:(VRMSpringBoneJoint *)joint;
+                     setting:(SpringBoneSetting *)setting
+              colliderGroups:(NSArray<NSArray<SCNNode *> *> *)colliderGroups;
 
 - (void)update:(NSTimeInterval)deltaTime;
 

@@ -2,13 +2,6 @@
 #import "SceneKitUtil.h"
 #import "SpringBoneJointState.h"
 
-static float angleBetweenVectors(SCNVector3 v1, SCNVector3 v2) {
-  float dot = v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
-  float magnitudeV1 = sqrt(v1.x * v1.x + v1.y * v1.y + v1.z * v1.z);
-  float magnitudeV2 = sqrt(v2.x * v2.x + v2.y * v2.y + v2.z * v2.z);
-  return acos(dot / (magnitudeV1 * magnitudeV2));
-}
-
 static SCNMatrix4 LookAtMatrix(SCNNode *headBone,
                                SCNVector3 offsetFromHeadBone) {
   SCNVector3 headPosition = headBone.worldPosition;
@@ -54,48 +47,31 @@ static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
   return self;
 }
 
-- (NSArray<SCNNode *> *)addColliderNodes:
-    (NSArray<VRMSpringBoneCollider *> *)colliders {
+- (NSArray<NSArray<SCNNode *> *> *)colliderGroupsFromVRMSpringBone:
+    (VRMSpringBone *)springBone {
+  NSMutableArray<NSArray<SCNNode *> *> *colliderGroups = [NSMutableArray array];
+
   NSMutableArray<SCNNode *> *colliderNodes = [NSMutableArray array];
+  if (springBone.colliders) {
+    for (VRMSpringBoneCollider *collider in springBone.colliders) {
+      SCNNode *node = self.scnNodes[collider.node];
+      SCNNode *colliderNode = [collider toSCNNode];
+      [node addChildNode:colliderNode];
 
-  for (VRMSpringBoneCollider *collider in colliders) {
-    SCNNode *node = self.scnNodes[collider.node];
-    SCNNode *colliderNode = [SCNNode node];
-    if (collider.shape.sphere) {
-      colliderNode.geometry =
-          [SCNSphere sphereWithRadius:collider.shape.sphere.radiusValue];
-      SCNVector3 offset = collider.shape.sphere.offsetValue;
-      colliderNode.position = offset;
-    } else if (collider.shape.capsule) {
-      SCNVector3 offset = collider.shape.capsule.offsetValue;
-      SCNVector3 tail = collider.shape.capsule.tailValue;
-      float height =
-          sqrt(pow(tail.x - offset.x, 2) + pow(tail.y - offset.y, 2) +
-               pow(tail.z - offset.z, 2));
-      colliderNode.geometry =
-          [SCNCapsule capsuleWithCapRadius:collider.shape.capsule.radiusValue
-                                    height:height];
-
-      colliderNode.position = offset;
-
-      SCNVector3 direction = SCNVector3Make(
-          tail.x - offset.x, tail.y - offset.y, tail.z - offset.z);
-      SCNVector3 up = SCNVector3Make(0, 1, 0);
-      SCNVector3 cross = SCNVector3Cross(up, direction);
-      SCNVector3 axis = SCNVector3Cross(up, direction);
-      float angle = angleBetweenVectors(up, direction);
-      colliderNode.rotation = SCNVector4Make(axis.x, axis.y, axis.z, angle);
+      [colliderNodes addObject:colliderNode];
     }
-    colliderNode.geometry.firstMaterial.transparency = 0.0;
-    colliderNode.physicsBody = [SCNPhysicsBody
-        bodyWithType:SCNPhysicsBodyTypeKinematic
-               shape:[SCNPhysicsShape shapeWithNode:colliderNode options:nil]];
-    [node addChildNode:colliderNode];
-
-    [colliderNodes addObject:colliderNode];
   }
 
-  return [colliderNodes copy];
+  for (VRMSpringBoneColliderGroup *colliderGroup in springBone.colliderGroups) {
+    NSMutableArray<SCNNode *> *groupColliders = [NSMutableArray array];
+    for (NSNumber *colliderIndex in colliderGroup.colliders) {
+      SCNNode *colliderNode = colliderNodes[colliderIndex.unsignedIntValue];
+      [groupColliders addObject:colliderNode];
+    }
+    [colliderGroups addObject:[groupColliders copy]];
+  }
+
+  return [colliderGroups copy];
 }
 
 - (BOOL)loadFile:(const NSString *)path
@@ -118,23 +94,9 @@ static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
   if (self.json.springBone) {
     VRMSpringBone *springBone = self.json.springBone;
 
-    NSArray<SCNNode *> *colliderNodes = [NSMutableArray array];
-    if (springBone.colliders) {
-      colliderNodes = [self addColliderNodes:springBone.colliders];
-    }
-
-    NSMutableArray<NSArray<SCNNode *> *> *colliderGroups =
-        [NSMutableArray array];
+    NSArray<NSArray<SCNNode *> *> *colliderGroups;
     if (springBone.colliderGroups) {
-      for (VRMSpringBoneColliderGroup *colliderGroup in springBone
-               .colliderGroups) {
-        NSMutableArray<SCNNode *> *groupColliders = [NSMutableArray array];
-        for (NSNumber *colliderIndex in colliderGroup.colliders) {
-          SCNNode *colliderNode = colliderNodes[colliderIndex.unsignedIntValue];
-          [groupColliders addObject:colliderNode];
-        }
-        [colliderGroups addObject:[groupColliders copy]];
-      }
+      colliderGroups = [self colliderGroupsFromVRMSpringBone:springBone];
     }
 
     if (springBone.springs) {
@@ -146,6 +108,14 @@ static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
           center = self.scnNodes[spring.center.unsignedIntValue];
         }
 
+        NSMutableArray<NSArray<SCNNode *> *> *colliders =
+            [NSMutableArray array];
+        if (spring.colliderGroups) {
+          for (NSNumber *index in spring.colliderGroups) {
+            [colliders addObject:colliderGroups[index.unsignedIntegerValue]];
+          }
+        }
+
         for (int i = 1; i < spring.joints.count; i++) {
           NSUInteger boneIndex = spring.joints[i - 1].node;
           NSUInteger childIndex = spring.joints[i].node;
@@ -153,11 +123,18 @@ static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
           SCNNode *child = self.scnNodes[childIndex];
           assert(bone == child.parentNode);
           VRMSpringBoneJoint *joint = spring.joints[i - 1];
+          SpringBoneSetting *setting = [[SpringBoneSetting alloc]
+              initWithHitRadius:joint.hitRadiusValue
+                      stiffness:joint.stiffnessValue
+                   gravityPower:joint.gravityPowerValue
+                     gravityDir:joint.gravityDirValue
+                      dragForce:joint.dragForceValue];
           SpringBoneJointState *state =
               [[SpringBoneJointState alloc] initWithBone:bone
                                                    child:child
                                                   center:center
-                                                   joint:joint];
+                                                 setting:setting
+                                          colliderGroups:[colliders copy]];
           [jointStates addObject:state];
         }
       }
@@ -165,27 +142,66 @@ static float roundValue(float value) { return value >= 0.5f ? 1.0f : 0.0; }
     }
   }
 
-  if (self.json.vrm0 && self.json.vrm0.secondaryAnimation &&
-      self.json.vrm0.secondaryAnimation.colliderGroups) {
-    for (VRM0SecondaryAnimationColliderGroup *colliderGroup in self.json.vrm0
-             .secondaryAnimation.colliderGroups) {
-      if (colliderGroup.node && colliderGroup.colliders) {
-        SCNNode *node = self.scnNodes[colliderGroup.node.unsignedIntValue];
-        for (VRM0SecondaryAnimationCollider *collider in colliderGroup
-                 .colliders) {
-          SCNNode *colliderNode = [SCNNode node];
-          colliderNode.geometry =
-              [SCNSphere sphereWithRadius:collider.radiusValue];
-          SCNVector3 offset = collider.offsetValue;
-          colliderNode.position = offset;
-          colliderNode.geometry.firstMaterial.transparency = 0.0;
-          colliderNode.physicsBody = [SCNPhysicsBody
-              bodyWithType:SCNPhysicsBodyTypeKinematic
-                     shape:[SCNPhysicsShape shapeWithNode:colliderNode
-                                                  options:nil]];
-          [node addChildNode:colliderNode];
+  if (self.json.vrm0 && self.json.vrm0.secondaryAnimation) {
+    NSMutableArray<NSArray<SCNNode *> *> *colliderGroups =
+        [NSMutableArray array];
+    if (self.json.vrm0.secondaryAnimation.colliderGroups) {
+      for (VRM0SecondaryAnimationColliderGroup *colliderGroup in self.json.vrm0
+               .secondaryAnimation.colliderGroups) {
+        if (colliderGroup.node && colliderGroup.colliders) {
+          SCNNode *node = self.scnNodes[colliderGroup.node.unsignedIntValue];
+          NSMutableArray<SCNNode *> *group = [NSMutableArray array];
+          for (VRM0SecondaryAnimationCollider *collider in colliderGroup
+                   .colliders) {
+            SCNNode *colliderNode = [collider toSCNNode];
+            [node addChildNode:colliderNode];
+            [group addObject:colliderNode];
+          }
+          [colliderGroups addObject:[group copy]];
         }
       }
+    }
+    if (self.json.vrm0.secondaryAnimation.boneGroups) {
+      NSMutableArray<SpringBoneJointState *> *jointStates =
+          [NSMutableArray array];
+      for (VRM0SecondaryAnimationSpring *spring in self.json.vrm0
+               .secondaryAnimation.boneGroups) {
+        SpringBoneSetting *setting = [[SpringBoneSetting alloc]
+            initWithHitRadius:spring.hitRadiusValue
+                    stiffness:spring.stiffinessValue
+                 gravityPower:spring.gravityPowerValue
+                   gravityDir:spring.gravityDirValue
+                    dragForce:spring.dragForceValue];
+        for (int i = 0; i < spring.bones.count; i++) {
+          SCNNode *bone = self.scnNodes[spring.bones[i].unsignedIntValue];
+          SCNNode *child;
+          if (i < spring.bones.count - 1) {
+            child = self.scnNodes[spring.bones[i + 1].unsignedIntValue];
+          }
+          SCNNode *center;
+          if (spring.center) {
+            int index = spring.center.intValue;
+            if (index > 0)
+              center = self.scnNodes[index];
+          }
+          NSMutableArray<NSArray<SCNNode *> *> *colliders =
+              [NSMutableArray array];
+          if (spring.colliderGroups) {
+            for (NSNumber *index in spring.colliderGroups) {
+              [colliders addObject:colliderGroups[index.unsignedIntValue]];
+            }
+          }
+
+          SpringBoneJointState *state =
+              [[SpringBoneJointState alloc] initWithBone:bone
+                                                   child:child
+                                                  center:center
+                                                 setting:setting
+                                          colliderGroups:colliders];
+          [jointStates addObject:state];
+        }
+      }
+      self.jointStates = [jointStates copy];
     }
   }
 

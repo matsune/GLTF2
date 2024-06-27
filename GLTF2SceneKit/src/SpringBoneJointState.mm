@@ -1,18 +1,56 @@
 #import "SpringBoneJointState.h"
 #import "SceneKitUtil.h"
 
+@implementation SpringBoneSetting
+
+- (instancetype)initWithHitRadius:(CGFloat)hitRadius
+                        stiffness:(CGFloat)stiffness
+                     gravityPower:(CGFloat)gravityPower
+                       gravityDir:(SCNVector3)gravityDir
+                        dragForce:(CGFloat)dragForce {
+  self = [super init];
+  if (self) {
+    _hitRadius = hitRadius;
+    _stiffness = stiffness;
+    _gravityPower = gravityPower;
+    _gravityDir = gravityDir;
+    _dragForce = dragForce;
+  }
+  return self;
+}
+@end
+
+@interface SpringBoneJointState ()
+
+@property(nonatomic, nonnull, strong) SCNNode *bone;
+@property(nonatomic, nullable, strong) SCNNode *child;
+@property(nonatomic, nullable, strong) SCNNode *center;
+@property(nonatomic, nonnull, strong) SpringBoneSetting *setting;
+@property(nonatomic, nonnull, strong)
+    NSArray<NSArray<SCNNode *> *> *colliderGroups;
+@property(nonatomic, assign) SCNMatrix4 initialLocalMatrix;
+@property(nonatomic, assign) SCNQuaternion initialLocalRotation;
+@property(nonatomic, assign) SCNVector3 initialLocalChildPosition;
+@property(nonatomic, assign) SCNVector3 boneAxisInBone;
+@property(nonatomic, assign) SCNVector3 prevTailInCenter;
+@property(nonatomic, assign) SCNVector3 currentTailInCenter;
+
+@end
+
 @implementation SpringBoneJointState
 
 - (instancetype)initWithBone:(SCNNode *)bone
                        child:(nullable SCNNode *)child
                       center:(nullable SCNNode *)center
-                       joint:(VRMSpringBoneJoint *)joint {
+                     setting:(SpringBoneSetting *)setting
+              colliderGroups:(NSArray<NSArray<SCNNode *> *> *)colliderGroups {
   self = [super init];
   if (self) {
     _bone = bone;
     _child = child;
     _center = center;
-    _joint = joint;
+    _setting = setting;
+    _colliderGroups = colliderGroups;
     _initialLocalMatrix = bone.transform;
     _initialLocalRotation = bone.orientation;
     if (child) {
@@ -98,22 +136,22 @@
 
   // gravity in center space
   SCNVector3 gravityDirInCenter = SCNVector3Normalize(
-      SCNVector3Apply(self.joint.gravityDirValue, worldToCenterQuat));
+      SCNVector3Apply(self.setting.gravityDir, worldToCenterQuat));
 
   SCNMatrix4 centerToWorld = [self getCenterToWorldMatrix];
 
   // inertia
   SCNVector3 inertia = SCNVector3Scale(
       SCNVector3Sub(self.currentTailInCenter, self.prevTailInCenter),
-      1.0 - self.joint.dragForceValue);
+      1.0 - self.setting.dragForce);
 
   // stiffness
   SCNVector3 stiffness =
-      SCNVector3Scale(boneAxisInCenter, self.joint.stiffnessValue * deltaTime);
+      SCNVector3Scale(boneAxisInCenter, self.setting.stiffness * deltaTime);
 
   // gravity
-  SCNVector3 gravity = SCNVector3Scale(
-      gravityDirInCenter, self.joint.gravityPowerValue * deltaTime);
+  SCNVector3 gravity = SCNVector3Scale(gravityDirInCenter,
+                                       self.setting.gravityPower * deltaTime);
 
   // nextTail = currentTail + inertia + stiffness + gravity (in center space)
   SCNVector3 nextTailInCenter =

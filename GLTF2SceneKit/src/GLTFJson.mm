@@ -1,4 +1,5 @@
 #import "GLTFJson.h"
+#import "SceneKitUtil.h"
 
 @implementation GLTFAccessorSparseIndices
 
@@ -678,6 +679,18 @@ NSString *const VRM0BlendShapeGroupPresetNameBlinkR = @"blink_r";
   return 0;
 }
 
+- (SCNNode *)toSCNNode {
+  SCNNode *colliderNode = [SCNNode node];
+  colliderNode.geometry = [SCNSphere sphereWithRadius:self.radiusValue];
+  SCNVector3 offset = self.offsetValue;
+  colliderNode.position = offset;
+  colliderNode.geometry.firstMaterial.transparency = 0.0;
+  colliderNode.physicsBody = [SCNPhysicsBody
+      bodyWithType:SCNPhysicsBodyTypeKinematic
+             shape:[SCNPhysicsShape shapeWithNode:colliderNode options:nil]];
+  return colliderNode;
+}
+
 @end
 
 @implementation VRM0SecondaryAnimationColliderGroup
@@ -685,6 +698,36 @@ NSString *const VRM0BlendShapeGroupPresetNameBlinkR = @"blink_r";
 @end
 
 @implementation VRM0SecondaryAnimationSpring
+
+- (float)hitRadiusValue {
+  if (self.hitRadius)
+    return self.hitRadius.floatValue;
+  return 0;
+}
+
+- (float)stiffinessValue {
+  if (self.stiffiness)
+    return self.stiffiness.floatValue;
+  return 1.0f;
+}
+
+- (float)gravityPowerValue {
+  if (self.gravityPower)
+    return self.gravityPower.floatValue;
+  return 0;
+}
+
+- (SCNVector3)gravityDirValue {
+  if (self.gravityDir)
+    return self.gravityDir.scnVector3;
+  return SCNVector3Make(0, -1.0f, 0);
+}
+
+- (float)dragForceValue {
+  if (self.dragForce)
+    return self.dragForce.floatValue;
+  return 0.5f;
+}
 
 @end
 
@@ -749,6 +792,40 @@ NSString *const VRM0BlendShapeGroupPresetNameBlinkR = @"blink_r";
 @end
 
 @implementation VRMSpringBoneCollider
+
+- (SCNNode *)toSCNNode {
+  SCNNode *colliderNode = [SCNNode node];
+  if (self.shape.sphere) {
+    colliderNode.geometry =
+        [SCNSphere sphereWithRadius:self.shape.sphere.radiusValue];
+    SCNVector3 offset = self.shape.sphere.offsetValue;
+    colliderNode.position = offset;
+  } else if (self.shape.capsule) {
+    SCNVector3 offset = self.shape.capsule.offsetValue;
+    SCNVector3 tail = self.shape.capsule.tailValue;
+    float height = sqrt(pow(tail.x - offset.x, 2) + pow(tail.y - offset.y, 2) +
+                        pow(tail.z - offset.z, 2));
+    colliderNode.geometry =
+        [SCNCapsule capsuleWithCapRadius:self.shape.capsule.radiusValue
+                                  height:height];
+
+    colliderNode.position = offset;
+
+    SCNVector3 direction =
+        SCNVector3Make(tail.x - offset.x, tail.y - offset.y, tail.z - offset.z);
+    SCNVector3 up = SCNVector3Make(0, 1, 0);
+    SCNVector3 cross = SCNVector3Cross(up, direction);
+    SCNVector3 axis = SCNVector3Cross(up, direction);
+    CGFloat angle = SCNVector3AngleBetween(up, direction);
+    colliderNode.rotation = SCNVector4Make(axis.x, axis.y, axis.z, angle);
+  }
+  colliderNode.geometry.firstMaterial.transparency = 0.0;
+  colliderNode.physicsBody = [SCNPhysicsBody
+      bodyWithType:SCNPhysicsBodyTypeKinematic
+             shape:[SCNPhysicsShape shapeWithNode:colliderNode options:nil]];
+  return colliderNode;
+}
+
 @end
 
 @implementation VRMSpringBoneJoint

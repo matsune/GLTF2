@@ -978,6 +978,8 @@ extern NSString *const VRM0BlendShapeGroupPresetNameBlinkR;
 - (SCNVector3)offsetValue;
 - (float)radiusValue;
 
+- (SCNNode *)toSCNNode;
+
 @end
 
 @interface VRM0SecondaryAnimationColliderGroup : NSObject
@@ -999,6 +1001,12 @@ extern NSString *const VRM0BlendShapeGroupPresetNameBlinkR;
 @property(nonatomic, strong, nullable) NSNumber *hitRadius;
 @property(nonatomic, strong, nullable) NSArray<NSNumber *> *bones;
 @property(nonatomic, strong, nullable) NSArray<NSNumber *> *colliderGroups;
+
+- (float)hitRadiusValue;
+- (float)stiffinessValue;
+- (float)gravityPowerValue;
+- (SCNVector3)gravityDirValue;
+- (float)dragForceValue;
 
 @end
 
@@ -1080,6 +1088,8 @@ extern NSString *const VRM0BlendShapeGroupPresetNameBlinkR;
 
 @property(nonatomic, assign) NSUInteger node;
 @property(nonatomic, strong) VRMSpringBoneShape *shape;
+
+- (SCNNode *)toSCNNode;
 
 @end
 

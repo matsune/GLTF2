@@ -20,6 +20,90 @@
 }
 @end
 
+@implementation SpringBoneColliderShape
+
+- (instancetype)initWithNode:(SCNNode *)node
+                      offset:(SCNVector3)offset
+                      radius:(CGFloat)radius {
+  self = [super init];
+  if (self) {
+    _node = node;
+    _offset = offset;
+    _radius = radius;
+  }
+  return self;
+}
+
+- (void)calculateCollisionWithObjectPosition:(SCNVector3)objectPosition
+                                objectRadius:(CGFloat)objectRadius
+                                   direction:(SCNVector3 *)direction
+                                    distance:(CGFloat *)distance {
+  return 0;
+}
+
+@end
+
+@implementation SpringBoneColliderShapeCapsule
+
+- (instancetype)initWithNode:(SCNNode *)node
+                      offset:(SCNVector3)offset
+                      radius:(CGFloat)radius
+                        tail:(SCNVector3)tail {
+  self = [super initWithNode:node offset:offset radius:radius];
+  if (self) {
+    _tail = tail;
+  }
+  return self;
+}
+
+- (void)calculateCollisionWithObjectPosition:(SCNVector3)objectPosition
+                                objectRadius:(CGFloat)objectRadius
+                                   direction:(SCNVector3 *)direction
+                                    distance:(CGFloat *)distance {
+  SCNVector3 headPos = SCNVector3Apply(self.offset, self.node.worldTransform);
+  SCNVector3 tailPos = SCNVector3Apply(self.tail, self.node.worldTransform);
+  SCNVector3 headToTail = SCNVector3Sub(tailPos, headPos);
+  CGFloat lengthSq = pow(SCNVector3Length(headToTail), 2);
+  // head to object
+  SCNVector3 target = SCNVector3Sub(objectPosition, headPos);
+  CGFloat dot = SCNVector3Dot(headToTail, target);
+  if (dot <= 0.0) {
+    // if object is near from the head
+    // do nothing, use the current value directly
+  } else if (lengthSq <= dot) {
+    // if object is near from the tail
+    target = SCNVector3Sub(target, headToTail); // from tail to object
+  } else {
+    // if object is between two ends
+    SCNVector3 headToNearest =
+        SCNVector3Scale(headToTail, dot / lengthSq); // from head to the nearest
+    target =
+        SCNVector3Sub(target, headToNearest); // from the shaft point to object
+  }
+  // target is from nearest to object vector
+  CGFloat radius = objectRadius + self.radius;
+  *distance = SCNVector3Length(target) - radius;
+  *direction = SCNVector3Normalize(target);
+}
+
+@end
+
+@implementation SpringBoneColliderShapeSphere
+
+- (void)calculateCollisionWithObjectPosition:(SCNVector3)objectPosition
+                                objectRadius:(CGFloat)objectRadius
+                                   direction:(SCNVector3 *)direction
+                                    distance:(CGFloat *)distance {
+  SCNVector3 colliderPos =
+      SCNVector3Apply(self.offset, self.node.worldTransform);
+  SCNVector3 vec = SCNVector3Sub(objectPosition, colliderPos);
+  CGFloat radius = self.radius + objectRadius;
+  *distance = SCNVector3Length(vec) - radius;
+  *direction = SCNVector3Normalize(vec);
+}
+
+@end
+
 @interface SpringBoneJointState ()
 
 @property(nonatomic, nonnull, strong) SCNNode *bone;
@@ -27,7 +111,7 @@
 @property(nonatomic, nullable, strong) SCNNode *center;
 @property(nonatomic, nonnull, strong) SpringBoneSetting *setting;
 @property(nonatomic, nonnull, strong)
-    NSArray<NSArray<SCNNode *> *> *colliderGroups;
+    NSArray<NSArray<SpringBoneColliderShape *> *> *colliderGroups;
 @property(nonatomic, assign) SCNMatrix4 initialLocalMatrix;
 @property(nonatomic, assign) SCNQuaternion initialLocalRotation;
 @property(nonatomic, assign) SCNVector3 initialLocalChildPosition;
@@ -43,7 +127,8 @@
                        child:(nullable SCNNode *)child
                       center:(nullable SCNNode *)center
                      setting:(SpringBoneSetting *)setting
-              colliderGroups:(NSArray<NSArray<SCNNode *> *> *)colliderGroups {
+              colliderGroups:(NSArray<NSArray<SpringBoneColliderShape *> *> *)
+                                 colliderGroups {
   self = [super init];
   if (self) {
     _bone = bone;
@@ -165,9 +250,28 @@
                                         nextTailInWorld, bonePositionInWorld)),
                                     boneLength),
                     bonePositionInWorld);
+  for (NSArray<SpringBoneColliderShape *> *colliderGroup in self
+           .colliderGroups) {
+    for (SpringBoneColliderShape *collider in colliderGroup) {
+      SCNVector3 dir;
+      CGFloat dist;
+      [collider calculateCollisionWithObjectPosition:nextTailInWorld
+                                        objectRadius:self.setting.hitRadius
+                                           direction:&dir
+                                            distance:&dist];
+      if (dist < 0.0) {
+        // hit
+        nextTailInWorld =
+            SCNVector3Add(nextTailInWorld, SCNVector3Scale(dir, -dist));
+        // normalize bone length
+        SCNVector3 normalizedDir =
+            SCNVector3Axis(bonePositionInWorld, nextTailInWorld);
+        nextTailInWorld = SCNVector3Add(
+            SCNVector3Scale(normalizedDir, boneLength), bonePositionInWorld);
+      }
+    }
+  }
   nextTailInCenter = SCNVector3Apply(nextTailInWorld, worldToCenterMatrix);
-
-  // TODO: collision
 
   self.prevTailInCenter = self.currentTailInCenter;
   self.currentTailInCenter = nextTailInCenter;

@@ -20,13 +20,46 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
+@interface SpringBoneColliderShape : NSObject
+
+@property(nonatomic, strong, nonnull) SCNNode *node;
+@property(nonatomic, assign) SCNVector3 offset;
+@property(nonatomic, assign) CGFloat radius;
+
+- (instancetype)initWithNode:(SCNNode *)node
+                      offset:(SCNVector3)offset
+                      radius:(CGFloat)radius;
+
+- (void)calculateCollisionWithObjectPosition:(SCNVector3)objectPosition
+                                objectRadius:(CGFloat)objectRadius
+                                   direction:(SCNVector3 *)direction
+                                    distance:(CGFloat *)distance;
+
+@end
+
+@interface SpringBoneColliderShapeCapsule : SpringBoneColliderShape
+
+@property(nonatomic, assign) SCNVector3 tail;
+
+- (instancetype)initWithNode:(SCNNode *)node
+                      offset:(SCNVector3)offset
+                      radius:(CGFloat)radius
+                        tail:(SCNVector3)tail;
+
+@end
+
+@interface SpringBoneColliderShapeSphere : SpringBoneColliderShape
+
+@end
+
 @interface SpringBoneJointState : NSObject
 
 - (instancetype)initWithBone:(SCNNode *)bone
                        child:(nullable SCNNode *)child
                       center:(nullable SCNNode *)center
                      setting:(SpringBoneSetting *)setting
-              colliderGroups:(NSArray<NSArray<SCNNode *> *> *)colliderGroups;
+              colliderGroups:(NSArray<NSArray<SpringBoneColliderShape *> *> *)
+                                 colliderGroups;
 
 - (void)update:(NSTimeInterval)deltaTime;
 

@@ -1196,11 +1196,11 @@ private:
           *extensionsObj, GLTFExtensionVRM, data.vrm0,
           [this](const nlohmann::json &item) { return decodeVRM0VRM(item); });
 
-      decodeObjWithMap<vrm1::VRM>(
+      decodeObjWithMap<vrmc::VRM>(
           *extensionsObj, GLTFExtensionVRMCvrm, data.vrm1,
           [this](const nlohmann::json &item) { return decodeVRM1VRM(item); });
 
-      decodeObjWithMap<springbone::SpringBone>(
+      decodeObjWithMap<vrmc::SpringBone>(
           *extensionsObj, GLTFExtensionVRMCSpringBone, data.springBone,
           [this](const nlohmann::json &item) {
             return decodeVRM1SpringBone(item);
@@ -1428,8 +1428,8 @@ private:
 
 #pragma mark - VRM 1
 
-  vrm1::Meta decodeVRM1Meta(const nlohmann::json &j) {
-    vrm1::Meta meta;
+  vrmc::Meta decodeVRM1Meta(const nlohmann::json &j) {
+    vrmc::Meta meta;
     decodeValue(j, "name", meta.name);
     decodeValue(j, "version", meta.version);
     decodeValue(j, "authors", meta.authors);
@@ -1439,296 +1439,296 @@ private:
     decodeValue(j, "thirdPartyLicenses", meta.thirdPartyLicenses);
     decodeValue(j, "thumbnailImage", meta.thumbnailImage);
     decodeValue(j, "licenseUrl", meta.licenseUrl);
-    decodeEnumValue<vrm1::Meta::AvatarPermission>(
+    decodeEnumValue<vrmc::Meta::AvatarPermission>(
         j, "avatarPermission", meta.avatarPermission,
-        vrm1::Meta::AvatarPermissionFromString);
+        vrmc::Meta::AvatarPermissionFromString);
     decodeValue(j, "allowExcessivelyViolentUsage",
                 meta.allowExcessivelyViolentUsage);
     decodeValue(j, "allowExcessivelySexualUsage",
                 meta.allowExcessivelySexualUsage);
-    decodeEnumValue<vrm1::Meta::CommercialUsage>(
+    decodeEnumValue<vrmc::Meta::CommercialUsage>(
         j, "commercialUsage", meta.commercialUsage,
-        vrm1::Meta::CommercialUsageFromString);
+        vrmc::Meta::CommercialUsageFromString);
     decodeValue(j, "allowPoliticalOrReligiousUsage",
                 meta.allowPoliticalOrReligiousUsage);
     decodeValue(j, "allowAntisocialOrHateUsage",
                 meta.allowAntisocialOrHateUsage);
-    decodeEnumValue<vrm1::Meta::CreditNotation>(
+    decodeEnumValue<vrmc::Meta::CreditNotation>(
         j, "creditNotation", meta.creditNotation,
-        vrm1::Meta::CreditNotationFromString);
+        vrmc::Meta::CreditNotationFromString);
     decodeValue(j, "allowRedistribution", meta.allowRedistribution);
-    decodeEnumValue<vrm1::Meta::Modification>(
+    decodeEnumValue<vrmc::Meta::Modification>(
         j, "modification", meta.modification,
-        vrm1::Meta::ModificationFromString);
+        vrmc::Meta::ModificationFromString);
     decodeValue(j, "otherLicenseUrl", meta.otherLicenseUrl);
     return meta;
   }
 
-  vrm1::HumanoidHumanBone decodeVRM1HumanoidHumanBone(const nlohmann::json &j) {
-    vrm1::HumanoidHumanBone bone;
+  vrmc::HumanoidHumanBone decodeVRM1HumanoidHumanBone(const nlohmann::json &j) {
+    vrmc::HumanoidHumanBone bone;
     decodeValue(j, "node", bone.node);
     return bone;
   }
 
-  vrm1::HumanoidHumanBones
+  vrmc::HumanoidHumanBones
   decodeVRM1HumanoidHumanBones(const nlohmann::json &j) {
-    vrm1::HumanoidHumanBones bones;
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    vrmc::HumanoidHumanBones bones;
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "hips", bones.hips, [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "spine", bones.spine, [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "chest", bones.chest, [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "upperChest", bones.upperChest, [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "neck", bones.neck, [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "head", bones.head, [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "leftEye", bones.leftEye, [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "rightEye", bones.rightEye, [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "jaw", bones.jaw, [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "leftUpperLeg", bones.leftUpperLeg,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "leftLowerLeg", bones.leftLowerLeg,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "leftFoot", bones.leftFoot, [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "leftToes", bones.leftToes, [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "rightUpperLeg", bones.rightUpperLeg,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "rightLowerLeg", bones.rightLowerLeg,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "rightFoot", bones.rightFoot, [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "rightToes", bones.rightToes, [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "leftShoulder", bones.leftShoulder,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "leftUpperArm", bones.leftUpperArm,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "leftLowerArm", bones.leftLowerArm,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "leftHand", bones.leftHand, [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "rightShoulder", bones.rightShoulder,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "rightUpperArm", bones.rightUpperArm,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "rightLowerArm", bones.rightLowerArm,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "rightHand", bones.rightHand, [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "leftThumbMetacarpal", bones.leftThumbMetacarpal,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "leftThumbProximal", bones.leftThumbProximal,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "leftThumbDistal", bones.leftThumbDistal,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "leftIndexProximal", bones.leftIndexProximal,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "leftIndexIntermediate", bones.leftIndexIntermediate,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "leftIndexDistal", bones.leftIndexDistal,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "leftMiddleProximal", bones.leftMiddleProximal,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "leftMiddleIntermediate", bones.leftMiddleIntermediate,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "leftMiddleDistal", bones.leftMiddleDistal,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "leftRingProximal", bones.leftRingProximal,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "leftRingIntermediate", bones.leftRingIntermediate,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "leftRingDistal", bones.leftRingDistal,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "leftLittleProximal", bones.leftLittleProximal,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "leftLittleIntermediate", bones.leftLittleIntermediate,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "leftLittleDistal", bones.leftLittleDistal,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "rightThumbMetacarpal", bones.rightThumbMetacarpal,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "rightThumbProximal", bones.rightThumbProximal,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "rightThumbDistal", bones.rightThumbDistal,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "rightIndexProximal", bones.rightIndexProximal,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "rightIndexIntermediate", bones.rightIndexIntermediate,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "rightIndexDistal", bones.rightIndexDistal,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "rightMiddleProximal", bones.rightMiddleProximal,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "rightMiddleIntermediate", bones.rightMiddleIntermediate,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "rightMiddleDistal", bones.rightMiddleDistal,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "rightRingProximal", bones.rightRingProximal,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "rightRingIntermediate", bones.rightRingIntermediate,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "rightRingDistal", bones.rightRingDistal,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "rightLittleProximal", bones.rightLittleProximal,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "rightLittleIntermediate", bones.rightLittleIntermediate,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
         });
-    decodeObjWithMap<vrm1::HumanoidHumanBone>(
+    decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "rightLittleDistal", bones.rightLittleDistal,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBone(value);
@@ -1736,9 +1736,9 @@ private:
     return bones;
   }
 
-  vrm1::Humanoid decodeVRM1Humanoid(const nlohmann::json &j) {
-    vrm1::Humanoid humanoid;
-    decodeObjWithMap<vrm1::HumanoidHumanBones>(
+  vrmc::Humanoid decodeVRM1Humanoid(const nlohmann::json &j) {
+    vrmc::Humanoid humanoid;
+    decodeObjWithMap<vrmc::HumanoidHumanBones>(
         j, "humanBones", humanoid.humanBones,
         [this](const nlohmann::json &value) {
           return decodeVRM1HumanoidHumanBones(value);
@@ -1746,19 +1746,19 @@ private:
     return humanoid;
   }
 
-  vrm1::FirstPersonMeshAnnotation
+  vrmc::FirstPersonMeshAnnotation
   decodeVRM1FirstPersonMeshAnnotation(const nlohmann::json &j) {
-    vrm1::FirstPersonMeshAnnotation annotation;
+    vrmc::FirstPersonMeshAnnotation annotation;
     decodeValue(j, "node", annotation.node);
-    decodeEnumValue<vrm1::FirstPersonMeshAnnotation::Type>(
+    decodeEnumValue<vrmc::FirstPersonMeshAnnotation::Type>(
         j, "type", annotation.type,
-        vrm1::FirstPersonMeshAnnotation::TypeFromString);
+        vrmc::FirstPersonMeshAnnotation::TypeFromString);
     return annotation;
   }
 
-  vrm1::FirstPerson decodeVRM1FirstPerson(const nlohmann::json &j) {
-    vrm1::FirstPerson firstPerson;
-    decodeArrayWithMapElem<vrm1::FirstPersonMeshAnnotation>(
+  vrmc::FirstPerson decodeVRM1FirstPerson(const nlohmann::json &j) {
+    vrmc::FirstPerson firstPerson;
+    decodeArrayWithMapElem<vrmc::FirstPersonMeshAnnotation>(
         j, "meshAnnotations", firstPerson.meshAnnotations,
         [this](const nlohmann::json &item) {
           return decodeVRM1FirstPersonMeshAnnotation(item);
@@ -1766,15 +1766,15 @@ private:
     return firstPerson;
   }
 
-  vrm1::LookAtRangeMap decodeVRM1LookAtRangeMap(const nlohmann::json &j) {
-    vrm1::LookAtRangeMap rangeMap;
+  vrmc::LookAtRangeMap decodeVRM1LookAtRangeMap(const nlohmann::json &j) {
+    vrmc::LookAtRangeMap rangeMap;
     decodeValue(j, "inputMaxValue", rangeMap.inputMaxValue);
     decodeValue(j, "outputScale", rangeMap.outputScale);
     return rangeMap;
   }
 
-  vrm1::LookAt decodeVRM1LookAt(const nlohmann::json &j) {
-    vrm1::LookAt lookAt;
+  vrmc::LookAt decodeVRM1LookAt(const nlohmann::json &j) {
+    vrmc::LookAt lookAt;
     decodeValueWithMap<std::array<float, 3>>(
         j, "offsetFromHeadBone", lookAt.offsetFromHeadBone,
         [this](const nlohmann::json &value) {
@@ -1782,25 +1782,25 @@ private:
             throw InvalidFormatException(context());
           return value.get<std::array<float, 3>>();
         });
-    decodeEnumValue<vrm1::LookAt::Type>(j, "type", lookAt.type,
-                                        vrm1::LookAt::TypeFromString);
+    decodeEnumValue<vrmc::LookAt::Type>(j, "type", lookAt.type,
+                                        vrmc::LookAt::TypeFromString);
 
-    decodeObjWithMap<vrm1::LookAtRangeMap>(
+    decodeObjWithMap<vrmc::LookAtRangeMap>(
         j, "rangeMapHorizontalInner", lookAt.rangeMapHorizontalInner,
         [this](const nlohmann::json &value) {
           return decodeVRM1LookAtRangeMap(value);
         });
-    decodeObjWithMap<vrm1::LookAtRangeMap>(
+    decodeObjWithMap<vrmc::LookAtRangeMap>(
         j, "rangeMapHorizontalOuter", lookAt.rangeMapHorizontalOuter,
         [this](const nlohmann::json &value) {
           return decodeVRM1LookAtRangeMap(value);
         });
-    decodeObjWithMap<vrm1::LookAtRangeMap>(
+    decodeObjWithMap<vrmc::LookAtRangeMap>(
         j, "rangeMapVerticalDown", lookAt.rangeMapVerticalDown,
         [this](const nlohmann::json &value) {
           return decodeVRM1LookAtRangeMap(value);
         });
-    decodeObjWithMap<vrm1::LookAtRangeMap>(
+    decodeObjWithMap<vrmc::LookAtRangeMap>(
         j, "rangeMapVerticalUp", lookAt.rangeMapVerticalUp,
         [this](const nlohmann::json &value) {
           return decodeVRM1LookAtRangeMap(value);
@@ -1808,13 +1808,13 @@ private:
     return lookAt;
   }
 
-  vrm1::ExpressionMaterialColorBind
+  vrmc::ExpressionMaterialColorBind
   decodeVRM1ExpressionMaterialColorBind(const nlohmann::json &j) {
-    vrm1::ExpressionMaterialColorBind bind;
+    vrmc::ExpressionMaterialColorBind bind;
     decodeValue(j, "material", bind.material);
-    decodeEnumValue<vrm1::ExpressionMaterialColorBind::Type>(
+    decodeEnumValue<vrmc::ExpressionMaterialColorBind::Type>(
         j, "type", bind.type,
-        vrm1::ExpressionMaterialColorBind::TypeFromString);
+        vrmc::ExpressionMaterialColorBind::TypeFromString);
     decodeValueWithMap<std::array<float, 4>>(
         j, "targetValue", bind.targetValue,
         [this](const nlohmann::json &value) {
@@ -1825,18 +1825,18 @@ private:
     return bind;
   }
 
-  vrm1::ExpressionMorphTargetBind
+  vrmc::ExpressionMorphTargetBind
   decodeVRM1ExpressionMorphTargetBind(const nlohmann::json &j) {
-    vrm1::ExpressionMorphTargetBind bind;
+    vrmc::ExpressionMorphTargetBind bind;
     decodeValue(j, "node", bind.node);
     decodeValue(j, "index", bind.index);
     decodeValue(j, "weight", bind.weight);
     return bind;
   }
 
-  vrm1::ExpressionTextureTransformBind
+  vrmc::ExpressionTextureTransformBind
   decodeVRM1ExpressionTextureTransformBind(const nlohmann::json &j) {
-    vrm1::ExpressionTextureTransformBind bind;
+    vrmc::ExpressionTextureTransformBind bind;
     decodeValue(j, "material", bind.material);
     decodeValueWithMap<std::array<float, 2>>(
         j, "scale", bind.scale, [this](const nlohmann::json &value) {
@@ -1853,127 +1853,127 @@ private:
     return bind;
   }
 
-  vrm1::Expression decodeVRM1Expression(const nlohmann::json &j) {
-    vrm1::Expression expression;
+  vrmc::Expression decodeVRM1Expression(const nlohmann::json &j) {
+    vrmc::Expression expression;
 
-    decodeArrayWithMapElem<vrm1::ExpressionMorphTargetBind>(
+    decodeArrayWithMapElem<vrmc::ExpressionMorphTargetBind>(
         j, "morphTargetBinds", expression.morphTargetBinds,
         [this](const nlohmann::json &item) {
           return decodeVRM1ExpressionMorphTargetBind(item);
         });
 
-    decodeArrayWithMapElem<vrm1::ExpressionMaterialColorBind>(
+    decodeArrayWithMapElem<vrmc::ExpressionMaterialColorBind>(
         j, "materialColorBinds", expression.materialColorBinds,
         [this](const nlohmann::json &item) {
           return decodeVRM1ExpressionMaterialColorBind(item);
         });
 
-    decodeArrayWithMapElem<vrm1::ExpressionTextureTransformBind>(
+    decodeArrayWithMapElem<vrmc::ExpressionTextureTransformBind>(
         j, "textureTransformBinds", expression.textureTransformBinds,
         [this](const nlohmann::json &item) {
           return decodeVRM1ExpressionTextureTransformBind(item);
         });
 
     decodeValue(j, "isBinary", expression.isBinary);
-    decodeEnumValue<vrm1::Expression::Override>(
+    decodeEnumValue<vrmc::Expression::Override>(
         j, "overrideBlink", expression.overrideBlink,
-        vrm1::Expression::OverrideFromString);
-    decodeEnumValue<vrm1::Expression::Override>(
+        vrmc::Expression::OverrideFromString);
+    decodeEnumValue<vrmc::Expression::Override>(
         j, "overrideLookAt", expression.overrideLookAt,
-        vrm1::Expression::OverrideFromString);
-    decodeEnumValue<vrm1::Expression::Override>(
+        vrmc::Expression::OverrideFromString);
+    decodeEnumValue<vrmc::Expression::Override>(
         j, "overrideMouth", expression.overrideMouth,
-        vrm1::Expression::OverrideFromString);
+        vrmc::Expression::OverrideFromString);
 
     return expression;
   }
 
-  vrm1::ExpressionsPreset decodeVRM1ExpressionsPreset(const nlohmann::json &j) {
-    vrm1::ExpressionsPreset preset;
-    decodeObjWithMap<vrm1::Expression>(j, "happy", preset.happy,
+  vrmc::ExpressionsPreset decodeVRM1ExpressionsPreset(const nlohmann::json &j) {
+    vrmc::ExpressionsPreset preset;
+    decodeObjWithMap<vrmc::Expression>(j, "happy", preset.happy,
                                        [this](const nlohmann::json &value) {
                                          return decodeVRM1Expression(value);
                                        });
-    decodeObjWithMap<vrm1::Expression>(j, "angry", preset.angry,
+    decodeObjWithMap<vrmc::Expression>(j, "angry", preset.angry,
                                        [this](const nlohmann::json &value) {
                                          return decodeVRM1Expression(value);
                                        });
-    decodeObjWithMap<vrm1::Expression>(j, "sad", preset.sad,
+    decodeObjWithMap<vrmc::Expression>(j, "sad", preset.sad,
                                        [this](const nlohmann::json &value) {
                                          return decodeVRM1Expression(value);
                                        });
-    decodeObjWithMap<vrm1::Expression>(j, "relaxed", preset.relaxed,
+    decodeObjWithMap<vrmc::Expression>(j, "relaxed", preset.relaxed,
                                        [this](const nlohmann::json &value) {
                                          return decodeVRM1Expression(value);
                                        });
-    decodeObjWithMap<vrm1::Expression>(j, "surprised", preset.surprised,
+    decodeObjWithMap<vrmc::Expression>(j, "surprised", preset.surprised,
                                        [this](const nlohmann::json &value) {
                                          return decodeVRM1Expression(value);
                                        });
-    decodeObjWithMap<vrm1::Expression>(j, "aa", preset.aa,
+    decodeObjWithMap<vrmc::Expression>(j, "aa", preset.aa,
                                        [this](const nlohmann::json &value) {
                                          return decodeVRM1Expression(value);
                                        });
-    decodeObjWithMap<vrm1::Expression>(j, "ih", preset.ih,
+    decodeObjWithMap<vrmc::Expression>(j, "ih", preset.ih,
                                        [this](const nlohmann::json &value) {
                                          return decodeVRM1Expression(value);
                                        });
-    decodeObjWithMap<vrm1::Expression>(j, "ou", preset.ou,
+    decodeObjWithMap<vrmc::Expression>(j, "ou", preset.ou,
                                        [this](const nlohmann::json &value) {
                                          return decodeVRM1Expression(value);
                                        });
-    decodeObjWithMap<vrm1::Expression>(j, "ee", preset.ee,
+    decodeObjWithMap<vrmc::Expression>(j, "ee", preset.ee,
                                        [this](const nlohmann::json &value) {
                                          return decodeVRM1Expression(value);
                                        });
-    decodeObjWithMap<vrm1::Expression>(j, "oh", preset.oh,
+    decodeObjWithMap<vrmc::Expression>(j, "oh", preset.oh,
                                        [this](const nlohmann::json &value) {
                                          return decodeVRM1Expression(value);
                                        });
-    decodeObjWithMap<vrm1::Expression>(j, "blink", preset.blink,
+    decodeObjWithMap<vrmc::Expression>(j, "blink", preset.blink,
                                        [this](const nlohmann::json &value) {
                                          return decodeVRM1Expression(value);
                                        });
-    decodeObjWithMap<vrm1::Expression>(j, "blinkLeft", preset.blinkLeft,
+    decodeObjWithMap<vrmc::Expression>(j, "blinkLeft", preset.blinkLeft,
                                        [this](const nlohmann::json &value) {
                                          return decodeVRM1Expression(value);
                                        });
-    decodeObjWithMap<vrm1::Expression>(j, "blinkRight", preset.blinkRight,
+    decodeObjWithMap<vrmc::Expression>(j, "blinkRight", preset.blinkRight,
                                        [this](const nlohmann::json &value) {
                                          return decodeVRM1Expression(value);
                                        });
-    decodeObjWithMap<vrm1::Expression>(j, "lookUp", preset.lookUp,
+    decodeObjWithMap<vrmc::Expression>(j, "lookUp", preset.lookUp,
                                        [this](const nlohmann::json &value) {
                                          return decodeVRM1Expression(value);
                                        });
-    decodeObjWithMap<vrm1::Expression>(j, "lookDown", preset.lookDown,
+    decodeObjWithMap<vrmc::Expression>(j, "lookDown", preset.lookDown,
                                        [this](const nlohmann::json &value) {
                                          return decodeVRM1Expression(value);
                                        });
-    decodeObjWithMap<vrm1::Expression>(j, "lookLeft", preset.lookLeft,
+    decodeObjWithMap<vrmc::Expression>(j, "lookLeft", preset.lookLeft,
                                        [this](const nlohmann::json &value) {
                                          return decodeVRM1Expression(value);
                                        });
-    decodeObjWithMap<vrm1::Expression>(j, "lookRight", preset.lookRight,
+    decodeObjWithMap<vrmc::Expression>(j, "lookRight", preset.lookRight,
                                        [this](const nlohmann::json &value) {
                                          return decodeVRM1Expression(value);
                                        });
-    decodeObjWithMap<vrm1::Expression>(j, "neutral", preset.neutral,
+    decodeObjWithMap<vrmc::Expression>(j, "neutral", preset.neutral,
                                        [this](const nlohmann::json &value) {
                                          return decodeVRM1Expression(value);
                                        });
     return preset;
   }
 
-  vrm1::Expressions decodeVRM1Expressions(const nlohmann::json &j) {
-    vrm1::Expressions expressions;
-    decodeObjWithMap<vrm1::ExpressionsPreset>(
+  vrmc::Expressions decodeVRM1Expressions(const nlohmann::json &j) {
+    vrmc::Expressions expressions;
+    decodeObjWithMap<vrmc::ExpressionsPreset>(
         j, "preset", expressions.preset, [this](const nlohmann::json &value) {
           return decodeVRM1ExpressionsPreset(value);
         });
     auto customObj = decodeOptionalObj(j, "custom");
     if (customObj) {
-      std::map<std::string, vrm1::Expression> custom;
+      std::map<std::string, vrmc::Expression> custom;
       for (const auto &item : customObj->items()) {
         custom[item.key()] = decodeVRM1Expression(item.value());
       }
@@ -1982,25 +1982,25 @@ private:
     return expressions;
   }
 
-  vrm1::VRM decodeVRM1VRM(const nlohmann::json &j) {
-    vrm1::VRM vrm;
+  vrmc::VRM decodeVRM1VRM(const nlohmann::json &j) {
+    vrmc::VRM vrm;
     decodeValue(j, "specVersion", vrm.specVersion);
-    decodeObjWithMap<vrm1::Meta>(
+    decodeObjWithMap<vrmc::Meta>(
         j, "meta", vrm.meta,
         [this](const nlohmann::json &value) { return decodeVRM1Meta(value); });
-    decodeObjWithMap<vrm1::Humanoid>(j, "humanoid", vrm.humanoid,
+    decodeObjWithMap<vrmc::Humanoid>(j, "humanoid", vrm.humanoid,
                                      [this](const nlohmann::json &value) {
                                        return decodeVRM1Humanoid(value);
                                      });
-    decodeObjWithMap<vrm1::FirstPerson>(j, "firstPerson", vrm.firstPerson,
+    decodeObjWithMap<vrmc::FirstPerson>(j, "firstPerson", vrm.firstPerson,
                                         [this](const nlohmann::json &value) {
                                           return decodeVRM1FirstPerson(value);
                                         });
-    decodeObjWithMap<vrm1::LookAt>(j, "lookAt", vrm.lookAt,
+    decodeObjWithMap<vrmc::LookAt>(j, "lookAt", vrm.lookAt,
                                    [this](const nlohmann::json &value) {
                                      return decodeVRM1LookAt(value);
                                    });
-    decodeObjWithMap<vrm1::Expressions>(j, "expressions", vrm.expressions,
+    decodeObjWithMap<vrmc::Expressions>(j, "expressions", vrm.expressions,
                                         [this](const nlohmann::json &value) {
                                           return decodeVRM1Expressions(value);
                                         });
@@ -2324,17 +2324,17 @@ private:
     return material;
   }
 
-  springbone::SpringBoneColliderGroup
+  vrmc::SpringBoneColliderGroup
   decodeVRM1SpringBoneColliderGroup(const nlohmann::json &j) {
-    springbone::SpringBoneColliderGroup colliderGroup;
+    vrmc::SpringBoneColliderGroup colliderGroup;
     decodeValue(j, "name", colliderGroup.name);
     decodeValue(j, "colliders", colliderGroup.colliders);
     return colliderGroup;
   }
 
-  springbone::SpringBoneJoint
+  vrmc::SpringBoneJoint
   decodeVRM1SpringBoneJoint(const nlohmann::json &j) {
-    springbone::SpringBoneJoint joint;
+    vrmc::SpringBoneJoint joint;
     decodeValue(j, "node", joint.node);
     decodeValue(j, "hitRadius", joint.hitRadius);
     decodeValue(j, "stiffness", joint.stiffness);
@@ -2349,9 +2349,9 @@ private:
     return joint;
   }
 
-  springbone::SpringBoneShapeSphere
+  vrmc::SpringBoneShapeSphere
   decodeVRM1SpringBoneShapeSphere(const nlohmann::json &j) {
-    springbone::SpringBoneShapeSphere sphere;
+    vrmc::SpringBoneShapeSphere sphere;
     decodeValueWithMap<std::array<float, 3>>(
         j, "offset", sphere.offset, [this](const nlohmann::json &value) {
           if (!value.is_array())
@@ -2362,9 +2362,9 @@ private:
     return sphere;
   }
 
-  springbone::SpringBoneShapeCapsule
+  vrmc::SpringBoneShapeCapsule
   decodeVRM1SpringBoneShapeCapsule(const nlohmann::json &j) {
-    springbone::SpringBoneShapeCapsule capsule;
+    vrmc::SpringBoneShapeCapsule capsule;
     decodeValueWithMap<std::array<float, 3>>(
         j, "offset", capsule.offset, [this](const nlohmann::json &value) {
           if (!value.is_array())
@@ -2381,36 +2381,36 @@ private:
     return capsule;
   }
 
-  springbone::SpringBoneShape
+  vrmc::SpringBoneShape
   decodeVRM1SpringBoneShape(const nlohmann::json &j) {
-    springbone::SpringBoneShape shape;
-    decodeObjWithMap<springbone::SpringBoneShapeSphere>(
+    vrmc::SpringBoneShape shape;
+    decodeObjWithMap<vrmc::SpringBoneShapeSphere>(
         j, "sphere", shape.sphere, [this](nlohmann::json value) {
           return decodeVRM1SpringBoneShapeSphere(value);
         });
-    decodeObjWithMap<springbone::SpringBoneShapeCapsule>(
+    decodeObjWithMap<vrmc::SpringBoneShapeCapsule>(
         j, "capsule", shape.capsule, [this](nlohmann::json value) {
           return decodeVRM1SpringBoneShapeCapsule(value);
         });
     return shape;
   }
 
-  springbone::SpringBoneCollider
+  vrmc::SpringBoneCollider
   decodeVRM1SpringBoneCollider(const nlohmann::json &j) {
-    springbone::SpringBoneCollider collider;
+    vrmc::SpringBoneCollider collider;
     decodeValue(j, "node", collider.node);
-    decodeObjWithMap<springbone::SpringBoneShape>(
+    decodeObjWithMap<vrmc::SpringBoneShape>(
         j, "shape", collider.shape, [this](nlohmann::json value) {
           return decodeVRM1SpringBoneShape(value);
         });
     return collider;
   }
 
-  springbone::SpringBoneSpring
+  vrmc::SpringBoneSpring
   decodeVRM1SpringBoneSpring(const nlohmann::json &j) {
-    springbone::SpringBoneSpring spring;
+    vrmc::SpringBoneSpring spring;
     decodeValue(j, "name", spring.name);
-    decodeArrayWithMapElem<springbone::SpringBoneJoint>(
+    decodeArrayWithMapElem<vrmc::SpringBoneJoint>(
         j, "joints", spring.joints, [this](const nlohmann::json &item) {
           return decodeVRM1SpringBoneJoint(item);
         });
@@ -2419,20 +2419,20 @@ private:
     return spring;
   }
 
-  springbone::SpringBone decodeVRM1SpringBone(const nlohmann::json &j) {
-    springbone::SpringBone springBone;
+  vrmc::SpringBone decodeVRM1SpringBone(const nlohmann::json &j) {
+    vrmc::SpringBone springBone;
     decodeValue(j, "specVersion", springBone.specVersion);
-    decodeArrayWithMapElem<springbone::SpringBoneCollider>(
+    decodeArrayWithMapElem<vrmc::SpringBoneCollider>(
         j, "colliders", springBone.colliders,
         [this](const nlohmann::json &item) {
           return decodeVRM1SpringBoneCollider(item);
         });
-    decodeArrayWithMapElem<springbone::SpringBoneColliderGroup>(
+    decodeArrayWithMapElem<vrmc::SpringBoneColliderGroup>(
         j, "colliderGroups", springBone.colliderGroups,
         [this](const nlohmann::json &item) {
           return decodeVRM1SpringBoneColliderGroup(item);
         });
-    decodeArrayWithMapElem<springbone::SpringBoneSpring>(
+    decodeArrayWithMapElem<vrmc::SpringBoneSpring>(
         j, "springs", springBone.springs, [this](const nlohmann::json &item) {
           return decodeVRM1SpringBoneSpring(item);
         });

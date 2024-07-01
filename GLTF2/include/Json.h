@@ -505,6 +505,7 @@ public:
   }
 };
 
+
 class Material {
 public:
   enum class AlphaMode { OPAQUE, MASK, BLEND };
@@ -837,8 +838,8 @@ public:
   std::optional<std::vector<Texture>> textures;
   std::optional<std::vector<KHRLight>> lights;
   std::optional<vrm0::VRM> vrm0;
-  std::optional<vrm1::VRM> vrm1;
-  std::optional<springbone::SpringBone> springBone;
+  std::optional<vrmc::VRM> vrm1;
+  std::optional<vrmc::SpringBone> springBone;
 };
 
 } // namespace json

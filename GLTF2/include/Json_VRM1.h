@@ -7,7 +7,7 @@
 
 namespace gltf2 {
 namespace json {
-namespace vrm1 {
+namespace vrmc {
 
 // Meta
 

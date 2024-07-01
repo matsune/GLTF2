@@ -7,7 +7,7 @@
 
 namespace gltf2 {
 namespace json {
-namespace springbone {
+namespace vrmc {
 
 class SpringBoneColliderGroup {
 public:

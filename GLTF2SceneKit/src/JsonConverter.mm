@@ -1163,14 +1163,14 @@
 }
 
 + (NSString *)convertVRM1MetaAvatarPermission:
-    (gltf2::json::vrm1::Meta::AvatarPermission)permission {
+    (gltf2::json::vrmc::Meta::AvatarPermission)permission {
   switch (permission) {
-  case gltf2::json::vrm1::Meta::AvatarPermission::ONLY_AUTHOR:
+  case gltf2::json::vrmc::Meta::AvatarPermission::ONLY_AUTHOR:
     return VRM1MetaAvatarPermissionOnlyAuthor;
-  case gltf2::json::vrm1::Meta::AvatarPermission::
+  case gltf2::json::vrmc::Meta::AvatarPermission::
       ONLY_SEPARATELY_LICENSED_PERSON:
     return VRM1MetaAvatarPermissionOnlySeparatelyLicensedPerson;
-  case gltf2::json::vrm1::Meta::AvatarPermission::EVERYONE:
+  case gltf2::json::vrmc::Meta::AvatarPermission::EVERYONE:
     return VRM1MetaAvatarPermissionEveryone;
   default:
     return VRM1MetaAvatarPermissionOnlyAuthor; // Default case
@@ -1178,13 +1178,13 @@
 }
 
 + (NSString *)convertVRM1MetaCommercialUsage:
-    (gltf2::json::vrm1::Meta::CommercialUsage)usage {
+    (gltf2::json::vrmc::Meta::CommercialUsage)usage {
   switch (usage) {
-  case gltf2::json::vrm1::Meta::CommercialUsage::PERSONAL_NON_PROFIT:
+  case gltf2::json::vrmc::Meta::CommercialUsage::PERSONAL_NON_PROFIT:
     return VRM1MetaCommercialUsagePersonalNonProfit;
-  case gltf2::json::vrm1::Meta::CommercialUsage::PERSONAL_PROFIT:
+  case gltf2::json::vrmc::Meta::CommercialUsage::PERSONAL_PROFIT:
     return VRM1MetaCommercialUsagePersonalProfit;
-  case gltf2::json::vrm1::Meta::CommercialUsage::CORPORATION:
+  case gltf2::json::vrmc::Meta::CommercialUsage::CORPORATION:
     return VRM1MetaCommercialUsageCorporation;
   default:
     return VRM1MetaCommercialUsagePersonalNonProfit; // Default case
@@ -1192,11 +1192,11 @@
 }
 
 + (NSString *)convertVRM1MetaCreditNotation:
-    (gltf2::json::vrm1::Meta::CreditNotation)notation {
+    (gltf2::json::vrmc::Meta::CreditNotation)notation {
   switch (notation) {
-  case gltf2::json::vrm1::Meta::CreditNotation::REQUIRED:
+  case gltf2::json::vrmc::Meta::CreditNotation::REQUIRED:
     return VRM1MetaCreditNotationRequired;
-  case gltf2::json::vrm1::Meta::CreditNotation::UNNECESSARY:
+  case gltf2::json::vrmc::Meta::CreditNotation::UNNECESSARY:
     return VRM1MetaCreditNotationUnnecessary;
   default:
     return VRM1MetaCreditNotationRequired; // Default case
@@ -1204,20 +1204,20 @@
 }
 
 + (NSString *)convertVRM1MetaModification:
-    (gltf2::json::vrm1::Meta::Modification)modification {
+    (gltf2::json::vrmc::Meta::Modification)modification {
   switch (modification) {
-  case gltf2::json::vrm1::Meta::Modification::PROHIBITED:
+  case gltf2::json::vrmc::Meta::Modification::PROHIBITED:
     return VRM1MetaModificationProhibited;
-  case gltf2::json::vrm1::Meta::Modification::ALLOW_MODIFICATION:
+  case gltf2::json::vrmc::Meta::Modification::ALLOW_MODIFICATION:
     return VRM1MetaModificationAllowModification;
-  case gltf2::json::vrm1::Meta::Modification::ALLOW_MODIFICATION_REDISTRIBUTION:
+  case gltf2::json::vrmc::Meta::Modification::ALLOW_MODIFICATION_REDISTRIBUTION:
     return VRM1MetaModificationAllowModificationRedistribution;
   default:
     return VRM1MetaModificationProhibited; // Default case
   }
 }
 
-+ (VRM1Meta *)convertVRM1Meta:(const gltf2::json::vrm1::Meta &)cppMeta {
++ (VRM1Meta *)convertVRM1Meta:(const gltf2::json::vrmc::Meta &)cppMeta {
   VRM1Meta *objcMeta = [[VRM1Meta alloc] init];
 
   objcMeta.name = [NSString stringWithUTF8String:cppMeta.name.c_str()];
@@ -1299,14 +1299,14 @@
 }
 
 + (VRM1HumanBone *)convertVRM1HumanoidHumanBone:
-    (const gltf2::json::vrm1::HumanoidHumanBone &)cppBone {
+    (const gltf2::json::vrmc::HumanoidHumanBone &)cppBone {
   VRM1HumanBone *objcBone = [[VRM1HumanBone alloc] init];
   objcBone.node = @(cppBone.node);
   return objcBone;
 }
 
 + (VRM1HumanBones *)convertVRM1HumanoidHumanBones:
-    (const gltf2::json::vrm1::HumanoidHumanBones &)cppBones {
+    (const gltf2::json::vrmc::HumanoidHumanBones &)cppBones {
   VRM1HumanBones *objcBones = [[VRM1HumanBones alloc] init];
 
   objcBones.hips = [self convertVRM1HumanoidHumanBone:cppBones.hips];
@@ -1495,7 +1495,7 @@
 }
 
 + (VRM1Humanoid *)convertVRM1Humanoid:
-    (const gltf2::json::vrm1::Humanoid &)cppHumanoid {
+    (const gltf2::json::vrmc::Humanoid &)cppHumanoid {
   VRM1Humanoid *objcHumanoid = [[VRM1Humanoid alloc] init];
   objcHumanoid.humanBones =
       [self convertVRM1HumanoidHumanBones:cppHumanoid.humanBones];
@@ -1503,15 +1503,15 @@
 }
 
 + (NSString *)convertVRM1FirstPersonMeshAnnotationType:
-    (gltf2::json::vrm1::FirstPersonMeshAnnotation::Type)type {
+    (gltf2::json::vrmc::FirstPersonMeshAnnotation::Type)type {
   switch (type) {
-  case gltf2::json::vrm1::FirstPersonMeshAnnotation::Type::AUTO:
+  case gltf2::json::vrmc::FirstPersonMeshAnnotation::Type::AUTO:
     return VRM1FirstPersonMeshAnnotationTypeAuto;
-  case gltf2::json::vrm1::FirstPersonMeshAnnotation::Type::BOTH:
+  case gltf2::json::vrmc::FirstPersonMeshAnnotation::Type::BOTH:
     return VRM1FirstPersonMeshAnnotationTypeBoth;
-  case gltf2::json::vrm1::FirstPersonMeshAnnotation::Type::THIRD_PERSON_ONLY:
+  case gltf2::json::vrmc::FirstPersonMeshAnnotation::Type::THIRD_PERSON_ONLY:
     return VRM1FirstPersonMeshAnnotationTypeThirdPersonOnly;
-  case gltf2::json::vrm1::FirstPersonMeshAnnotation::Type::FIRST_PERSON_ONLY:
+  case gltf2::json::vrmc::FirstPersonMeshAnnotation::Type::FIRST_PERSON_ONLY:
     return VRM1FirstPersonMeshAnnotationTypeFirstPersonOnly;
   default:
     return VRM1FirstPersonMeshAnnotationTypeAuto; // Default case
@@ -1519,7 +1519,7 @@
 }
 
 + (VRM1FirstPersonMeshAnnotation *)convertVRM1FirstPersonMeshAnnotation:
-    (const gltf2::json::vrm1::FirstPersonMeshAnnotation &)cppAnnotation {
+    (const gltf2::json::vrmc::FirstPersonMeshAnnotation &)cppAnnotation {
   VRM1FirstPersonMeshAnnotation *objcAnnotation =
       [[VRM1FirstPersonMeshAnnotation alloc] init];
   objcAnnotation.node = cppAnnotation.node;
@@ -1529,7 +1529,7 @@
 }
 
 + (VRM1FirstPerson *)convertVRM1FirstPerson:
-    (const gltf2::json::vrm1::FirstPerson &)cppFirstPerson {
+    (const gltf2::json::vrmc::FirstPerson &)cppFirstPerson {
   VRM1FirstPerson *objcFirstPerson = [[VRM1FirstPerson alloc] init];
 
   if (cppFirstPerson.meshAnnotations.has_value()) {
@@ -1547,7 +1547,7 @@
 }
 
 + (VRM1LookAtRangeMap *)convertVRM1LookAtRangeMap:
-    (const gltf2::json::vrm1::LookAtRangeMap &)cppLookAtRangeMap {
+    (const gltf2::json::vrmc::LookAtRangeMap &)cppLookAtRangeMap {
   VRM1LookAtRangeMap *objcLookAtRangeMap = [[VRM1LookAtRangeMap alloc] init];
 
   if (cppLookAtRangeMap.inputMaxValue.has_value()) {
@@ -1561,18 +1561,18 @@
   return objcLookAtRangeMap;
 }
 
-+ (NSString *)convertVRM1LookAtType:(gltf2::json::vrm1::LookAt::Type)type {
++ (NSString *)convertVRM1LookAtType:(gltf2::json::vrmc::LookAt::Type)type {
   switch (type) {
-  case gltf2::json::vrm1::LookAt::Type::BONE:
+  case gltf2::json::vrmc::LookAt::Type::BONE:
     return VRM1LookAtTypeBone;
-  case gltf2::json::vrm1::LookAt::Type::EXPRESSION:
+  case gltf2::json::vrmc::LookAt::Type::EXPRESSION:
     return VRM1LookAtTypeExpression;
   default:
     return VRM1LookAtTypeBone; // Default case
   }
 }
 
-+ (VRM1LookAt *)convertVRM1LookAt:(const gltf2::json::vrm1::LookAt &)cppLookAt {
++ (VRM1LookAt *)convertVRM1LookAt:(const gltf2::json::vrmc::LookAt &)cppLookAt {
   VRM1LookAt *objcLookAt = [[VRM1LookAt alloc] init];
 
   if (cppLookAt.offsetFromHeadBone.has_value()) {
@@ -1605,19 +1605,19 @@
 }
 
 + (NSString *)convertVRM1ExpressionMaterialColorBindType:
-    (gltf2::json::vrm1::ExpressionMaterialColorBind::Type)type {
+    (gltf2::json::vrmc::ExpressionMaterialColorBind::Type)type {
   switch (type) {
-  case gltf2::json::vrm1::ExpressionMaterialColorBind::Type::COLOR:
+  case gltf2::json::vrmc::ExpressionMaterialColorBind::Type::COLOR:
     return VRM1ExpressionMaterialColorBindTypeColor;
-  case gltf2::json::vrm1::ExpressionMaterialColorBind::Type::EMISSION_COLOR:
+  case gltf2::json::vrmc::ExpressionMaterialColorBind::Type::EMISSION_COLOR:
     return VRM1ExpressionMaterialColorBindTypeEmissionColor;
-  case gltf2::json::vrm1::ExpressionMaterialColorBind::Type::SHADE_COLOR:
+  case gltf2::json::vrmc::ExpressionMaterialColorBind::Type::SHADE_COLOR:
     return VRM1ExpressionMaterialColorBindTypeShadeColor;
-  case gltf2::json::vrm1::ExpressionMaterialColorBind::Type::MATCAP_COLOR:
+  case gltf2::json::vrmc::ExpressionMaterialColorBind::Type::MATCAP_COLOR:
     return VRM1ExpressionMaterialColorBindTypeMatcapColor;
-  case gltf2::json::vrm1::ExpressionMaterialColorBind::Type::RIM_COLOR:
+  case gltf2::json::vrmc::ExpressionMaterialColorBind::Type::RIM_COLOR:
     return VRM1ExpressionMaterialColorBindTypeRimColor;
-  case gltf2::json::vrm1::ExpressionMaterialColorBind::Type::OUTLINE_COLOR:
+  case gltf2::json::vrmc::ExpressionMaterialColorBind::Type::OUTLINE_COLOR:
     return VRM1ExpressionMaterialColorBindTypeOutlineColor;
   default:
     return VRM1ExpressionMaterialColorBindTypeColor; // Default case
@@ -1625,7 +1625,7 @@
 }
 
 + (VRM1ExpressionMaterialColorBind *)convertVRM1ExpressionMaterialColorBind:
-    (const gltf2::json::vrm1::ExpressionMaterialColorBind &)cppBind {
+    (const gltf2::json::vrmc::ExpressionMaterialColorBind &)cppBind {
   VRM1ExpressionMaterialColorBind *objcBind =
       [[VRM1ExpressionMaterialColorBind alloc] init];
   objcBind.material = cppBind.material;
@@ -1639,7 +1639,7 @@
 }
 
 + (VRM1ExpressionMorphTargetBind *)convertVRM1ExpressionMorphTargetBind:
-    (const gltf2::json::vrm1::ExpressionMorphTargetBind &)cppBind {
+    (const gltf2::json::vrmc::ExpressionMorphTargetBind &)cppBind {
   VRM1ExpressionMorphTargetBind *objcBind =
       [[VRM1ExpressionMorphTargetBind alloc] init];
   objcBind.node = cppBind.node;
@@ -1650,7 +1650,7 @@
 
 + (VRM1ExpressionTextureTransformBind *)
     convertVRM1ExpressionTextureTransformBind:
-        (const gltf2::json::vrm1::ExpressionTextureTransformBind &)cppBind {
+        (const gltf2::json::vrmc::ExpressionTextureTransformBind &)cppBind {
   VRM1ExpressionTextureTransformBind *objcBind =
       [[VRM1ExpressionTextureTransformBind alloc] init];
   objcBind.material = cppBind.material;
@@ -1664,13 +1664,13 @@
 }
 
 + (NSString *)convertVRM1ExpressionOverride:
-    (gltf2::json::vrm1::Expression::Override)override {
+    (gltf2::json::vrmc::Expression::Override)override {
   switch (override) {
-  case gltf2::json::vrm1::Expression::Override::NONE:
+  case gltf2::json::vrmc::Expression::Override::NONE:
     return VRM1ExpressionOverrideNone;
-  case gltf2::json::vrm1::Expression::Override::BLOCK:
+  case gltf2::json::vrmc::Expression::Override::BLOCK:
     return VRM1ExpressionOverrideBlock;
-  case gltf2::json::vrm1::Expression::Override::BLEND:
+  case gltf2::json::vrmc::Expression::Override::BLEND:
     return VRM1ExpressionOverrideBlend;
   default:
     return VRM1ExpressionOverrideNone; // Default case
@@ -1678,7 +1678,7 @@
 }
 
 + (VRM1Expression *)convertVRM1Expression:
-    (const gltf2::json::vrm1::Expression &)cppExpression {
+    (const gltf2::json::vrmc::Expression &)cppExpression {
   VRM1Expression *objcExpression = [[VRM1Expression alloc] init];
 
   if (cppExpression.morphTargetBinds.has_value()) {
@@ -1726,7 +1726,7 @@
 }
 
 + (VRM1ExpressionsPreset *)convertVRM1ExpressionsPreset:
-    (const gltf2::json::vrm1::ExpressionsPreset &)cppPreset {
+    (const gltf2::json::vrmc::ExpressionsPreset &)cppPreset {
   VRM1ExpressionsPreset *objcPreset = [[VRM1ExpressionsPreset alloc] init];
 
   if (cppPreset.happy.has_value()) {
@@ -1794,7 +1794,7 @@
 }
 
 + (VRM1Expressions *)convertVRM1Expressions:
-    (const gltf2::json::vrm1::Expressions &)cppExpressions {
+    (const gltf2::json::vrmc::Expressions &)cppExpressions {
   VRM1Expressions *objcExpressions = [[VRM1Expressions alloc] init];
 
   if (cppExpressions.preset.has_value()) {
@@ -1815,7 +1815,7 @@
   return objcExpressions;
 }
 
-+ (VRM1VRM *)convertVRM1VRM:(const gltf2::json::vrm1::VRM &)cppVRM {
++ (VRM1VRM *)convertVRM1VRM:(const gltf2::json::vrmc::VRM &)cppVRM {
   VRM1VRM *objcVRM = [[VRM1VRM alloc] init];
 
   objcVRM.specVersion =
@@ -2613,7 +2613,7 @@
 }
 
 + (VRMSpringBone *)convertSpringBone:
-    (const gltf2::json::springbone::SpringBone &)cppSpringBone {
+    (const gltf2::json::vrmc::SpringBone &)cppSpringBone {
   VRMSpringBone *objcSpringBone = [[VRMSpringBone alloc] init];
   objcSpringBone.specVersion =
       [NSString stringWithUTF8String:cppSpringBone.specVersion.c_str()];
@@ -2656,7 +2656,7 @@
 }
 
 + (VRMSpringBoneCollider *)convertSpringBoneCollider:
-    (const gltf2::json::springbone::SpringBoneCollider &)cppCollider {
+    (const gltf2::json::vrmc::SpringBoneCollider &)cppCollider {
   VRMSpringBoneCollider *objcCollider = [[VRMSpringBoneCollider alloc] init];
   objcCollider.node = cppCollider.node;
   objcCollider.shape = [JsonConverter convertSpringBoneShape:cppCollider.shape];
@@ -2664,7 +2664,7 @@
 }
 
 + (VRMSpringBoneShape *)convertSpringBoneShape:
-    (const gltf2::json::springbone::SpringBoneShape &)cppShape {
+    (const gltf2::json::vrmc::SpringBoneShape &)cppShape {
   VRMSpringBoneShape *objcShape = [[VRMSpringBoneShape alloc] init];
   if (cppShape.sphere.has_value()) {
     objcShape.sphere =
@@ -2678,7 +2678,7 @@
 }
 
 + (VRMSpringBoneShapeSphere *)convertSpringBoneShapeSphere:
-    (const gltf2::json::springbone::SpringBoneShapeSphere &)cppSphere {
+    (const gltf2::json::vrmc::SpringBoneShapeSphere &)cppSphere {
   VRMSpringBoneShapeSphere *objcSphere =
       [[VRMSpringBoneShapeSphere alloc] init];
   if (cppSphere.offset.has_value()) {
@@ -2693,7 +2693,7 @@
 }
 
 + (VRMSpringBoneShapeCapsule *)convertSpringBoneShapeCapsule:
-    (const gltf2::json::springbone::SpringBoneShapeCapsule &)cppCapsule {
+    (const gltf2::json::vrmc::SpringBoneShapeCapsule &)cppCapsule {
   VRMSpringBoneShapeCapsule *objcCapsule =
       [[VRMSpringBoneShapeCapsule alloc] init];
   if (cppCapsule.offset.has_value()) {
@@ -2713,7 +2713,7 @@
 }
 
 + (VRMSpringBoneColliderGroup *)convertSpringBoneColliderGroup:
-    (const gltf2::json::springbone::SpringBoneColliderGroup &)cppColliderGroup {
+    (const gltf2::json::vrmc::SpringBoneColliderGroup &)cppColliderGroup {
   VRMSpringBoneColliderGroup *objcColliderGroup =
       [[VRMSpringBoneColliderGroup alloc] init];
   if (cppColliderGroup.name.has_value()) {
@@ -2729,7 +2729,7 @@
 }
 
 + (VRMSpringBoneSpring *)convertSpringBoneSpring:
-    (const gltf2::json::springbone::SpringBoneSpring &)cppSpring {
+    (const gltf2::json::vrmc::SpringBoneSpring &)cppSpring {
   VRMSpringBoneSpring *objcSpring = [[VRMSpringBoneSpring alloc] init];
   if (cppSpring.name.has_value()) {
     objcSpring.name = [NSString stringWithUTF8String:cppSpring.name->c_str()];
@@ -2755,7 +2755,7 @@
 }
 
 + (VRMSpringBoneJoint *)convertSpringBoneJoint:
-    (const gltf2::json::springbone::SpringBoneJoint &)cppJoint {
+    (const gltf2::json::vrmc::SpringBoneJoint &)cppJoint {
   VRMSpringBoneJoint *objcJoint = [[VRMSpringBoneJoint alloc] init];
   objcJoint.node = cppJoint.node;
   if (cppJoint.hitRadius.has_value()) {

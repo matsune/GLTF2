@@ -94,7 +94,7 @@ public:
   std::optional<std::vector<SpringBoneSpring>> springs;
 };
 
-} // namespace springbone
+} // namespace vrmc
 } // namespace json
 }; // namespace gltf2
 

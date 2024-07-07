@@ -335,6 +335,61 @@ public:
   uint32_t texCoordValue() const { return texCoord.value_or(0); }
 };
 
+namespace vrmc {
+
+class ShadingShiftTexture {
+public:
+  std::optional<uint32_t> index;
+  std::optional<uint32_t> texCoord;
+  std::optional<float> scale;
+};
+
+class MaterialsMtoon {
+public:
+  enum class OutlineWidthMode {
+    NONE, WORLD_COORDINATES, SCREEN_COORDINATES
+  };
+  
+  static std::optional<OutlineWidthMode> OutlineWidthModeFromString(const std::string &value) {
+    if (value == "none")
+      return OutlineWidthMode::NONE;
+    else if (value == "worldCoordinates")
+      return OutlineWidthMode::WORLD_COORDINATES;
+    else if (value == "screenCoordinates")
+      return OutlineWidthMode::SCREEN_COORDINATES;
+    else
+      return std::nullopt;
+  }
+  
+  std::string specVersion;
+  std::optional<bool> transparentWithZWrite;
+  std::optional<int> renderQueueOffsetNumber;
+  std::optional<std::array<float, 3>> shadeColorFactor;
+  std::optional<gltf2::json::TextureInfo> shadeMultiplyTexture;
+  std::optional<float> shadingShiftFactor;
+  std::optional<ShadingShiftTexture> shadingShiftTexture;
+  std::optional<float> shadingToonyFactor;
+  std::optional<float> giEqualizationFactor;
+  std::optional<std::array<float, 3>> matcapFactor;
+  std::optional<gltf2::json::TextureInfo> matcapTexture;
+  std::optional<std::array<float, 3>> parametricRimColorFactor;
+  std::optional<gltf2::json::TextureInfo> rimMultiplyTexture;
+  std::optional<float> rimLightingMixFactor;
+  std::optional<float> parametricRimFresnelPowerFactor;
+  std::optional<float> parametricRimLiftFactor;
+  std::optional<OutlineWidthMode> outlineWidthMode;
+  std::optional<float> outlineWidthFactor;
+  std::optional<gltf2::json::TextureInfo> outlineWidthMultiplyTexture;
+  std::optional<std::array<float, 3>> outlineColorFactor;
+  std::optional<float> outlineLightingMixFactor;
+  std::optional<gltf2::json::TextureInfo> uvAnimationMaskTexture;
+  std::optional<float> uvAnimationScrollXSpeedFactor;
+  std::optional<float> uvAnimationScrollYSpeedFactor;
+  std::optional<float> uvAnimationRotationSpeedFactor;
+};
+
+}
+
 // Material
 
 class MaterialPBRMetallicRoughness {
@@ -505,7 +560,6 @@ public:
   }
 };
 
-
 class Material {
 public:
   enum class AlphaMode { OPAQUE, MASK, BLEND };
@@ -542,6 +596,7 @@ public:
   std::optional<KHRMaterialTransmission> transmission;
   std::optional<bool> unlit;
   std::optional<KHRMaterialVolume> volume;
+  std::optional<vrmc::MaterialsMtoon> mtoon;
 
   std::array<float, 3> emissiveFactorValue() const {
     return emissiveFactor.value_or(std::array<float, 3>{0.0f, 0.0f, 0.0f});

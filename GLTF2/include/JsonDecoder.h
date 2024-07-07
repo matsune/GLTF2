@@ -11,25 +11,31 @@
 
 namespace {
 
-template <typename T> bool isValueType(const nlohmann::json &j);
+template <typename T>
+bool isValueType(const nlohmann::json &j);
 
-template <> bool isValueType<std::string>(const nlohmann::json &j) {
+template <>
+bool isValueType<std::string>(const nlohmann::json &j) {
   return j.is_string();
 }
 
-template <> bool isValueType<uint32_t>(const nlohmann::json &j) {
+template <>
+bool isValueType<uint32_t>(const nlohmann::json &j) {
   return j.is_number_unsigned();
 }
 
-template <> bool isValueType<int>(const nlohmann::json &j) {
+template <>
+bool isValueType<int>(const nlohmann::json &j) {
   return j.is_number_integer();
 }
 
-template <> bool isValueType<float>(const nlohmann::json &j) {
+template <>
+bool isValueType<float>(const nlohmann::json &j) {
   return j.is_number_float() || j.is_number_integer();
 }
 
-template <> bool isValueType<bool>(const nlohmann::json &j) {
+template <>
+bool isValueType<bool>(const nlohmann::json &j) {
   return j.is_boolean();
 }
 
@@ -67,13 +73,13 @@ std::string joinStack(const std::stack<std::string> &stack,
   return result.str();
 }
 
-} // namespace
+}  // namespace
 
 namespace gltf2 {
 namespace json {
 
 class JsonDecoder {
-public:
+ public:
   static Json decode(const nlohmann::json &j) {
     return JsonDecoder().decodeJson(j);
   }
@@ -81,7 +87,7 @@ public:
   JsonDecoder(const JsonDecoder &) = delete;
   JsonDecoder &operator=(const JsonDecoder &) = delete;
 
-private:
+ private:
   std::stack<std::string> stack;
 
   JsonDecoder(){};
@@ -117,9 +123,9 @@ private:
    * @throws InvalidFormatException If the JSON object does not match the
    * expected type `T`.
    */
-  template <typename T> T decodeAs(const nlohmann::json &j) {
-    if (!isValueType<T>(j))
-      throw InvalidFormatException(context());
+  template <typename T>
+  T decodeAs(const nlohmann::json &j) {
+    if (!isValueType<T>(j)) throw InvalidFormatException(context());
     return j.get<T>();
   }
 
@@ -146,8 +152,7 @@ private:
   void decodeValue(const nlohmann::json &j, const std::string &key, T &to) {
     if (!j.contains(key) || j[key].is_null())
       throw KeyNotFoundException(contextKey(key));
-    if (!isValueType<T>(j[key]))
-      throw InvalidFormatException(contextKey(key));
+    if (!isValueType<T>(j[key])) throw InvalidFormatException(contextKey(key));
     j[key].get_to(to);
   }
 
@@ -174,8 +179,7 @@ private:
                                           const std::string &key) {
     if (!j.contains(key) || j[key].is_null())
       throw KeyNotFoundException(contextKey(key));
-    if (!j[key].is_array())
-      throw InvalidFormatException(contextKey(key));
+    if (!j[key].is_array()) throw InvalidFormatException(contextKey(key));
     return j[key].get<std::vector<nlohmann::json>>();
   }
 
@@ -196,12 +200,10 @@ private:
    * @throws InvalidFormatException If the key exists but the value is not a
    * JSON array.
    */
-  std::optional<std::vector<nlohmann::json>>
-  decodeOptionalArray(const nlohmann::json &j, const std::string &key) {
-    if (!j.contains(key) || j[key].is_null())
-      return std::nullopt;
-    if (!j[key].is_array())
-      throw InvalidFormatException(contextKey(key));
+  std::optional<std::vector<nlohmann::json>> decodeOptionalArray(
+      const nlohmann::json &j, const std::string &key) {
+    if (!j.contains(key) || j[key].is_null()) return std::nullopt;
+    if (!j[key].is_array()) throw InvalidFormatException(contextKey(key));
     return j[key].get<std::vector<nlohmann::json>>();
   }
 
@@ -224,8 +226,7 @@ private:
   nlohmann::json decodeObj(const nlohmann::json &j, const std::string &key) {
     if (!j.contains(key) || j[key].is_null())
       throw KeyNotFoundException(contextKey(key));
-    if (!j[key].is_object())
-      throw InvalidFormatException(contextKey(key));
+    if (!j[key].is_object()) throw InvalidFormatException(contextKey(key));
     return j[key].get<nlohmann::json>();
   }
 
@@ -248,10 +249,8 @@ private:
    */
   std::optional<nlohmann::json> decodeOptionalObj(const nlohmann::json &j,
                                                   const std::string &key) {
-    if (!j.contains(key) || j[key].is_null())
-      return std::nullopt;
-    if (!j[key].is_object())
-      throw InvalidFormatException(contextKey(key));
+    if (!j.contains(key) || j[key].is_null()) return std::nullopt;
+    if (!j[key].is_object()) throw InvalidFormatException(contextKey(key));
     return j[key].get<nlohmann::json>();
   }
 
@@ -279,10 +278,8 @@ private:
   template <typename T>
   void decodeValue(const nlohmann::json &j, const std::string &key,
                    std::optional<T> &to) {
-    if (!j.contains(key) || j[key].is_null())
-      return;
-    if (!isValueType<T>(j[key]))
-      throw InvalidFormatException(contextKey(key));
+    if (!j.contains(key) || j[key].is_null()) return;
+    if (!isValueType<T>(j[key])) throw InvalidFormatException(contextKey(key));
     T value;
     j[key].get_to(value);
     to = value;
@@ -307,10 +304,9 @@ private:
    * type `T`. This function is applied to each element of the decoded array.
    */
   template <typename T>
-  void
-  decodeArrayWithMapElem(const nlohmann::json &j, const std::string &key,
-                         std::vector<T> &to,
-                         std::function<T(const nlohmann::json &)> mapFunc) {
+  void decodeArrayWithMapElem(
+      const nlohmann::json &j, const std::string &key, std::vector<T> &to,
+      std::function<T(const nlohmann::json &)> mapFunc) {
     auto array = decodeArray(j, key);
 
     std::vector<T> values;
@@ -344,13 +340,12 @@ private:
    * the array exists.
    */
   template <typename T>
-  void
-  decodeArrayWithMapElem(const nlohmann::json &j, const std::string &key,
-                         std::optional<std::vector<T>> &to,
-                         std::function<T(const nlohmann::json &)> mapFunc) {
+  void decodeArrayWithMapElem(
+      const nlohmann::json &j, const std::string &key,
+      std::optional<std::vector<T>> &to,
+      std::function<T(const nlohmann::json &)> mapFunc) {
     auto array = decodeOptionalArray(j, key);
-    if (!array)
-      return;
+    if (!array) return;
 
     std::vector<T> values;
     for (const auto &value : *array) {
@@ -457,8 +452,7 @@ private:
   void decodeValueWithMap(const nlohmann::json &j, const std::string &key,
                           std::optional<T> &to,
                           std::function<T(const nlohmann::json &)> mapFunc) {
-    if (!j.contains(key) || j[key].is_null())
-      return;
+    if (!j.contains(key) || j[key].is_null()) return;
     to = mapFunc(j[key]);
   }
 
@@ -507,8 +501,7 @@ private:
                         std::optional<T> &to,
                         std::function<T(const nlohmann::json &)> mapFunc) {
     auto obj = decodeOptionalObj(j, key);
-    if (!obj)
-      return;
+    if (!obj) return;
 
     pushStack(key);
     to = mapFunc(*obj);
@@ -590,8 +583,7 @@ private:
     decodeValueWithMap<T>(
         j, key, to, [this, mapFunc](const nlohmann::json &value) {
           auto enumValue = mapFunc(decodeAs<std::string>(value));
-          if (!enumValue)
-            throw InvalidFormatException(context());
+          if (!enumValue) throw InvalidFormatException(context());
           return *enumValue;
         });
   }
@@ -603,8 +595,7 @@ private:
     decodeValueWithMap<T>(
         j, key, to, [this, mapFunc](const nlohmann::json &value) {
           auto enumValue = mapFunc(decodeAs<std::string>(value));
-          if (!enumValue)
-            throw InvalidFormatException(context());
+          if (!enumValue) throw InvalidFormatException(context());
           return *enumValue;
         });
   }
@@ -760,11 +751,11 @@ private:
     decodeValue(j, "name", camera.name);
 
     if (camera.type == Camera::Type::PERSPECTIVE) {
-      decodeObjWithMap<CameraPerspective>(j, "perspective", camera.perspective,
-                                          [this](const nlohmann::json &value) {
-                                            return decodeCameraPerspective(
-                                                value);
-                                          });
+      decodeObjWithMap<CameraPerspective>(
+          j, "perspective", camera.perspective,
+          [this](const nlohmann::json &value) {
+            return decodeCameraPerspective(value);
+          });
     } else if (camera.type == Camera::Type::ORTHOGRAPHIC) {
       decodeObjWithMap<CameraOrthographic>(
           j, "orthographic", camera.orthographic,
@@ -810,14 +801,13 @@ private:
     return textureInfo;
   }
 
-  MaterialPBRMetallicRoughness
-  decodeMaterialPBRMetallicRoughness(const nlohmann::json &j) {
+  MaterialPBRMetallicRoughness decodeMaterialPBRMetallicRoughness(
+      const nlohmann::json &j) {
     MaterialPBRMetallicRoughness pbr;
     decodeValueWithMap<std::array<float, 4>>(
         j, "baseColorFactor", pbr.baseColorFactor,
         [this](const nlohmann::json &value) {
-          if (!value.is_array())
-            throw InvalidFormatException(context());
+          if (!value.is_array()) throw InvalidFormatException(context());
           return value.get<std::array<float, 4>>();
         });
     decodeObjWithMap<TextureInfo>(j, "baseColorTexture", pbr.baseColorTexture,
@@ -834,8 +824,8 @@ private:
     return pbr;
   }
 
-  MaterialNormalTextureInfo
-  decodeMaterialNormalTextureInfo(const nlohmann::json &j) {
+  MaterialNormalTextureInfo decodeMaterialNormalTextureInfo(
+      const nlohmann::json &j) {
     MaterialNormalTextureInfo normal;
     decodeValue(j, "index", normal.index);
     decodeValue(j, "texCoord", normal.texCoord);
@@ -851,8 +841,8 @@ private:
     return normal;
   }
 
-  MaterialOcclusionTextureInfo
-  decodeMaterialOcclusionTextureInfo(const nlohmann::json &j) {
+  MaterialOcclusionTextureInfo decodeMaterialOcclusionTextureInfo(
+      const nlohmann::json &j) {
     MaterialOcclusionTextureInfo occlusion;
     decodeValue(j, "index", occlusion.index);
     decodeValue(j, "texCoord", occlusion.texCoord);
@@ -866,6 +856,84 @@ private:
           });
     }
     return occlusion;
+  }
+  
+  vrmc::ShadingShiftTexture decodeShadingShiftTexture(const nlohmann::json &j) {
+    vrmc::ShadingShiftTexture texture;
+    decodeValue(j, "index", texture.index);
+    decodeValue(j, "texCoord", texture.texCoord);
+    decodeValue(j, "scale", texture.scale);
+    return texture;
+  }
+
+  vrmc::MaterialsMtoon decodeMaterialsMtoon(const nlohmann::json &j) {
+    vrmc::MaterialsMtoon mtoon;
+    decodeValue(j, "specVersion", mtoon.specVersion);
+
+    decodeValue(j, "transparentWithZWrite", mtoon.transparentWithZWrite);
+    decodeValue(j, "renderQueueOffsetNumber", mtoon.renderQueueOffsetNumber);
+    decodeValueWithMap<std::array<float, 3>>(
+        j, "shadeColorFactor", mtoon.shadeColorFactor, [this](const nlohmann::json &value) {
+          if (!value.is_array()) throw InvalidFormatException(context());
+          return value.get<std::array<float, 3>>();
+        });
+    decodeObjWithMap<TextureInfo>(j, "shadeMultiplyTexture", mtoon.shadeMultiplyTexture,
+                                  [this](const nlohmann::json &value) {
+                                    return decodeTextureInfo(value);
+                                  });
+    decodeValue(j, "shadingShiftFactor", mtoon.shadingShiftFactor);
+    decodeObjWithMap<vrmc::ShadingShiftTexture>(j, "shadingShiftTexture", mtoon.shadingShiftTexture,
+                                  [this](const nlohmann::json &value) {
+                                    return decodeShadingShiftTexture(value);
+                                  });
+    decodeValue(j, "shadingToonyFactor", mtoon.shadingToonyFactor);
+    decodeValue(j, "giEqualizationFactor", mtoon.giEqualizationFactor);
+    decodeValueWithMap<std::array<float, 3>>(
+        j, "matcapFactor", mtoon.matcapFactor, [this](const nlohmann::json &value) {
+          if (!value.is_array()) throw InvalidFormatException(context());
+          return value.get<std::array<float, 3>>();
+        });
+    decodeObjWithMap<TextureInfo>(j, "matcapTexture", mtoon.matcapTexture,
+                                  [this](const nlohmann::json &value) {
+                                    return decodeTextureInfo(value);
+                                  });
+    decodeValueWithMap<std::array<float, 3>>(
+        j, "parametricRimColorFactor", mtoon.parametricRimColorFactor, [this](const nlohmann::json &value) {
+          if (!value.is_array()) throw InvalidFormatException(context());
+          return value.get<std::array<float, 3>>();
+        });
+    decodeObjWithMap<TextureInfo>(j, "rimMultiplyTexture", mtoon.rimMultiplyTexture,
+                                  [this](const nlohmann::json &value) {
+                                    return decodeTextureInfo(value);
+                                  });
+    decodeValue(j, "rimLightingMixFactor", mtoon.rimLightingMixFactor);
+    decodeValue(j, "parametricRimFresnelPowerFactor",
+                mtoon.parametricRimFresnelPowerFactor);
+    decodeValue(j, "parametricRimLiftFactor", mtoon.parametricRimLiftFactor);
+    decodeEnumValue<vrmc::MaterialsMtoon::OutlineWidthMode>(j, "outlineWidthMode", mtoon.outlineWidthMode, vrmc::MaterialsMtoon::OutlineWidthModeFromString);
+    decodeValue(j, "outlineWidthFactor", mtoon.outlineWidthFactor);
+    decodeObjWithMap<TextureInfo>(j, "outlineWidthMultiplyTexture", mtoon.outlineWidthMultiplyTexture,
+                                  [this](const nlohmann::json &value) {
+                                    return decodeTextureInfo(value);
+                                  });
+    decodeValueWithMap<std::array<float, 3>>(
+        j, "outlineColorFactor", mtoon.outlineColorFactor, [this](const nlohmann::json &value) {
+          if (!value.is_array()) throw InvalidFormatException(context());
+          return value.get<std::array<float, 3>>();
+        });
+    decodeValue(j, "outlineLightingMixFactor", mtoon.outlineLightingMixFactor);
+    decodeObjWithMap<TextureInfo>(j, "uvAnimationMaskTexture", mtoon.uvAnimationMaskTexture,
+                                  [this](const nlohmann::json &value) {
+                                    return decodeTextureInfo(value);
+                                  });
+    decodeValue(j, "uvAnimationScrollXSpeedFactor",
+                mtoon.uvAnimationScrollXSpeedFactor);
+    decodeValue(j, "uvAnimationScrollYSpeedFactor",
+                mtoon.uvAnimationScrollYSpeedFactor);
+    decodeValue(j, "uvAnimationRotationSpeedFactor",
+                mtoon.uvAnimationRotationSpeedFactor);
+
+    return mtoon;
   }
 
   Material decodeMaterial(const nlohmann::json &j) {
@@ -894,8 +962,7 @@ private:
     decodeValueWithMap<std::array<float, 3>>(
         j, "emissiveFactor", material.emissiveFactor,
         [this](const nlohmann::json &value) {
-          if (!value.is_array())
-            throw InvalidFormatException(context());
+          if (!value.is_array()) throw InvalidFormatException(context());
           return value.get<std::array<float, 3>>();
         });
     decodeEnumValue<Material::AlphaMode>(j, "alphaMode", material.alphaMode,
@@ -967,6 +1034,12 @@ private:
           [this](const nlohmann::json &value) {
             return decodeKHRMaterialVolume(value);
           });
+
+      decodeObjWithMap<vrmc::MaterialsMtoon>(
+          *extensionsObj, GLTFExtensionVRMCMaterialsMtoon, material.mtoon,
+          [this](const nlohmann::json &value) {
+            return decodeMaterialsMtoon(value);
+          });
     }
 
     return material;
@@ -979,25 +1052,22 @@ private:
     decodeValue(j, "TANGENT", target.tangent);
   }
 
-  std::optional<std::vector<uint32_t>>
-  decodeMeshPrimitiveAttributesSequenceKey(const nlohmann::json &j,
-                                           const std::string &prefix) {
+  std::optional<std::vector<uint32_t>> decodeMeshPrimitiveAttributesSequenceKey(
+      const nlohmann::json &j, const std::string &prefix) {
     std::vector<uint32_t> values;
     int i = 0;
     while (true) {
       std::string key = format("%s_%d", prefix.c_str(), i);
-      if (!j.contains(key) || j[key].is_null())
-        break;
-      if (!j[key].is_number_unsigned())
-        throw InvalidFormatException(context());
+      if (!j.contains(key) || j[key].is_null()) break;
+      if (!j[key].is_number_unsigned()) throw InvalidFormatException(context());
       values.push_back(j[key].get<uint32_t>());
       i++;
     }
     return values.empty() ? std::nullopt : std::make_optional(values);
   }
 
-  MeshPrimitiveAttributes
-  decodeMeshPrimitiveAttributes(const nlohmann::json &j) {
+  MeshPrimitiveAttributes decodeMeshPrimitiveAttributes(
+      const nlohmann::json &j) {
     MeshPrimitiveAttributes attributes;
     decodeMeshPrimitiveTarget(j, attributes);
     attributes.texcoords =
@@ -1058,28 +1128,24 @@ private:
     decodeValue(j, "skin", node.skin);
     decodeValueWithMap<std::array<float, 16>>(
         j, "matrix", node.matrix, [this](const nlohmann::json &value) {
-          if (!value.is_array())
-            throw InvalidFormatException(context());
+          if (!value.is_array()) throw InvalidFormatException(context());
           return value.get<std::array<float, 16>>();
         });
     decodeValue(j, "mesh", node.mesh);
     decodeValueWithMap<std::array<float, 4>>(
         j, "rotation", node.rotation, [this](const nlohmann::json &value) {
-          if (!value.is_array())
-            throw InvalidFormatException(context());
+          if (!value.is_array()) throw InvalidFormatException(context());
           return value.get<std::array<float, 4>>();
         });
     decodeValueWithMap<std::array<float, 3>>(
         j, "scale", node.scale, [this](const nlohmann::json &value) {
-          if (!value.is_array())
-            throw InvalidFormatException(context());
+          if (!value.is_array()) throw InvalidFormatException(context());
           return value.get<std::array<float, 3>>();
         });
     decodeValueWithMap<std::array<float, 3>>(
         j, "translation", node.translation,
         [this](const nlohmann::json &value) {
-          if (!value.is_array())
-            throw InvalidFormatException(context());
+          if (!value.is_array()) throw InvalidFormatException(context());
           return value.get<std::array<float, 3>>();
         });
     decodeValue(j, "weights", node.weights);
@@ -1213,8 +1279,8 @@ private:
   }
 
 #pragma mark - draco
-  MeshPrimitiveDracoExtension
-  decodeMeshPrimitiveDracoExtension(const nlohmann::json &j) {
+  MeshPrimitiveDracoExtension decodeMeshPrimitiveDracoExtension(
+      const nlohmann::json &j) {
     MeshPrimitiveDracoExtension dracoExtension;
     decodeValue(j, "bufferView", dracoExtension.bufferView);
     decodeObjWithMap<MeshPrimitiveAttributes>(
@@ -1231,15 +1297,13 @@ private:
     KHRTextureTransform t;
     decodeValueWithMap<std::array<float, 2>>(
         j, "offset", t.offset, [this](const nlohmann::json &value) {
-          if (!value.is_array())
-            throw InvalidFormatException(context());
+          if (!value.is_array()) throw InvalidFormatException(context());
           return value.get<std::array<float, 2>>();
         });
     decodeValue(j, "rotation", t.rotation);
     decodeValueWithMap<std::array<float, 2>>(
         j, "scale", t.scale, [this](const nlohmann::json &value) {
-          if (!value.is_array())
-            throw InvalidFormatException(context());
+          if (!value.is_array()) throw InvalidFormatException(context());
           return value.get<std::array<float, 2>>();
         });
     decodeValue(j, "texCoord", t.texCoord);
@@ -1287,8 +1351,8 @@ private:
     return dispersion;
   }
 
-  KHRMaterialEmissiveStrength
-  decodeKHRMaterialEmissiveStrength(const nlohmann::json &j) {
+  KHRMaterialEmissiveStrength decodeKHRMaterialEmissiveStrength(
+      const nlohmann::json &j) {
     KHRMaterialEmissiveStrength strength;
     decodeValue(j, "emissiveStrength", strength.emissiveStrength);
     return strength;
@@ -1326,8 +1390,7 @@ private:
     decodeValueWithMap<std::array<float, 3>>(
         j, "sheenColorFactor", sheen.sheenColorFactor,
         [this](const nlohmann::json &value) {
-          if (!value.is_array())
-            throw InvalidFormatException(context());
+          if (!value.is_array()) throw InvalidFormatException(context());
           return value.get<std::array<float, 3>>();
         });
     decodeObjWithMap<TextureInfo>(j, "sheenColorTexture",
@@ -1355,8 +1418,7 @@ private:
     decodeValueWithMap<std::array<float, 3>>(
         j, "specularColorFactor", specular.specularColorFactor,
         [this](const nlohmann::json &value) {
-          if (!value.is_array())
-            throw InvalidFormatException(context());
+          if (!value.is_array()) throw InvalidFormatException(context());
           return value.get<std::array<float, 3>>();
         });
     decodeObjWithMap<TextureInfo>(j, "specularColorTexture",
@@ -1367,8 +1429,8 @@ private:
     return specular;
   }
 
-  KHRMaterialTransmission
-  decodeKHRMaterialTransmission(const nlohmann::json &j) {
+  KHRMaterialTransmission decodeKHRMaterialTransmission(
+      const nlohmann::json &j) {
     KHRMaterialTransmission transmission;
     decodeValue(j, "transmissionFactor", transmission.transmissionFactor);
     decodeObjWithMap<TextureInfo>(j, "transmissionTexture",
@@ -1391,8 +1453,7 @@ private:
     decodeValueWithMap<std::array<float, 3>>(
         j, "attenuationColor", volume.attenuationColor,
         [this](const nlohmann::json &value) {
-          if (!value.is_array())
-            throw InvalidFormatException(context());
+          if (!value.is_array()) throw InvalidFormatException(context());
           return value.get<std::array<float, 3>>();
         });
     return volume;
@@ -1410,8 +1471,7 @@ private:
     decodeValue(j, "name", light.name);
     decodeValueWithMap<std::array<float, 3>>(
         j, "color", light.color, [this](const nlohmann::json &value) {
-          if (!value.is_array())
-            throw InvalidFormatException(context());
+          if (!value.is_array()) throw InvalidFormatException(context());
           return value.get<std::array<float, 3>>();
         });
     decodeValue(j, "intensity", light.intensity);
@@ -1470,8 +1530,8 @@ private:
     return bone;
   }
 
-  vrmc::HumanoidHumanBones
-  decodeVRM1HumanoidHumanBones(const nlohmann::json &j) {
+  vrmc::HumanoidHumanBones decodeVRM1HumanoidHumanBones(
+      const nlohmann::json &j) {
     vrmc::HumanoidHumanBones bones;
     decodeObjWithMap<vrmc::HumanoidHumanBone>(
         j, "hips", bones.hips, [this](const nlohmann::json &value) {
@@ -1746,8 +1806,8 @@ private:
     return humanoid;
   }
 
-  vrmc::FirstPersonMeshAnnotation
-  decodeVRM1FirstPersonMeshAnnotation(const nlohmann::json &j) {
+  vrmc::FirstPersonMeshAnnotation decodeVRM1FirstPersonMeshAnnotation(
+      const nlohmann::json &j) {
     vrmc::FirstPersonMeshAnnotation annotation;
     decodeValue(j, "node", annotation.node);
     decodeEnumValue<vrmc::FirstPersonMeshAnnotation::Type>(
@@ -1778,8 +1838,7 @@ private:
     decodeValueWithMap<std::array<float, 3>>(
         j, "offsetFromHeadBone", lookAt.offsetFromHeadBone,
         [this](const nlohmann::json &value) {
-          if (!value.is_array())
-            throw InvalidFormatException(context());
+          if (!value.is_array()) throw InvalidFormatException(context());
           return value.get<std::array<float, 3>>();
         });
     decodeEnumValue<vrmc::LookAt::Type>(j, "type", lookAt.type,
@@ -1808,8 +1867,8 @@ private:
     return lookAt;
   }
 
-  vrmc::ExpressionMaterialColorBind
-  decodeVRM1ExpressionMaterialColorBind(const nlohmann::json &j) {
+  vrmc::ExpressionMaterialColorBind decodeVRM1ExpressionMaterialColorBind(
+      const nlohmann::json &j) {
     vrmc::ExpressionMaterialColorBind bind;
     decodeValue(j, "material", bind.material);
     decodeEnumValue<vrmc::ExpressionMaterialColorBind::Type>(
@@ -1825,8 +1884,8 @@ private:
     return bind;
   }
 
-  vrmc::ExpressionMorphTargetBind
-  decodeVRM1ExpressionMorphTargetBind(const nlohmann::json &j) {
+  vrmc::ExpressionMorphTargetBind decodeVRM1ExpressionMorphTargetBind(
+      const nlohmann::json &j) {
     vrmc::ExpressionMorphTargetBind bind;
     decodeValue(j, "node", bind.node);
     decodeValue(j, "index", bind.index);
@@ -1834,8 +1893,8 @@ private:
     return bind;
   }
 
-  vrmc::ExpressionTextureTransformBind
-  decodeVRM1ExpressionTextureTransformBind(const nlohmann::json &j) {
+  vrmc::ExpressionTextureTransformBind decodeVRM1ExpressionTextureTransformBind(
+      const nlohmann::json &j) {
     vrmc::ExpressionTextureTransformBind bind;
     decodeValue(j, "material", bind.material);
     decodeValueWithMap<std::array<float, 2>>(
@@ -2115,16 +2174,16 @@ private:
     return vec;
   }
 
-  vrm0::FirstPersonMeshAnnotation
-  decodeVRM0FirstPersonMeshAnnotation(const nlohmann::json &j) {
+  vrm0::FirstPersonMeshAnnotation decodeVRM0FirstPersonMeshAnnotation(
+      const nlohmann::json &j) {
     vrm0::FirstPersonMeshAnnotation annotation;
     decodeValue(j, "mesh", annotation.mesh);
     decodeValue(j, "firstPersonFlag", annotation.firstPersonFlag);
     return annotation;
   }
 
-  vrm0::FirstPersonDegreeMap
-  decodeVRM0FirstPersonDegreeMap(const nlohmann::json &j) {
+  vrm0::FirstPersonDegreeMap decodeVRM0FirstPersonDegreeMap(
+      const nlohmann::json &j) {
     vrm0::FirstPersonDegreeMap degreeMap;
     const auto curveArray = decodeOptionalArray(j, "curve");
     if (curveArray) {
@@ -2181,8 +2240,8 @@ private:
     return firstPerson;
   }
 
-  vrm0::BlendShapeMaterialBind
-  decodeVRM0BlendShapeMaterialBind(const nlohmann::json &j) {
+  vrm0::BlendShapeMaterialBind decodeVRM0BlendShapeMaterialBind(
+      const nlohmann::json &j) {
     vrm0::BlendShapeMaterialBind materialBind;
     decodeValue(j, "materialName", materialBind.materialName);
     decodeValue(j, "propertyName", materialBind.propertyName);
@@ -2227,8 +2286,8 @@ private:
     return blendShapeGroup;
   }
 
-  vrm0::SecondaryAnimationCollider
-  decodeVRM0SecondaryAnimationCollider(const nlohmann::json &j) {
+  vrm0::SecondaryAnimationCollider decodeVRM0SecondaryAnimationCollider(
+      const nlohmann::json &j) {
     vrm0::SecondaryAnimationCollider collider;
     decodeObjWithMap<vrm0::Vec3>(
         j, "offset", collider.offset,
@@ -2249,8 +2308,8 @@ private:
     return colliderGroup;
   }
 
-  vrm0::SecondaryAnimationSpring
-  decodeVRM0SecondaryAnimationSpring(const nlohmann::json &j) {
+  vrm0::SecondaryAnimationSpring decodeVRM0SecondaryAnimationSpring(
+      const nlohmann::json &j) {
     vrm0::SecondaryAnimationSpring spring;
     decodeValue(j, "comment", spring.comment);
     decodeValue(j, "stiffiness", spring.stiffiness);
@@ -2266,8 +2325,8 @@ private:
     return spring;
   }
 
-  vrm0::SecondaryAnimation
-  decodeVRM0SecondaryAnimation(const nlohmann::json &j) {
+  vrm0::SecondaryAnimation decodeVRM0SecondaryAnimation(
+      const nlohmann::json &j) {
     vrm0::SecondaryAnimation secondaryAnimation;
     decodeArrayWithMapElem<vrm0::SecondaryAnimationSpring>(
         j, "boneGroups", secondaryAnimation.boneGroups,
@@ -2324,16 +2383,15 @@ private:
     return material;
   }
 
-  vrmc::SpringBoneColliderGroup
-  decodeVRM1SpringBoneColliderGroup(const nlohmann::json &j) {
+  vrmc::SpringBoneColliderGroup decodeVRM1SpringBoneColliderGroup(
+      const nlohmann::json &j) {
     vrmc::SpringBoneColliderGroup colliderGroup;
     decodeValue(j, "name", colliderGroup.name);
     decodeValue(j, "colliders", colliderGroup.colliders);
     return colliderGroup;
   }
 
-  vrmc::SpringBoneJoint
-  decodeVRM1SpringBoneJoint(const nlohmann::json &j) {
+  vrmc::SpringBoneJoint decodeVRM1SpringBoneJoint(const nlohmann::json &j) {
     vrmc::SpringBoneJoint joint;
     decodeValue(j, "node", joint.node);
     decodeValue(j, "hitRadius", joint.hitRadius);
@@ -2341,48 +2399,43 @@ private:
     decodeValue(j, "gravityPower", joint.gravityPower);
     decodeValueWithMap<std::array<float, 3>>(
         j, "gravityDir", joint.gravityDir, [this](const nlohmann::json &value) {
-          if (!value.is_array())
-            throw InvalidFormatException(context());
+          if (!value.is_array()) throw InvalidFormatException(context());
           return value.get<std::array<float, 3>>();
         });
     decodeValue(j, "dragForce", joint.dragForce);
     return joint;
   }
 
-  vrmc::SpringBoneShapeSphere
-  decodeVRM1SpringBoneShapeSphere(const nlohmann::json &j) {
+  vrmc::SpringBoneShapeSphere decodeVRM1SpringBoneShapeSphere(
+      const nlohmann::json &j) {
     vrmc::SpringBoneShapeSphere sphere;
     decodeValueWithMap<std::array<float, 3>>(
         j, "offset", sphere.offset, [this](const nlohmann::json &value) {
-          if (!value.is_array())
-            throw InvalidFormatException(context());
+          if (!value.is_array()) throw InvalidFormatException(context());
           return value.get<std::array<float, 3>>();
         });
     decodeValue(j, "radius", sphere.radius);
     return sphere;
   }
 
-  vrmc::SpringBoneShapeCapsule
-  decodeVRM1SpringBoneShapeCapsule(const nlohmann::json &j) {
+  vrmc::SpringBoneShapeCapsule decodeVRM1SpringBoneShapeCapsule(
+      const nlohmann::json &j) {
     vrmc::SpringBoneShapeCapsule capsule;
     decodeValueWithMap<std::array<float, 3>>(
         j, "offset", capsule.offset, [this](const nlohmann::json &value) {
-          if (!value.is_array())
-            throw InvalidFormatException(context());
+          if (!value.is_array()) throw InvalidFormatException(context());
           return value.get<std::array<float, 3>>();
         });
     decodeValue(j, "radius", capsule.radius);
     decodeValueWithMap<std::array<float, 3>>(
         j, "tail", capsule.tail, [this](const nlohmann::json &value) {
-          if (!value.is_array())
-            throw InvalidFormatException(context());
+          if (!value.is_array()) throw InvalidFormatException(context());
           return value.get<std::array<float, 3>>();
         });
     return capsule;
   }
 
-  vrmc::SpringBoneShape
-  decodeVRM1SpringBoneShape(const nlohmann::json &j) {
+  vrmc::SpringBoneShape decodeVRM1SpringBoneShape(const nlohmann::json &j) {
     vrmc::SpringBoneShape shape;
     decodeObjWithMap<vrmc::SpringBoneShapeSphere>(
         j, "sphere", shape.sphere, [this](nlohmann::json value) {
@@ -2395,8 +2448,8 @@ private:
     return shape;
   }
 
-  vrmc::SpringBoneCollider
-  decodeVRM1SpringBoneCollider(const nlohmann::json &j) {
+  vrmc::SpringBoneCollider decodeVRM1SpringBoneCollider(
+      const nlohmann::json &j) {
     vrmc::SpringBoneCollider collider;
     decodeValue(j, "node", collider.node);
     decodeObjWithMap<vrmc::SpringBoneShape>(
@@ -2406,8 +2459,7 @@ private:
     return collider;
   }
 
-  vrmc::SpringBoneSpring
-  decodeVRM1SpringBoneSpring(const nlohmann::json &j) {
+  vrmc::SpringBoneSpring decodeVRM1SpringBoneSpring(const nlohmann::json &j) {
     vrmc::SpringBoneSpring spring;
     decodeValue(j, "name", spring.name);
     decodeArrayWithMapElem<vrmc::SpringBoneJoint>(
@@ -2440,7 +2492,7 @@ private:
   }
 };
 
-} // namespace json
-} // namespace gltf2
+}  // namespace json
+}  // namespace gltf2
 
 #endif /* JsonDecoder_h */

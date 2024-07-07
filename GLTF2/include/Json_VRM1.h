@@ -527,7 +527,7 @@ public:
   }
 };
 
-} // namespace vrm1
+} // namespace vrmc
 } // namespace json
 }; // namespace gltf2
 

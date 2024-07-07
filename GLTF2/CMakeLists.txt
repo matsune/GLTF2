@@ -8,7 +8,7 @@ target_include_directories(${LIB_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include/${LIB_NAME}>
 )
-target_include_directories(${LIB_NAME} PRIVATE ${json_SOURCE_DIR}/include ${cppcodec_SOURCE_DIR} ${CMAKE_BINARY_DIR} ${draco_SOURCE_DIR}/src)
+target_include_directories(${LIB_NAME} PRIVATE ${json_SOURCE_DIR}/include ${cppcodec_SOURCE_DIR} ${CMAKE_BINARY_DIR} ${draco_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR})
 
 target_link_libraries(${LIB_NAME} PUBLIC ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY} PRIVATE Boost::url draco::draco)
 

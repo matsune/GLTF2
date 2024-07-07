@@ -1,0 +1,254 @@
+{
+    "asset": { "version": "1.0" },
+    "extensionsUsed": ["VRMC_vrm"],
+    "extensions": {
+      "VRMC_vrm": {
+        "specVersion": "1.0",
+        "meta": {
+          "name": "test",
+          "authors": [ "test author 1" ],
+          "copyrightInformation": "copyrightInformation",
+          "contactInformation": "contactInformation",
+          "references": ["references_1"],
+          "thumbnailImage": 0,
+          "thirdPartyLicenses": "thirdPartyLicenses",
+          "licenseUrl": "https://vrm.dev/licenses/1.0",
+          "avatarPermission": "onlySeparatelyLicensedPerson",
+          "allowExcessivelyViolentUsage": true,
+          "allowExcessivelySexualUsage": true,
+          "commercialUsage": "personalProfit",
+          "allowPoliticalOrReligiousUsage": true,
+          "allowAntisocialOrHateUsage": true,
+          "creditNotation": "unnecessary",
+          "allowRedistribution": true,
+          "modification": "allowModificationRedistribution",
+          "otherLicenseUrl": "otherLicenseUrl"
+        },
+        "humanoid": {
+          "humanBones": {
+            "chest":{
+              "node":22
+            },
+            "head":{
+              "node":25
+            },
+            "hips":{
+              "node":4
+            },
+            "leftEye":{
+              "node":26
+            },
+            "leftFoot":{
+              "node":162
+            },
+            "leftHand":{
+              "node":98
+            },
+            "leftIndexDistal":{
+              "node":101
+            },
+            "leftIndexIntermediate":{
+              "node":100
+            },
+            "leftIndexProximal":{
+              "node":99
+            },
+            "leftLittleDistal":{
+              "node":105
+            },
+            "leftLittleIntermediate":{
+              "node":104
+            },
+            "leftLittleProximal":{
+              "node":103
+            },
+            "leftLowerArm":{
+              "node":97
+            },
+            "leftLowerLeg":{
+              "node":161
+            },
+            "leftMiddleDistal":{
+              "node":109
+            },
+            "leftMiddleIntermediate":{
+              "node":108
+            },
+            "leftMiddleProximal":{
+              "node":107
+            },
+            "leftRingDistal":{
+              "node":113
+            },
+            "leftRingIntermediate":{
+              "node":112
+            },
+            "leftRingProximal":{
+              "node":111
+            },
+            "leftShoulder":{
+              "node":88
+            },
+            "leftThumbDistal":{
+              "node":117
+            },
+            "leftThumbMetacarpal":{
+              "node":115
+            },
+            "leftThumbProximal":{
+              "node":116
+            },
+            "leftToes":{
+              "node":163
+            },
+            "leftUpperArm":{
+              "node":96
+            },
+            "leftUpperLeg":{
+              "node":160
+            },
+            "neck":{
+              "node":24
+            },
+            "rightEye":{
+              "node":27
+            },
+            "rightFoot":{
+              "node":167
+            },
+            "rightHand":{
+              "node":132
+            },
+            "rightIndexDistal":{
+              "node":135
+            },
+            "rightIndexIntermediate":{
+              "node":134
+            },
+            "rightIndexProximal":{
+              "node":133
+            },
+            "rightLittleDistal":{
+              "node":139
+            },
+            "rightLittleIntermediate":{
+              "node":138
+            },
+            "rightLittleProximal":{
+              "node":137
+            },
+            "rightLowerArm":{
+              "node":131
+            },
+            "rightLowerLeg":{
+              "node":166
+            },
+            "rightMiddleDistal":{
+              "node":143
+            },
+            "rightMiddleIntermediate":{
+              "node":142
+            },
+            "rightMiddleProximal":{
+              "node":141
+            },
+            "rightRingDistal":{
+              "node":147
+            },
+            "rightRingIntermediate":{
+              "node":146
+            },
+            "rightRingProximal":{
+              "node":145
+            },
+            "rightShoulder":{
+              "node":122
+            },
+            "rightThumbDistal":{
+              "node":151
+            },
+            "rightThumbMetacarpal":{
+              "node":149
+            },
+            "rightThumbProximal":{
+              "node":150
+            },
+            "rightToes":{
+              "node":168
+            },
+            "rightUpperArm":{
+              "node":130
+            },
+            "rightUpperLeg":{
+              "node":165
+            },
+            "spine":{
+              "node":21
+            },
+            "upperChest":{
+              "node":23
+            }
+          }
+        },
+        "firstPerson": {
+          "meshAnnotations": [
+            {
+              "node": 1,
+              "type": "firstPersonOnly"
+            }
+          ]
+        },
+        "lookAt": {
+          "offsetFromHeadBone": [1.0, 2.0, 3.0],
+          "type": "expression",
+          "rangeMapHorizontalInner": {
+            "inputMaxValue": 1.0,
+            "outputScale": 2.0
+          },
+          "rangeMapHorizontalOuter": {
+            "inputMaxValue": 3.0,
+            "outputScale": 4.0
+          },
+          "rangeMapVerticalDown": {
+            "inputMaxValue": 5.0,
+            "outputScale": 6.0
+          },
+          "rangeMapVerticalUp": {
+            "inputMaxValue": 7.0,
+            "outputScale": 8.0
+          }
+        },
+        "expressions": {
+          "preset": {
+            "happy": {
+              "morphTargetBinds": [
+                {
+                  "node": 1,
+                  "index": 2,
+                  "weight": 3.0
+                }
+              ],
+              "materialColorBinds": [
+                {
+                  "material": 1,
+                  "type": "outlineColor",
+                  "targetValue": [0.0, 1.0, 2.0, 3.0]
+                }
+              ],
+              "textureTransformBinds": [
+                {
+                  "material": 3,
+                  "scale": [0.1, 0.2],
+                  "offset": [1, 2]
+                }
+              ],
+              "isBinary": true,
+              "overrideBlink": "none",
+              "overrideLookAt": "block",
+              "overrideMouth": "blend"
+            }
+          }
+        }
+      }
+    }
+  }

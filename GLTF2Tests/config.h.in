@@ -1,0 +1,9 @@
+#ifndef GLTF2Tests_config_h
+#define GLTF2Tests_config_h
+
+#define GLTF_JSON_PATH "@GLTF_JSON_PATH@"
+#define VRM0_JSON_PATH "@VRM0_JSON_PATH@"
+#define VRM1_JSON_PATH "@VRM1_JSON_PATH@"
+#define SPRINGBONE_JSON_PATH "@SPRINGBONE_JSON_PATH@"
+
+#endif

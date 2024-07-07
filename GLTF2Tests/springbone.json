@@ -1,0 +1,43 @@
+{
+    "asset": { "version": "1.0" },
+    "extensionsUsed": ["VRMC_springBone"],
+    "extensions": {
+      "VRMC_springBone": {
+        "specVersion": "1.0",
+        "colliders": [
+          {
+            "node": 0,
+            "shape": {
+              "sphere": {
+                "offset": [0.0, 0.1, 0.2],
+                "radius": 0.3
+              }
+            }
+          }
+        ],
+        "colliderGroups": [
+          {
+            "name": "Group1",
+            "colliders": [0]
+          }
+        ],
+        "springs": [
+          {
+            "name": "Spring1",
+            "joints": [
+              {
+                "node": 1,
+                "hitRadius": 0.2,
+                "stiffness": 0.5,
+                "gravityPower": 1.0,
+                "gravityDir": [0.0, -1.0, 0.0],
+                "dragForce": 0.3
+              }
+            ],
+            "colliderGroups": [0],
+            "center": 1
+          }
+        ]
+      }
+    }
+  }

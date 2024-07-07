@@ -1,0 +1,321 @@
+{
+    "extensionsUsed": ["ext1", "ext2"],
+    "extensionsRequired": ["ext1"],
+    "accessors": [
+      {
+        "bufferView": 0,
+        "byteOffset": 0,
+        "componentType": 5123,
+        "normalized": false,
+        "count": 3,
+        "type": "VEC3",
+        "max": [1, 1, 1],
+        "min": [-1, -1, -1]
+      },
+      {
+        "bufferView": 1,
+        "byteOffset": 24,
+        "componentType": 5125,
+        "normalized": true,
+        "count": 3,
+        "type": "SCALAR",
+        "sparse": {
+          "count": 2,
+          "indices": {
+            "bufferView": 3,
+            "byteOffset": 0,
+            "componentType": 5123
+          },
+          "values": {
+            "bufferView": 4,
+            "byteOffset": 8
+          }
+        }
+      }
+    ],
+    "animations": [
+      {
+        "name": "WaveAnimation",
+        "channels": [
+          {
+            "sampler": 0,
+            "target": {
+              "node": 2,
+              "path": "rotation"
+            }
+          },
+          {
+            "sampler": 1,
+            "target": {
+              "node": 3,
+              "path": "translation"
+            }
+          }
+        ],
+        "samplers": [
+          {
+            "input": 0,
+            "interpolation": "LINEAR",
+            "output": 1
+          },
+          {
+            "input": 2,
+            "interpolation": "CUBICSPLINE",
+            "output": 3
+          }
+        ]
+      }
+    ],
+    "asset": {
+      "copyright": "COPYRIGHT",
+      "generator": "GENERATOR",
+      "version": "1.0",
+      "minVersion": "0.1"
+    },
+    "buffers": [
+      {
+        "uri": "buffer.bin",
+        "byteLength": 1024
+      }
+    ],
+    "bufferViews": [
+      {
+        "buffer": 0,
+        "byteOffset": 0,
+        "byteLength": 512,
+        "byteStride": 12,
+        "target": 34962
+      },
+      {
+        "buffer": 0,
+        "byteOffset": 512,
+        "byteLength": 512,
+        "byteStride": 16,
+        "target": 34963
+      }
+    ],
+    "cameras": [
+      {
+        "type": "perspective",
+        "perspective": {
+          "aspectRatio": 1.333,
+          "yfov": 1.0,
+          "zfar": 100.0,
+          "znear": 0.1
+        }
+      },
+      {
+        "type": "orthographic",
+        "orthographic": {
+          "xmag": 2.0,
+          "ymag": 2.0,
+          "zfar": 50.0,
+          "znear": 0.5
+        }
+      }
+    ],
+    "images": [
+      {
+        "uri": "image1.png",
+        "mimeType": "image/png"
+      },
+      {
+        "uri": "image2.jpeg",
+        "mimeType": "image/jpeg"
+      }
+    ],
+    "materials": [
+      {
+        "name": "MaterialOne",
+        "pbrMetallicRoughness": {
+          "baseColorFactor": [0.5, 0.5, 0.5, 1.0],
+          "metallicFactor": 0.1
+        },
+        "alphaMode": "BLEND",
+        "doubleSided": true,
+        "extensions": {
+            "KHR_materials_unlit": {}
+        }
+      },
+      {
+        "name": "MaterialTwo",
+        "pbrMetallicRoughness": {
+          "metallicFactor": 0.3,
+          "roughnessFactor": 0.4
+        },
+        "emissiveTexture": {
+          "index": 0,
+          "extensions": {
+            "KHR_texture_transform": {
+              "offset": [0, 1],
+              "rotation": 1.5,
+              "scale": [0.5, 0.5],
+              "texCoord": 1
+            }
+          }
+        }
+      },
+      {
+        "extensions": {
+          "KHR_materials_anisotropy": {
+              "anisotropyStrength": 0.6,
+              "anisotropyRotation": 1.57,
+              "anisotropyTexture": {
+                  "index": 0
+              }
+          },
+          "KHR_materials_sheen": {
+            "sheenColorFactor": [0.9, 0.9, 0.9],
+            "sheenColorTexture": {
+              "index": 0
+            },
+            "sheenRoughnessFactor": 0.3,
+            "sheenRoughnessTexture": {
+              "index": 1
+            }
+          },
+          "KHR_materials_specular": {
+            "specularFactor": 0.3,
+            "specularTexture": {
+              "index": 2
+            },
+            "specularColorFactor": [0.6, 0.7, 0.8],
+            "specularColorTexture": {
+              "index": 3
+            }
+          },
+          "KHR_materials_ior": {
+            "ior": 1.4
+          },
+          "KHR_materials_clearcoat": {
+            "clearcoatFactor": 1.0,
+            "clearcoatTexture": {
+                "index": 0,
+                "texCoord": 0
+            },
+            "clearcoatRoughnessFactor": 0.5,
+            "clearcoatRoughnessTexture": {
+                "index": 1,
+                "texCoord": 0
+            },
+            "clearcoatNormalTexture": {
+                "index": 2,
+                "texCoord": 0,
+                "scale": 1.0
+            }
+          },
+          "KHR_materials_dispersion": {
+            "dispersion": 0.1
+          },
+          "KHR_materials_emissive_strength": {
+            "emissiveStrength": 5.0
+          },
+          "KHR_materials_iridescence": {
+            "iridescenceFactor": 1.2,
+            "iridescenceIor": 1.3,
+            "iridescenceThicknessMinimum": 200.0,
+            "iridescenceThicknessMaximum": 500.0
+          },
+          "KHR_materials_transmission": {
+            "transmissionFactor": 1.0,
+            "transmissionTexture": {
+                "index": 0,
+                "texCoord": 0
+            }
+          },
+          "KHR_materials_volume": {
+            "thicknessFactor": 1.0,
+            "attenuationDistance":  0.006,
+            "attenuationColor": [ 0.5, 0.5, 0.5 ]
+          }
+        }
+      }
+    ],
+    "meshes": [
+      {
+        "name": "MeshOne",
+        "primitives": [
+          {
+            "mode": 4,
+            "indices": 1,
+            "attributes": {
+              "POSITION": 0,
+              "NORMAL": 2
+            }
+          },
+          {
+            "mode": 3,
+            "indices": 2,
+            "attributes": {
+              "POSITION": 1,
+              "TEXCOORD_0": 3,
+              "TEXCOORD_1": 4
+            }
+          }
+        ]
+      }
+    ],
+    "nodes": [
+      {
+        "camera": 0,
+        "children": [1],
+        "skin": 0,
+        "matrix": [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1],
+        "mesh": 0,
+        "rotation": [1.0, 1.0, 1.0, 1.0],
+        "scale": [1.0, 1.0, 1.0],
+        "translation": [1.0, 1.0, 1.0],
+        "weights": [1.0, 1.0],
+        "name": "Node 1"
+      }
+    ],
+    "textures": [
+      {
+        "sampler": 0,
+        "source": 0,
+        "name": "tex1"
+      }
+    ],
+    "scene": 0,
+    "scenes": [
+      {
+        "nodes": [1, 2],
+        "name": "Scene1"
+      }
+    ],
+    "skins": [
+      {
+        "inverseBindMatrices": 0,
+        "skeleton": 1,
+        "joints": [0, 2, 3],
+        "name": "Skin1"
+      }
+    ],
+    "samplers": [
+      {
+        "magFilter": 9729,
+        "minFilter": 9728,
+        "wrapS": 33071,
+        "wrapT": 10497,
+        "name": "Sampler1"
+      }
+    ],
+    "extensions": {
+      "KHR_lights_punctual" : {
+        "lights": [
+          {
+            "spot": {
+                "innerConeAngle": 0.78,
+                "outerConeAngle": 1.57
+            },
+            "color": [
+                0.0,
+                0.5,
+                1.0
+            ],
+            "type": "spot"
+          }
+        ]
+      }
+    }
+  }

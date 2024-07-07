@@ -1,0 +1,165 @@
+{
+    "asset": { "version": "1.0" },
+    "extensionsUsed": ["VRM"],
+    "extensions": {
+      "VRM": {
+        "exporterVersion": "UniVRM-0.46",
+        "specVersion": "0.0",
+        "meta": {
+          "title": "Sample json::vrm0:: Model",
+          "version": "1.0",
+          "author": "John Doe",
+          "contactInformation": "john.doe@example.com",
+          "reference": "https://example.com/reference",
+          "texture": 1,
+          "allowedUserName": "Everyone",
+          "violentUssageName": "Allow",
+          "sexualUssageName": "Disallow",
+          "commercialUssageName": "Allow",
+          "otherPermissionUrl": "https://example.com/permissions",
+          "licenseName": "CC_BY",
+          "otherLicenseUrl": "https://example.com/other-license"
+        },
+        "humanoid": {
+          "humanBones": [
+            {
+              "bone": "hips",
+              "node": 0,
+              "useDefaultValues": true,
+              "min": { "x": -0.5, "y": -0.5, "z": -0.5 },
+              "max": { "x": 0.5, "y": 0.5, "z": 0.5 },
+              "center": { "x": 0.0, "y": 0.0, "z": 0.0 },
+              "axisLength": 1.0
+            },
+            {
+              "bone": "leftUpperLeg",
+              "node": 1,
+              "useDefaultValues": false,
+              "min": { "x": -0.3, "y": -0.3, "z": -0.3 },
+              "max": { "x": 0.3, "y": 0.3, "z": 0.3 },
+              "center": { "x": 0.1, "y": 0.1, "z": 0.1 },
+              "axisLength": 1.2
+            }
+          ],
+          "armStretch": 0.05,
+          "legStretch": 0.03,
+          "upperArmTwist": 0.5,
+          "lowerArmTwist": 0.4,
+          "upperLegTwist": 0.6,
+          "lowerLegTwist": 0.5,
+          "feetSpacing": 0.2,
+          "hasTranslationDoF": true
+        },
+        "firstPerson": {
+          "firstPersonBone": 1,
+          "firstPersonBoneOffset": {
+            "x": 0.0,
+            "y": 0.1,
+            "z": 0.2
+          },
+          "meshAnnotations": [
+            {
+              "mesh": 0,
+              "firstPersonFlag": "Auto"
+            }
+          ],
+          "lookAtTypeName": "Bone",
+          "lookAtHorizontalInner": {
+            "curve": [0.0, 0.5, 1.0, 1.5],
+            "xRange": 90.0,
+            "yRange": 10.0
+          },
+          "lookAtHorizontalOuter": {
+            "curve": [0.0, 0.5, 1.0, 1.5],
+            "xRange": 90.0,
+            "yRange": 10.0
+          },
+          "lookAtVerticalDown": {
+            "curve": [0.0, 0.5, 1.0, 1.5],
+            "xRange": 90.0,
+            "yRange": 10.0
+          },
+          "lookAtVerticalUp": {
+            "curve": [0.0, 0.5, 1.0, 1.5],
+            "xRange": 90.0,
+            "yRange": 10.0
+          }
+        },
+        "blendShapeMaster": {
+          "blendShapeGroups": [
+            {
+              "name": "smile",
+              "presetName": "joy",
+              "binds": [
+                {
+                  "mesh": 0,
+                  "index": 1,
+                  "weight": 50.0
+                }
+              ],
+              "materialValues": [
+                {
+                  "materialName": "face",
+                  "propertyName": "_Color",
+                  "targetValue": [1.0, 0.5, 0.5, 1.0]
+                }
+              ],
+              "isBinary": true
+            }
+          ]
+        },
+        "secondaryAnimation": {
+          "boneGroups": [
+            {
+              "comment": "Hair",
+              "stiffiness": 0.5,
+              "gravityPower": 0.98,
+              "gravityDir": { "x": 0.0, "y": -1.0, "z": 0.0 },
+              "dragForce": 0.3,
+              "center": 0,
+              "hitRadius": 0.2,
+              "bones": [1, 2, 3],
+              "colliderGroups": [0]
+            }
+          ],
+          "colliderGroups": [
+            {
+              "node": 0,
+              "colliders": [
+                {
+                  "offset": { "x": 0.0, "y": 0.0, "z": 0.0 },
+                  "radius": 0.5
+                }
+              ]
+            }
+          ]
+        },
+        "materialProperties": [
+          {
+            "name": "exampleMaterial",
+            "shader": "VRM/MToon",
+            "renderQueue": 2000,
+            "floatProperties": {
+              "_Cutoff": 0.5,
+              "_BumpScale": 1.0
+            },
+            "vectorProperties": {
+              "_MainTex": [1.0, 1.0, 0.0, 0.0],
+              "_Color": [1.0, 0.5, 0.5, 1.0]
+            },
+            "textureProperties": {
+              "_MainTex": 0,
+              "_BumpMap": 1
+            },
+            "keywordMap": {
+              "_ALPHABLEND_ON": true,
+              "_ALPHATEST_ON": false
+            },
+            "tagMap": {
+              "RenderType": "Transparent"
+            }
+          }
+        ]
+      }
+    }
+  }

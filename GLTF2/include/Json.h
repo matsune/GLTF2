@@ -346,11 +346,10 @@ public:
 
 class MaterialsMtoon {
 public:
-  enum class OutlineWidthMode {
-    NONE, WORLD_COORDINATES, SCREEN_COORDINATES
-  };
-  
-  static std::optional<OutlineWidthMode> OutlineWidthModeFromString(const std::string &value) {
+  enum class OutlineWidthMode { NONE, WORLD_COORDINATES, SCREEN_COORDINATES };
+
+  static std::optional<OutlineWidthMode>
+  OutlineWidthModeFromString(const std::string &value) {
     if (value == "none")
       return OutlineWidthMode::NONE;
     else if (value == "worldCoordinates")
@@ -360,7 +359,7 @@ public:
     else
       return std::nullopt;
   }
-  
+
   std::string specVersion;
   std::optional<bool> transparentWithZWrite;
   std::optional<int> renderQueueOffsetNumber;
@@ -388,7 +387,7 @@ public:
   std::optional<float> uvAnimationRotationSpeedFactor;
 };
 
-}
+} // namespace vrmc
 
 // Material
 

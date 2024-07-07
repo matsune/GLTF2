@@ -10,9 +10,15 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
+set(GLTF_JSON_PATH "${CMAKE_CURRENT_SOURCE_DIR}/gltf.json")
+set(VRM0_JSON_PATH "${CMAKE_CURRENT_SOURCE_DIR}/vrm0.json")
+set(VRM1_JSON_PATH "${CMAKE_CURRENT_SOURCE_DIR}/vrm1.json")
+set(SPRINGBONE_JSON_PATH "${CMAKE_CURRENT_SOURCE_DIR}/springbone.json")
+configure_file(config.h.in config.h)
+
 file(GLOB_RECURSE SOURCES "*.cpp")
-add_executable(GLTF2Tests ${SOURCES})
-target_include_directories(GLTF2Tests PRIVATE ${CMAKE_BINARY_DIR} ${cppcodec_SOURCE_DIR})
+add_executable(GLTF2Tests ${SOURCES} ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+target_include_directories(GLTF2Tests PRIVATE ${CMAKE_CURRENT_BINARY_DIR} ${cppcodec_SOURCE_DIR} ${json_SOURCE_DIR}/include)
 
 target_link_libraries(GLTF2Tests GLTF2 GTest::gtest_main)
 

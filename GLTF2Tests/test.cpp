@@ -1233,17 +1233,17 @@ TEST(TestGLTFData, validVRM1) {
   ASSERT_EQ(meta.thirdPartyLicenses, "thirdPartyLicenses");
   ASSERT_EQ(meta.licenseUrl, "https://vrm.dev/licenses/1.0");
   ASSERT_EQ(meta.avatarPermission,
-            json::VRMCMeta::AvatarPermission::ONLY_SEPARATELY_LICENSED_PERSON);
+            json::vrmc::Meta::AvatarPermission::ONLY_SEPARATELY_LICENSED_PERSON);
   ASSERT_TRUE(meta.allowExcessivelyViolentUsage);
   ASSERT_TRUE(meta.allowExcessivelySexualUsage);
   ASSERT_EQ(meta.commercialUsage,
-            json::VRMCMeta::CommercialUsage::PERSONAL_PROFIT);
+            json::vrmc::Meta::CommercialUsage::PERSONAL_PROFIT);
   ASSERT_TRUE(meta.allowPoliticalOrReligiousUsage);
   ASSERT_TRUE(meta.allowAntisocialOrHateUsage);
-  ASSERT_EQ(meta.creditNotation, json::VRMCMeta::CreditNotation::UNNECESSARY);
+  ASSERT_EQ(meta.creditNotation, json::vrmc::Meta::CreditNotation::UNNECESSARY);
   ASSERT_TRUE(meta.allowRedistribution);
   ASSERT_EQ(meta.modification,
-            json::VRMCMeta::Modification::ALLOW_MODIFICATION_REDISTRIBUTION);
+            json::vrmc::Meta::Modification::ALLOW_MODIFICATION_REDISTRIBUTION);
   ASSERT_EQ(meta.otherLicenseUrl, "otherLicenseUrl");
 
   auto &humanBones = vrm.humanoid.humanBones;
@@ -1306,13 +1306,13 @@ TEST(TestGLTFData, validVRM1) {
   auto &meshAnnotation = firstPerson.meshAnnotations->at(0);
   ASSERT_EQ(meshAnnotation.node, 1);
   ASSERT_EQ(meshAnnotation.type,
-            json::VRMCFirstPersonMeshAnnotation::Type::FIRST_PERSON_ONLY);
+            json::vrmc::FirstPersonMeshAnnotation::Type::FIRST_PERSON_ONLY);
 
-  json::VRMCLookAt &lookAt = *vrm.lookAt;
+  json::vrmc::LookAt &lookAt = *vrm.lookAt;
   ASSERT_EQ(lookAt.offsetFromHeadBone->at(0), 1.0f);
   ASSERT_EQ(lookAt.offsetFromHeadBone->at(1), 2.0f);
   ASSERT_EQ(lookAt.offsetFromHeadBone->at(2), 3.0f);
-  ASSERT_EQ(lookAt.type, json::VRMCLookAt::Type::EXPRESSION);
+  ASSERT_EQ(lookAt.type, json::vrmc::LookAt::Type::EXPRESSION);
   ASSERT_EQ(lookAt.rangeMapHorizontalInner->inputMaxValue, 1.0f);
   ASSERT_EQ(lookAt.rangeMapHorizontalInner->outputScale, 2.0f);
   ASSERT_EQ(lookAt.rangeMapHorizontalOuter->inputMaxValue, 3.0f);
@@ -1322,13 +1322,13 @@ TEST(TestGLTFData, validVRM1) {
   ASSERT_EQ(lookAt.rangeMapVerticalUp->inputMaxValue, 7.0f);
   ASSERT_EQ(lookAt.rangeMapVerticalUp->outputScale, 8.0f);
 
-  json::VRMCExpression &happy = *vrm.expressions->preset->happy;
+  json::vrmc::Expression &happy = *vrm.expressions->preset->happy;
   ASSERT_EQ(happy.morphTargetBinds->at(0).node, 1);
   ASSERT_EQ(happy.morphTargetBinds->at(0).index, 2);
   ASSERT_EQ(happy.morphTargetBinds->at(0).weight, 3.0f);
   ASSERT_EQ(happy.materialColorBinds->at(0).material, 1);
   ASSERT_EQ(happy.materialColorBinds->at(0).type,
-            json::VRMCExpressionMaterialColorBind::Type::OUTLINE_COLOR);
+            json::vrmc::ExpressionMaterialColorBind::Type::OUTLINE_COLOR);
   ASSERT_EQ(happy.materialColorBinds->at(0).targetValue.at(0), 0.0f);
   ASSERT_EQ(happy.materialColorBinds->at(0).targetValue.at(1), 1.0f);
   ASSERT_EQ(happy.materialColorBinds->at(0).targetValue.at(2), 2.0f);
@@ -1339,9 +1339,9 @@ TEST(TestGLTFData, validVRM1) {
   ASSERT_EQ(happy.textureTransformBinds->at(0).offset->at(0), 1.0f);
   ASSERT_EQ(happy.textureTransformBinds->at(0).offset->at(1), 2.0f);
   ASSERT_EQ(happy.isBinary, true);
-  ASSERT_EQ(happy.overrideBlink, json::VRMCExpression::Override::NONE);
-  ASSERT_EQ(happy.overrideLookAt, json::VRMCExpression::Override::BLOCK);
-  ASSERT_EQ(happy.overrideMouth, json::VRMCExpression::Override::BLEND);
+  ASSERT_EQ(happy.overrideBlink, json::vrmc::Expression::Override::NONE);
+  ASSERT_EQ(happy.overrideLookAt, json::vrmc::Expression::Override::BLOCK);
+  ASSERT_EQ(happy.overrideMouth, json::vrmc::Expression::Override::BLEND);
 }
 
 TEST(TestGLTFData, validVRM0) {
@@ -1354,7 +1354,7 @@ TEST(TestGLTFData, validVRM0) {
           "exporterVersion": "UniVRM-0.46",
           "specVersion": "0.0",
           "meta": {
-            "title": "Sample json::VRM Model",
+            "title": "Sample json::vrm0:: Model",
             "version": "1.0",
             "author": "John Doe",
             "contactInformation": "john.doe@example.com",
@@ -1520,20 +1520,20 @@ TEST(TestGLTFData, validVRM0) {
   ASSERT_EQ(vrm.specVersion, "0.0");
 
   auto &meta = vrm.meta;
-  ASSERT_EQ(meta->title, "Sample json::VRM Model");
+  ASSERT_EQ(meta->title, "Sample json::vrm0:: Model");
   ASSERT_EQ(meta->version, "1.0");
   ASSERT_EQ(meta->author, "John Doe");
   ASSERT_EQ(meta->contactInformation, "john.doe@example.com");
   ASSERT_EQ(meta->reference, "https://example.com/reference");
   ASSERT_EQ(meta->texture, 1);
   ASSERT_EQ(meta->allowedUserNameValue(),
-            json::VRMMeta::AllowedUserName::EVERYONE);
-  ASSERT_EQ(meta->violentUsageValue(), json::VRMMeta::UsagePermission::ALLOW);
-  ASSERT_EQ(meta->sexualUsageValue(), json::VRMMeta::UsagePermission::DISALLOW);
+            json::vrm0::Meta::AllowedUserName::EVERYONE);
+  ASSERT_EQ(meta->violentUsageValue(), json::vrm0::Meta::UsagePermission::ALLOW);
+  ASSERT_EQ(meta->sexualUsageValue(), json::vrm0::Meta::UsagePermission::DISALLOW);
   ASSERT_EQ(meta->commercialUsageValue(),
-            json::VRMMeta::UsagePermission::ALLOW);
+            json::vrm0::Meta::UsagePermission::ALLOW);
   ASSERT_EQ(meta->otherPermissionUrl, "https://example.com/permissions");
-  ASSERT_EQ(meta->licenseNameValue(), json::VRMMeta::LicenseName::CC_BY);
+  ASSERT_EQ(meta->licenseNameValue(), json::vrm0::Meta::LicenseName::CC_BY);
   ASSERT_EQ(meta->otherLicenseUrl, "https://example.com/other-license");
 
   auto &humanoid = vrm.humanoid;
@@ -1550,7 +1550,7 @@ TEST(TestGLTFData, validVRM0) {
   ASSERT_EQ(humanBones->size(), 2);
 
   auto &bone1 = humanBones->at(0);
-  ASSERT_EQ(bone1.bone, json::VRMHumanoidBone::Bone::HIPS);
+  ASSERT_EQ(bone1.bone, json::vrm0::HumanoidBone::BoneName::HIPS);
   ASSERT_EQ(bone1.node, 0);
   ASSERT_TRUE(bone1.useDefaultValues.value());
   ASSERT_EQ(bone1.min->x.value(), -0.5f);
@@ -1565,7 +1565,7 @@ TEST(TestGLTFData, validVRM0) {
   ASSERT_EQ(bone1.axisLength.value(), 1.0f);
 
   auto &bone2 = humanBones->at(1);
-  ASSERT_EQ(bone2.bone, json::VRMHumanoidBone::Bone::LEFT_UPPER_LEG);
+  ASSERT_EQ(bone2.bone, json::vrm0::HumanoidBone::BoneName::LEFT_UPPER_LEG);
   ASSERT_EQ(bone2.node, 1);
   ASSERT_FALSE(bone2.useDefaultValues.value());
   ASSERT_EQ(bone2.min->x.value(), -0.3f);
@@ -1590,7 +1590,7 @@ TEST(TestGLTFData, validVRM0) {
   ASSERT_EQ(firstPerson->meshAnnotations->at(0).firstPersonFlag, "Auto");
 
   ASSERT_EQ(firstPerson->lookAtTypeName.value(),
-            json::VRMFirstPerson::LookAtType::BONE);
+            json::vrm0::FirstPerson::LookAtType::BONE);
 
   auto &horizontalInner = firstPerson->lookAtHorizontalInner.value();
   ASSERT_EQ(horizontalInner.curve->size(), 1);
@@ -1634,7 +1634,7 @@ TEST(TestGLTFData, validVRM0) {
   auto &blendShapeGroup = blendShape->blendShapeGroups->at(0);
   ASSERT_EQ(blendShapeGroup.name, "smile");
   ASSERT_EQ(blendShapeGroup.presetName.value(),
-            json::VRMBlendShapeGroup::PresetName::JOY);
+            json::vrm0::BlendShapeGroup::PresetName::JOY);
   ASSERT_EQ(blendShapeGroup.binds->size(), 1);
   ASSERT_EQ(blendShapeGroup.materialValues->size(), 1);
   ASSERT_TRUE(blendShapeGroup.isBinary.value());
@@ -1794,13 +1794,13 @@ TEST(TestGLTFData, SpringBone) {
   auto &joint = spring.joints.at(0);
   ASSERT_EQ(joint.node, 1);
   ASSERT_EQ(joint.hitRadius.value(), 0.2f);
-  ASSERT_EQ(joint.stffnessValue(), 0.5f);
+  ASSERT_EQ(joint.stiffnessValue(), 0.5f);
   ASSERT_EQ(joint.gravityPowerValue(), 1.0f);
   ASSERT_EQ(joint.gravityDirValue().at(0), 0.0f);
   ASSERT_EQ(joint.gravityDirValue().at(1), -1.0f);
   ASSERT_EQ(joint.gravityDirValue().at(2), 0.0f);
   ASSERT_EQ(joint.dragForceValue(), 0.3f);
-  ASSERT_EQ(spring.colliderGroups.size(), 1);
-  ASSERT_EQ(spring.colliderGroups.at(0), 0);
+  ASSERT_EQ(spring.colliderGroups->size(), 1);
+  ASSERT_EQ(spring.colliderGroups->at(0), 0);
   ASSERT_EQ(spring.center.value(), 1);
 }

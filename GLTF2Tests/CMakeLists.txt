@@ -14,6 +14,7 @@ set(GLTF_JSON_PATH "${CMAKE_CURRENT_SOURCE_DIR}/gltf.json")
 set(VRM0_JSON_PATH "${CMAKE_CURRENT_SOURCE_DIR}/vrm0.json")
 set(VRM1_JSON_PATH "${CMAKE_CURRENT_SOURCE_DIR}/vrm1.json")
 set(SPRINGBONE_JSON_PATH "${CMAKE_CURRENT_SOURCE_DIR}/springbone.json")
+set(MTOON_JSON_PATH "${CMAKE_CURRENT_SOURCE_DIR}/mtoon.json")
 configure_file(config.h.in config.h)
 
 file(GLOB_RECURSE SOURCES "*.cpp")
